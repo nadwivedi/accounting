@@ -15,10 +15,10 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  const login = async (email, password) => {
+  const login = async (emailOrPhone, password) => {
     setLoading(true);
     try {
-      const response = await apiClient.post('/users/login', { email, password });
+      const response = await apiClient.post('/users/login', { emailOrPhone, password });
 
       if (response.success) {
         localStorage.setItem('token', response.token);

@@ -68,21 +68,29 @@ exports.register = async (req, res) => {
 // User Login
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { emailOrPhone, password } = req.body;
 
-    if (!email || !password) {
+    if (!emailOrPhone || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide email and password'
+        message: 'Please provide email/phone and password'
       });
     }
 
-    const user = await User.findOne({ email }).select('+password');
+    // Check if input is email or phone
+    const isEmail = emailOrPhone.includes('@');
+    let user;
+
+    if (isEmail) {
+      user = await User.findOne({ email: emailOrPhone }).select('+password');
+    } else {
+      user = await User.findOne({ phone: emailOrPhone }).select('+password');
+    }
 
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid email/phone or password'
       });
     }
 
@@ -98,7 +106,7 @@ exports.login = async (req, res) => {
     if (!isPasswordMatch) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid email/phone or password'
       });
     }
 
@@ -113,6 +121,7 @@ exports.login = async (req, res) => {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
+        phone: user.phone,
         role: user.role,
         department: user.department
       }

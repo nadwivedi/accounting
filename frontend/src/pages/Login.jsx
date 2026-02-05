@@ -3,13 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
-  const [email, setEmail] = useState('');
+  const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    email: '',
     phone: ''
   });
 
@@ -20,7 +21,12 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
-    const result = await login(email, password);
+    if (!emailOrPhone || !password) {
+      setError('Please fill all fields');
+      return;
+    }
+
+    const result = await login(emailOrPhone, password);
     if (result.success) {
       navigate('/dashboard');
     } else {
@@ -32,15 +38,29 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
-    if (!formData.firstName || !formData.lastName || !email || !password || !formData.phone) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !password) {
       setError('Please fill all fields');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please enter a valid email address');
+      return;
+    }
+
+    // Validate phone format (10 digits)
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(formData.phone)) {
+      setError('Please enter a valid 10-digit phone number');
       return;
     }
 
     const result = await register(
       formData.firstName,
       formData.lastName,
-      email,
+      formData.email,
       formData.phone,
       password
     );
@@ -55,6 +75,10 @@ export default function Login() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+  };
+
+  const getLoginInputPlaceholder = () => {
+    return 'Email or Mobile Number';
   };
 
   return (
@@ -103,15 +127,18 @@ export default function Login() {
           {isLogin ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-gray-700 font-medium mb-2">Email</label>
+                <label className="block text-gray-700 font-medium mb-2">Email or Mobile Number</label>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  type="text"
+                  value={emailOrPhone}
+                  onChange={(e) => setEmailOrPhone(e.target.value)}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  placeholder="you@example.com"
+                  placeholder={getLoginInputPlaceholder()}
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">
+                  Enter your email (e.g., user@example.com) or 10-digit mobile number
+                </p>
               </div>
 
               <div>
@@ -139,7 +166,7 @@ export default function Login() {
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">First Name</label>
+                  <label className="block text-gray-700 font-medium mb-2">First Name *</label>
                   <input
                     type="text"
                     name="firstName"
@@ -151,7 +178,7 @@ export default function Login() {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">Last Name</label>
+                  <label className="block text-gray-700 font-medium mb-2">Last Name *</label>
                   <input
                     type="text"
                     name="lastName"
@@ -165,11 +192,12 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-medium mb-2">Email</label>
+                <label className="block text-gray-700 font-medium mb-2">Email *</label>
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  name="email"
+                  value={formData.email}
+                  onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                   placeholder="you@example.com"
                   required
@@ -177,7 +205,7 @@ export default function Login() {
               </div>
 
               <div>
-                <label className="block text-gray-700 font-medium mb-2">Phone</label>
+                <label className="block text-gray-700 font-medium mb-2">Mobile Number *</label>
                 <input
                   type="tel"
                   name="phone"
@@ -185,12 +213,14 @@ export default function Login() {
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                   placeholder="9876543210"
+                  maxLength="10"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Enter 10-digit mobile number</p>
               </div>
 
               <div>
-                <label className="block text-gray-700 font-medium mb-2">Password</label>
+                <label className="block text-gray-700 font-medium mb-2">Password *</label>
                 <input
                   type="password"
                   value={password}
@@ -199,6 +229,7 @@ export default function Login() {
                   placeholder="••••••••"
                   required
                 />
+                <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
               </div>
 
               <button
@@ -215,7 +246,12 @@ export default function Login() {
           <p className="text-center text-gray-600 text-sm mt-6">
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
             <button
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+                setEmailOrPhone('');
+                setPassword('');
+              }}
               className="text-blue-600 font-semibold hover:underline"
             >
               {isLogin ? 'Register' : 'Login'}
