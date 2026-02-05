@@ -1,6 +1,5 @@
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Header from './Header';
 import Sidebar from './Sidebar';
 
 export default function ProtectedRoute({ children }) {
@@ -21,7 +20,6 @@ export default function ProtectedRoute({ children }) {
   return (
     <div>
       <Sidebar />
-      <Header />
       {children}
     </div>
   );

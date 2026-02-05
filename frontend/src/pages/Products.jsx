@@ -117,30 +117,35 @@ export default function Products() {
     setFormData(initialFormData);
   };
 
+  const totalProducts = products.length;
+  const activeProducts = products.filter((product) => product.isActive).length;
+  const lowStockProducts = products.filter(
+    (product) => Number(product.currentStock || 0) <= Number(product.minStockLevel || 0)
+  ).length;
+
   return (
-    <div className="ml-64 p-8">
-      <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Products</h1>
-          <p className="text-gray-600 mt-2">Manage your products and inventory</p>
-        </div>
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setFormData(initialFormData);
-            setShowForm(true);
-          }}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm"
-        >
-          + Add Product
-        </button>
-      </div>
+    <div className="ml-64 p-8 bg-slate-50 min-h-screen">
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
         </div>
       )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-sm text-slate-500">Total Products</p>
+          <p className="text-2xl font-bold text-slate-800 mt-1">{totalProducts}</p>
+        </div>
+        <div className="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm">
+          <p className="text-sm text-green-700">Active</p>
+          <p className="text-2xl font-bold text-green-800 mt-1">{activeProducts}</p>
+        </div>
+        <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 shadow-sm">
+          <p className="text-sm text-orange-700">Low Stock</p>
+          <p className="text-2xl font-bold text-orange-800 mt-1">{lowStockProducts}</p>
+        </div>
+      </div>
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCancel}>
@@ -325,28 +330,38 @@ export default function Products() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="mb-6">
+      {/* Search + Add */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
           placeholder="Search products..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
+        <button
+          onClick={() => {
+            setEditingId(null);
+            setFormData(initialFormData);
+            setShowForm(true);
+          }}
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
+        >
+          + Add Product
+        </button>
       </div>
 
       {/* Products List */}
       {loading && !showForm ? (
         <div className="text-center py-8 text-gray-500">Loading...</div>
       ) : products.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center text-gray-500">
           No products found. Create your first product!
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-100 border-b">
+            <thead className="bg-slate-100 border-b border-slate-200">
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Name</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Category</th>
@@ -359,8 +374,8 @@ export default function Products() {
             </thead>
             <tbody>
               {products.map((product) => (
-                <tr key={product._id} className="border-b hover:bg-gray-50">
-                  <td className="px-6 py-3 font-medium">{product.name}</td>
+                <tr key={product._id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-6 py-3 font-medium text-slate-800">{product.name}</td>
                   <td className="px-6 py-3">{product.category?.name || '-'}</td>
                   <td className="px-6 py-3">₹{product.purchasePrice}</td>
                   <td className="px-6 py-3">₹{product.salePrice}</td>

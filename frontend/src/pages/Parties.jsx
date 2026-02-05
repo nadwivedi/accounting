@@ -114,30 +114,33 @@ export default function Parties() {
     setFormData(initialFormData);
   };
 
+  const totalParties = parties.length;
+  const activeParties = parties.filter((party) => party.isActive).length;
+  const inactiveParties = totalParties - activeParties;
+
   return (
-    <div className="ml-64 p-8">
-      <div className="mb-8 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Parties</h1>
-          <p className="text-gray-600 mt-2">Manage suppliers and customers</p>
-        </div>
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setFormData(initialFormData);
-            setShowForm(true);
-          }}
-          className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
-        >
-          + Add Party
-        </button>
-      </div>
+    <div className="ml-64 p-8 bg-slate-50 min-h-screen">
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
         </div>
       )}
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-sm text-slate-500">Total Parties</p>
+          <p className="text-2xl font-bold text-slate-800 mt-1">{totalParties}</p>
+        </div>
+        <div className="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm">
+          <p className="text-sm text-green-700">Active</p>
+          <p className="text-2xl font-bold text-green-800 mt-1">{activeParties}</p>
+        </div>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
+          <p className="text-sm text-red-700">Inactive</p>
+          <p className="text-2xl font-bold text-red-800 mt-1">{inactiveParties}</p>
+        </div>
+      </div>
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCancel}>
@@ -335,37 +338,47 @@ export default function Parties() {
       )}
 
       {/* Search and Filters */}
-      <div className="mb-6 space-y-4">
+      <div className="mb-6 flex flex-col md:flex-row gap-3">
         <input
           type="text"
           placeholder="Search parties..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full md:w-56 bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
         >
           <option value="">All Types</option>
           <option value="supplier">Suppliers</option>
           <option value="customer">Customers</option>
           <option value="both">Both</option>
         </select>
+        <button
+          onClick={() => {
+            setEditingId(null);
+            setFormData(initialFormData);
+            setShowForm(true);
+          }}
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
+        >
+          + Add Party
+        </button>
       </div>
 
       {/* Parties List */}
       {loading && !showForm ? (
         <div className="text-center py-8 text-gray-500">Loading...</div>
       ) : parties.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center text-gray-500">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center text-gray-500">
           No parties found. Create your first party!
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-100 border-b">
+            <thead className="bg-slate-100 border-b border-slate-200">
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Name</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Type</th>
@@ -379,8 +392,8 @@ export default function Parties() {
             </thead>
             <tbody>
               {parties.map((party) => (
-                <tr key={party._id} className="border-b hover:bg-gray-50">
-                  <td className="px-6 py-3 font-medium">{party.PartName}</td>
+                <tr key={party._id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-6 py-3 font-medium text-slate-800">{party.PartName}</td>
                   <td className="px-6 py-3 capitalize">{party.type}</td>
                   <td className="px-6 py-3">{party.phone || '-'}</td>
                   <td className="px-6 py-3">{party.email || '-'}</td>
