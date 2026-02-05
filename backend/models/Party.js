@@ -27,6 +27,16 @@ const partySchema = new mongoose.Schema({
     pincode: { type: String, trim: true },
     country: { type: String, trim: true, default: 'India' }
   },
+  gstin: {
+    type: String,
+    trim: true,
+    uppercase: true
+  },
+  panNumber: {
+    type: String,
+    trim: true,
+    uppercase: true
+  },
   openingBalance: {
     type: Number,
     default: 0
@@ -38,6 +48,11 @@ const partySchema = new mongoose.Schema({
   creditLimit: {
     type: Number,
     default: 0
+  },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
   isActive: {
     type: Boolean,

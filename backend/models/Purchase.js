@@ -100,6 +100,11 @@ const purchaseSchema = new mongoose.Schema({
     enum: ['draft', 'confirmed', 'cancelled'],
     default: 'confirmed'
   },
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   notes: {
     type: String,
     trim: true
