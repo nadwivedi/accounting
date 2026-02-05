@@ -40,6 +40,11 @@ const purchaseItemSchema = new mongoose.Schema({
 });
 
 const purchaseSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   invoiceNumber: {
     type: String,
     required: true,
@@ -99,11 +104,6 @@ const purchaseSchema = new mongoose.Schema({
     type: String,
     enum: ['draft', 'confirmed', 'cancelled'],
     default: 'confirmed'
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
   },
   notes: {
     type: String,

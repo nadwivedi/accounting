@@ -1,7 +1,12 @@
 const mongoose = require('mongoose');
 
 const partySchema = new mongoose.Schema({
-  name: {
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  PartyName: {
     type: String,
     required: [true, 'Party name is required'],
     trim: true
@@ -48,11 +53,6 @@ const partySchema = new mongoose.Schema({
   creditLimit: {
     type: Number,
     default: 0
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
   },
   isActive: {
     type: Boolean,

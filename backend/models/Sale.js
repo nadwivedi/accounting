@@ -40,6 +40,11 @@ const saleItemSchema = new mongoose.Schema({
 });
 
 const saleSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   invoiceNumber: {
     type: String,
     required: true,
@@ -116,11 +121,6 @@ const saleSchema = new mongoose.Schema({
     type: String,
     enum: ['draft', 'confirmed', 'cancelled', 'returned'],
     default: 'confirmed'
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
   },
   notes: {
     type: String,

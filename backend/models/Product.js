@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   name: {
     type: String,
     required: [true, 'Product name is required'],
@@ -60,11 +65,6 @@ const productSchema = new mongoose.Schema({
   hsnCode: {
     type: String,
     trim: true
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
   },
   isActive: {
     type: Boolean,
