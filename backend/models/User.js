@@ -28,15 +28,7 @@ const userSchema = new mongoose.Schema({
     minlength: 6,
     select: false
   },
-  role: {
-    type: String,
-    enum: ['employee', 'manager'],
-    default: 'employee'
-  },
-  department: {
-    type: String,
-    trim: true
-  },
+  
   address: {
     street: { type: String, trim: true },
     city: { type: String, trim: true },
