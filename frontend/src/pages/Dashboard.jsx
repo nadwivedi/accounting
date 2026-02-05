@@ -1,0 +1,149 @@
+import { useState, useEffect } from 'react';
+import apiClient from '../utils/api';
+
+export default function Dashboard() {
+  const [stats, setStats] = useState({
+    totalProducts: 0,
+    totalCategories: 0,
+    totalParties: 0,
+    totalSales: 0,
+    totalPurchases: 0,
+    totalPayments: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      setLoading(true);
+
+      const [products, categories, parties, sales, purchases, payments] = await Promise.all([
+        apiClient.get('/products'),
+        apiClient.get('/categories'),
+        apiClient.get('/parties'),
+        apiClient.get('/sales'),
+        apiClient.get('/purchases'),
+        apiClient.get('/payments')
+      ]);
+
+      setStats({
+        totalProducts: products.count || 0,
+        totalCategories: categories.count || 0,
+        totalParties: parties.count || 0,
+        totalSales: sales.count || 0,
+        totalPurchases: purchases.count || 0,
+        totalPayments: payments.count || 0
+      });
+    } catch (err) {
+      setError(err.message || 'Failed to fetch stats');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const StatCard = ({ icon, label, value, color }) => (
+    <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 border-${color}-500`}>
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-gray-600 text-sm font-medium">{label}</p>
+          <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
+        </div>
+        <div className={`text-4xl`}>{icon}</div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="ml-64 p-8">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
+        <p className="text-gray-600 mt-2">Overview of your inventory and billing</p>
+      </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+          {error}
+        </div>
+      )}
+
+      {/* Stats Grid */}
+      {loading ? (
+        <div className="flex items-center justify-center h-96">
+          <p className="text-gray-500 text-lg">Loading dashboard...</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <StatCard icon="📦" label="Products" value={stats.totalProducts} color="blue" />
+          <StatCard icon="🏷️" label="Categories" value={stats.totalCategories} color="green" />
+          <StatCard icon="👥" label="Parties" value={stats.totalParties} color="purple" />
+          <StatCard icon="💳" label="Sales" value={stats.totalSales} color="yellow" />
+          <StatCard icon="🛒" label="Purchases" value={stats.totalPurchases} color="red" />
+          <StatCard icon="💰" label="Payments" value={stats.totalPayments} color="indigo" />
+        </div>
+      )}
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
+          <div className="space-y-2">
+            <a
+              href="/products"
+              className="block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center"
+            >
+              Add Product
+            </a>
+            <a
+              href="/categories"
+              className="block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-center"
+            >
+              Add Category
+            </a>
+            <a
+              href="/parties"
+              className="block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-center"
+            >
+              Add Party
+            </a>
+            <a
+              href="/sales"
+              className="block px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-center"
+            >
+              New Sale
+            </a>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">Features</h3>
+          <ul className="space-y-2 text-gray-700">
+            <li className="flex items-center gap-2">
+              <span className="text-green-600">✓</span> Product Management
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-green-600">✓</span> Inventory Tracking
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-green-600">✓</span> Sales & Purchase
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-green-600">✓</span> Payment Management
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-green-600">✓</span> Party Management
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="text-green-600">✓</span> Reports & Analytics
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
