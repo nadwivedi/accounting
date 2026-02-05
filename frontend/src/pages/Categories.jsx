@@ -2,17 +2,19 @@ import { useState, useEffect } from 'react';
 import apiClient from '../utils/api';
 
 export default function Categories() {
+  const initialFormData = {
+    name: '',
+    description: '',
+    isActive: true
+  };
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    isActive: true
-  });
+  const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
     fetchCategories();
@@ -56,7 +58,7 @@ export default function Categories() {
         await apiClient.post('/categories', formData);
       }
       fetchCategories();
-      setFormData({ name: '', description: '', isActive: true });
+      setFormData(initialFormData);
       setEditingId(null);
       setShowForm(false);
       setError('');
@@ -87,7 +89,7 @@ export default function Categories() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({ name: '', description: '', isActive: true });
+    setFormData(initialFormData);
   };
 
   return (
@@ -98,10 +100,14 @@ export default function Categories() {
           <p className="text-gray-600 mt-2">Manage product categories</p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setEditingId(null);
+            setFormData(initialFormData);
+            setShowForm(true);
+          }}
           className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
         >
-          {showForm ? 'Cancel' : '+ Add Category'}
+          + Add Category
         </button>
       </div>
 
@@ -112,11 +118,23 @@ export default function Categories() {
       )}
 
       {showForm && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            {editingId ? 'Edit Category' : 'Add New Category'}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCancel}>
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
+              <h2 className="text-xl font-bold text-gray-800">
+                {editingId ? 'Edit Category' : 'Add New Category'}
+              </h2>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="h-9 w-9 rounded-full border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition"
+                aria-label="Close popup"
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
             <div>
               <label className="block text-gray-700 font-medium mb-2">Category Name</label>
               <input
@@ -172,7 +190,8 @@ export default function Categories() {
                 Cancel
               </button>
             </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
 

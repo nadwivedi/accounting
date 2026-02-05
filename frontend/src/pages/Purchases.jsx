@@ -2,15 +2,7 @@ import { useState, useEffect } from 'react';
 import apiClient from '../utils/api';
 
 export default function Purchases() {
-  const [purchases, setPurchases] = useState([]);
-  const [parties, setParties] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [search, setSearch] = useState('');
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     party: '',
     items: [],
     purchaseDate: new Date().toISOString().split('T')[0],
@@ -23,15 +15,26 @@ export default function Purchases() {
     totalAmount: 0,
     paidAmount: 0,
     notes: ''
-  });
-  const [currentItem, setCurrentItem] = useState({
+  };
+  const initialCurrentItem = {
     product: '',
     productName: '',
     quantity: '',
     unitPrice: '',
     taxRate: 0,
     discount: 0
-  });
+  };
+
+  const [purchases, setPurchases] = useState([]);
+  const [parties, setParties] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [search, setSearch] = useState('');
+  const [formData, setFormData] = useState(initialFormData);
+  const [currentItem, setCurrentItem] = useState(initialCurrentItem);
 
   useEffect(() => {
     fetchPurchases();
@@ -97,14 +100,7 @@ export default function Purchases() {
       items: [...formData.items, newItem]
     });
 
-    setCurrentItem({
-      product: '',
-      productName: '',
-      quantity: '',
-      unitPrice: '',
-      taxRate: 0,
-      discount: 0
-    });
+    setCurrentItem(initialCurrentItem);
 
     calculateTotals([...formData.items, newItem]);
   };
@@ -161,20 +157,8 @@ export default function Purchases() {
         await apiClient.post('/purchases', submitData);
       }
       fetchPurchases();
-      setFormData({
-        party: '',
-        items: [],
-        purchaseDate: new Date().toISOString().split('T')[0],
-        dueDate: '',
-        subtotal: 0,
-        discountAmount: 0,
-        taxAmount: 0,
-        shippingCharges: 0,
-        otherCharges: 0,
-        totalAmount: 0,
-        paidAmount: 0,
-        notes: ''
-      });
+      setFormData(initialFormData);
+      setCurrentItem(initialCurrentItem);
       setEditingId(null);
       setShowForm(false);
       setError('');
@@ -205,20 +189,8 @@ export default function Purchases() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({
-      party: '',
-      items: [],
-      purchaseDate: new Date().toISOString().split('T')[0],
-      dueDate: '',
-      subtotal: 0,
-      discountAmount: 0,
-      taxAmount: 0,
-      shippingCharges: 0,
-      otherCharges: 0,
-      totalAmount: 0,
-      paidAmount: 0,
-      notes: ''
-    });
+    setFormData(initialFormData);
+    setCurrentItem(initialCurrentItem);
   };
 
   return (
@@ -229,10 +201,15 @@ export default function Purchases() {
           <p className="text-gray-600 mt-2">Manage purchase transactions</p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setEditingId(null);
+            setFormData(initialFormData);
+            setCurrentItem(initialCurrentItem);
+            setShowForm(true);
+          }}
           className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
         >
-          {showForm ? 'Cancel' : '+ New Purchase'}
+          + New Purchase
         </button>
       </div>
 
@@ -243,11 +220,23 @@ export default function Purchases() {
       )}
 
       {showForm && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            {editingId ? 'Edit Purchase' : 'Create New Purchase'}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCancel}>
+          <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
+              <h2 className="text-xl font-bold text-gray-800">
+                {editingId ? 'Edit Purchase' : 'Create New Purchase'}
+              </h2>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="h-9 w-9 rounded-full border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition"
+                aria-label="Close popup"
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
             {/* Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -494,7 +483,8 @@ export default function Purchases() {
                 Cancel
               </button>
             </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
 

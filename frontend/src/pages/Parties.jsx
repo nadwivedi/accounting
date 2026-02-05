@@ -2,14 +2,7 @@ import { useState, useEffect } from 'react';
 import apiClient from '../utils/api';
 
 export default function Parties() {
-  const [parties, setParties] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     PartName: '',
     type: 'both',
     phone: '',
@@ -20,7 +13,16 @@ export default function Parties() {
     openingBalance: 0,
     creditLimit: 0,
     isActive: true
-  });
+  };
+
+  const [parties, setParties] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
     fetchParties();
@@ -78,18 +80,7 @@ export default function Parties() {
         await apiClient.post('/parties', submitData);
       }
       fetchParties();
-      setFormData({
-        PartName: '',
-        type: 'both',
-        phone: '',
-        email: '',
-        address: { street: '', city: '', state: '', pincode: '', country: 'India' },
-        gstin: '',
-        panNumber: '',
-        openingBalance: 0,
-        creditLimit: 0,
-        isActive: true
-      });
+      setFormData(initialFormData);
       setEditingId(null);
       setShowForm(false);
       setError('');
@@ -120,18 +111,7 @@ export default function Parties() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData({
-      PartName: '',
-      type: 'both',
-      phone: '',
-      email: '',
-      address: { street: '', city: '', state: '', pincode: '', country: 'India' },
-      gstin: '',
-      panNumber: '',
-      openingBalance: 0,
-      creditLimit: 0,
-      isActive: true
-    });
+    setFormData(initialFormData);
   };
 
   return (
@@ -142,10 +122,14 @@ export default function Parties() {
           <p className="text-gray-600 mt-2">Manage suppliers and customers</p>
         </div>
         <button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setEditingId(null);
+            setFormData(initialFormData);
+            setShowForm(true);
+          }}
           className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition"
         >
-          {showForm ? 'Cancel' : '+ Add Party'}
+          + Add Party
         </button>
       </div>
 
@@ -156,11 +140,23 @@ export default function Parties() {
       )}
 
       {showForm && (
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4">
-            {editingId ? 'Edit Party' : 'Add New Party'}
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCancel}>
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
+              <h2 className="text-xl font-bold text-gray-800">
+                {editingId ? 'Edit Party' : 'Add New Party'}
+              </h2>
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="h-9 w-9 rounded-full border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition"
+                aria-label="Close popup"
+              >
+                &times;
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-4 px-6 py-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">Party Name *</label>
@@ -333,7 +329,8 @@ export default function Parties() {
                 Cancel
               </button>
             </div>
-          </form>
+            </form>
+          </div>
         </div>
       )}
 
