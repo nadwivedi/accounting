@@ -7,8 +7,7 @@ export default function Dashboard() {
     totalCategories: 0,
     totalParties: 0,
     totalSales: 0,
-    totalPurchases: 0,
-    totalPayments: 0
+    totalPurchases: 0
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -21,13 +20,12 @@ export default function Dashboard() {
     try {
       setLoading(true);
 
-      const [products, categories, parties, sales, purchases, payments] = await Promise.all([
+      const [products, categories, parties, sales, purchases] = await Promise.all([
         apiClient.get('/products'),
         apiClient.get('/categories'),
         apiClient.get('/parties'),
         apiClient.get('/sales'),
-        apiClient.get('/purchases'),
-        apiClient.get('/payments')
+        apiClient.get('/purchases')
       ]);
 
       setStats({
@@ -35,8 +33,7 @@ export default function Dashboard() {
         totalCategories: categories.count || 0,
         totalParties: parties.count || 0,
         totalSales: sales.count || 0,
-        totalPurchases: purchases.count || 0,
-        totalPayments: payments.count || 0
+        totalPurchases: purchases.count || 0
       });
     } catch (err) {
       setError(err.message || 'Failed to fetch stats');
@@ -84,7 +81,6 @@ export default function Dashboard() {
           <StatCard icon="👥" label="Parties" value={stats.totalParties} color="purple" />
           <StatCard icon="💳" label="Sales" value={stats.totalSales} color="yellow" />
           <StatCard icon="🛒" label="Purchases" value={stats.totalPurchases} color="red" />
-          <StatCard icon="💰" label="Payments" value={stats.totalPayments} color="indigo" />
         </div>
       )}
 

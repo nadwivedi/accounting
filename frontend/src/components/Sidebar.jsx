@@ -12,7 +12,6 @@ export default function Sidebar() {
     { name: 'Parties', path: '/parties', icon: '👥' },
     { name: 'Purchase', path: '/purchases', icon: '🛒' },
     { name: 'Sale', path: '/sales', icon: '💳' },
-    { name: 'Payments', path: '/payments', icon: '💰' },
     { name: 'Reports', path: '/reports', icon: '📈' }
   ];
 

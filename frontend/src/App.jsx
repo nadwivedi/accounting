@@ -7,7 +7,6 @@ import Categories from './pages/Categories';
 import Parties from './pages/Parties';
 import Sales from './pages/Sales';
 import Purchases from './pages/Purchases';
-import Payments from './pages/Payments';
 import Reports from './pages/Reports';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -73,15 +72,6 @@ function App() {
         element={
           <ProtectedRoute>
             <Sales />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/payments"
-        element={
-          <ProtectedRoute>
-            <Payments />
           </ProtectedRoute>
         }
       />
