@@ -6,7 +6,7 @@ const partySchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  PartyName: {
+  partyName: {
     type: String,
     required: [true, 'Party name is required'],
     trim: true

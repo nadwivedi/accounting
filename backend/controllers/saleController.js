@@ -1,5 +1,7 @@
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
+const Party = require('../models/Party');
+const Payment = require('../models/Payment');
 
 // Create sale
 exports.createSale = async (req, res) => {
@@ -36,9 +38,28 @@ exports.createSale = async (req, res) => {
     // Calculate total amount from items
     const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
 
+    let partySnapshot = undefined;
+    if (party) {
+      const partyDoc = await Party.findOne({ _id: party, userId });
+      if (!partyDoc) {
+        return res.status(404).json({
+          success: false,
+          message: 'Party not found'
+        });
+      }
+      partySnapshot = {
+        partyName: partyDoc.partyName,
+        phone: partyDoc.phone,
+        email: partyDoc.email,
+        gstin: partyDoc.gstin,
+        address: partyDoc.address
+      };
+    }
+
     const sale = await Sale.create({
       userId,
       party: party || null,
+      partySnapshot,
       customerName,
       customerPhone,
       customerAddress,
@@ -82,7 +103,7 @@ exports.getAllSales = async (req, res) => {
     if (party) filter.party = party;
 
     let query = Sale.find(filter)
-      .populate('party', 'PartName phone')
+      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     if (search) {
@@ -112,7 +133,7 @@ exports.getSaleById = async (req, res) => {
     const userId = req.userId;
 
     const sale = await Sale.findOne({ _id: id, userId })
-      .populate('party', 'PartName phone email')
+      .populate('party', 'partyName phone email')
       .populate('items.product', 'name');
 
     if (!sale) {
@@ -147,7 +168,7 @@ exports.updateSale = async (req, res) => {
       { customerName, customerPhone, customerAddress, notes },
       { new: true, runValidators: true }
     )
-      .populate('party', 'PartName phone')
+      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     if (!sale) {
@@ -203,6 +224,67 @@ exports.deleteSale = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error deleting sale'
+    });
+  }
+};
+
+// Update payment status
+exports.updatePaymentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paidAmount } = req.body;
+    const userId = req.userId;
+
+    if (!paidAmount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Paid amount is required'
+      });
+    }
+
+    const sale = await Sale.findOne({ _id: id, userId });
+
+    if (!sale) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sale not found'
+      });
+    }
+
+    const newPaidAmount = sale.paidAmount + paidAmount;
+    const newBalanceAmount = sale.totalAmount - newPaidAmount;
+
+    const updatedSale = await Sale.findByIdAndUpdate(
+      id,
+      {
+        paidAmount: newPaidAmount,
+        balanceAmount: newBalanceAmount,
+        paymentStatus: newBalanceAmount === 0 ? 'paid' : 'partial'
+      },
+      { new: true, runValidators: true }
+    )
+      .populate('party', 'partyName phone')
+      .populate('items.product', 'name');
+
+    await Payment.create({
+      userId,
+      party: updatedSale.party || null,
+      refType: 'sale',
+      refId: updatedSale._id,
+      amount: paidAmount,
+      paymentDate: new Date()
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Payment status updated successfully',
+      data: updatedSale
+    });
+  } catch (error) {
+    console.error('Update payment status error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating payment status'
     });
   }
 };

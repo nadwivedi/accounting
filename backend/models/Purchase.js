@@ -68,6 +68,11 @@ const purchaseSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  paymentStatus: {
+    type: String,
+    enum: ['unpaid', 'partial', 'paid'],
+    default: 'unpaid'
+  },
   balanceAmount: {
     type: Number,
     required: true

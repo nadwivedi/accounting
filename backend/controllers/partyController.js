@@ -4,7 +4,7 @@ const Party = require('../models/Party');
 exports.createParty = async (req, res) => {
   try {
     const {
-      PartName,
+      partyName,
       type,
       phone,
       email,
@@ -17,16 +17,16 @@ exports.createParty = async (req, res) => {
     } = req.body;
     const userId = req.userId;
 
-    if (!PartName || !type) {
+    if (!partyName || !type) {
       return res.status(400).json({
         success: false,
-        message: 'PartName and type are required'
+        message: 'partyName and type are required'
       });
     }
 
     const party = await Party.create({
       userId,
-      PartName,
+      partyName,
       type,
       phone,
       email,
@@ -68,7 +68,7 @@ exports.getAllParties = async (req, res) => {
     if (search) {
       query = query.where({
         $or: [
-          { PartName: { $regex: search, $options: 'i' } },
+          { partyName: { $regex: search, $options: 'i' } },
           { phone: { $regex: search, $options: 'i' } }
         ]
       });

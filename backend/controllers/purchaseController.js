@@ -1,5 +1,6 @@
 const Purchase = require('../models/Purchase');
 const Product = require('../models/Product');
+const Payment = require('../models/Payment');
 
 // Create purchase
 exports.createPurchase = async (req, res) => {
@@ -65,7 +66,7 @@ exports.getAllPurchases = async (req, res) => {
     if (party) filter.party = party;
 
     let query = Purchase.find(filter)
-      .populate('party', 'PartName phone')
+      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     if (search) {
@@ -95,7 +96,7 @@ exports.getPurchaseById = async (req, res) => {
     const userId = req.userId;
 
     const purchase = await Purchase.findOne({ _id: id, userId })
-      .populate('party', 'PartName phone email')
+      .populate('party', 'partyName phone email')
       .populate('items.product', 'name');
 
     if (!purchase) {
@@ -130,7 +131,7 @@ exports.updatePurchase = async (req, res) => {
       { notes },
       { new: true, runValidators: true }
     )
-      .populate('party', 'PartName phone')
+      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     if (!purchase) {
@@ -186,6 +187,67 @@ exports.deletePurchase = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error deleting purchase'
+    });
+  }
+};
+
+// Update payment status
+exports.updatePaymentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paidAmount } = req.body;
+    const userId = req.userId;
+    
+    if (!paidAmount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Paid amount is required'
+      });
+    }
+    
+    const purchase = await Purchase.findOne({ _id: id, userId });
+    
+    if (!purchase) {
+      return res.status(404).json({
+        success: false,
+        message: 'Purchase not found'
+      });
+    }
+    
+    const newPaidAmount = purchase.paidAmount + paidAmount;
+    const newBalanceAmount = purchase.totalAmount - newPaidAmount;
+    
+    const updatedPurchase = await Purchase.findByIdAndUpdate(
+      id,
+      {
+        paidAmount: newPaidAmount,
+        balanceAmount: newBalanceAmount,
+        paymentStatus: newBalanceAmount === 0 ? 'paid' : 'partial'
+      },
+      { new: true, runValidators: true }
+    )
+      .populate('party', 'partyName phone')
+      .populate('items.product', 'name');
+
+    await Payment.create({
+      userId,
+      party: updatedPurchase.party || null,
+      refType: 'purchase',
+      refId: updatedPurchase._id,
+      amount: paidAmount,
+      paymentDate: new Date()
+    });
+      
+    res.status(200).json({
+      success: true,
+      message: 'Payment status updated successfully',
+      data: updatedPurchase
+    });
+  } catch (error) {
+    console.error('Update payment status error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating payment status'
     });
   }
 };
