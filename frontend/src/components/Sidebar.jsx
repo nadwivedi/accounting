@@ -180,21 +180,21 @@ export default function Sidebar() {
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileOpen(false)}
-                  className={`group relative flex items-center gap-3 overflow-hidden rounded-xl px-3 py-2.5 transition ${
+                  className={`group relative flex items-center gap-2.5 overflow-hidden rounded-lg px-2.5 py-2 transition md:gap-3 md:rounded-xl md:px-3 md:py-2.5 ${
                     active
                       ? 'bg-gradient-to-r from-blue-600/90 to-cyan-500/80 text-white shadow-lg shadow-blue-950/40'
                       : 'text-slate-300 hover:bg-slate-800/70 hover:text-white'
                   }`}
                 >
                   {active && <span className="absolute left-0 top-2 h-7 w-1 rounded-r-full bg-white/90" />}
-                  <span className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${
+                  <span className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border md:h-9 md:w-9 md:rounded-lg ${
                     active
                       ? 'border-white/25 bg-white/10'
                       : 'border-slate-700 bg-slate-800/90 text-slate-200 group-hover:border-slate-500'
                   }`}>
                     <Icon />
                   </span>
-                  <span className="truncate text-sm font-medium tracking-wide">{item.name}</span>
+                  <span className="truncate text-[13px] font-medium tracking-wide md:text-sm">{item.name}</span>
                 </Link>
               );
             })}
