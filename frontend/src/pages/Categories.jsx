@@ -97,7 +97,7 @@ export default function Categories() {
   const inactiveCategories = totalCategories - activeCategories;
 
   return (
-    <div className="ml-64 p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}

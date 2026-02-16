@@ -12,7 +12,7 @@ export default function Header() {
 
   return (
     <header className="bg-white border-b border-gray-200 shadow-sm">
-      <div className="flex items-center justify-between px-8 py-4 ml-64">
+      <div className="flex items-center justify-between px-4 py-4 pt-16 md:px-8 md:py-4 md:pt-4 md:ml-64">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">Dashboard</h2>
           <p className="text-gray-600 text-sm">Welcome back!</p>

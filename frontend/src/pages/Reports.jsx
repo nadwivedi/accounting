@@ -77,7 +77,7 @@ export default function Reports() {
   };
 
   return (
-    <div className="ml-64 p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Reports</h1>
         <p className="text-gray-600 mt-2">Party ledger, stock ledger and pending amount</p>
