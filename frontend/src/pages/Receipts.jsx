@@ -134,14 +134,14 @@ export default function Receipts() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Total Receipts</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{receipts.length}</p>
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4 mb-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 shadow-sm">
+          <p className="text-xs md:text-sm text-slate-500">Total Receipts</p>
+          <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1">{receipts.length}</p>
         </div>
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-          <p className="text-sm text-emerald-700">Amount Received</p>
-          <p className="text-2xl font-bold text-emerald-800 mt-1">Rs {totalReceipts.toFixed(2)}</p>
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 md:p-4 shadow-sm">
+          <p className="text-xs md:text-sm text-emerald-700">Amount Received</p>
+          <p className="text-xl md:text-2xl font-bold text-emerald-800 mt-1">Rs {totalReceipts.toFixed(2)}</p>
         </div>
       </div>
 

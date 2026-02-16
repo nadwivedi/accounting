@@ -134,14 +134,14 @@ export default function Payments() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Total Payments</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{payments.length}</p>
+      <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4 mb-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 shadow-sm">
+          <p className="text-xs md:text-sm text-slate-500">Total Payments</p>
+          <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1">{payments.length}</p>
         </div>
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 shadow-sm">
-          <p className="text-sm text-rose-700">Amount Paid</p>
-          <p className="text-2xl font-bold text-rose-800 mt-1">Rs {totalPayments.toFixed(2)}</p>
+        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 md:p-4 shadow-sm">
+          <p className="text-xs md:text-sm text-rose-700">Amount Paid</p>
+          <p className="text-xl md:text-2xl font-bold text-rose-800 mt-1">Rs {totalPayments.toFixed(2)}</p>
         </div>
       </div>
 

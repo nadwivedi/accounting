@@ -42,14 +42,11 @@ export default function Dashboard() {
     }
   };
 
-  const StatCard = ({ icon, label, value, color }) => (
-    <div className={`bg-white rounded-lg shadow-md p-6 border-l-4 border-${color}-500`}>
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-gray-600 text-sm font-medium">{label}</p>
-          <p className="text-3xl font-bold text-gray-800 mt-2">{value}</p>
-        </div>
-        <div className={`text-4xl`}>{icon}</div>
+  const StatCard = ({ label, value, color }) => (
+    <div className={`bg-white rounded-lg shadow-md p-3 md:p-6 border-l-4 border-${color}-500`}>
+      <div>
+        <p className="text-gray-600 text-xs md:text-sm font-medium">{label}</p>
+        <p className="text-xl md:text-3xl font-bold text-gray-800 mt-1 md:mt-2">{value}</p>
       </div>
     </div>
   );
@@ -58,8 +55,8 @@ export default function Dashboard() {
     <div className="p-4 pt-20 md:ml-64 md:p-8">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-        <p className="text-gray-600 mt-2">Overview of your inventory and billing</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-800">Dashboard</h1>
+        <p className="text-sm md:text-base text-gray-600 mt-1 md:mt-2">Overview of your inventory and billing</p>
       </div>
 
       {/* Error Message */}
@@ -75,50 +72,50 @@ export default function Dashboard() {
           <p className="text-gray-500 text-lg">Loading dashboard...</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <StatCard icon="PKG" label="Stock/Product" value={stats.totalProducts} color="blue" />
-          <StatCard icon="CAT" label="Categories" value={stats.totalCategories} color="green" />
-          <StatCard icon="PTY" label="Parties" value={stats.totalParties} color="purple" />
-          <StatCard icon="SAL" label="Sales" value={stats.totalSales} color="yellow" />
-          <StatCard icon="PUR" label="Purchases" value={stats.totalPurchases} color="red" />
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
+          <StatCard label="Stock/Product" value={stats.totalProducts} color="blue" />
+          <StatCard label="Categories" value={stats.totalCategories} color="green" />
+          <StatCard label="Parties" value={stats.totalParties} color="purple" />
+          <StatCard label="Sales" value={stats.totalSales} color="yellow" />
+          <StatCard label="Purchases" value={stats.totalPurchases} color="red" />
         </div>
       )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4">Quick Actions</h3>
           <div className="space-y-2">
             <a
               href="/products"
-              className="block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center"
+              className="block px-3 md:px-4 py-2 text-sm md:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center"
             >
               Add Stock/Product
             </a>
             <a
               href="/categories"
-              className="block px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-center"
+              className="block px-3 md:px-4 py-2 text-sm md:text-base bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-center"
             >
               Add Category
             </a>
             <a
               href="/parties"
-              className="block px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-center"
+              className="block px-3 md:px-4 py-2 text-sm md:text-base bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition text-center"
             >
               Add Party
             </a>
             <a
               href="/sales"
-              className="block px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-center"
+              className="block px-3 md:px-4 py-2 text-sm md:text-base bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition text-center"
             >
               New Sale
             </a>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">Features</h3>
-          <ul className="space-y-2 text-gray-700">
+        <div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+          <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4">Features</h3>
+          <ul className="space-y-2 text-sm md:text-base text-gray-700">
             <li className="flex items-center gap-2">
               <span className="text-green-600">*</span> Stock/Product Management
             </li>

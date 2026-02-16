@@ -265,18 +265,18 @@ export default function Purchases() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Total Purchases</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{totalPurchases}</p>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 shadow-sm">
+          <p className="text-xs md:text-sm text-slate-500">Total Purchases</p>
+          <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1">{totalPurchases}</p>
         </div>
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
-          <p className="text-sm text-blue-700">Total Amount</p>
-          <p className="text-2xl font-bold text-blue-800 mt-1">Rs {totalAmount.toFixed(2)}</p>
+        <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 md:p-4 shadow-sm">
+          <p className="text-xs md:text-sm text-blue-700">Total Amount</p>
+          <p className="text-xl md:text-2xl font-bold text-blue-800 mt-1">Rs {totalAmount.toFixed(2)}</p>
         </div>
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
-          <p className="text-sm text-red-700">Total Due</p>
-          <p className="text-2xl font-bold text-red-800 mt-1">Rs {totalDue.toFixed(2)}</p>
+        <div className="rounded-xl border border-red-200 bg-red-50 p-3 md:p-4 shadow-sm">
+          <p className="text-xs md:text-sm text-red-700">Total Due</p>
+          <p className="text-xl md:text-2xl font-bold text-red-800 mt-1">Rs {totalDue.toFixed(2)}</p>
         </div>
       </div>
 

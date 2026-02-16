@@ -116,22 +116,22 @@ export default function Reports() {
 
       {activeTab === 'outstanding' && outstanding && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
-              <p className="text-sm text-amber-700">Sale Pending</p>
-              <p className="text-2xl font-bold text-amber-900">Rs {Number(outstanding.totals?.totalSalePending || 0).toFixed(2)}</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 md:p-4">
+              <p className="text-xs md:text-sm text-amber-700">Sale Pending</p>
+              <p className="text-xl md:text-2xl font-bold text-amber-900">Rs {Number(outstanding.totals?.totalSalePending || 0).toFixed(2)}</p>
             </div>
-            <div className="rounded-xl border border-rose-200 bg-rose-50 p-4">
-              <p className="text-sm text-rose-700">Purchase Pending</p>
-              <p className="text-2xl font-bold text-rose-900">Rs {Number(outstanding.totals?.totalPurchasePending || 0).toFixed(2)}</p>
+            <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 md:p-4">
+              <p className="text-xs md:text-sm text-rose-700">Purchase Pending</p>
+              <p className="text-xl md:text-2xl font-bold text-rose-900">Rs {Number(outstanding.totals?.totalPurchasePending || 0).toFixed(2)}</p>
             </div>
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-              <p className="text-sm text-emerald-700">Receivable</p>
-              <p className="text-2xl font-bold text-emerald-900">Rs {Number(outstanding.totals?.totalReceivable || 0).toFixed(2)}</p>
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 md:p-4">
+              <p className="text-xs md:text-sm text-emerald-700">Receivable</p>
+              <p className="text-xl md:text-2xl font-bold text-emerald-900">Rs {Number(outstanding.totals?.totalReceivable || 0).toFixed(2)}</p>
             </div>
-            <div className="rounded-xl border border-violet-200 bg-violet-50 p-4">
-              <p className="text-sm text-violet-700">Payable</p>
-              <p className="text-2xl font-bold text-violet-900">Rs {Number(outstanding.totals?.totalPayable || 0).toFixed(2)}</p>
+            <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 md:p-4">
+              <p className="text-xs md:text-sm text-violet-700">Payable</p>
+              <p className="text-xl md:text-2xl font-bold text-violet-900">Rs {Number(outstanding.totals?.totalPayable || 0).toFixed(2)}</p>
             </div>
           </div>
 

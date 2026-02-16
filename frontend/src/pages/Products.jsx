@@ -141,18 +141,18 @@ export default function Products() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Total Stock/Products</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{totalProducts}</p>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+        <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 shadow-sm">
+          <p className="text-xs md:text-sm text-slate-500">Total Stock/Products</p>
+          <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1">{totalProducts}</p>
         </div>
-        <div className="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm">
-          <p className="text-sm text-green-700">Active</p>
-          <p className="text-2xl font-bold text-green-800 mt-1">{activeProducts}</p>
+        <div className="rounded-xl border border-green-200 bg-green-50 p-3 md:p-4 shadow-sm">
+          <p className="text-xs md:text-sm text-green-700">Active</p>
+          <p className="text-xl md:text-2xl font-bold text-green-800 mt-1">{activeProducts}</p>
         </div>
-        <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 shadow-sm">
-          <p className="text-sm text-orange-700">Low Stock</p>
-          <p className="text-2xl font-bold text-orange-800 mt-1">{lowStockProducts}</p>
+        <div className="rounded-xl border border-orange-200 bg-orange-50 p-3 md:p-4 shadow-sm">
+          <p className="text-xs md:text-sm text-orange-700">Low Stock</p>
+          <p className="text-xl md:text-2xl font-bold text-orange-800 mt-1">{lowStockProducts}</p>
         </div>
       </div>
 
