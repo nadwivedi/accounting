@@ -60,6 +60,35 @@ const purchaseSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  dueDate: {
+    type: Date,
+    default: null
+  },
+  subtotal: {
+    type: Number,
+    default: 0
+  },
+  discountAmount: {
+    type: Number,
+    default: 0
+  },
+  taxAmount: {
+    type: Number,
+    default: 0
+  },
+  shippingCharges: {
+    type: Number,
+    default: 0
+  },
+  otherCharges: {
+    type: Number,
+    default: 0
+  },
+  paymentMode: {
+    type: String,
+    enum: ['cash', 'bank', 'upi', 'card', 'credit', 'other'],
+    default: 'credit'
+  },
   totalAmount: {
     type: Number,
     required: true

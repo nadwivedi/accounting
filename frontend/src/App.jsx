@@ -7,6 +7,8 @@ import Categories from './pages/Categories';
 import Parties from './pages/Parties';
 import Sales from './pages/Sales';
 import Purchases from './pages/Purchases';
+import Payments from './pages/Payments';
+import Receipts from './pages/Receipts';
 import Reports from './pages/Reports';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -81,6 +83,24 @@ function App() {
         element={
           <ProtectedRoute>
             <Reports />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/payments"
+        element={
+          <ProtectedRoute>
+            <Payments />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/receipts"
+        element={
+          <ProtectedRoute>
+            <Receipts />
           </ProtectedRoute>
         }
       />

@@ -12,6 +12,8 @@ const partyRoutes = require('./routes/partyRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const saleRoutes = require('./routes/saleRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const receiptRoutes = require('./routes/receiptRoutes');
+const reportRoutes = require('./routes/reportRoutes');
 
 const app = express();
 
@@ -37,6 +39,8 @@ app.use('/api/parties', partyRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/receipts', receiptRoutes);
+app.use('/api/reports', reportRoutes);
 
 
 

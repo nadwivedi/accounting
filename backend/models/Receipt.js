@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const paymentSchema = new mongoose.Schema({
+const receiptSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -13,7 +13,7 @@ const paymentSchema = new mongoose.Schema({
   },
   refType: {
     type: String,
-    enum: ['purchase', 'none'],
+    enum: ['sale', 'none'],
     default: 'none'
   },
   refId: {
@@ -30,7 +30,7 @@ const paymentSchema = new mongoose.Schema({
     enum: ['cash', 'bank', 'upi', 'card', 'credit', 'other'],
     default: 'cash'
   },
-  paymentDate: {
+  receiptDate: {
     type: Date,
     default: Date.now
   },
@@ -40,4 +40,4 @@ const paymentSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Payment', paymentSchema);
+module.exports = mongoose.model('Receipt', receiptSchema);

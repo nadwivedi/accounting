@@ -1,7 +1,56 @@
 const Sale = require('../models/Sale');
 const Product = require('../models/Product');
 const Party = require('../models/Party');
-const Payment = require('../models/Payment');
+const Receipt = require('../models/Receipt');
+
+const toNumber = (value, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const generateInvoiceNumber = () => {
+  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const stamp = Date.now().toString().slice(-6);
+  const rand = Math.floor(Math.random() * 90 + 10);
+  return `SAL-${date}-${stamp}${rand}`;
+};
+
+const calculateTotals = (payload = {}) => {
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  const subtotal = toNumber(payload.subtotal, items.reduce((sum, item) => {
+    const qty = toNumber(item.quantity);
+    const price = toNumber(item.unitPrice);
+    return sum + (qty * price);
+  }, 0));
+
+  const taxAmount = toNumber(payload.taxAmount, items.reduce((sum, item) => {
+    return sum + toNumber(item.taxAmount);
+  }, 0));
+
+  const discountAmount = toNumber(payload.discountAmount);
+  const shippingCharges = toNumber(payload.shippingCharges);
+  const otherCharges = toNumber(payload.otherCharges);
+  const roundOff = toNumber(payload.roundOff);
+  const computedTotal = subtotal + taxAmount + shippingCharges + otherCharges - discountAmount + roundOff;
+  const totalAmount = toNumber(payload.totalAmount, computedTotal);
+  const paidAmount = Math.max(0, toNumber(payload.paidAmount));
+  const normalizedPaid = Math.min(paidAmount, totalAmount);
+  const balanceAmount = Math.max(0, totalAmount - normalizedPaid);
+  const paymentStatus = balanceAmount === 0 ? 'paid' : (normalizedPaid > 0 ? 'partial' : 'unpaid');
+
+  return {
+    subtotal,
+    taxAmount,
+    discountAmount,
+    shippingCharges,
+    otherCharges,
+    roundOff,
+    totalAmount,
+    paidAmount: normalizedPaid,
+    balanceAmount,
+    paymentStatus
+  };
+};
 
 // Create sale
 exports.createSale = async (req, res) => {
@@ -13,7 +62,18 @@ exports.createSale = async (req, res) => {
       customerAddress,
       items,
       saleDate,
-      notes
+      dueDate,
+      subtotal,
+      discountAmount,
+      taxAmount,
+      shippingCharges,
+      otherCharges,
+      roundOff,
+      totalAmount,
+      paidAmount,
+      paymentMode,
+      notes,
+      invoiceNumber
     } = req.body;
     const userId = req.userId;
 
@@ -24,19 +84,16 @@ exports.createSale = async (req, res) => {
       });
     }
 
-    // Check stock availability
     for (const item of items) {
       const product = await Product.findById(item.product);
-      if (!product || product.currentStock < item.quantity) {
+      const qty = toNumber(item.quantity);
+      if (!product || product.currentStock < qty) {
         return res.status(400).json({
           success: false,
-          message: `Insufficient stock for ${item.productName}`
+          message: `Insufficient stock for ${item.productName || 'selected product'}`
         });
       }
     }
-
-    // Calculate total amount from items
-    const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
 
     let partySnapshot = undefined;
     if (party) {
@@ -47,6 +104,7 @@ exports.createSale = async (req, res) => {
           message: 'Party not found'
         });
       }
+
       partySnapshot = {
         partyName: partyDoc.partyName,
         phone: partyDoc.phone,
@@ -56,8 +114,21 @@ exports.createSale = async (req, res) => {
       };
     }
 
+    const totals = calculateTotals({
+      items,
+      subtotal,
+      discountAmount,
+      taxAmount,
+      shippingCharges,
+      otherCharges,
+      roundOff,
+      totalAmount,
+      paidAmount
+    });
+
     const sale = await Sale.create({
       userId,
+      invoiceNumber: invoiceNumber || generateInvoiceNumber(),
       party: party || null,
       partySnapshot,
       customerName,
@@ -65,24 +136,49 @@ exports.createSale = async (req, res) => {
       customerAddress,
       items,
       saleDate: saleDate || new Date(),
-      totalAmount,
-      paidAmount: 0,
-      balanceAmount: totalAmount,
+      dueDate: dueDate || null,
+      subtotal: totals.subtotal,
+      discountAmount: totals.discountAmount,
+      taxAmount: totals.taxAmount,
+      shippingCharges: totals.shippingCharges,
+      otherCharges: totals.otherCharges,
+      roundOff: totals.roundOff,
+      totalAmount: totals.totalAmount,
+      paidAmount: totals.paidAmount,
+      balanceAmount: totals.balanceAmount,
+      paymentStatus: totals.paymentStatus,
+      paymentMode: paymentMode || 'credit',
       notes
     });
 
-    // Update product stock
     for (const item of items) {
       await Product.findByIdAndUpdate(
         item.product,
-        { $inc: { currentStock: -item.quantity } }
+        { $inc: { currentStock: -toNumber(item.quantity) } }
       );
     }
+
+    if (totals.paidAmount > 0) {
+      await Receipt.create({
+        userId,
+        party: sale.party || null,
+        refType: 'sale',
+        refId: sale._id,
+        amount: totals.paidAmount,
+        method: paymentMode || 'cash',
+        receiptDate: saleDate || new Date(),
+        notes: notes || 'Auto receipt from sale'
+      });
+    }
+
+    const populatedSale = await Sale.findById(sale._id)
+      .populate('party', 'partyName phone')
+      .populate('items.product', 'name');
 
     res.status(201).json({
       success: true,
       message: 'Sale created successfully',
-      data: sale
+      data: populatedSale
     });
   } catch (error) {
     console.error('Create sale error:', error);
@@ -98,7 +194,7 @@ exports.getAllSales = async (req, res) => {
   try {
     const { party, search } = req.query;
     const userId = req.userId;
-    let filter = { userId };
+    const filter = { userId };
 
     if (party) filter.party = party;
 
@@ -107,7 +203,12 @@ exports.getAllSales = async (req, res) => {
       .populate('items.product', 'name');
 
     if (search) {
-      query = query.where('invoiceNumber').regex(new RegExp(search, 'i'));
+      query = query.where({
+        $or: [
+          { invoiceNumber: { $regex: search, $options: 'i' } },
+          { customerName: { $regex: search, $options: 'i' } }
+        ]
+      });
     }
 
     const sales = await query.sort({ createdAt: -1 });
@@ -161,11 +262,17 @@ exports.updateSale = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const { customerName, customerPhone, customerAddress, notes } = req.body;
+    const {
+      customerName,
+      customerPhone,
+      customerAddress,
+      dueDate,
+      notes
+    } = req.body;
 
     const sale = await Sale.findOneAndUpdate(
       { _id: id, userId },
-      { customerName, customerPhone, customerAddress, notes },
+      { customerName, customerPhone, customerAddress, dueDate, notes },
       { new: true, runValidators: true }
     )
       .populate('party', 'partyName phone')
@@ -207,13 +314,18 @@ exports.deleteSale = async (req, res) => {
       });
     }
 
-    // Revert stock updates
     for (const item of sale.items) {
       await Product.findByIdAndUpdate(
         item.product,
-        { $inc: { currentStock: item.quantity } }
+        { $inc: { currentStock: toNumber(item.quantity) } }
       );
     }
+
+    await Receipt.deleteMany({
+      userId,
+      refType: 'sale',
+      refId: sale._id
+    });
 
     res.status(200).json({
       success: true,
@@ -228,22 +340,22 @@ exports.deleteSale = async (req, res) => {
   }
 };
 
-// Update payment status
+// Update payment status via receipt entry
 exports.updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { paidAmount } = req.body;
+    const { paidAmount, method = 'cash', notes = '' } = req.body;
     const userId = req.userId;
 
-    if (!paidAmount) {
+    const amount = toNumber(paidAmount, NaN);
+    if (!Number.isFinite(amount) || amount <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'Paid amount is required'
+        message: 'Valid paid amount is required'
       });
     }
 
     const sale = await Sale.findOne({ _id: id, userId });
-
     if (!sale) {
       return res.status(404).json({
         success: false,
@@ -251,29 +363,34 @@ exports.updatePaymentStatus = async (req, res) => {
       });
     }
 
-    const newPaidAmount = sale.paidAmount + paidAmount;
-    const newBalanceAmount = sale.totalAmount - newPaidAmount;
+    if (amount > sale.balanceAmount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Amount exceeds sale pending amount'
+      });
+    }
 
-    const updatedSale = await Sale.findByIdAndUpdate(
-      id,
-      {
-        paidAmount: newPaidAmount,
-        balanceAmount: newBalanceAmount,
-        paymentStatus: newBalanceAmount === 0 ? 'paid' : 'partial'
-      },
-      { new: true, runValidators: true }
-    )
+    const newPaidAmount = sale.paidAmount + amount;
+    const newBalanceAmount = Math.max(0, sale.totalAmount - newPaidAmount);
+    sale.paidAmount = newPaidAmount;
+    sale.balanceAmount = newBalanceAmount;
+    sale.paymentStatus = newBalanceAmount === 0 ? 'paid' : 'partial';
+    await sale.save();
+
+    await Receipt.create({
+      userId,
+      party: sale.party || null,
+      refType: 'sale',
+      refId: sale._id,
+      amount,
+      method,
+      receiptDate: new Date(),
+      notes: notes || 'Receipt against sale'
+    });
+
+    const updatedSale = await Sale.findById(id)
       .populate('party', 'partyName phone')
       .populate('items.product', 'name');
-
-    await Payment.create({
-      userId,
-      party: updatedSale.party || null,
-      refType: 'sale',
-      refId: updatedSale._id,
-      amount: paidAmount,
-      paymentDate: new Date()
-    });
 
     res.status(200).json({
       success: true,

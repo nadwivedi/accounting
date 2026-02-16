@@ -60,7 +60,13 @@ exports.getAllParties = async (req, res) => {
     const userId = req.userId;
     let filter = { userId };
 
-    if (type) filter.type = type;
+    if (type === 'customer') {
+      filter.type = { $in: ['customer', 'both'] };
+    } else if (type === 'supplier') {
+      filter.type = { $in: ['supplier', 'both'] };
+    } else if (type) {
+      filter.type = type;
+    }
     if (isActive !== undefined) filter.isActive = isActive === 'true';
 
     let query = Party.find(filter);

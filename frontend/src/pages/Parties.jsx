@@ -3,7 +3,7 @@ import apiClient from '../utils/api';
 
 export default function Parties() {
   const initialFormData = {
-    PartName: '',
+    partyName: '',
     type: 'both',
     phone: '',
     email: '',
@@ -61,7 +61,7 @@ export default function Parties() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.PartName || !formData.type) {
+    if (!formData.partyName || !formData.type) {
       setError('Party name and type are required');
       return;
     }
@@ -165,8 +165,8 @@ export default function Parties() {
                 <label className="block text-gray-700 font-medium mb-2">Party Name *</label>
                 <input
                   type="text"
-                  name="PartName"
-                  value={formData.PartName}
+                  name="partyName"
+                  value={formData.partyName}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                   placeholder="Enter party name"
@@ -393,7 +393,7 @@ export default function Parties() {
             <tbody>
               {parties.map((party) => (
                 <tr key={party._id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-6 py-3 font-medium text-slate-800">{party.PartName}</td>
+                  <td className="px-6 py-3 font-medium text-slate-800">{party.partyName}</td>
                   <td className="px-6 py-3 capitalize">{party.type}</td>
                   <td className="px-6 py-3">{party.phone || '-'}</td>
                   <td className="px-6 py-3">{party.email || '-'}</td>

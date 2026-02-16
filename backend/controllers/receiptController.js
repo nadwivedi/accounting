@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-const Payment = require('../models/Payment');
-const Purchase = require('../models/Purchase');
+const Receipt = require('../models/Receipt');
+const Sale = require('../models/Sale');
 const Party = require('../models/Party');
 
 const toNumber = (value, fallback = 0) => {
@@ -8,39 +8,39 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const applyPurchasePayment = async ({ refId, userId, amount }) => {
-  const purchase = await Purchase.findOne({ _id: refId, userId });
-  if (!purchase) {
-    return { error: 'Purchase not found' };
+const applySaleReceipt = async ({ refId, userId, amount }) => {
+  const sale = await Sale.findOne({ _id: refId, userId });
+  if (!sale) {
+    return { error: 'Sale not found' };
   }
 
-  const totalAmount = toNumber(purchase.totalAmount);
-  const paidAmount = toNumber(purchase.paidAmount);
+  const totalAmount = toNumber(sale.totalAmount);
+  const paidAmount = toNumber(sale.paidAmount);
   const balanceAmount = Math.max(0, totalAmount - paidAmount);
 
   if (amount > balanceAmount) {
-    return { error: 'Amount exceeds purchase pending amount' };
+    return { error: 'Amount exceeds sale pending amount' };
   }
 
   const newPaidAmount = paidAmount + amount;
   const newBalanceAmount = Math.max(0, totalAmount - newPaidAmount);
   const paymentStatus = newBalanceAmount === 0 ? 'paid' : 'partial';
 
-  purchase.paidAmount = newPaidAmount;
-  purchase.balanceAmount = newBalanceAmount;
-  purchase.paymentStatus = paymentStatus;
-  await purchase.save();
+  sale.paidAmount = newPaidAmount;
+  sale.balanceAmount = newBalanceAmount;
+  sale.paymentStatus = paymentStatus;
+  await sale.save();
 
-  return { purchase };
+  return { sale };
 };
 
-exports.createPayment = async (req, res) => {
+exports.createReceipt = async (req, res) => {
   try {
     const {
       party,
       amount,
       method,
-      paymentDate,
+      receiptDate,
       notes,
       refType = 'none',
       refId = null
@@ -62,26 +62,26 @@ exports.createPayment = async (req, res) => {
       });
     }
 
-    if (!['purchase', 'none'].includes(refType)) {
+    if (!['sale', 'none'].includes(refType)) {
       return res.status(400).json({
         success: false,
-        message: 'refType must be purchase or none'
+        message: 'refType must be sale or none'
       });
     }
 
     let resolvedParty = party || null;
     let resolvedRefId = null;
-    let linkedPurchase = null;
+    let linkedSale = null;
 
-    if (refType === 'purchase') {
+    if (refType === 'sale') {
       if (!refId || !mongoose.isValidObjectId(refId)) {
         return res.status(400).json({
           success: false,
-          message: 'Valid purchase id is required'
+          message: 'Valid sale id is required'
         });
       }
 
-      const { purchase, error } = await applyPurchasePayment({
+      const { sale, error } = await applySaleReceipt({
         refId,
         userId,
         amount: amountNumber
@@ -94,9 +94,9 @@ exports.createPayment = async (req, res) => {
         });
       }
 
-      linkedPurchase = purchase;
+      linkedSale = sale;
       resolvedRefId = refId;
-      resolvedParty = resolvedParty || purchase.party || null;
+      resolvedParty = resolvedParty || sale.party || null;
     }
 
     if (resolvedParty) {
@@ -109,44 +109,44 @@ exports.createPayment = async (req, res) => {
       }
     }
 
-    const payment = await Payment.create({
+    const receipt = await Receipt.create({
       userId,
       party: resolvedParty,
       refType,
       refId: resolvedRefId,
       amount: amountNumber,
       method: method || 'cash',
-      paymentDate: paymentDate || new Date(),
+      receiptDate: receiptDate || new Date(),
       notes
     });
 
-    const populatedPayment = await Payment.findById(payment._id)
+    const populatedReceipt = await Receipt.findById(receipt._id)
       .populate('party', 'partyName phone');
 
     res.status(201).json({
       success: true,
-      message: 'Payment created successfully',
+      message: 'Receipt created successfully',
       data: {
-        payment: populatedPayment,
-        purchase: linkedPurchase
+        receipt: populatedReceipt,
+        sale: linkedSale
       }
     });
   } catch (error) {
-    console.error('Create payment error:', error);
+    console.error('Create receipt error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error creating payment'
+      message: error.message || 'Error creating receipt'
     });
   }
 };
 
-exports.getAllPayments = async (req, res) => {
+exports.getAllReceipts = async (req, res) => {
   try {
     const { refType, refId, party, search } = req.query;
     const userId = req.userId;
     const filter = { userId };
 
-    if (refType && ['purchase', 'none'].includes(refType)) {
+    if (refType && ['sale', 'none'].includes(refType)) {
       filter.refType = refType;
     }
 
@@ -162,20 +162,20 @@ exports.getAllPayments = async (req, res) => {
       filter.notes = { $regex: search, $options: 'i' };
     }
 
-    const payments = await Payment.find(filter)
+    const receipts = await Receipt.find(filter)
       .populate('party', 'partyName phone')
-      .sort({ paymentDate: -1, createdAt: -1 });
+      .sort({ receiptDate: -1, createdAt: -1 });
 
     res.status(200).json({
       success: true,
-      count: payments.length,
-      data: payments
+      count: receipts.length,
+      data: receipts
     });
   } catch (error) {
-    console.error('Get all payments error:', error);
+    console.error('Get all receipts error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error fetching payments'
+      message: error.message || 'Error fetching receipts'
     });
   }
 };

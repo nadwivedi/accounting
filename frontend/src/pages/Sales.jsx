@@ -585,7 +585,7 @@ export default function Sales() {
               {sales.map((sale) => (
                 <tr key={sale._id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-6 py-3 font-medium text-slate-800">{sale.invoiceNumber}</td>
-                  <td className="px-6 py-3">{sale.party?.PartName || sale.customerName || 'Walk-in'}</td>
+                  <td className="px-6 py-3">{sale.party?.partyName || sale.customerName || 'Walk-in'}</td>
                   <td className="px-6 py-3">{new Date(sale.saleDate).toLocaleDateString()}</td>
                   <td className="px-6 py-3">₹{sale.totalAmount.toFixed(2)}</td>
                   <td className="px-6 py-3">₹{sale.paidAmount.toFixed(2)}</td>

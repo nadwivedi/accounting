@@ -256,7 +256,7 @@ export default function Purchases() {
                   <option value="">Select supplier</option>
                   {parties.map((party) => (
                     <option key={party._id} value={party._id}>
-                      {party.PartName}
+                      {party.partyName}
                     </option>
                   ))}
                 </select>
@@ -541,7 +541,7 @@ export default function Purchases() {
               {purchases.map((purchase) => (
                 <tr key={purchase._id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-6 py-3 font-medium text-slate-800">{purchase.invoiceNumber}</td>
-                  <td className="px-6 py-3">{purchase.party?.PartName || '-'}</td>
+                  <td className="px-6 py-3">{purchase.party?.partyName || '-'}</td>
                   <td className="px-6 py-3">{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
                   <td className="px-6 py-3">₹{purchase.totalAmount.toFixed(2)}</td>
                   <td className="px-6 py-3">₹{purchase.paidAmount.toFixed(2)}</td>
