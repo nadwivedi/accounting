@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 
 export default function Sales() {
+  const toastOptions = { autoClose: 1200 };
+
   const initialFormData = {
     party: '',
     customerName: '',
@@ -154,6 +157,7 @@ export default function Sales() {
 
     try {
       setLoading(true);
+      const isEditMode = Boolean(editingId);
       const submitData = {
         ...formData,
         saleDate: new Date(formData.saleDate),
@@ -165,6 +169,10 @@ export default function Sales() {
       } else {
         await apiClient.post('/sales', submitData);
       }
+      toast.success(
+        isEditMode ? 'Sale updated successfully' : 'Sale added successfully',
+        toastOptions
+      );
       fetchSales();
       setFormData(initialFormData);
       setCurrentItem(initialCurrentItem);
@@ -188,6 +196,7 @@ export default function Sales() {
     if (window.confirm('Are you sure you want to delete this sale?')) {
       try {
         await apiClient.delete(`/sales/${id}`);
+        toast.success('Sale deleted successfully', toastOptions);
         fetchSales();
       } catch (err) {
         setError(err.message || 'Error deleting sale');
@@ -573,6 +582,7 @@ export default function Sales() {
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Customer</th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-700">Products</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Total</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Paid</th>
@@ -586,6 +596,14 @@ export default function Sales() {
                 <tr key={sale._id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-6 py-3 font-medium text-slate-800">{sale.invoiceNumber}</td>
                   <td className="px-6 py-3">{sale.party?.partyName || sale.customerName || 'Walk-in'}</td>
+                  <td className="px-6 py-3 text-slate-700">
+                    {sale.items?.length
+                      ? (
+                        sale.items.slice(0, 2).map((item) => item.productName).join(', ') +
+                        (sale.items.length > 2 ? ` +${sale.items.length - 2} more` : '')
+                      )
+                      : '-'}
+                  </td>
                   <td className="px-6 py-3">{new Date(sale.saleDate).toLocaleDateString()}</td>
                   <td className="px-6 py-3">₹{sale.totalAmount.toFixed(2)}</td>
                   <td className="px-6 py-3">₹{sale.paidAmount.toFixed(2)}</td>

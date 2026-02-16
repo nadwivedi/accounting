@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { FileText, Loader2, Upload } from 'lucide-react';
+import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 
 export default function Purchases() {
+  const toastOptions = { autoClose: 1200 };
+
   const initialFormData = {
     party: '',
     items: [],
@@ -148,6 +151,7 @@ export default function Purchases() {
 
     try {
       setLoading(true);
+      const isEditMode = Boolean(editingId);
       const submitData = {
         ...formData,
         party: formData.party,
@@ -161,6 +165,10 @@ export default function Purchases() {
       } else {
         await apiClient.post('/purchases', submitData);
       }
+      toast.success(
+        isEditMode ? 'Purchase updated successfully' : 'Purchase added successfully',
+        toastOptions
+      );
       fetchPurchases();
       setFormData(initialFormData);
       setCurrentItem(initialCurrentItem);
@@ -194,6 +202,7 @@ export default function Purchases() {
     if (window.confirm('Are you sure you want to delete this purchase?')) {
       try {
         await apiClient.delete(`/purchases/${id}`);
+        toast.success('Purchase deleted successfully', toastOptions);
         fetchPurchases();
       } catch (err) {
         setError(err.message || 'Error deleting purchase');
@@ -620,6 +629,7 @@ export default function Purchases() {
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Supplier</th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-700">Products</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice File</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Total</th>
@@ -634,6 +644,14 @@ export default function Purchases() {
                 <tr key={purchase._id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-6 py-3 font-medium text-slate-800">{purchase.invoiceNumber}</td>
                   <td className="px-6 py-3">{purchase.party?.partyName || '-'}</td>
+                  <td className="px-6 py-3 text-slate-700">
+                    {purchase.items?.length
+                      ? (
+                        purchase.items.slice(0, 2).map((item) => item.productName).join(', ') +
+                        (purchase.items.length > 2 ? ` +${purchase.items.length - 2} more` : '')
+                      )
+                      : '-'}
+                  </td>
                   <td className="px-6 py-3">{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
                   <td className="px-6 py-3">
                     {purchase.invoiceLink ? (

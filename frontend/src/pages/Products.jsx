@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 
 export default function Products() {
+  const toastOptions = { autoClose: 1200 };
+
   const initialFormData = {
     name: '',
     category: '',
-    description: '',
     unit: 'pcs',
-    purchasePrice: '',
-    salePrice: '',
     minStockLevel: 10,
     taxRate: 0,
     isActive: true
@@ -54,27 +54,26 @@ export default function Products() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
+    setFormData((prev) => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : value
-    });
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.category || !formData.purchasePrice || !formData.salePrice) {
-      setError('Name, category, purchase price and sale price are required');
+    if (!formData.name || !formData.category) {
+      setError('Name and category are required');
       return;
     }
 
     try {
       setLoading(true);
+      const isEditMode = Boolean(editingId);
       const submitData = {
         ...formData,
-        purchasePrice: parseFloat(formData.purchasePrice),
-        salePrice: parseFloat(formData.salePrice),
-        minStockLevel: parseInt(formData.minStockLevel),
-        taxRate: parseFloat(formData.taxRate)
+        minStockLevel: parseInt(formData.minStockLevel || 0),
+        taxRate: parseFloat(formData.taxRate || 0)
       };
 
       if (editingId) {
@@ -82,6 +81,11 @@ export default function Products() {
       } else {
         await apiClient.post('/products', submitData);
       }
+
+      toast.success(
+        isEditMode ? 'Product updated successfully' : 'Product added successfully',
+        toastOptions
+      );
       fetchProducts();
       setFormData(initialFormData);
       setEditingId(null);
@@ -95,7 +99,11 @@ export default function Products() {
   };
 
   const handleEdit = (product) => {
-    setFormData(product);
+    setFormData({
+      ...initialFormData,
+      ...product,
+      category: typeof product.category === 'object' ? product.category?._id || '' : product.category
+    });
     setEditingId(product._id);
     setShowForm(true);
   };
@@ -104,6 +112,7 @@ export default function Products() {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await apiClient.delete(`/products/${id}`);
+        toast.success('Product deleted successfully', toastOptions);
         fetchProducts();
       } catch (err) {
         setError(err.message || 'Error deleting product');
@@ -125,7 +134,6 @@ export default function Products() {
 
   return (
     <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
-
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
@@ -171,128 +179,84 @@ export default function Products() {
               <div className="rounded-xl border border-gray-200 bg-white p-5">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">Basic Info</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm text-gray-700 font-semibold mb-2">Product Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter product name"
-                    required
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 font-semibold mb-2">Product Name *</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter product name"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm text-gray-700 font-semibold mb-2">Category *</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  >
-                    <option value="">Select category</option>
-                    {categories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 font-semibold mb-2">Category *</label>
+                    <select
+                      name="category"
+                      value={formData.category}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      required
+                    >
+                      <option value="">Select category</option>
+                      {categories.map((cat) => (
+                        <option key={cat._id} value={cat._id}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm text-gray-700 font-semibold mb-2">Unit *</label>
-                  <select
-                    name="unit"
-                    value={formData.unit}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="pcs">Pieces</option>
-                    <option value="kg">Kilogram</option>
-                    <option value="g">Gram</option>
-                    <option value="ltr">Liter</option>
-                    <option value="ml">Milliliter</option>
-                    <option value="box">Box</option>
-                    <option value="pack">Pack</option>
-                    <option value="dozen">Dozen</option>
-                    <option value="meter">Meter</option>
-                    <option value="feet">Feet</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 font-semibold mb-2">Unit *</label>
+                    <select
+                      name="unit"
+                      value={formData.unit}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="pcs">Pieces</option>
+                      <option value="kg">Kilogram</option>
+                      <option value="g">Gram</option>
+                      <option value="ltr">Liter</option>
+                      <option value="ml">Milliliter</option>
+                      <option value="box">Box</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
               <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">Pricing & Stock</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">Stock & Tax</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm text-gray-700 font-semibold mb-2">Purchase Price *</label>
-                  <input
-                    type="number"
-                    name="purchasePrice"
-                    value={formData.purchasePrice}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0.00"
-                    step="0.01"
-                    required
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 font-semibold mb-2">Min Stock Level</label>
+                    <input
+                      type="number"
+                      name="minStockLevel"
+                      value={formData.minStockLevel}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="10"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm text-gray-700 font-semibold mb-2">Sale Price *</label>
-                  <input
-                    type="number"
-                    name="salePrice"
-                    value={formData.salePrice}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0.00"
-                    step="0.01"
-                    required
-                  />
+                  <div>
+                    <label className="block text-sm text-gray-700 font-semibold mb-2">Tax Rate (%)</label>
+                    <input
+                      type="number"
+                      name="taxRate"
+                      value={formData.taxRate}
+                      onChange={handleInputChange}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                      step="0.01"
+                    />
+                  </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm text-gray-700 font-semibold mb-2">Min Stock Level</label>
-                  <input
-                    type="number"
-                    name="minStockLevel"
-                    value={formData.minStockLevel}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="10"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-700 font-semibold mb-2">Tax Rate (%)</label>
-                  <input
-                    type="number"
-                    name="taxRate"
-                    value={formData.taxRate}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <label className="block text-sm text-gray-700 font-semibold mb-2">Description</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter description"
-                  rows="3"
-                />
               </div>
 
               <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
@@ -300,7 +264,6 @@ export default function Products() {
                   <input
                     type="checkbox"
                     name="isActive"
-                    id="isActive"
                     checked={formData.isActive}
                     onChange={handleInputChange}
                     className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-600"
@@ -330,7 +293,6 @@ export default function Products() {
         </div>
       )}
 
-      {/* Search + Add */}
       <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
@@ -351,7 +313,6 @@ export default function Products() {
         </button>
       </div>
 
-      {/* Products List */}
       {loading && !showForm ? (
         <div className="text-center py-8 text-gray-500">Loading...</div>
       ) : products.length === 0 ? (
@@ -365,8 +326,7 @@ export default function Products() {
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Name</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Category</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Purchase Price</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Sale Price</th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-700">Unit</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Stock</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Actions</th>
@@ -377,11 +337,10 @@ export default function Products() {
                 <tr key={product._id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-6 py-3 font-medium text-slate-800">{product.name}</td>
                   <td className="px-6 py-3">{product.category?.name || '-'}</td>
-                  <td className="px-6 py-3">₹{product.purchasePrice}</td>
-                  <td className="px-6 py-3">₹{product.salePrice}</td>
+                  <td className="px-6 py-3">{product.unit || '-'}</td>
                   <td className="px-6 py-3">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      product.currentStock > product.minStockLevel
+                      Number(product.currentStock || 0) > Number(product.minStockLevel || 0)
                         ? 'bg-green-100 text-green-800'
                         : 'bg-orange-100 text-orange-800'
                     }`}>

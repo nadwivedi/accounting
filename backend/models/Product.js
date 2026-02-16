@@ -16,25 +16,11 @@ const productSchema = new mongoose.Schema({
     ref: 'Category',
     required: [true, 'Category is required']
   },
-  description: {
-    type: String,
-    trim: true
-  },
   unit: {
     type: String,
     required: true,
     enum: ['pcs', 'kg', 'g', 'ltr', 'ml', 'box', ],
     default: 'pcs'
-  },
-  purchasePrice: {
-    type: Number,
-    required: [true, 'Purchase price is required'],
-    min: 0
-  },
-  salePrice: {
-    type: Number,
-    required: [true, 'Sale price is required'],
-    min: 0
   },
   currentStock: {
     type: Number,

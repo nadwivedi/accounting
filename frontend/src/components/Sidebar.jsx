@@ -88,6 +88,15 @@ function ReportIcon() {
   );
 }
 
+function SettingsIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M19.2 12a7.2 7.2 0 0 0-.1-1.2l2-1.5-2-3.5-2.4 1a7.5 7.5 0 0 0-2.1-1.2l-.4-2.6h-4l-.4 2.6a7.5 7.5 0 0 0-2.1 1.2l-2.4-1-2 3.5 2 1.5a7.2 7.2 0 0 0 0 2.4l-2 1.5 2 3.5 2.4-1a7.5 7.5 0 0 0 2.1 1.2l.4 2.6h4l.4-2.6a7.5 7.5 0 0 0 2.1-1.2l2.4 1 2-3.5-2-1.5c.1-.4.1-.8.1-1.2Z" />
+    </svg>
+  );
+}
+
 const menuItems = [
   { name: 'Dashboard', path: '/dashboard', Icon: DashboardIcon },
   { name: 'Products', path: '/products', Icon: ProductIcon },
@@ -97,7 +106,8 @@ const menuItems = [
   { name: 'Sale', path: '/sales', Icon: SaleIcon },
   { name: 'Payment', path: '/payments', Icon: PaymentIcon },
   { name: 'Receipt', path: '/receipts', Icon: ReceiptIcon },
-  { name: 'Reports', path: '/reports', Icon: ReportIcon }
+  { name: 'Reports', path: '/reports', Icon: ReportIcon },
+  { name: 'Settings', path: '/settings', Icon: SettingsIcon }
 ];
 
 export default function Sidebar() {

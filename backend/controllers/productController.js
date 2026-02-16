@@ -6,20 +6,17 @@ exports.createProduct = async (req, res) => {
     const {
       name,
       category,
-      description,
       unit,
-      purchasePrice,
-      salePrice,
       minStockLevel,
       taxRate,
       isActive
     } = req.body;
     const userId = req.userId;
 
-    if (!name || !category || purchasePrice === undefined || salePrice === undefined) {
+    if (!name || !category) {
       return res.status(400).json({
         success: false,
-        message: 'Name, category, purchasePrice and salePrice are required'
+        message: 'Name and category are required'
       });
     }
 
@@ -27,10 +24,7 @@ exports.createProduct = async (req, res) => {
       userId,
       name,
       category,
-      description,
       unit: unit || 'pcs',
-      purchasePrice,
-      salePrice,
       minStockLevel: minStockLevel || 10,
       taxRate: taxRate || 0,
       isActive: isActive !== undefined ? isActive : true
