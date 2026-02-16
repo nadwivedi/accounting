@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import apiClient from '../utils/api';
+import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 export default function Categories() {
   const initialFormData = {
@@ -139,7 +140,7 @@ export default function Categories() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5 px-6 py-6">
+            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-5 px-6 py-6">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">Category Name</label>
                 <input

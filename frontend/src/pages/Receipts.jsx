@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import apiClient from '../utils/api';
+import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 const getInitialForm = () => ({
   party: '',
@@ -175,7 +176,7 @@ export default function Receipts() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCloseForm)} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
               <div>
                 <label className="block text-sm text-slate-600 mb-1">Party</label>
                 <select

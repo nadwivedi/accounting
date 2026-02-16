@@ -99,7 +99,7 @@ function SettingsIcon() {
 
 const menuItems = [
   { name: 'Dashboard', path: '/dashboard', Icon: DashboardIcon },
-  { name: 'Products', path: '/products', Icon: ProductIcon },
+  { name: 'Stock/Product', path: '/products', Icon: ProductIcon },
   { name: 'Categories', path: '/categories', Icon: CategoryIcon },
   { name: 'Parties', path: '/parties', Icon: PartyIcon },
   { name: 'Purchase', path: '/purchases', Icon: PurchaseIcon },

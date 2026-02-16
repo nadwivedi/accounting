@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
+import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 export default function Products() {
   const toastOptions = { autoClose: 1200 };
@@ -37,7 +38,7 @@ export default function Products() {
       setProducts(response.data || []);
       setError('');
     } catch (err) {
-      setError(err.message || 'Error fetching products');
+      setError(err.message || 'Error fetching stock/products');
     } finally {
       setLoading(false);
     }
@@ -83,7 +84,7 @@ export default function Products() {
       }
 
       toast.success(
-        isEditMode ? 'Product updated successfully' : 'Product added successfully',
+        isEditMode ? 'Stock/Product updated successfully' : 'Stock/Product added successfully',
         toastOptions
       );
       fetchProducts();
@@ -112,7 +113,7 @@ export default function Products() {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await apiClient.delete(`/products/${id}`);
-        toast.success('Product deleted successfully', toastOptions);
+        toast.success('Stock/Product deleted successfully', toastOptions);
         fetchProducts();
       } catch (err) {
         setError(err.message || 'Error deleting product');
@@ -142,7 +143,7 @@ export default function Products() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-sm text-slate-500">Total Products</p>
+          <p className="text-sm text-slate-500">Total Stock/Products</p>
           <p className="text-2xl font-bold text-slate-800 mt-1">{totalProducts}</p>
         </div>
         <div className="rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm">
@@ -161,7 +162,7 @@ export default function Products() {
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
-                  {editingId ? 'Edit Product' : 'Add New Product'}
+                  {editingId ? 'Edit Stock/Product' : 'Add New Stock/Product'}
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">Fill the details and save your product.</p>
               </div>
@@ -175,12 +176,12 @@ export default function Products() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6 bg-white">
+            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-6 px-6 py-6 bg-white">
               <div className="rounded-xl border border-gray-200 bg-white p-5">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">Basic Info</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm text-gray-700 font-semibold mb-2">Product Name *</label>
+                    <label className="block text-sm text-gray-700 font-semibold mb-2">Stock/Product Name *</label>
                     <input
                       type="text"
                       name="name"
@@ -278,7 +279,7 @@ export default function Products() {
                   disabled={loading}
                   className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Saving...' : editingId ? 'Update Product' : 'Save Product'}
+                  {loading ? 'Saving...' : editingId ? 'Update Stock/Product' : 'Save Stock/Product'}
                 </button>
                 <button
                   type="button"
@@ -296,7 +297,7 @@ export default function Products() {
       <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
-          placeholder="Search products..."
+          placeholder="Search stock/products..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -309,7 +310,7 @@ export default function Products() {
           }}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
         >
-          + Add Product
+          + Add Stock/Product
         </button>
       </div>
 
@@ -317,7 +318,7 @@ export default function Products() {
         <div className="text-center py-8 text-gray-500">Loading...</div>
       ) : products.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center text-gray-500">
-          No products found. Create your first product!
+          No stock/products found. Create your first stock/product!
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
@@ -379,3 +380,4 @@ export default function Products() {
     </div>
   );
 }
+

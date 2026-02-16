@@ -76,11 +76,11 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <StatCard icon="📦" label="Products" value={stats.totalProducts} color="blue" />
-          <StatCard icon="🏷️" label="Categories" value={stats.totalCategories} color="green" />
-          <StatCard icon="👥" label="Parties" value={stats.totalParties} color="purple" />
-          <StatCard icon="💳" label="Sales" value={stats.totalSales} color="yellow" />
-          <StatCard icon="🛒" label="Purchases" value={stats.totalPurchases} color="red" />
+          <StatCard icon="PKG" label="Stock/Product" value={stats.totalProducts} color="blue" />
+          <StatCard icon="CAT" label="Categories" value={stats.totalCategories} color="green" />
+          <StatCard icon="PTY" label="Parties" value={stats.totalParties} color="purple" />
+          <StatCard icon="SAL" label="Sales" value={stats.totalSales} color="yellow" />
+          <StatCard icon="PUR" label="Purchases" value={stats.totalPurchases} color="red" />
         </div>
       )}
 
@@ -93,7 +93,7 @@ export default function Dashboard() {
               href="/products"
               className="block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center"
             >
-              Add Product
+              Add Stock/Product
             </a>
             <a
               href="/categories"
@@ -120,22 +120,22 @@ export default function Dashboard() {
           <h3 className="text-lg font-bold text-gray-800 mb-4">Features</h3>
           <ul className="space-y-2 text-gray-700">
             <li className="flex items-center gap-2">
-              <span className="text-green-600">✓</span> Product Management
+              <span className="text-green-600">*</span> Stock/Product Management
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-green-600">✓</span> Inventory Tracking
+              <span className="text-green-600">*</span> Inventory Tracking
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-green-600">✓</span> Sales & Purchase
+              <span className="text-green-600">*</span> Sales & Purchase
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-green-600">✓</span> Payment Management
+              <span className="text-green-600">*</span> Payment Management
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-green-600">✓</span> Party Management
+              <span className="text-green-600">*</span> Party Management
             </li>
             <li className="flex items-center gap-2">
-              <span className="text-green-600">✓</span> Reports & Analytics
+              <span className="text-green-600">*</span> Reports & Analytics
             </li>
           </ul>
         </div>
@@ -143,3 +143,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

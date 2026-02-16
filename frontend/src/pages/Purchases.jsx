@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FileText, Loader2, Upload } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
+import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 export default function Purchases() {
   const toastOptions = { autoClose: 1200 };
@@ -296,7 +297,7 @@ export default function Purchases() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
+            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-6 px-6 py-6">
             {/* Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>

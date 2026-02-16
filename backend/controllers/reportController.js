@@ -3,7 +3,7 @@ const Sale = require('../models/Sale');
 const Purchase = require('../models/Purchase');
 const Payment = require('../models/Payment');
 const Receipt = require('../models/Receipt');
-const Product = require('../models/Product');
+const Product = require('../models/Stock');
 const Party = require('../models/Party');
 
 const toNumber = (value, fallback = 0) => {
