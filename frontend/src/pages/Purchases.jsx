@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FileText, Loader2, Upload } from 'lucide-react';
 import apiClient from '../utils/api';
 
 export default function Purchases() {
@@ -14,6 +15,7 @@ export default function Purchases() {
     otherCharges: 0,
     totalAmount: 0,
     paidAmount: 0,
+    invoiceLink: '',
     notes: ''
   };
   const initialCurrentItem = {
@@ -35,6 +37,8 @@ export default function Purchases() {
   const [search, setSearch] = useState('');
   const [formData, setFormData] = useState(initialFormData);
   const [currentItem, setCurrentItem] = useState(initialCurrentItem);
+  const [uploadingInvoice, setUploadingInvoice] = useState(false);
+  const [invoiceFileName, setInvoiceFileName] = useState('');
 
   useEffect(() => {
     fetchPurchases();
@@ -148,7 +152,8 @@ export default function Purchases() {
         ...formData,
         party: formData.party,
         purchaseDate: new Date(formData.purchaseDate),
-        dueDate: formData.dueDate ? new Date(formData.dueDate) : null
+        dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
+        invoiceLink: formData.invoiceLink || ''
       };
 
       if (editingId) {
@@ -159,6 +164,7 @@ export default function Purchases() {
       fetchPurchases();
       setFormData(initialFormData);
       setCurrentItem(initialCurrentItem);
+      setInvoiceFileName('');
       setEditingId(null);
       setShowForm(false);
       setError('');
@@ -170,7 +176,16 @@ export default function Purchases() {
   };
 
   const handleEdit = (purchase) => {
-    setFormData(purchase);
+    const existingName = purchase.invoiceLink
+      ? purchase.invoiceLink.split('/').pop()?.split('?')[0] || ''
+      : '';
+    setFormData({
+      ...purchase,
+      purchaseDate: purchase.purchaseDate ? new Date(purchase.purchaseDate).toISOString().split('T')[0] : '',
+      dueDate: purchase.dueDate ? new Date(purchase.dueDate).toISOString().split('T')[0] : '',
+      invoiceLink: purchase.invoiceLink || ''
+    });
+    setInvoiceFileName(existingName);
     setEditingId(purchase._id);
     setShowForm(true);
   };
@@ -191,6 +206,37 @@ export default function Purchases() {
     setEditingId(null);
     setFormData(initialFormData);
     setCurrentItem(initialCurrentItem);
+    setInvoiceFileName('');
+  };
+
+  const handleInvoiceUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setInvoiceFileName(file.name);
+      setUploadingInvoice(true);
+      const body = new FormData();
+      body.append('invoice', file);
+
+      const response = await apiClient.post('/uploads/invoice', body, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        invoiceLink: response.data?.url || response.data?.relativePath || ''
+      }));
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Error uploading invoice');
+      setInvoiceFileName('');
+    } finally {
+      setUploadingInvoice(false);
+      event.target.value = '';
+    }
   };
 
   const totalPurchases = purchases.length;
@@ -243,7 +289,7 @@ export default function Purchases() {
 
             <form onSubmit={handleSubmit} className="space-y-6 px-6 py-6">
             {/* Basic Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-gray-700 font-medium mb-2">Supplier *</label>
                 <select
@@ -282,6 +328,50 @@ export default function Purchases() {
                   onChange={handleInputChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                 />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Invoice File (JPG/JPEG/PNG/PDF)</label>
+                <input
+                  id="purchase-invoice-upload"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                  onChange={handleInvoiceUpload}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="purchase-invoice-upload"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-blue-300 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition"
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Invoice
+                </label>
+                <div className="mt-2 text-sm">
+                  {uploadingInvoice && (
+                    <span className="inline-flex items-center gap-2 text-blue-600">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Uploading invoice...
+                    </span>
+                  )}
+                  {!uploadingInvoice && invoiceFileName && (
+                    <span className="inline-flex items-center gap-2 text-slate-700">
+                      <FileText className="h-4 w-4 text-slate-500" />
+                      {invoiceFileName}
+                    </span>
+                  )}
+                  {!uploadingInvoice && formData.invoiceLink && (
+                    <div className="mt-1">
+                      <a
+                        href={formData.invoiceLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        View uploaded invoice
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -507,6 +597,7 @@ export default function Purchases() {
             setEditingId(null);
             setFormData(initialFormData);
             setCurrentItem(initialCurrentItem);
+            setInvoiceFileName('');
             setShowForm(true);
           }}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
@@ -530,6 +621,7 @@ export default function Purchases() {
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Supplier</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice File</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Total</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Paid</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Due</th>
@@ -543,6 +635,18 @@ export default function Purchases() {
                   <td className="px-6 py-3 font-medium text-slate-800">{purchase.invoiceNumber}</td>
                   <td className="px-6 py-3">{purchase.party?.partyName || '-'}</td>
                   <td className="px-6 py-3">{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
+                  <td className="px-6 py-3">
+                    {purchase.invoiceLink ? (
+                      <a
+                        href={purchase.invoiceLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        View
+                      </a>
+                    ) : '-'}
+                  </td>
                   <td className="px-6 py-3">₹{purchase.totalAmount.toFixed(2)}</td>
                   <td className="px-6 py-3">₹{purchase.paidAmount.toFixed(2)}</td>
                   <td className="px-6 py-3">₹{(purchase.totalAmount - purchase.paidAmount).toFixed(2)}</td>

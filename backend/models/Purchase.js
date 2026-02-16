@@ -89,6 +89,11 @@ const purchaseSchema = new mongoose.Schema({
     enum: ['cash', 'bank', 'upi', 'card', 'credit', 'other'],
     default: 'credit'
   },
+  invoiceLink: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   totalAmount: {
     type: Number,
     required: true

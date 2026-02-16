@@ -66,6 +66,7 @@ exports.createPurchase = async (req, res) => {
       totalAmount,
       paidAmount,
       paymentMode,
+      invoiceLink,
       notes,
       invoiceNumber
     } = req.body;
@@ -114,6 +115,7 @@ exports.createPurchase = async (req, res) => {
       balanceAmount: totals.balanceAmount,
       paymentStatus: totals.paymentStatus,
       paymentMode: paymentMode || 'credit',
+      invoiceLink: invoiceLink || '',
       notes
     });
 
@@ -228,11 +230,15 @@ exports.updatePurchase = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const { dueDate, notes } = req.body;
+    const { dueDate, notes, invoiceLink } = req.body;
+    const updateData = { dueDate, notes };
+    if (invoiceLink !== undefined) {
+      updateData.invoiceLink = invoiceLink;
+    }
 
     const purchase = await Purchase.findOneAndUpdate(
       { _id: id, userId },
-      { dueDate, notes },
+      updateData,
       { new: true, runValidators: true }
     )
       .populate('party', 'partyName phone')
