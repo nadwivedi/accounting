@@ -20,19 +20,6 @@ const purchaseItemSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  discount: {
-    type: Number,
-    default: 0,
-    min: 0
-  },
-  taxRate: {
-    type: Number,
-    default: 0
-  },
-  taxAmount: {
-    type: Number,
-    default: 0
-  },
   total: {
     type: Number,
     required: true
@@ -45,10 +32,10 @@ const purchaseSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  invoiceNumber: {
+  invoiceNo: {
     type: String,
     required: true,
-    unique: true
+    trim: true
   },
   party: {
     type: mongoose.Schema.Types.ObjectId,
@@ -60,54 +47,12 @@ const purchaseSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  dueDate: {
-    type: Date,
-    default: null
-  },
-  subtotal: {
-    type: Number,
-    default: 0
-  },
-  discountAmount: {
-    type: Number,
-    default: 0
-  },
-  taxAmount: {
-    type: Number,
-    default: 0
-  },
-  shippingCharges: {
-    type: Number,
-    default: 0
-  },
-  otherCharges: {
-    type: Number,
-    default: 0
-  },
-  paymentMode: {
-    type: String,
-    enum: ['cash', 'bank', 'upi', 'card', 'credit', 'other'],
-    default: 'credit'
-  },
   invoiceLink: {
     type: String,
     trim: true,
     default: ''
   },
   totalAmount: {
-    type: Number,
-    required: true
-  },
-  paidAmount: {
-    type: Number,
-    default: 0
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['unpaid', 'partial', 'paid'],
-    default: 'unpaid'
-  },
-  balanceAmount: {
     type: Number,
     required: true
   },

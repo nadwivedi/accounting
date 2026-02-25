@@ -5,8 +5,7 @@ const {
   getAllPurchases,
   getPurchaseById,
   updatePurchase,
-  deletePurchase,
-  updatePaymentStatus
+  deletePurchase
 } = require('../controllers/purchaseController');
 const auth = require('../middleware/auth');
 
@@ -18,6 +17,5 @@ router.get('/', getAllPurchases);
 router.get('/:id', getPurchaseById);
 router.put('/:id', updatePurchase);
 router.delete('/:id', deletePurchase);
-router.patch('/:id/payment', updatePaymentStatus);
 
 module.exports = router;

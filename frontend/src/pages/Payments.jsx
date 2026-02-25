@@ -56,10 +56,7 @@ export default function Payments() {
   const fetchPurchases = async () => {
     try {
       const response = await apiClient.get('/purchases');
-      const pending = (response.data || []).filter(
-        (p) => (Number(p.totalAmount || 0) - Number(p.paidAmount || 0)) > 0
-      );
-      setPurchases(pending);
+      setPurchases(response.data || []);
     } catch (err) {
       console.error('Error fetching purchases:', err);
     }
@@ -258,10 +255,9 @@ export default function Payments() {
                 >
                   <option value="">Select purchase bill</option>
                   {purchaseOptions.map((purchase) => {
-                    const pending = Number(purchase.totalAmount || 0) - Number(purchase.paidAmount || 0);
                     return (
                       <option key={purchase._id} value={purchase._id}>
-                        {purchase.invoiceNumber} - {purchase.party?.partyName || '-'} - Pending Rs {pending.toFixed(2)}
+                        {purchase.invoiceNo || purchase.invoiceNumber || '-'} - {purchase.party?.partyName || '-'} - Amount Rs {Number(purchase.totalAmount || 0).toFixed(2)}
                       </option>
                     );
                   })}

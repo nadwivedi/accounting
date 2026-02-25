@@ -5,7 +5,7 @@ exports.createProduct = async (req, res) => {
   try {
     const {
       name,
-      category,
+      stockGroup,
       unit,
       minStockLevel,
       taxRate,
@@ -13,17 +13,17 @@ exports.createProduct = async (req, res) => {
     } = req.body;
     const userId = req.userId;
 
-    if (!name || !category) {
+    if (!name || !stockGroup) {
       return res.status(400).json({
         success: false,
-        message: 'Name and category are required'
+        message: 'Name and stock group are required'
       });
     }
 
     const product = await Product.create({
       userId,
       name,
-      category,
+      stockGroup,
       unit: unit || 'pcs',
       minStockLevel: minStockLevel || 10,
       taxRate: taxRate || 0,
@@ -47,14 +47,14 @@ exports.createProduct = async (req, res) => {
 // Get all products
 exports.getAllProducts = async (req, res) => {
   try {
-    const { category, isActive, search } = req.query;
+    const { stockGroup, isActive, search } = req.query;
     const userId = req.userId;
     let filter = { userId };
 
-    if (category) filter.category = category;
+    if (stockGroup) filter.stockGroup = stockGroup;
     if (isActive !== undefined) filter.isActive = isActive === 'true';
 
-    let query = Product.find(filter).populate('category', 'name');
+    let query = Product.find(filter).populate('stockGroup', 'name');
 
     if (search) {
       query = query.where('name').regex(new RegExp(search, 'i'));
@@ -82,7 +82,7 @@ exports.getProductById = async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
 
-    const product = await Product.findOne({ _id: id, userId }).populate('category', 'name');
+    const product = await Product.findOne({ _id: id, userId }).populate('stockGroup', 'name');
 
     if (!product) {
       return res.status(404).json({
@@ -109,13 +109,13 @@ exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const updateData = req.body;
+    const updateData = { ...req.body };
 
     const product = await Product.findOneAndUpdate(
       { _id: id, userId },
       updateData,
       { new: true, runValidators: true }
-    ).populate('category', 'name');
+    ).populate('stockGroup', 'name');
 
     if (!product) {
       return res.status(404).json({

@@ -8,46 +8,45 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const generateInvoiceNumber = () => {
+const generateInvoiceNo = () => {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const stamp = Date.now().toString().slice(-6);
   const rand = Math.floor(Math.random() * 90 + 10);
   return `PUR-${date}-${stamp}${rand}`;
 };
 
-const calculateTotals = (payload = {}) => {
-  const items = Array.isArray(payload.items) ? payload.items : [];
-  const subtotal = toNumber(payload.subtotal, items.reduce((sum, item) => {
-    const qty = toNumber(item.quantity);
-    const price = toNumber(item.unitPrice);
-    return sum + (qty * price);
-  }, 0));
-
-  const taxAmount = toNumber(payload.taxAmount, items.reduce((sum, item) => {
-    return sum + toNumber(item.taxAmount);
-  }, 0));
-
-  const discountAmount = toNumber(payload.discountAmount);
-  const shippingCharges = toNumber(payload.shippingCharges);
-  const otherCharges = toNumber(payload.otherCharges);
-  const computedTotal = subtotal + taxAmount + shippingCharges + otherCharges - discountAmount;
-  const totalAmount = toNumber(payload.totalAmount, computedTotal);
-  const paidAmount = Math.max(0, toNumber(payload.paidAmount));
-  const normalizedPaid = Math.min(paidAmount, totalAmount);
-  const balanceAmount = Math.max(0, totalAmount - normalizedPaid);
-  const paymentStatus = balanceAmount === 0 ? 'paid' : (normalizedPaid > 0 ? 'partial' : 'unpaid');
-
+const normalizeItems = (items = []) => items.map((item) => {
+  const quantity = toNumber(item.quantity);
+  const unitPrice = toNumber(item.unitPrice);
   return {
-    subtotal,
-    taxAmount,
-    discountAmount,
-    shippingCharges,
-    otherCharges,
-    totalAmount,
-    paidAmount: normalizedPaid,
-    balanceAmount,
-    paymentStatus
+    product: item.product,
+    productName: String(item.productName || 'Item').trim(),
+    quantity,
+    unitPrice,
+    total: toNumber(item.total, quantity * unitPrice)
   };
+});
+
+const validateItems = (items) => {
+  if (!Array.isArray(items) || items.length === 0) {
+    return 'At least one item is required';
+  }
+
+  for (const item of items) {
+    if (!item.product) return 'Each item must have a product';
+    if (toNumber(item.quantity) <= 0) return 'Item quantity must be greater than 0';
+    if (toNumber(item.unitPrice) < 0) return 'Item price cannot be negative';
+  }
+
+  return null;
+};
+
+const calculateTotalAmount = (items, requestedTotal) => {
+  const computedTotal = items.reduce((sum, item) => {
+    return sum + (toNumber(item.quantity) * toNumber(item.unitPrice));
+  }, 0);
+
+  return toNumber(requestedTotal, computedTotal);
 };
 
 // Create purchase
@@ -57,25 +56,18 @@ exports.createPurchase = async (req, res) => {
       party,
       items,
       purchaseDate,
-      dueDate,
-      subtotal,
-      discountAmount,
-      taxAmount,
-      shippingCharges,
-      otherCharges,
-      totalAmount,
-      paidAmount,
-      paymentMode,
       invoiceLink,
       notes,
-      invoiceNumber
+      invoiceNo,
+      invoiceNumber,
+      totalAmount
     } = req.body;
     const userId = req.userId;
 
-    if (!party || !items || items.length === 0) {
+    if (!party) {
       return res.status(400).json({
         success: false,
-        message: 'Party and at least one item are required'
+        message: 'Supplier is required'
       });
     }
 
@@ -83,60 +75,34 @@ exports.createPurchase = async (req, res) => {
     if (!partyDoc) {
       return res.status(404).json({
         success: false,
-        message: 'Party not found'
+        message: 'Supplier not found'
       });
     }
 
-    const totals = calculateTotals({
-      items,
-      subtotal,
-      discountAmount,
-      taxAmount,
-      shippingCharges,
-      otherCharges,
-      totalAmount,
-      paidAmount
-    });
+    const normalizedItems = normalizeItems(items || []);
+    const itemError = validateItems(normalizedItems);
+    if (itemError) {
+      return res.status(400).json({ success: false, message: itemError });
+    }
+
+    const normalizedInvoiceNo = String(invoiceNo || invoiceNumber || '').trim();
 
     const purchase = await Purchase.create({
       userId,
-      invoiceNumber: invoiceNumber || generateInvoiceNumber(),
+      invoiceNo: normalizedInvoiceNo || generateInvoiceNo(),
       party,
-      items,
+      items: normalizedItems,
       purchaseDate: purchaseDate || new Date(),
-      dueDate: dueDate || null,
-      subtotal: totals.subtotal,
-      discountAmount: totals.discountAmount,
-      taxAmount: totals.taxAmount,
-      shippingCharges: totals.shippingCharges,
-      otherCharges: totals.otherCharges,
-      totalAmount: totals.totalAmount,
-      paidAmount: totals.paidAmount,
-      balanceAmount: totals.balanceAmount,
-      paymentStatus: totals.paymentStatus,
-      paymentMode: paymentMode || 'credit',
+      totalAmount: calculateTotalAmount(normalizedItems, totalAmount),
       invoiceLink: invoiceLink || '',
       notes
     });
 
-    for (const item of items) {
+    for (const item of normalizedItems) {
       await Product.findByIdAndUpdate(
         item.product,
         { $inc: { currentStock: toNumber(item.quantity) } }
       );
-    }
-
-    if (totals.paidAmount > 0) {
-      await Payment.create({
-        userId,
-        party: purchase.party || null,
-        refType: 'purchase',
-        refId: purchase._id,
-        amount: totals.paidAmount,
-        method: paymentMode || 'cash',
-        paymentDate: purchaseDate || new Date(),
-        notes: notes || 'Auto payment from purchase'
-      });
     }
 
     const populatedPurchase = await Purchase.findById(purchase._id)
@@ -173,6 +139,7 @@ exports.getAllPurchases = async (req, res) => {
     if (search) {
       query = query.where({
         $or: [
+          { invoiceNo: { $regex: search, $options: 'i' } },
           { invoiceNumber: { $regex: search, $options: 'i' } },
           { notes: { $regex: search, $options: 'i' } }
         ]
@@ -230,20 +197,18 @@ exports.updatePurchase = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const { dueDate, notes, invoiceLink } = req.body;
-    const updateData = { dueDate, notes };
-    if (invoiceLink !== undefined) {
-      updateData.invoiceLink = invoiceLink;
-    }
+    const {
+      party,
+      items,
+      purchaseDate,
+      totalAmount,
+      notes,
+      invoiceLink,
+      invoiceNo,
+      invoiceNumber
+    } = req.body;
 
-    const purchase = await Purchase.findOneAndUpdate(
-      { _id: id, userId },
-      updateData,
-      { new: true, runValidators: true }
-    )
-      .populate('party', 'partyName phone')
-      .populate('items.product', 'name');
-
+    const purchase = await Purchase.findOne({ _id: id, userId });
     if (!purchase) {
       return res.status(404).json({
         success: false,
@@ -251,10 +216,75 @@ exports.updatePurchase = async (req, res) => {
       });
     }
 
+    if (party) {
+      const partyDoc = await Party.findOne({ _id: party, userId });
+      if (!partyDoc) {
+        return res.status(404).json({
+          success: false,
+          message: 'Supplier not found'
+        });
+      }
+      purchase.party = party;
+    }
+
+    const hasNewItems = Array.isArray(items);
+    let normalizedItems = purchase.items;
+
+    if (hasNewItems) {
+      normalizedItems = normalizeItems(items);
+      const itemError = validateItems(normalizedItems);
+      if (itemError) {
+        return res.status(400).json({ success: false, message: itemError });
+      }
+
+      for (const oldItem of purchase.items) {
+        await Product.findByIdAndUpdate(
+          oldItem.product,
+          { $inc: { currentStock: -toNumber(oldItem.quantity) } }
+        );
+      }
+
+      for (const newItem of normalizedItems) {
+        await Product.findByIdAndUpdate(
+          newItem.product,
+          { $inc: { currentStock: toNumber(newItem.quantity) } }
+        );
+      }
+
+      purchase.items = normalizedItems;
+    }
+
+    if (purchaseDate) {
+      purchase.purchaseDate = new Date(purchaseDate);
+    }
+
+    const normalizedInvoiceNo = String(invoiceNo || invoiceNumber || '').trim();
+    if (normalizedInvoiceNo) {
+      purchase.invoiceNo = normalizedInvoiceNo;
+    }
+
+    if (invoiceLink !== undefined) {
+      purchase.invoiceLink = invoiceLink || '';
+    }
+
+    if (notes !== undefined) {
+      purchase.notes = notes;
+    }
+
+    if (hasNewItems || totalAmount !== undefined) {
+      purchase.totalAmount = calculateTotalAmount(normalizedItems, totalAmount);
+    }
+
+    await purchase.save();
+
+    const updatedPurchase = await Purchase.findById(id)
+      .populate('party', 'partyName phone')
+      .populate('items.product', 'name');
+
     res.status(200).json({
       success: true,
       message: 'Purchase updated successfully',
-      data: purchase
+      data: updatedPurchase
     });
   } catch (error) {
     console.error('Update purchase error:', error);
@@ -305,68 +335,10 @@ exports.deletePurchase = async (req, res) => {
   }
 };
 
-// Update payment status via payment entry
+// Deprecated: purchase payment status is no longer tracked in purchase entry
 exports.updatePaymentStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { paidAmount, method = 'cash', notes = '' } = req.body;
-    const userId = req.userId;
-
-    const amount = toNumber(paidAmount, NaN);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid paid amount is required'
-      });
-    }
-
-    const purchase = await Purchase.findOne({ _id: id, userId });
-    if (!purchase) {
-      return res.status(404).json({
-        success: false,
-        message: 'Purchase not found'
-      });
-    }
-
-    if (amount > purchase.balanceAmount) {
-      return res.status(400).json({
-        success: false,
-        message: 'Amount exceeds purchase pending amount'
-      });
-    }
-
-    const newPaidAmount = purchase.paidAmount + amount;
-    const newBalanceAmount = Math.max(0, purchase.totalAmount - newPaidAmount);
-    purchase.paidAmount = newPaidAmount;
-    purchase.balanceAmount = newBalanceAmount;
-    purchase.paymentStatus = newBalanceAmount === 0 ? 'paid' : 'partial';
-    await purchase.save();
-
-    await Payment.create({
-      userId,
-      party: purchase.party || null,
-      refType: 'purchase',
-      refId: purchase._id,
-      amount,
-      method,
-      paymentDate: new Date(),
-      notes: notes || 'Payment against purchase'
-    });
-
-    const updatedPurchase = await Purchase.findById(id)
-      .populate('party', 'partyName phone')
-      .populate('items.product', 'name');
-
-    res.status(200).json({
-      success: true,
-      message: 'Payment status updated successfully',
-      data: updatedPurchase
-    });
-  } catch (error) {
-    console.error('Update payment status error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error updating payment status'
-    });
-  }
+  return res.status(400).json({
+    success: false,
+    message: 'Purchase payment status tracking is removed. Use Payments separately.'
+  });
 };

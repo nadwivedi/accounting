@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const categorySchema = new mongoose.Schema({
+const stockGroupSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -8,7 +8,7 @@ const categorySchema = new mongoose.Schema({
   },
   name: {
     type: String,
-    required: [true, 'Category name is required'],
+    required: [true, 'Stock group name is required'],
     trim: true,
     unique: true
   },
@@ -22,4 +22,4 @@ const categorySchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Category', categorySchema);
+module.exports = mongoose.model('StockGroup', stockGroupSchema);

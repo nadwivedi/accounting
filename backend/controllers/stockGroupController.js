@@ -1,7 +1,7 @@
-const Category = require('../models/Category');
+const StockGroup = require('../models/StockGroup');
 
-// Create category
-exports.createCategory = async (req, res) => {
+// Create stock group
+exports.createStockGroup = async (req, res) => {
   try {
     const { name, description, isActive } = req.body;
     const userId = req.userId;
@@ -9,11 +9,11 @@ exports.createCategory = async (req, res) => {
     if (!name) {
       return res.status(400).json({
         success: false,
-        message: 'Category name is required'
+        message: 'Stock group name is required'
       });
     }
 
-    const category = await Category.create({
+    const stockGroup = await StockGroup.create({
       userId,
       name,
       description,
@@ -22,20 +22,20 @@ exports.createCategory = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'Category created successfully',
-      data: category
+      message: 'Stock group created successfully',
+      data: stockGroup
     });
   } catch (error) {
-    console.error('Create category error:', error);
+    console.error('Create stock group error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error creating category'
+      message: error.message || 'Error creating stock group'
     });
   }
 };
 
-// Get all categories
-exports.getAllCategories = async (req, res) => {
+// Get all stock groups
+exports.getAllStockGroups = async (req, res) => {
   try {
     const { isActive, search } = req.query;
     const userId = req.userId;
@@ -45,114 +45,114 @@ exports.getAllCategories = async (req, res) => {
       filter.isActive = isActive === 'true';
     }
 
-    let query = Category.find(filter);
+    let query = StockGroup.find(filter);
 
     if (search) {
       query = query.where('name').regex(new RegExp(search, 'i'));
     }
 
-    const categories = await query.sort({ createdAt: -1 });
+    const stockGroups = await query.sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
-      count: categories.length,
-      data: categories
+      count: stockGroups.length,
+      data: stockGroups
     });
   } catch (error) {
-    console.error('Get all categories error:', error);
+    console.error('Get all stock groups error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error fetching categories'
+      message: error.message || 'Error fetching stock groups'
     });
   }
 };
 
-// Get category by ID
-exports.getCategoryById = async (req, res) => {
+// Get stock group by ID
+exports.getStockGroupById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
 
-    const category = await Category.findOne({ _id: id, userId });
+    const stockGroup = await StockGroup.findOne({ _id: id, userId });
 
-    if (!category) {
+    if (!stockGroup) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        message: 'Stock group not found'
       });
     }
 
     res.status(200).json({
       success: true,
-      data: category
+      data: stockGroup
     });
   } catch (error) {
-    console.error('Get category by ID error:', error);
+    console.error('Get stock group by ID error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error fetching category'
+      message: error.message || 'Error fetching stock group'
     });
   }
 };
 
-// Update category
-exports.updateCategory = async (req, res) => {
+// Update stock group
+exports.updateStockGroup = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
     const { name, description, isActive } = req.body;
 
-    const category = await Category.findOneAndUpdate(
+    const stockGroup = await StockGroup.findOneAndUpdate(
       { _id: id, userId },
       { name, description, isActive },
       { new: true, runValidators: true }
     );
 
-    if (!category) {
+    if (!stockGroup) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        message: 'Stock group not found'
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Category updated successfully',
-      data: category
+      message: 'Stock group updated successfully',
+      data: stockGroup
     });
   } catch (error) {
-    console.error('Update category error:', error);
+    console.error('Update stock group error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error updating category'
+      message: error.message || 'Error updating stock group'
     });
   }
 };
 
-// Delete category
-exports.deleteCategory = async (req, res) => {
+// Delete stock group
+exports.deleteStockGroup = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
 
-    const category = await Category.findOneAndDelete({ _id: id, userId });
+    const stockGroup = await StockGroup.findOneAndDelete({ _id: id, userId });
 
-    if (!category) {
+    if (!stockGroup) {
       return res.status(404).json({
         success: false,
-        message: 'Category not found'
+        message: 'Stock group not found'
       });
     }
 
     res.status(200).json({
       success: true,
-      message: 'Category deleted successfully'
+      message: 'Stock group deleted successfully'
     });
   } catch (error) {
-    console.error('Delete category error:', error);
+    console.error('Delete stock group error:', error);
     res.status(500).json({
       success: false,
-      message: error.message || 'Error deleting category'
+      message: error.message || 'Error deleting stock group'
     });
   }
 };

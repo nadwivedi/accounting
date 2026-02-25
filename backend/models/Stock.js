@@ -11,10 +11,10 @@ const productSchema = new mongoose.Schema({
     required: [true, 'Product name is required'],
     trim: true
   },
-  category: {
+  stockGroup: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category',
-    required: [true, 'Category is required']
+    ref: 'StockGroup',
+    required: [true, 'Stock group is required']
   },
   unit: {
     type: String,

@@ -5,7 +5,7 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
-import Categories from './pages/Categories';
+import StockGroups from './pages/StockGroups';
 import Parties from './pages/Parties';
 import Sales from './pages/Sales';
 import Purchases from './pages/Purchases';
@@ -38,22 +38,24 @@ function App() {
         />
 
         <Route
-          path="/categories"
+          path="/stock-groups"
           element={
             <ProtectedRoute>
-              <Categories />
+              <StockGroups />
             </ProtectedRoute>
           }
         />
 
         <Route
-          path="/products"
+          path="/stock"
           element={
             <ProtectedRoute>
               <Products />
             </ProtectedRoute>
           }
         />
+
+        <Route path="/products" element={<Navigate to="/stock" replace />} />
 
         <Route
           path="/parties"

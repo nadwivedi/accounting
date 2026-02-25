@@ -4,7 +4,7 @@ import apiClient from '../utils/api';
 export default function Dashboard() {
   const [stats, setStats] = useState({
     totalProducts: 0,
-    totalCategories: 0,
+    totalStockGroups: 0,
     totalParties: 0,
     totalSales: 0,
     totalPurchases: 0
@@ -20,9 +20,9 @@ export default function Dashboard() {
     try {
       setLoading(true);
 
-      const [products, categories, parties, sales, purchases] = await Promise.all([
+      const [products, stockGroups, parties, sales, purchases] = await Promise.all([
         apiClient.get('/products'),
-        apiClient.get('/categories'),
+        apiClient.get('/stock-groups'),
         apiClient.get('/parties'),
         apiClient.get('/sales'),
         apiClient.get('/purchases')
@@ -30,7 +30,7 @@ export default function Dashboard() {
 
       setStats({
         totalProducts: products.count || 0,
-        totalCategories: categories.count || 0,
+        totalStockGroups: stockGroups.count || 0,
         totalParties: parties.count || 0,
         totalSales: sales.count || 0,
         totalPurchases: purchases.count || 0
@@ -73,8 +73,8 @@ export default function Dashboard() {
         </div>
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
-          <StatCard label="Stock/Product" value={stats.totalProducts} color="blue" />
-          <StatCard label="Categories" value={stats.totalCategories} color="green" />
+          <StatCard label="Stock Item" value={stats.totalProducts} color="blue" />
+          <StatCard label="Stock Group" value={stats.totalStockGroups} color="green" />
           <StatCard label="Parties" value={stats.totalParties} color="purple" />
           <StatCard label="Sales" value={stats.totalSales} color="yellow" />
           <StatCard label="Purchases" value={stats.totalPurchases} color="red" />
@@ -87,16 +87,16 @@ export default function Dashboard() {
           <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4">Quick Actions</h3>
           <div className="space-y-2">
             <a
-              href="/products"
+              href="/stock"
               className="block px-3 md:px-4 py-2 text-sm md:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center"
             >
-              Add Stock/Product
+              Add Stock Item
             </a>
             <a
-              href="/categories"
+              href="/stock-groups"
               className="block px-3 md:px-4 py-2 text-sm md:text-base bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-center"
             >
-              Add Category
+              Add Stock Group
             </a>
             <a
               href="/parties"
@@ -117,7 +117,7 @@ export default function Dashboard() {
           <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4">Features</h3>
           <ul className="space-y-2 text-sm md:text-base text-gray-700">
             <li className="flex items-center gap-2">
-              <span className="text-green-600">*</span> Stock/Product Management
+              <span className="text-green-600">*</span> Stock Item Management
             </li>
             <li className="flex items-center gap-2">
               <span className="text-green-600">*</span> Inventory Tracking

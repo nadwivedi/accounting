@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 export default function Parties() {
+  const toastOptions = { autoClose: 1200 };
+
   const initialFormData = {
     partyName: '',
     type: 'both',
@@ -69,6 +72,7 @@ export default function Parties() {
 
     try {
       setLoading(true);
+      const isEditMode = Boolean(editingId);
       const submitData = {
         ...formData,
         openingBalance: parseFloat(formData.openingBalance),
@@ -80,6 +84,10 @@ export default function Parties() {
       } else {
         await apiClient.post('/parties', submitData);
       }
+      toast.success(
+        isEditMode ? 'Party updated successfully' : 'Party added successfully',
+        toastOptions
+      );
       fetchParties();
       setFormData(initialFormData);
       setEditingId(null);

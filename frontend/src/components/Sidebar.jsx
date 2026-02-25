@@ -21,7 +21,7 @@ function ProductIcon() {
   );
 }
 
-function CategoryIcon() {
+function StockGroupIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
       <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H10l2 2h5.5A2.5 2.5 0 0 1 20 9.5v7A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z" />
@@ -99,8 +99,8 @@ function SettingsIcon() {
 
 const menuItems = [
   { name: 'Dashboard', path: '/dashboard', Icon: DashboardIcon },
-  { name: 'Stock/Product', path: '/products', Icon: ProductIcon },
-  { name: 'Categories', path: '/categories', Icon: CategoryIcon },
+  { name: 'Stock Item', path: '/stock', Icon: ProductIcon },
+  { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
   { name: 'Parties', path: '/parties', Icon: PartyIcon },
   { name: 'Purchase', path: '/purchases', Icon: PurchaseIcon },
   { name: 'Sale', path: '/sales', Icon: SaleIcon },

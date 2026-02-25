@@ -8,7 +8,7 @@ export default function Products() {
 
   const initialFormData = {
     name: '',
-    category: '',
+    stockGroup: '',
     unit: 'pcs',
     minStockLevel: 10,
     taxRate: 0,
@@ -16,7 +16,7 @@ export default function Products() {
   };
 
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
+  const [stockGroups, setStockGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -26,7 +26,7 @@ export default function Products() {
 
   useEffect(() => {
     fetchProducts();
-    fetchCategories();
+    fetchStockGroups();
   }, [search]);
 
   const fetchProducts = async () => {
@@ -38,18 +38,18 @@ export default function Products() {
       setProducts(response.data || []);
       setError('');
     } catch (err) {
-      setError(err.message || 'Error fetching stock/products');
+      setError(err.message || 'Error fetching stock items');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchCategories = async () => {
+  const fetchStockGroups = async () => {
     try {
-      const response = await apiClient.get('/categories');
-      setCategories(response.data || []);
+      const response = await apiClient.get('/stock-groups');
+      setStockGroups(response.data || []);
     } catch (err) {
-      console.error('Error fetching categories:', err);
+      console.error('Error fetching stock groups:', err);
     }
   };
 
@@ -63,8 +63,8 @@ export default function Products() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.category) {
-      setError('Name and category are required');
+    if (!formData.name || !formData.stockGroup) {
+      setError('Name and stock group are required');
       return;
     }
 
@@ -84,7 +84,7 @@ export default function Products() {
       }
 
       toast.success(
-        isEditMode ? 'Stock/Product updated successfully' : 'Stock/Product added successfully',
+        isEditMode ? 'Stock Item updated successfully' : 'Stock Item added successfully',
         toastOptions
       );
       fetchProducts();
@@ -103,7 +103,9 @@ export default function Products() {
     setFormData({
       ...initialFormData,
       ...product,
-      category: typeof product.category === 'object' ? product.category?._id || '' : product.category
+      stockGroup: typeof product.stockGroup === 'object'
+        ? product.stockGroup?._id || ''
+        : (product.stockGroup || '')
     });
     setEditingId(product._id);
     setShowForm(true);
@@ -113,7 +115,7 @@ export default function Products() {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await apiClient.delete(`/products/${id}`);
-        toast.success('Stock/Product deleted successfully', toastOptions);
+        toast.success('Stock Item deleted successfully', toastOptions);
         fetchProducts();
       } catch (err) {
         setError(err.message || 'Error deleting product');
@@ -143,7 +145,7 @@ export default function Products() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
         <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 shadow-sm">
-          <p className="text-xs md:text-sm text-slate-500">Total Stock/Products</p>
+          <p className="text-xs md:text-sm text-slate-500">Total Stock Items</p>
           <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1">{totalProducts}</p>
         </div>
         <div className="rounded-xl border border-green-200 bg-green-50 p-3 md:p-4 shadow-sm">
@@ -162,9 +164,9 @@ export default function Products() {
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
               <div>
                 <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
-                  {editingId ? 'Edit Stock/Product' : 'Add New Stock/Product'}
+                  {editingId ? 'Edit Stock Item' : 'Add New Stock Item'}
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">Fill the details and save your product.</p>
+                <p className="text-sm text-gray-500 mt-1">Fill the details and save your stock item.</p>
               </div>
               <button
                 type="button"
@@ -181,7 +183,7 @@ export default function Products() {
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">Basic Info</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm text-gray-700 font-semibold mb-2">Stock/Product Name *</label>
+                    <label className="block text-sm text-gray-700 font-semibold mb-2">Stock Item Name *</label>
                     <input
                       type="text"
                       name="name"
@@ -194,18 +196,18 @@ export default function Products() {
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-700 font-semibold mb-2">Category *</label>
+                    <label className="block text-sm text-gray-700 font-semibold mb-2">Stock Group *</label>
                     <select
-                      name="category"
-                      value={formData.category}
+                      name="stockGroup"
+                      value={formData.stockGroup}
                       onChange={handleInputChange}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       required
                     >
-                      <option value="">Select category</option>
-                      {categories.map((cat) => (
-                        <option key={cat._id} value={cat._id}>
-                          {cat.name}
+                      <option value="">Select stock group</option>
+                      {stockGroups.map((group) => (
+                        <option key={group._id} value={group._id}>
+                          {group.name}
                         </option>
                       ))}
                     </select>
@@ -279,7 +281,7 @@ export default function Products() {
                   disabled={loading}
                   className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {loading ? 'Saving...' : editingId ? 'Update Stock/Product' : 'Save Stock/Product'}
+                  {loading ? 'Saving...' : editingId ? 'Update Stock Item' : 'Save Stock Item'}
                 </button>
                 <button
                   type="button"
@@ -297,7 +299,7 @@ export default function Products() {
       <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
-          placeholder="Search stock/products..."
+          placeholder="Search stock items..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -310,7 +312,7 @@ export default function Products() {
           }}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
         >
-          + Add Stock/Product
+          + Add Stock Item
         </button>
       </div>
 
@@ -318,7 +320,7 @@ export default function Products() {
         <div className="text-center py-8 text-gray-500">Loading...</div>
       ) : products.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center text-gray-500">
-          No stock/products found. Create your first stock/product!
+          No stock items found. Create your first stock item!
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
@@ -326,7 +328,7 @@ export default function Products() {
             <thead className="bg-slate-100 border-b border-slate-200">
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Name</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Category</th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-700">Stock Group</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Unit</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Stock</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
@@ -337,7 +339,7 @@ export default function Products() {
               {products.map((product) => (
                 <tr key={product._id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-6 py-3 font-medium text-slate-800">{product.name}</td>
-                  <td className="px-6 py-3">{product.category?.name || '-'}</td>
+                  <td className="px-6 py-3">{product.stockGroup?.name || '-'}</td>
                   <td className="px-6 py-3">{product.unit || '-'}</td>
                   <td className="px-6 py-3">
                     <span className={`px-3 py-1 rounded-full text-sm font-medium ${

@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
-export default function Categories() {
+export default function StockGroups() {
+  const toastOptions = { autoClose: 1200 };
+
   const initialFormData = {
     name: '',
     description: '',
     isActive: true
   };
 
-  const [categories, setCategories] = useState([]);
+  const [stockGroups, setStockGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -18,19 +21,19 @@ export default function Categories() {
   const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
-    fetchCategories();
+    fetchStockGroups();
   }, [search]);
 
-  const fetchCategories = async () => {
+  const fetchStockGroups = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/categories', {
+      const response = await apiClient.get('/stock-groups', {
         params: { search }
       });
-      setCategories(response.data || []);
+      setStockGroups(response.data || []);
       setError('');
     } catch (err) {
-      setError(err.message || 'Error fetching categories');
+      setError(err.message || 'Error fetching stock groups');
     } finally {
       setLoading(false);
     }
@@ -47,42 +50,47 @@ export default function Categories() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name) {
-      setError('Category name is required');
+      setError('Stock group name is required');
       return;
     }
 
     try {
       setLoading(true);
+      const isEditMode = Boolean(editingId);
       if (editingId) {
-        await apiClient.put(`/categories/${editingId}`, formData);
+        await apiClient.put(`/stock-groups/${editingId}`, formData);
       } else {
-        await apiClient.post('/categories', formData);
+        await apiClient.post('/stock-groups', formData);
       }
-      fetchCategories();
+      toast.success(
+        isEditMode ? 'Stock group updated successfully' : 'Stock group added successfully',
+        toastOptions
+      );
+      fetchStockGroups();
       setFormData(initialFormData);
       setEditingId(null);
       setShowForm(false);
       setError('');
     } catch (err) {
-      setError(err.message || 'Error saving category');
+      setError(err.message || 'Error saving stock group');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEdit = (category) => {
-    setFormData(category);
-    setEditingId(category._id);
+  const handleEdit = (stockGroup) => {
+    setFormData(stockGroup);
+    setEditingId(stockGroup._id);
     setShowForm(true);
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this category?')) {
+    if (window.confirm('Are you sure you want to delete this stock group?')) {
       try {
-        await apiClient.delete(`/categories/${id}`);
-        fetchCategories();
+        await apiClient.delete(`/stock-groups/${id}`);
+        fetchStockGroups();
       } catch (err) {
-        setError(err.message || 'Error deleting category');
+        setError(err.message || 'Error deleting stock group');
       }
     }
   };
@@ -93,9 +101,9 @@ export default function Categories() {
     setFormData(initialFormData);
   };
 
-  const totalCategories = categories.length;
-  const activeCategories = categories.filter((category) => category.isActive).length;
-  const inactiveCategories = totalCategories - activeCategories;
+  const totalStockGroups = stockGroups.length;
+  const activeStockGroups = stockGroups.filter((group) => group.isActive).length;
+  const inactiveStockGroups = totalStockGroups - activeStockGroups;
 
   return (
     <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
@@ -107,16 +115,16 @@ export default function Categories() {
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
         <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 shadow-sm">
-          <p className="text-xs md:text-sm text-slate-500">Total Categories</p>
-          <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1">{totalCategories}</p>
+          <p className="text-xs md:text-sm text-slate-500">Total Stock Group</p>
+          <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1">{totalStockGroups}</p>
         </div>
         <div className="rounded-xl border border-green-200 bg-green-50 p-3 md:p-4 shadow-sm">
           <p className="text-xs md:text-sm text-green-700">Active</p>
-          <p className="text-xl md:text-2xl font-bold text-green-800 mt-1">{activeCategories}</p>
+          <p className="text-xl md:text-2xl font-bold text-green-800 mt-1">{activeStockGroups}</p>
         </div>
         <div className="rounded-xl border border-red-200 bg-red-50 p-3 md:p-4 shadow-sm">
           <p className="text-xs md:text-sm text-red-700">Inactive</p>
-          <p className="text-xl md:text-2xl font-bold text-red-800 mt-1">{inactiveCategories}</p>
+          <p className="text-xl md:text-2xl font-bold text-red-800 mt-1">{inactiveStockGroups}</p>
         </div>
       </div>
 
@@ -126,7 +134,7 @@ export default function Categories() {
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
               <div>
                 <h2 className="text-xl font-bold text-gray-800">
-                  {editingId ? 'Edit Category' : 'Add New Category'}
+                  {editingId ? 'Edit Stock Group' : 'Add New Stock Group'}
                 </h2>
                 <p className="text-sm text-gray-500 mt-1">Name is required. Description is optional.</p>
               </div>
@@ -142,14 +150,14 @@ export default function Categories() {
 
             <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-5 px-6 py-6">
               <div>
-                <label className="block text-gray-700 font-medium mb-2">Category Name</label>
+                <label className="block text-gray-700 font-medium mb-2">Stock Group Name</label>
                 <input
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  placeholder="Enter category name"
+                  placeholder="Enter stock group name"
                   required
                 />
               </div>
@@ -186,7 +194,7 @@ export default function Categories() {
                   disabled={loading}
                   className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
                 >
-                  {loading ? 'Saving...' : editingId ? 'Update Category' : 'Save Category'}
+                  {loading ? 'Saving...' : editingId ? 'Update Stock Group' : 'Save Stock Group'}
                 </button>
                 <button
                   type="button"
@@ -205,7 +213,7 @@ export default function Categories() {
       <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
-          placeholder="Search categories..."
+          placeholder="Search stock group..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
@@ -218,16 +226,16 @@ export default function Categories() {
           }}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
         >
-          + Add Category
+          + Add Stock Group
         </button>
       </div>
 
-      {/* Categories List */}
+      {/* Stock Group List */}
       {loading && !showForm ? (
         <div className="text-center py-8 text-gray-500">Loading...</div>
-      ) : categories.length === 0 ? (
+      ) : stockGroups.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center text-gray-500">
-          No categories found. Create your first category!
+          No stock group found. Create your first stock group!
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -241,28 +249,28 @@ export default function Categories() {
               </tr>
             </thead>
             <tbody>
-              {categories.map((category) => (
-                <tr key={category._id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-6 py-3 font-medium text-slate-800">{category.name}</td>
-                  <td className="px-6 py-3 text-gray-600">{category.description || '-'}</td>
+              {stockGroups.map((group) => (
+                <tr key={group._id} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-6 py-3 font-medium text-slate-800">{group.name}</td>
+                  <td className="px-6 py-3 text-gray-600">{group.description || '-'}</td>
                   <td className="px-6 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      category.isActive
+                      group.isActive
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                     }`}>
-                      {category.isActive ? 'Active' : 'Inactive'}
+                      {group.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-6 py-3 space-x-2">
                     <button
-                      onClick={() => handleEdit(category)}
+                      onClick={() => handleEdit(group)}
                       className="text-blue-600 hover:text-blue-800 font-medium"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(category._id)}
+                      onClick={() => handleDelete(group._id)}
                       className="text-red-600 hover:text-red-800 font-medium"
                     >
                       Delete
