@@ -25,6 +25,11 @@ const partySchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
+  partyImg: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   address: {
     street: { type: String, trim: true },
     city: { type: String, trim: true },

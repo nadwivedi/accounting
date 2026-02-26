@@ -1,4 +1,5 @@
 const Product = require('../models/Stock');
+const StockAdjustment = require('../models/StockAdjustment');
 
 // Create product
 exports.createProduct = async (req, res) => {
@@ -171,12 +172,20 @@ exports.updateStock = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const { quantity, type } = req.body;
+    const { quantity, type, notes, adjustmentDate } = req.body;
+    const normalizedQuantity = Number(quantity);
 
-    if (!quantity || !type || !['add', 'subtract'].includes(type)) {
+    if (!type || !['add', 'subtract'].includes(type)) {
       return res.status(400).json({
         success: false,
         message: 'quantity and type (add/subtract) are required'
+      });
+    }
+
+    if (!Number.isFinite(normalizedQuantity) || normalizedQuantity <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Quantity must be greater than 0'
       });
     }
 
@@ -189,7 +198,9 @@ exports.updateStock = async (req, res) => {
       });
     }
 
-    if (type === 'subtract' && product.currentStock < quantity) {
+    const stockBefore = Number(product.currentStock || 0);
+
+    if (type === 'subtract' && stockBefore < normalizedQuantity) {
       return res.status(400).json({
         success: false,
         message: `Insufficient stock. Available: ${product.currentStock}`
@@ -197,12 +208,24 @@ exports.updateStock = async (req, res) => {
     }
 
     if (type === 'add') {
-      product.currentStock += quantity;
+      product.currentStock = stockBefore + normalizedQuantity;
     } else {
-      product.currentStock -= quantity;
+      product.currentStock = stockBefore - normalizedQuantity;
     }
 
     await product.save();
+    const stockAfter = Number(product.currentStock || 0);
+
+    await StockAdjustment.create({
+      userId,
+      product: product._id,
+      type,
+      quantity: normalizedQuantity,
+      stockBefore,
+      stockAfter,
+      notes: String(notes || '').trim(),
+      adjustmentDate: adjustmentDate ? new Date(adjustmentDate) : new Date()
+    });
 
     res.status(200).json({
       success: true,

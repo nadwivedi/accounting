@@ -5,6 +5,7 @@ import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
+import StockDetail from './pages/StockDetail';
 import StockGroups from './pages/StockGroups';
 import Parties from './pages/Parties';
 import Sales from './pages/Sales';
@@ -51,6 +52,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Products />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/stock/:id"
+          element={
+            <ProtectedRoute>
+              <StockDetail />
             </ProtectedRoute>
           }
         />

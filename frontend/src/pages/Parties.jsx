@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { FileImage, Loader2, Upload } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
@@ -11,6 +12,7 @@ export default function Parties() {
     type: 'both',
     phone: '',
     email: '',
+    partyImg: '',
     address: { street: '', city: '', state: '', pincode: '', country: 'India' },
     gstin: '',
     panNumber: '',
@@ -27,6 +29,8 @@ export default function Parties() {
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [formData, setFormData] = useState(initialFormData);
+  const [uploadingPartyImage, setUploadingPartyImage] = useState(false);
+  const [partyImageFileName, setPartyImageFileName] = useState('');
 
   useEffect(() => {
     fetchParties();
@@ -63,6 +67,47 @@ export default function Parties() {
     });
   };
 
+  const getFileNameFromPath = (filePath = '') => {
+    if (!filePath) return '';
+    const rawName = filePath.split('/').pop()?.split('?')[0] || '';
+    try {
+      return decodeURIComponent(rawName);
+    } catch {
+      return rawName;
+    }
+  };
+
+  const handlePartyImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setPartyImageFileName(file.name);
+      setUploadingPartyImage(true);
+      const body = new FormData();
+      body.append('partyImage', file);
+
+      const response = await apiClient.post('/uploads/party-image', body, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      setFormData((prev) => ({
+        ...prev,
+        partyImg: response.data?.url || response.data?.relativePath || ''
+      }));
+      setError('');
+      toast.success('Party image uploaded successfully', toastOptions);
+    } catch (err) {
+      setError(err.message || 'Error uploading party image');
+      setPartyImageFileName('');
+    } finally {
+      setUploadingPartyImage(false);
+      event.target.value = '';
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.partyName || !formData.type) {
@@ -90,6 +135,7 @@ export default function Parties() {
       );
       fetchParties();
       setFormData(initialFormData);
+      setPartyImageFileName('');
       setEditingId(null);
       setShowForm(false);
       setError('');
@@ -101,7 +147,16 @@ export default function Parties() {
   };
 
   const handleEdit = (party) => {
-    setFormData(party);
+    setFormData({
+      ...initialFormData,
+      ...party,
+      address: {
+        ...initialFormData.address,
+        ...(party.address || {})
+      },
+      partyImg: party.partyImg || ''
+    });
+    setPartyImageFileName(getFileNameFromPath(party.partyImg));
     setEditingId(party._id);
     setShowForm(true);
   };
@@ -121,6 +176,8 @@ export default function Parties() {
     setShowForm(false);
     setEditingId(null);
     setFormData(initialFormData);
+    setPartyImageFileName('');
+    setUploadingPartyImage(false);
   };
 
   const totalParties = parties.length;
@@ -220,6 +277,55 @@ export default function Parties() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                   placeholder="Enter email"
                 />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-gray-700 font-medium mb-2">Party Image</label>
+                <input
+                  id="party-image-upload"
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+                  onChange={handlePartyImageUpload}
+                  className="hidden"
+                />
+                <label
+                  htmlFor="party-image-upload"
+                  className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-blue-300 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition"
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Party Image
+                </label>
+                <div className="mt-2 text-sm">
+                  {uploadingPartyImage && (
+                    <span className="inline-flex items-center gap-2 text-blue-600">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Uploading party image...
+                    </span>
+                  )}
+                  {!uploadingPartyImage && partyImageFileName && (
+                    <span className="inline-flex items-center gap-2 text-slate-700">
+                      <FileImage className="h-4 w-4 text-slate-500" />
+                      {partyImageFileName}
+                    </span>
+                  )}
+                  {!uploadingPartyImage && formData.partyImg && (
+                    <div className="mt-2 flex items-center gap-3">
+                      <img
+                        src={formData.partyImg}
+                        alt="Party preview"
+                        className="h-16 w-16 rounded-lg border border-slate-200 object-cover"
+                      />
+                      <a
+                        href={formData.partyImg}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        View full image
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
@@ -369,6 +475,8 @@ export default function Parties() {
           onClick={() => {
             setEditingId(null);
             setFormData(initialFormData);
+            setPartyImageFileName('');
+            setUploadingPartyImage(false);
             setShowForm(true);
           }}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
@@ -390,6 +498,7 @@ export default function Parties() {
             <thead className="bg-slate-100 border-b border-slate-200">
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Name</th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-700">Image</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Type</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Phone</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Email</th>
@@ -403,6 +512,21 @@ export default function Parties() {
               {parties.map((party) => (
                 <tr key={party._id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-6 py-3 font-medium text-slate-800">{party.partyName}</td>
+                  <td className="px-6 py-3">
+                    <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                      {party.partyImg ? (
+                        <img
+                          src={party.partyImg}
+                          alt={`${party.partyName} image`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-slate-700">
+                          {(party.partyName || '?').trim().charAt(0) || '?'}
+                        </div>
+                      )}
+                    </div>
+                  </td>
                   <td className="px-6 py-3 capitalize">{party.type}</td>
                   <td className="px-6 py-3">{party.phone || '-'}</td>
                   <td className="px-6 py-3">{party.email || '-'}</td>

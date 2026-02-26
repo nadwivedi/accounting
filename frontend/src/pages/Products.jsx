@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 export default function Products() {
   const toastOptions = { autoClose: 1200 };
+  const navigate = useNavigate();
 
   const initialFormData = {
     name: '',
@@ -127,6 +129,10 @@ export default function Products() {
     setShowForm(false);
     setEditingId(null);
     setFormData(initialFormData);
+  };
+
+  const handleOpenLedger = (productId) => {
+    navigate(`/stock/${productId}`);
   };
 
   const totalProducts = products.length;
@@ -337,8 +343,17 @@ export default function Products() {
             </thead>
             <tbody>
               {products.map((product) => (
-                <tr key={product._id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-6 py-3 font-medium text-slate-800">{product.name}</td>
+                <tr
+                  key={product._id}
+                  className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                  onClick={() => handleOpenLedger(product._id)}
+                >
+                  <td className="px-6 py-3 font-medium text-slate-800">
+                    <div className="flex flex-col">
+                      <span>{product.name}</span>
+                      <span className="text-xs font-normal text-blue-600">View ledger</span>
+                    </div>
+                  </td>
                   <td className="px-6 py-3">{product.stockGroup?.name || '-'}</td>
                   <td className="px-6 py-3">{product.unit || '-'}</td>
                   <td className="px-6 py-3">
@@ -361,13 +376,19 @@ export default function Products() {
                   </td>
                   <td className="px-6 py-3 space-x-2">
                     <button
-                      onClick={() => handleEdit(product)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(product);
+                      }}
                       className="text-blue-600 hover:text-blue-800 font-medium"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(product._id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(product._id);
+                      }}
                       className="text-red-600 hover:text-red-800 font-medium"
                     >
                       Delete

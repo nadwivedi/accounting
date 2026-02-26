@@ -4,6 +4,7 @@ const multer = require('multer');
 
 const ROOT_UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
 const INVOICE_UPLOAD_DIR = path.join(ROOT_UPLOAD_DIR, 'invoices');
+const PARTY_IMAGE_UPLOAD_DIR = path.join(ROOT_UPLOAD_DIR, 'party-images');
 
 const ensureDir = (dirPath) => {
   if (!fs.existsSync(dirPath)) {
@@ -13,6 +14,7 @@ const ensureDir = (dirPath) => {
 
 ensureDir(ROOT_UPLOAD_DIR);
 ensureDir(INVOICE_UPLOAD_DIR);
+ensureDir(PARTY_IMAGE_UPLOAD_DIR);
 
 const sanitizeBaseName = (name = 'file') => {
   return name
@@ -69,9 +71,20 @@ const invoiceUpload = createMulter({
   errorMessage: 'Only JPG, JPEG, PNG and PDF files are allowed for invoice upload'
 });
 
+const partyImageUpload = createMulter({
+  destinationDir: PARTY_IMAGE_UPLOAD_DIR,
+  allowedMimeTypes: new Set([
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+  ]),
+  errorMessage: 'Only JPG, JPEG, PNG and WEBP images are allowed for party image upload'
+});
+
 module.exports = {
   upload: commonUpload,
   uploadSingle: (field = 'file') => commonUpload.single(field),
   uploadArray: (field = 'files', maxCount = 5) => commonUpload.array(field, maxCount),
-  uploadInvoiceSingle: (field = 'invoice') => invoiceUpload.single(field)
+  uploadInvoiceSingle: (field = 'invoice') => invoiceUpload.single(field),
+  uploadPartyImageSingle: (field = 'partyImage') => partyImageUpload.single(field)
 };

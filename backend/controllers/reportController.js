@@ -5,6 +5,7 @@ const Payment = require('../models/Payment');
 const Receipt = require('../models/Receipt');
 const Product = require('../models/Stock');
 const Party = require('../models/Party');
+const StockAdjustment = require('../models/StockAdjustment');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -282,13 +283,16 @@ exports.getStockLedger = async (req, res) => {
 
     const purchaseFilter = { userId };
     const saleFilter = { userId };
+    const adjustmentFilter = { userId };
 
     withDateFilters(purchaseFilter, 'purchaseDate', fromDate, toDate);
     withDateFilters(saleFilter, 'saleDate', fromDate, toDate);
+    withDateFilters(adjustmentFilter, 'adjustmentDate', fromDate, toDate);
 
-    const [purchases, sales, products] = await Promise.all([
+    const [purchases, sales, adjustments, products] = await Promise.all([
       Purchase.find(purchaseFilter).populate('items.product', 'name'),
       Sale.find(saleFilter).populate('items.product', 'name'),
+      StockAdjustment.find(adjustmentFilter).populate('product', 'name'),
       Product.find({ userId }, 'name currentStock')
     ]);
 
@@ -307,7 +311,8 @@ exports.getStockLedger = async (req, res) => {
           productId: item.product._id,
           productName: item.product.name,
           inQty: toNumber(item.quantity),
-          outQty: 0
+          outQty: 0,
+          note: purchase.notes || ''
         });
       });
     });
@@ -325,8 +330,30 @@ exports.getStockLedger = async (req, res) => {
           productId: item.product._id,
           productName: item.product.name,
           inQty: 0,
-          outQty: toNumber(item.quantity)
+          outQty: toNumber(item.quantity),
+          note: sale.notes || ''
         });
+      });
+    });
+
+    adjustments.forEach((adjustment) => {
+      if (!adjustment.product) return;
+      const adjustmentProductId = String(adjustment.product._id || adjustment.product);
+      if (productId && adjustmentProductId !== String(productId)) return;
+
+      const quantity = toNumber(adjustment.quantity);
+      const isAdd = adjustment.type === 'add';
+
+      rows.push({
+        date: adjustment.adjustmentDate || adjustment.createdAt,
+        type: 'adjustment',
+        refId: adjustment._id,
+        refNumber: `ADJ-${String(adjustment._id).slice(-6).toUpperCase()}`,
+        productId: adjustment.product._id,
+        productName: adjustment.product.name,
+        inQty: isAdd ? quantity : 0,
+        outQty: isAdd ? 0 : quantity,
+        note: adjustment.notes || ''
       });
     });
 

@@ -114,7 +114,10 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = (path) => {
+    if (location.pathname === path) return true;
+    return location.pathname.startsWith(`${path}/`);
+  };
 
   return (
     <>
