@@ -305,6 +305,7 @@ exports.getStockLedger = async (req, res) => {
         if (productId && productKey !== String(productId)) return;
         rows.push({
           date: purchase.purchaseDate,
+          entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
           type: 'purchase',
           refId: purchase._id,
           refNumber: purchase.invoiceNo || purchase.invoiceNumber || '-',
@@ -324,6 +325,7 @@ exports.getStockLedger = async (req, res) => {
         if (productId && productKey !== String(productId)) return;
         rows.push({
           date: sale.saleDate,
+          entryCreatedAt: sale.createdAt || sale.saleDate,
           type: 'sale',
           refId: sale._id,
           refNumber: sale.invoiceNumber,
@@ -346,6 +348,7 @@ exports.getStockLedger = async (req, res) => {
 
       rows.push({
         date: adjustment.adjustmentDate || adjustment.createdAt,
+        entryCreatedAt: adjustment.createdAt || adjustment.adjustmentDate,
         type: 'adjustment',
         refId: adjustment._id,
         refNumber: `ADJ-${String(adjustment._id).slice(-6).toUpperCase()}`,

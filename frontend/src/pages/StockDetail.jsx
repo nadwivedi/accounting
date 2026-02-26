@@ -13,7 +13,10 @@ const formatDate = (value) => {
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleDateString();
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
 const getTypeMeta = (row) => {
@@ -111,8 +114,8 @@ export default function StockDetail() {
 
   const sortedLedgerRows = useMemo(() => {
     return [...(stockLedger.ledger || [])].sort((a, b) => {
-      const aTime = new Date(a.date).getTime() || 0;
-      const bTime = new Date(b.date).getTime() || 0;
+      const aTime = new Date(a.entryCreatedAt || a.date).getTime() || 0;
+      const bTime = new Date(b.entryCreatedAt || b.date).getTime() || 0;
       return bTime - aTime;
     });
   }, [stockLedger]);
