@@ -14,17 +14,19 @@ exports.createProduct = async (req, res) => {
     } = req.body;
     const userId = req.userId;
 
-    if (!name || !stockGroup) {
+    if (!name) {
       return res.status(400).json({
         success: false,
-        message: 'Name and stock group are required'
+        message: 'Name is required'
       });
     }
+
+    const normalizedStockGroup = stockGroup ? stockGroup : null;
 
     const product = await Product.create({
       userId,
       name,
-      stockGroup,
+      stockGroup: normalizedStockGroup,
       unit: unit || 'pcs',
       minStockLevel: minStockLevel || 10,
       taxRate: taxRate || 0,
@@ -111,6 +113,10 @@ exports.updateProduct = async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
     const updateData = { ...req.body };
+
+    if (Object.prototype.hasOwnProperty.call(updateData, 'stockGroup')) {
+      updateData.stockGroup = updateData.stockGroup ? updateData.stockGroup : null;
+    }
 
     const product = await Product.findOneAndUpdate(
       { _id: id, userId },

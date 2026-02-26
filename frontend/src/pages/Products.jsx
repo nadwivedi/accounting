@@ -65,8 +65,8 @@ export default function Products() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.stockGroup) {
-      setError('Name and stock group are required');
+    if (!formData.name) {
+      setError('Name is required');
       return;
     }
 
@@ -75,6 +75,7 @@ export default function Products() {
       const isEditMode = Boolean(editingId);
       const submitData = {
         ...formData,
+        stockGroup: formData.stockGroup || null,
         minStockLevel: parseInt(formData.minStockLevel || 0),
         taxRate: parseFloat(formData.taxRate || 0)
       };
@@ -202,15 +203,14 @@ export default function Products() {
                   </div>
 
                   <div>
-                    <label className="block text-sm text-gray-700 font-semibold mb-2">Stock Group *</label>
+                    <label className="block text-sm text-gray-700 font-semibold mb-2">Stock Group</label>
                     <select
                       name="stockGroup"
                       value={formData.stockGroup}
                       onChange={handleInputChange}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      required
                     >
-                      <option value="">Select stock group</option>
+                      <option value="">No stock group</option>
                       {stockGroups.map((group) => (
                         <option key={group._id} value={group._id}>
                           {group.name}

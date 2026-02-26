@@ -14,7 +14,7 @@ const productSchema = new mongoose.Schema({
   stockGroup: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'StockGroup',
-    required: [true, 'Stock group is required']
+    default: null
   },
   unit: {
     type: String,
