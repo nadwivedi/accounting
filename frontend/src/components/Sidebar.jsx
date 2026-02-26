@@ -29,6 +29,15 @@ function StockGroupIcon() {
   );
 }
 
+function StockAdjustmentIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M12 3v18M3 12h18" />
+      <path d="M7 7h10v10H7z" />
+    </svg>
+  );
+}
+
 function PartyIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
@@ -101,6 +110,7 @@ const menuItems = [
   { name: 'Dashboard', path: '/dashboard', Icon: DashboardIcon },
   { name: 'Stock Item', path: '/stock', Icon: ProductIcon },
   { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
+  { name: 'Stock Adjustment', path: '/stock-adjustments', Icon: StockAdjustmentIcon },
   { name: 'Parties', path: '/parties', Icon: PartyIcon },
   { name: 'Purchase', path: '/purchases', Icon: PurchaseIcon },
   { name: 'Sale', path: '/sales', Icon: SaleIcon },

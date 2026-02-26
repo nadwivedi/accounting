@@ -6,8 +6,10 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import StockDetail from './pages/StockDetail';
+import StockAdjustments from './pages/StockAdjustments';
 import StockGroups from './pages/StockGroups';
 import Parties from './pages/Parties';
+import PartyDetail from './pages/PartyDetail';
 import Sales from './pages/Sales';
 import Purchases from './pages/Purchases';
 import Payments from './pages/Payments';
@@ -57,6 +59,15 @@ function App() {
         />
 
         <Route
+          path="/stock-adjustments"
+          element={
+            <ProtectedRoute>
+              <StockAdjustments />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/stock/:id"
           element={
             <ProtectedRoute>
@@ -72,6 +83,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Parties />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/parties/:id"
+          element={
+            <ProtectedRoute>
+              <PartyDetail />
             </ProtectedRoute>
           }
         />

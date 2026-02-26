@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { FileImage, Loader2, Upload } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 export default function Parties() {
   const toastOptions = { autoClose: 1200 };
+  const navigate = useNavigate();
 
   const initialFormData = {
     partyName: '',
@@ -178,6 +180,10 @@ export default function Parties() {
     setFormData(initialFormData);
     setPartyImageFileName('');
     setUploadingPartyImage(false);
+  };
+
+  const handleOpenPartyDetails = (partyId) => {
+    navigate(`/parties/${partyId}`);
   };
 
   const totalParties = parties.length;
@@ -510,8 +516,17 @@ export default function Parties() {
             </thead>
             <tbody>
               {parties.map((party) => (
-                <tr key={party._id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-6 py-3 font-medium text-slate-800">{party.partyName}</td>
+                <tr
+                  key={party._id}
+                  className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                  onClick={() => handleOpenPartyDetails(party._id)}
+                >
+                  <td className="px-6 py-3 font-medium text-slate-800">
+                    <div className="flex flex-col">
+                      <span>{party.partyName}</span>
+                      <span className="text-xs font-normal text-blue-600">View ledger</span>
+                    </div>
+                  </td>
                   <td className="px-6 py-3">
                     <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
                       {party.partyImg ? (
@@ -547,13 +562,19 @@ export default function Parties() {
                   </td>
                   <td className="px-6 py-3 space-x-2">
                     <button
-                      onClick={() => handleEdit(party)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEdit(party);
+                      }}
                       className="text-blue-600 hover:text-blue-800 font-medium"
                     >
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(party._id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(party._id);
+                      }}
                       className="text-red-600 hover:text-red-800 font-medium"
                     >
                       Delete
