@@ -19,7 +19,16 @@ const productSchema = new mongoose.Schema({
   unit: {
     type: String,
     required: true,
-    enum: ['pcs', 'kg', 'g', 'ltr', 'ml', 'box', ],
+    enum: [
+      'pcs',
+      'kg',
+      'g',
+      'ltr',
+      'ml',
+      'box',
+      'hrs',
+      'minutes'
+    ],
     default: 'pcs'
   },
   currentStock: {

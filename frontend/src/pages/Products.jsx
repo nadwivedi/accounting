@@ -233,6 +233,8 @@ export default function Products() {
                       <option value="ltr">Liter</option>
                       <option value="ml">Milliliter</option>
                       <option value="box">Box</option>
+                      <option value="hrs">Hours</option>
+                      <option value="minutes">Minutes</option>
                     </select>
                   </div>
                 </div>
