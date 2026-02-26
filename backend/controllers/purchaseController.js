@@ -15,6 +15,15 @@ const generateInvoiceNo = () => {
   return `PUR-${date}-${stamp}${rand}`;
 };
 
+const isDuplicatePurchaseInvoiceError = (error) => (
+  error?.code === 11000 && (
+    Object.prototype.hasOwnProperty.call(error?.keyPattern || {}, 'invoiceNo') ||
+    Object.prototype.hasOwnProperty.call(error?.keyPattern || {}, 'invoiceNumber') ||
+    Object.prototype.hasOwnProperty.call(error?.keyValue || {}, 'invoiceNo') ||
+    Object.prototype.hasOwnProperty.call(error?.keyValue || {}, 'invoiceNumber')
+  )
+);
+
 const normalizeItems = (items = []) => items.map((item) => {
   const quantity = toNumber(item.quantity);
   const unitPrice = toNumber(item.unitPrice);
@@ -86,17 +95,21 @@ exports.createPurchase = async (req, res) => {
     }
 
     const normalizedInvoiceNo = String(invoiceNo || invoiceNumber || '').trim();
+    const resolvedInvoiceNumber = normalizedInvoiceNo || generateInvoiceNo();
 
-    const purchase = await Purchase.create({
+    const basePayload = {
       userId,
-      invoiceNo: normalizedInvoiceNo || generateInvoiceNo(),
+      invoiceNo: resolvedInvoiceNumber,
+      invoiceNumber: resolvedInvoiceNumber,
       party,
       items: normalizedItems,
       purchaseDate: purchaseDate || new Date(),
       totalAmount: calculateTotalAmount(normalizedItems, totalAmount),
       invoiceLink: invoiceLink || '',
       notes
-    });
+    };
+
+    const purchase = await Purchase.create(basePayload);
 
     for (const item of normalizedItems) {
       await Product.findByIdAndUpdate(
@@ -115,6 +128,12 @@ exports.createPurchase = async (req, res) => {
       data: populatedPurchase
     });
   } catch (error) {
+    if (isDuplicatePurchaseInvoiceError(error)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invoice number already exists for this user'
+      });
+    }
     console.error('Create purchase error:', error);
     res.status(500).json({
       success: false,
@@ -261,6 +280,19 @@ exports.updatePurchase = async (req, res) => {
     const normalizedInvoiceNo = String(invoiceNo || invoiceNumber || '').trim();
     if (normalizedInvoiceNo) {
       purchase.invoiceNo = normalizedInvoiceNo;
+      purchase.invoiceNumber = normalizedInvoiceNo;
+    } else {
+      if (!purchase.invoiceNo && purchase.invoiceNumber) {
+        purchase.invoiceNo = purchase.invoiceNumber;
+      }
+      if (!purchase.invoiceNumber && purchase.invoiceNo) {
+        purchase.invoiceNumber = purchase.invoiceNo;
+      }
+      if (!purchase.invoiceNo && !purchase.invoiceNumber) {
+        const generatedInvoiceNo = generateInvoiceNo();
+        purchase.invoiceNo = generatedInvoiceNo;
+        purchase.invoiceNumber = generatedInvoiceNo;
+      }
     }
 
     if (invoiceLink !== undefined) {
@@ -287,6 +319,12 @@ exports.updatePurchase = async (req, res) => {
       data: updatedPurchase
     });
   } catch (error) {
+    if (isDuplicatePurchaseInvoiceError(error)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invoice number already exists for this user'
+      });
+    }
     console.error('Update purchase error:', error);
     res.status(500).json({
       success: false,

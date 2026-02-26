@@ -191,6 +191,7 @@ exports.getPartyLedger = async (req, res) => {
     sales.forEach((sale) => {
       entries.push({
         date: sale.saleDate,
+        entryCreatedAt: sale.createdAt || sale.saleDate,
         type: 'sale',
         refId: sale._id,
         refNumber: sale.invoiceNumber,
@@ -205,6 +206,7 @@ exports.getPartyLedger = async (req, res) => {
     receipts.forEach((receipt) => {
       entries.push({
         date: receipt.receiptDate,
+        entryCreatedAt: receipt.createdAt || receipt.receiptDate,
         type: 'receipt',
         refId: receipt._id,
         refNumber: receipt.refId || null,
@@ -219,6 +221,7 @@ exports.getPartyLedger = async (req, res) => {
     purchases.forEach((purchase) => {
       entries.push({
         date: purchase.purchaseDate,
+        entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
         type: 'purchase',
         refId: purchase._id,
         refNumber: purchase.invoiceNo || purchase.invoiceNumber || '-',
@@ -233,6 +236,7 @@ exports.getPartyLedger = async (req, res) => {
     payments.forEach((payment) => {
       entries.push({
         date: payment.paymentDate,
+        entryCreatedAt: payment.createdAt || payment.paymentDate,
         type: 'payment',
         refId: payment._id,
         refNumber: payment.refId || null,
@@ -244,7 +248,15 @@ exports.getPartyLedger = async (req, res) => {
       });
     });
 
-    entries.sort((a, b) => new Date(a.date) - new Date(b.date));
+    entries.sort((a, b) => {
+      const aDate = new Date(a.date).getTime() || 0;
+      const bDate = new Date(b.date).getTime() || 0;
+      if (aDate !== bDate) return aDate - bDate;
+
+      const aCreated = new Date(a.entryCreatedAt).getTime() || 0;
+      const bCreated = new Date(b.entryCreatedAt).getTime() || 0;
+      return aCreated - bCreated;
+    });
 
     let runningBalance = 0;
     const ledger = entries.map((entry) => {

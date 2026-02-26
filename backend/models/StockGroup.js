@@ -9,8 +9,7 @@ const stockGroupSchema = new mongoose.Schema({
   name: {
     type: String,
     required: [true, 'Stock group name is required'],
-    trim: true,
-    unique: true
+    trim: true
   },
   description: {
     type: String,
@@ -21,5 +20,7 @@ const stockGroupSchema = new mongoose.Schema({
     default: true
   }
 }, { timestamps: true });
+
+stockGroupSchema.index({ userId: 1, name: 1 }, { unique: true });
 
 module.exports = mongoose.model('StockGroup', stockGroupSchema);

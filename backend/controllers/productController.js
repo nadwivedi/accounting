@@ -9,6 +9,8 @@ exports.createProduct = async (req, res) => {
       stockGroup,
       unit,
       minStockLevel,
+      purchasePrice,
+      salePrice,
       taxRate,
       isActive
     } = req.body;
@@ -29,6 +31,8 @@ exports.createProduct = async (req, res) => {
       stockGroup: normalizedStockGroup,
       unit: unit || 'pcs',
       minStockLevel: minStockLevel || 10,
+      purchasePrice: Number(purchasePrice || 0),
+      salePrice: Number(salePrice || 0),
       taxRate: taxRate || 0,
       isActive: isActive !== undefined ? isActive : true
     });
@@ -116,6 +120,12 @@ exports.updateProduct = async (req, res) => {
 
     if (Object.prototype.hasOwnProperty.call(updateData, 'stockGroup')) {
       updateData.stockGroup = updateData.stockGroup ? updateData.stockGroup : null;
+    }
+    if (Object.prototype.hasOwnProperty.call(updateData, 'purchasePrice')) {
+      updateData.purchasePrice = Number(updateData.purchasePrice || 0);
+    }
+    if (Object.prototype.hasOwnProperty.call(updateData, 'salePrice')) {
+      updateData.salePrice = Number(updateData.salePrice || 0);
     }
 
     const product = await Product.findOneAndUpdate(

@@ -1,5 +1,12 @@
 const StockGroup = require('../models/StockGroup');
 
+const isDuplicateStockGroupNameError = (error) => (
+  error?.code === 11000 && (
+    Object.prototype.hasOwnProperty.call(error?.keyPattern || {}, 'name') ||
+    Object.prototype.hasOwnProperty.call(error?.keyValue || {}, 'name')
+  )
+);
+
 // Create stock group
 exports.createStockGroup = async (req, res) => {
   try {
@@ -27,6 +34,12 @@ exports.createStockGroup = async (req, res) => {
     });
   } catch (error) {
     console.error('Create stock group error:', error);
+    if (isDuplicateStockGroupNameError(error)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Stock group name already exists for this user'
+      });
+    }
     res.status(500).json({
       success: false,
       message: error.message || 'Error creating stock group'
@@ -122,6 +135,12 @@ exports.updateStockGroup = async (req, res) => {
     });
   } catch (error) {
     console.error('Update stock group error:', error);
+    if (isDuplicateStockGroupNameError(error)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Stock group name already exists for this user'
+      });
+    }
     res.status(500).json({
       success: false,
       message: error.message || 'Error updating stock group'

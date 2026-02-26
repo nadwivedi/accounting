@@ -34,8 +34,7 @@ const saleSchema = new mongoose.Schema({
   },
   invoiceNumber: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   party: {
     type: mongoose.Schema.Types.ObjectId,
@@ -114,5 +113,7 @@ const saleSchema = new mongoose.Schema({
     trim: true
   }
 }, { timestamps: true });
+
+saleSchema.index({ userId: 1, invoiceNumber: 1 }, { unique: true });
 
 module.exports = mongoose.model('Sale', saleSchema);

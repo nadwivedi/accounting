@@ -15,6 +15,13 @@ const generateInvoiceNumber = () => {
   return `SAL-${date}-${stamp}${rand}`;
 };
 
+const isDuplicateSaleInvoiceError = (error) => (
+  error?.code === 11000 && (
+    Object.prototype.hasOwnProperty.call(error?.keyPattern || {}, 'invoiceNumber') ||
+    Object.prototype.hasOwnProperty.call(error?.keyValue || {}, 'invoiceNumber')
+  )
+);
+
 const calculateTotals = (payload = {}) => {
   const items = Array.isArray(payload.items) ? payload.items : [];
   const subtotal = toNumber(payload.subtotal, items.reduce((sum, item) => {
@@ -181,6 +188,12 @@ exports.createSale = async (req, res) => {
       data: populatedSale
     });
   } catch (error) {
+    if (isDuplicateSaleInvoiceError(error)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invoice number already exists for this user'
+      });
+    }
     console.error('Create sale error:', error);
     res.status(500).json({
       success: false,

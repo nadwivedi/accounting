@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config({ quiet: true });
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -18,8 +18,6 @@ const reportRoutes = require('./routes/reportRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
-
-connectDB();
 
 app.use(cors({
   origin:['http://localhost:5173','http://localhost:5176'],
@@ -49,6 +47,14 @@ app.use('/api/uploads', uploadRoutes);
 
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+const startServer = async () => {
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+startServer().catch((error) => {
+  console.error('Server startup failed:', error.message);
+  process.exit(1);
 });
