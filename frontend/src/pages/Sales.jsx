@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ShoppingCart, IndianRupee, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
@@ -352,7 +353,7 @@ export default function Sales() {
   );
 
   return (
-    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
@@ -360,18 +361,48 @@ export default function Sales() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 shadow-sm">
-          <p className="text-xs md:text-sm text-slate-500">Total Sales</p>
-          <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1">{totalSales}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Sales</p>
+              <p className="mt-1 sm:mt-2 text-base sm:text-2xl font-bold text-slate-800 leading-tight">{totalSales}</p>
+            </div>
+            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform group-hover:scale-110">
+              <ShoppingCart className="h-6 w-6" />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-80"></div>
         </div>
-        <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 md:p-4 shadow-sm">
-          <p className="text-xs md:text-sm text-blue-700">Total Amount</p>
-          <p className="text-xl md:text-2xl font-bold text-blue-800 mt-1">Rs {totalAmount.toFixed(2)}</p>
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Amount</p>
+              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
+                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
+                {totalAmount.toFixed(2)}
+              </p>
+            </div>
+            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
+              <IndianRupee className="h-6 w-6" />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80"></div>
         </div>
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3 md:p-4 shadow-sm">
-          <p className="text-xs md:text-sm text-red-700">Total Due</p>
-          <p className="text-xl md:text-2xl font-bold text-red-800 mt-1">Rs {totalDue.toFixed(2)}</p>
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Due</p>
+              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
+                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
+                {totalDue.toFixed(2)}
+              </p>
+            </div>
+            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-transform group-hover:scale-110">
+              <AlertCircle className="h-6 w-6" />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-rose-500 to-orange-400 opacity-80"></div>
         </div>
       </div>
 

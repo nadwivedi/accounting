@@ -275,8 +275,8 @@ export default function Purchases() {
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[10px] sm:text-sm font-medium text-slate-500 leading-tight">Total Purchases</p>
-              <p className="mt-1 sm:mt-2 text-base sm:text-3xl font-bold text-slate-800 leading-tight">{totalPurchases}</p>
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Purchases</p>
+              <p className="mt-1 sm:mt-2 text-base sm:text-2xl font-bold text-slate-800 leading-tight">{totalPurchases}</p>
             </div>
             <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform group-hover:scale-110">
               <ShoppingCart className="h-6 w-6" />
@@ -289,9 +289,9 @@ export default function Purchases() {
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[10px] sm:text-sm font-medium text-slate-500 leading-tight">Total Amount</p>
-              <p className="mt-1 sm:mt-2 text-[11px] sm:text-3xl font-bold text-slate-800 leading-tight">
-                <span className="text-[10px] sm:text-lg text-slate-400 font-medium mr-1">Rs</span>
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Amount</p>
+              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
+                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
                 {totalAmount.toFixed(2)}
               </p>
             </div>
@@ -306,9 +306,9 @@ export default function Purchases() {
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[10px] sm:text-sm font-medium text-slate-500 leading-tight">Total Payable</p>
-              <p className="mt-1 sm:mt-2 text-[11px] sm:text-3xl font-bold text-slate-800 leading-tight">
-                <span className="text-[10px] sm:text-lg text-slate-400 font-medium mr-1">Rs</span>
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Payable</p>
+              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
+                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
                 {parties.filter(p => p.currentBalance < 0).reduce((sum, p) => sum + Math.abs(p.currentBalance || 0), 0).toFixed(2)}
               </p>
             </div>

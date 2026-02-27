@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Wallet, IndianRupee } from 'lucide-react';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
@@ -124,21 +125,40 @@ export default function Payments() {
   const totalPayments = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
   return (
-    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-2 gap-3 md:gap-4 mb-6">
-        <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 shadow-sm">
-          <p className="text-xs md:text-sm text-slate-500">Total Payments</p>
-          <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1">{payments.length}</p>
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-6">
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Payments</p>
+              <p className="mt-1 sm:mt-2 text-base sm:text-2xl font-bold text-slate-800 leading-tight">{payments.length}</p>
+            </div>
+            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform group-hover:scale-110">
+              <Wallet className="h-6 w-6" />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-80"></div>
         </div>
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 md:p-4 shadow-sm">
-          <p className="text-xs md:text-sm text-rose-700">Amount Paid</p>
-          <p className="text-xl md:text-2xl font-bold text-rose-800 mt-1">Rs {totalPayments.toFixed(2)}</p>
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Amount Paid</p>
+              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
+                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
+                {totalPayments.toFixed(2)}
+              </p>
+            </div>
+            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
+              <IndianRupee className="h-6 w-6" />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80"></div>
         </div>
       </div>
 
