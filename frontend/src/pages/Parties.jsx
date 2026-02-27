@@ -498,7 +498,6 @@ export default function Parties() {
           <option value="">All Types</option>
           <option value="supplier">Suppliers</option>
           <option value="customer">Customers</option>
-          <option value="both">Both</option>
         </select>
         <button
           onClick={() => {
