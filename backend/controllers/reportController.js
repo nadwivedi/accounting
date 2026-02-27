@@ -51,7 +51,13 @@ exports.getOutstandingReport = async (req, res) => {
 
     const purchasePending = purchases
       .map((purchase) => {
-        const pending = Math.max(0, toNumber(purchase.totalAmount) - toNumber(purchase.paidAmount));
+        const pending = Math.max(
+          0,
+          toNumber(
+            purchase.balanceAmount,
+            toNumber(purchase.totalAmount) - toNumber(purchase.paidAmount)
+          )
+        );
         return {
           id: purchase._id,
           invoiceNo: purchase.invoiceNo || purchase.invoiceNumber || '-',

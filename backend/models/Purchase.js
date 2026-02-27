@@ -61,6 +61,10 @@ const purchaseSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
+  dueDate: {
+    type: Date,
+    default: null
+  },
   invoiceLink: {
     type: String,
     trim: true,
@@ -70,6 +74,21 @@ const purchaseSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  paidAmount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  balanceAmount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  paymentStatus: {
+    type: String,
+    enum: ['unpaid', 'partial', 'paid'],
+    default: 'unpaid'
+  },
   notes: {
     type: String,
     trim: true
@@ -78,7 +97,7 @@ const purchaseSchema = new mongoose.Schema({
 
 purchaseSchema.index({ userId: 1, invoiceNumber: 1 }, { unique: true });
 
-purchaseSchema.pre('validate', function syncInvoiceFields(next) {
+purchaseSchema.pre('validate', function syncInvoiceFields() {
   if (this.invoiceNo && !this.invoiceNumber) {
     this.invoiceNumber = this.invoiceNo;
   }
@@ -93,7 +112,13 @@ purchaseSchema.pre('validate', function syncInvoiceFields(next) {
     this.invoiceNumber = generated;
   }
 
-  next();
+  const total = Number(this.totalAmount || 0);
+  const boundedPaid = Math.min(Math.max(Number(this.paidAmount || 0), 0), total);
+  const balance = Math.max(0, total - boundedPaid);
+
+  this.paidAmount = boundedPaid;
+  this.balanceAmount = balance;
+  this.paymentStatus = balance === 0 ? 'paid' : (boundedPaid > 0 ? 'partial' : 'unpaid');
 });
 
 module.exports = mongoose.model('Purchase', purchaseSchema);

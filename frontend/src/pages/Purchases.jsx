@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Loader2, Upload, ShoppingCart, IndianRupee, AlertCircle } from 'lucide-react';
+import { Upload, ShoppingCart, IndianRupee, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
@@ -12,9 +12,15 @@ export default function Purchases() {
     invoiceNo: '',
     items: [],
     purchaseDate: new Date().toISOString().split('T')[0],
+    dueDate: '',
     totalAmount: 0,
     invoiceLink: '',
-    notes: ''
+    notes: '',
+    paymentAmount: '',
+    paymentMethod: 'cash',
+    paymentDate: new Date().toISOString().split('T')[0],
+    paymentNotes: '',
+    isBillWisePayment: false
   };
 
   const initialCurrentItem = {
@@ -35,7 +41,6 @@ export default function Purchases() {
   const [formData, setFormData] = useState(initialFormData);
   const [currentItem, setCurrentItem] = useState(initialCurrentItem);
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
-  const [invoiceFileName, setInvoiceFileName] = useState('');
 
   useEffect(() => {
     fetchPurchases();
@@ -130,8 +135,8 @@ export default function Purchases() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSubmit = async (e) => {
@@ -142,6 +147,12 @@ export default function Purchases() {
       return;
     }
 
+    const entryPaymentAmount = Math.max(0, Number(formData.paymentAmount || 0));
+    if (entryPaymentAmount > Number(formData.totalAmount || 0)) {
+      setError('Entry payment amount cannot exceed total purchase amount');
+      return;
+    }
+
     try {
       setLoading(true);
       const isEditMode = Boolean(editingId);
@@ -149,9 +160,15 @@ export default function Purchases() {
       const submitData = {
         ...formData,
         invoiceNo: String(formData.invoiceNo || '').trim(),
-        purchaseDate: new Date(formData.purchaseDate),
+        purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : new Date(),
+        dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
         totalAmount: Number(formData.totalAmount || 0),
-        invoiceLink: formData.invoiceLink || ''
+        invoiceLink: formData.invoiceLink || '',
+        paymentAmount: isEditMode ? 0 : entryPaymentAmount,
+        paymentMethod: formData.paymentMethod || 'cash',
+        paymentDate: formData.paymentDate ? new Date(formData.paymentDate) : new Date(),
+        paymentNotes: formData.paymentNotes || '',
+        isBillWisePayment: isEditMode ? false : Boolean(formData.isBillWisePayment)
       };
 
       if (editingId) {
@@ -168,7 +185,6 @@ export default function Purchases() {
       fetchPurchases();
       setFormData(initialFormData);
       setCurrentItem(initialCurrentItem);
-      setInvoiceFileName('');
       setEditingId(null);
       setShowForm(false);
       setError('');
@@ -180,10 +196,6 @@ export default function Purchases() {
   };
 
   const handleEdit = (purchase) => {
-    const existingName = purchase.invoiceLink
-      ? purchase.invoiceLink.split('/').pop()?.split('?')[0] || ''
-      : '';
-
     const normalizedItems = (purchase.items || []).map((item) => ({
       ...item,
       product: item.product?._id || item.product,
@@ -198,12 +210,17 @@ export default function Purchases() {
       invoiceNo: purchase.invoiceNo || purchase.invoiceNumber || '',
       items: normalizedItems,
       purchaseDate: purchase.purchaseDate ? new Date(purchase.purchaseDate).toISOString().split('T')[0] : '',
+      dueDate: purchase.dueDate ? new Date(purchase.dueDate).toISOString().split('T')[0] : '',
       totalAmount: Number(purchase.totalAmount || 0),
       invoiceLink: purchase.invoiceLink || '',
-      notes: purchase.notes || ''
+      notes: purchase.notes || '',
+      paymentAmount: '',
+      paymentMethod: 'cash',
+      paymentDate: purchase.purchaseDate ? new Date(purchase.purchaseDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      paymentNotes: '',
+      isBillWisePayment: false
     });
 
-    setInvoiceFileName(existingName);
     setCurrentItem(initialCurrentItem);
     setEditingId(purchase._id);
     setShowForm(true);
@@ -226,7 +243,6 @@ export default function Purchases() {
     setEditingId(null);
     setFormData(initialFormData);
     setCurrentItem(initialCurrentItem);
-    setInvoiceFileName('');
   };
 
   const handleInvoiceUpload = async (event) => {
@@ -234,7 +250,6 @@ export default function Purchases() {
     if (!file) return;
 
     try {
-      setInvoiceFileName(file.name);
       setUploadingInvoice(true);
       const body = new FormData();
       body.append('invoice', file);
@@ -252,7 +267,6 @@ export default function Purchases() {
       setError('');
     } catch (err) {
       setError(err.message || 'Error uploading invoice');
-      setInvoiceFileName('');
     } finally {
       setUploadingInvoice(false);
       event.target.value = '';
@@ -261,6 +275,19 @@ export default function Purchases() {
 
   const totalPurchases = purchases.length;
   const totalAmount = purchases.reduce((sum, purchase) => sum + Number(purchase.totalAmount || 0), 0);
+  const totalPayable = purchases.reduce((sum, purchase) => {
+    const pending = Math.max(
+      0,
+      Number(
+        purchase.balanceAmount ?? (Number(purchase.totalAmount || 0) - Number(purchase.paidAmount || 0))
+      )
+    );
+    return sum + pending;
+  }, 0);
+  const entryPaymentPreviewBalance = Math.max(
+    0,
+    Number(formData.totalAmount || 0) - (formData.isBillWisePayment ? Number(formData.paymentAmount || 0) : 0)
+  );
 
   return (
     <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
@@ -309,7 +336,7 @@ export default function Purchases() {
               <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Payable</p>
               <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
                 <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
-                {parties.filter(p => p.currentBalance < 0).reduce((sum, p) => sum + Math.abs(p.currentBalance || 0), 0).toFixed(2)}
+                {totalPayable.toFixed(2)}
               </p>
             </div>
             <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-transform group-hover:scale-110">
@@ -338,7 +365,7 @@ export default function Purchases() {
             </div>
 
             <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-6 px-6 py-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
                   <label className="block text-gray-700 font-medium mb-2">Supplier *</label>
                   <select
@@ -381,47 +408,39 @@ export default function Purchases() {
                 </div>
 
                 <div>
+                  <label className="block text-gray-700 font-medium mb-2">Due Date</label>
+                  <input
+                    type="date"
+                    name="dueDate"
+                    value={formData.dueDate || ''}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                </div>
+
+                <div>
                   <label className="block text-gray-700 font-medium mb-2">Invoice File (JPG/JPEG/PNG/PDF)</label>
                   <input
                     id="purchase-invoice-upload"
                     type="file"
                     accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
                     onChange={handleInvoiceUpload}
+                    disabled={uploadingInvoice}
                     className="hidden"
                   />
                   <label
                     htmlFor="purchase-invoice-upload"
-                    className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-blue-300 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 transition"
+                    className={`flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center transition ${
+                      uploadingInvoice
+                        ? 'border-blue-200 bg-blue-50 text-blue-600 opacity-75'
+                        : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                    }`}
                   >
-                    <Upload className="h-4 w-4" />
-                    Upload Invoice
+                    <Upload className="h-5 w-5" />
+                    <span className="text-sm font-medium">
+                      {uploadingInvoice ? 'Uploading Invoice...' : 'Upload Invoice'}
+                    </span>
                   </label>
-                  <div className="mt-2 text-sm">
-                    {uploadingInvoice && (
-                      <span className="inline-flex items-center gap-2 text-blue-600">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Uploading invoice...
-                      </span>
-                    )}
-                    {!uploadingInvoice && invoiceFileName && (
-                      <span className="inline-flex items-center gap-2 text-slate-700">
-                        <FileText className="h-4 w-4 text-slate-500" />
-                        {invoiceFileName}
-                      </span>
-                    )}
-                    {!uploadingInvoice && formData.invoiceLink && (
-                      <div className="mt-1">
-                        <a
-                          href={formData.invoiceLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-blue-600 hover:text-blue-800 underline"
-                        >
-                          View uploaded invoice
-                        </a>
-                      </div>
-                    )}
-                  </div>
                 </div>
               </div>
 
@@ -511,6 +530,94 @@ export default function Purchases() {
                 </div>
               </div>
 
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-base font-semibold text-slate-800">Payment At Entry (Optional)</h3>
+                  {editingId && (
+                    <span className="text-xs text-slate-500">Use Payments page to add payment for existing purchase</span>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-1">Amount Paid Now</label>
+                    <input
+                      type="number"
+                      name="paymentAmount"
+                      value={formData.paymentAmount}
+                      onChange={handleInputChange}
+                      step="0.01"
+                      min="0"
+                      disabled={Boolean(editingId)}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg disabled:bg-slate-100"
+                      placeholder="0.00"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-1">Payment Method</label>
+                    <select
+                      name="paymentMethod"
+                      value={formData.paymentMethod}
+                      onChange={handleInputChange}
+                      disabled={Boolean(editingId) || Number(formData.paymentAmount || 0) <= 0}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg disabled:bg-slate-100"
+                    >
+                      <option value="cash">Cash</option>
+                      <option value="bank">Bank</option>
+                      <option value="upi">UPI</option>
+                      <option value="card">Card</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm text-slate-600 mb-1">Payment Date</label>
+                    <input
+                      type="date"
+                      name="paymentDate"
+                      value={formData.paymentDate}
+                      onChange={handleInputChange}
+                      disabled={Boolean(editingId) || Number(formData.paymentAmount || 0) <= 0}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg disabled:bg-slate-100"
+                    />
+                  </div>
+
+                  <label className="flex items-center gap-2 text-sm text-slate-700 pt-7">
+                    <input
+                      type="checkbox"
+                      name="isBillWisePayment"
+                      checked={Boolean(formData.isBillWisePayment)}
+                      onChange={handleInputChange}
+                      disabled={Boolean(editingId) || Number(formData.paymentAmount || 0) <= 0}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-60"
+                    />
+                    Save as bill-wise payment
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-slate-600 mb-1">Payment Note</label>
+                  <input
+                    type="text"
+                    name="paymentNotes"
+                    value={formData.paymentNotes}
+                    onChange={handleInputChange}
+                    disabled={Boolean(editingId) || Number(formData.paymentAmount || 0) <= 0}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg disabled:bg-slate-100"
+                    placeholder="Optional payment note"
+                  />
+                </div>
+
+                {!editingId && Number(formData.paymentAmount || 0) > 0 && (
+                  <p className="text-xs text-slate-600">
+                    {formData.isBillWisePayment
+                      ? `Bill-wise selected: this payment will be linked with this purchase bill. Pending balance will be Rs ${entryPaymentPreviewBalance.toFixed(2)}.`
+                      : 'Bill-wise is not selected: payment will be saved as normal on-account party payment (no bill reference).'}
+                  </p>
+                )}
+              </div>
+
               <div>
                 <label className="block text-gray-700 font-medium mb-2">Notes</label>
                 <textarea
@@ -557,7 +664,6 @@ export default function Purchases() {
             setEditingId(null);
             setFormData(initialFormData);
             setCurrentItem(initialCurrentItem);
-            setInvoiceFileName('');
             setShowForm(true);
           }}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
@@ -583,11 +689,21 @@ export default function Purchases() {
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice File</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Total</th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-700">Paid</th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-700">Pending</th>
+                <th className="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {purchases.map((purchase) => (
+              {purchases.map((purchase) => {
+                const paidAmount = Number(purchase.paidAmount || 0);
+                const pendingAmount = Math.max(
+                  0,
+                  Number(purchase.balanceAmount ?? (Number(purchase.totalAmount || 0) - paidAmount))
+                );
+                const status = purchase.paymentStatus || (pendingAmount === 0 ? 'paid' : (paidAmount > 0 ? 'partial' : 'unpaid'));
+                return (
                 <tr key={purchase._id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-6 py-3 font-medium text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
                   <td className="px-6 py-3">{purchase.party?.partyName || '-'}</td>
@@ -613,6 +729,19 @@ export default function Purchases() {
                     ) : '-'}
                   </td>
                   <td className="px-6 py-3">Rs {Number(purchase.totalAmount || 0).toFixed(2)}</td>
+                  <td className="px-6 py-3 text-emerald-700 font-medium">Rs {paidAmount.toFixed(2)}</td>
+                  <td className="px-6 py-3 text-rose-700 font-medium">Rs {pendingAmount.toFixed(2)}</td>
+                  <td className="px-6 py-3 capitalize">
+                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                      status === 'paid'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : status === 'partial'
+                          ? 'bg-amber-100 text-amber-700'
+                          : 'bg-rose-100 text-rose-700'
+                    }`}>
+                      {status}
+                    </span>
+                  </td>
                   <td className="px-6 py-3 space-x-2 text-sm">
                     <button
                       onClick={() => handleEdit(purchase)}
@@ -628,7 +757,8 @@ export default function Purchases() {
                     </button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

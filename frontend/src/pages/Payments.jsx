@@ -68,6 +68,12 @@ export default function Payments() {
     return purchases.filter((p) => {
       if (!formData.party) return true;
       return String(p.party?._id || p.party) === String(formData.party);
+    }).filter((p) => {
+      const pending = Math.max(
+        0,
+        Number(p.balanceAmount ?? (Number(p.totalAmount || 0) - Number(p.paidAmount || 0)))
+      );
+      return pending > 0;
     });
   }, [purchases, formData.refType, formData.party]);
 
@@ -275,9 +281,13 @@ export default function Payments() {
                 >
                   <option value="">Select purchase bill</option>
                   {purchaseOptions.map((purchase) => {
+                    const pendingAmount = Math.max(
+                      0,
+                      Number(purchase.balanceAmount ?? (Number(purchase.totalAmount || 0) - Number(purchase.paidAmount || 0)))
+                    );
                     return (
                       <option key={purchase._id} value={purchase._id}>
-                        {purchase.invoiceNo || purchase.invoiceNumber || '-'} - {purchase.party?.partyName || '-'} - Amount Rs {Number(purchase.totalAmount || 0).toFixed(2)}
+                        {purchase.invoiceNo || purchase.invoiceNumber || '-'} - {purchase.party?.partyName || '-'} - Pending Rs {pendingAmount.toFixed(2)}
                       </option>
                     );
                   })}

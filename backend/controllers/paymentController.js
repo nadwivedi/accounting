@@ -14,8 +14,23 @@ const applyPurchasePayment = async ({ refId, userId, amount }) => {
     return { error: 'Purchase not found' };
   }
 
-  // Purchase flow is simplified; we only keep reference to purchase bill in payment.
-  void amount;
+  const totalAmount = toNumber(purchase.totalAmount);
+  const paidAmount = toNumber(purchase.paidAmount);
+  const balanceAmount = Math.max(0, toNumber(purchase.balanceAmount, totalAmount - paidAmount));
+
+  if (amount > balanceAmount) {
+    return { error: 'Amount exceeds purchase pending amount' };
+  }
+
+  const newPaidAmount = paidAmount + amount;
+  const newBalanceAmount = Math.max(0, totalAmount - newPaidAmount);
+  const paymentStatus = newBalanceAmount === 0 ? 'paid' : 'partial';
+
+  purchase.paidAmount = newPaidAmount;
+  purchase.balanceAmount = newBalanceAmount;
+  purchase.paymentStatus = paymentStatus;
+  await purchase.save();
+
   return { purchase };
 };
 

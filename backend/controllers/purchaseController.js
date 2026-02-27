@@ -58,6 +58,8 @@ const calculateTotalAmount = (items, requestedTotal) => {
   return toNumber(requestedTotal, computedTotal);
 };
 
+const toBoolean = (value) => value === true || value === 'true' || value === 1 || value === '1';
+
 // Create purchase
 exports.createPurchase = async (req, res) => {
   try {
@@ -65,11 +67,17 @@ exports.createPurchase = async (req, res) => {
       party,
       items,
       purchaseDate,
+      dueDate,
       invoiceLink,
       notes,
       invoiceNo,
       invoiceNumber,
-      totalAmount
+      totalAmount,
+      paymentAmount,
+      paymentMethod,
+      paymentDate,
+      paymentNotes,
+      isBillWisePayment
     } = req.body;
     const userId = req.userId;
 
@@ -96,6 +104,20 @@ exports.createPurchase = async (req, res) => {
 
     const normalizedInvoiceNo = String(invoiceNo || invoiceNumber || '').trim();
     const resolvedInvoiceNumber = normalizedInvoiceNo || generateInvoiceNo();
+    const resolvedTotalAmount = calculateTotalAmount(normalizedItems, totalAmount);
+    const resolvedPaymentAmount = Math.max(0, toNumber(paymentAmount, 0));
+    const resolvedBillWiseFlag = toBoolean(isBillWisePayment);
+
+    if (resolvedPaymentAmount > resolvedTotalAmount) {
+      return res.status(400).json({
+        success: false,
+        message: 'Payment amount cannot exceed purchase total'
+      });
+    }
+
+    const linkedBillPaidAmount = resolvedBillWiseFlag ? resolvedPaymentAmount : 0;
+    const balanceAmount = Math.max(0, resolvedTotalAmount - linkedBillPaidAmount);
+    const paymentStatus = balanceAmount === 0 ? 'paid' : (linkedBillPaidAmount > 0 ? 'partial' : 'unpaid');
 
     const basePayload = {
       userId,
@@ -103,8 +125,12 @@ exports.createPurchase = async (req, res) => {
       invoiceNumber: resolvedInvoiceNumber,
       party,
       items: normalizedItems,
-      purchaseDate: purchaseDate || new Date(),
-      totalAmount: calculateTotalAmount(normalizedItems, totalAmount),
+      purchaseDate: purchaseDate ? new Date(purchaseDate) : new Date(),
+      dueDate: dueDate ? new Date(dueDate) : null,
+      totalAmount: resolvedTotalAmount,
+      paidAmount: linkedBillPaidAmount,
+      balanceAmount,
+      paymentStatus,
       invoiceLink: invoiceLink || '',
       notes
     };
@@ -116,6 +142,21 @@ exports.createPurchase = async (req, res) => {
         item.product,
         { $inc: { currentStock: toNumber(item.quantity) } }
       );
+    }
+
+    if (resolvedPaymentAmount > 0) {
+      await Payment.create({
+        userId,
+        party,
+        refType: resolvedBillWiseFlag ? 'purchase' : 'none',
+        refId: resolvedBillWiseFlag ? purchase._id : null,
+        amount: resolvedPaymentAmount,
+        method: paymentMethod || 'cash',
+        paymentDate: paymentDate ? new Date(paymentDate) : (purchaseDate ? new Date(purchaseDate) : new Date()),
+        notes: paymentNotes || (resolvedBillWiseFlag
+          ? `Payment against purchase ${resolvedInvoiceNumber}`
+          : `On-account payment posted during purchase ${resolvedInvoiceNumber}`)
+      });
     }
 
     const populatedPurchase = await Purchase.findById(purchase._id)
@@ -220,6 +261,7 @@ exports.updatePurchase = async (req, res) => {
       party,
       items,
       purchaseDate,
+      dueDate,
       totalAmount,
       notes,
       invoiceLink,
@@ -273,8 +315,12 @@ exports.updatePurchase = async (req, res) => {
       purchase.items = normalizedItems;
     }
 
-    if (purchaseDate) {
-      purchase.purchaseDate = new Date(purchaseDate);
+    if (purchaseDate !== undefined) {
+      purchase.purchaseDate = purchaseDate ? new Date(purchaseDate) : purchase.purchaseDate;
+    }
+
+    if (dueDate !== undefined) {
+      purchase.dueDate = dueDate ? new Date(dueDate) : null;
     }
 
     const normalizedInvoiceNo = String(invoiceNo || invoiceNumber || '').trim();
@@ -304,7 +350,19 @@ exports.updatePurchase = async (req, res) => {
     }
 
     if (hasNewItems || totalAmount !== undefined) {
-      purchase.totalAmount = calculateTotalAmount(normalizedItems, totalAmount);
+      const recalculatedTotal = calculateTotalAmount(normalizedItems, totalAmount);
+      const currentPaidAmount = toNumber(purchase.paidAmount);
+
+      if (currentPaidAmount > recalculatedTotal) {
+        return res.status(400).json({
+          success: false,
+          message: 'Total cannot be less than already paid bill-wise amount'
+        });
+      }
+
+      purchase.totalAmount = recalculatedTotal;
+      purchase.balanceAmount = Math.max(0, recalculatedTotal - currentPaidAmount);
+      purchase.paymentStatus = purchase.balanceAmount === 0 ? 'paid' : (currentPaidAmount > 0 ? 'partial' : 'unpaid');
     }
 
     await purchase.save();
