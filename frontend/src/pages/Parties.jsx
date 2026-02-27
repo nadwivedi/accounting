@@ -11,7 +11,7 @@ export default function Parties() {
 
   const initialFormData = {
     partyName: '',
-    type: 'both',
+    type: 'customer',
     phone: '',
     email: '',
     partyImg: '',
@@ -257,7 +257,6 @@ export default function Parties() {
                 >
                   <option value="supplier">Supplier</option>
                   <option value="customer">Customer</option>
-                  <option value="both">Both</option>
                 </select>
               </div>
 
