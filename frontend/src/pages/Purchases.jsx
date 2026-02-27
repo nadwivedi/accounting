@@ -667,14 +667,14 @@ export default function Purchases() {
         <select
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value)}
-          className="w-full sm:w-56 bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full sm:w-56 bg-white px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
         >
-          <option value="">All Time</option>
-          <option value="7d">Last 7 Days</option>
-          <option value="30d">Last 30 Days</option>
-          <option value="3m">Last 3 Months</option>
-          <option value="6m">Last 6 Months</option>
-          <option value="1y">Last 1 Year</option>
+          <option value="">Purchase History - All Time</option>
+          <option value="7d">Purchase History - 7 Days</option>
+          <option value="30d">Purchase History - 30 Days</option>
+          <option value="3m">Purchase History - 3 Months</option>
+          <option value="6m">Purchase History - 6 Months</option>
+          <option value="1y">Purchase History - 1 Year</option>
         </select>
         <button
           onClick={() => {
