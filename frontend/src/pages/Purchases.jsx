@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, ShoppingCart, IndianRupee, AlertCircle } from 'lucide-react';
+import { Upload, ShoppingCart, IndianRupee } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
@@ -38,6 +38,7 @@ export default function Purchases() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [formData, setFormData] = useState(initialFormData);
   const [currentItem, setCurrentItem] = useState(initialCurrentItem);
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
@@ -46,13 +47,42 @@ export default function Purchases() {
     fetchPurchases();
     fetchParties();
     fetchProducts();
-  }, [search]);
+  }, [search, dateFilter]);
+
+  const getFromDateByFilter = () => {
+    const now = new Date();
+    if (dateFilter === '7d') {
+      now.setDate(now.getDate() - 7);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '30d') {
+      now.setDate(now.getDate() - 30);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '3m') {
+      now.setMonth(now.getMonth() - 3);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '6m') {
+      now.setMonth(now.getMonth() - 6);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '1y') {
+      now.setFullYear(now.getFullYear() - 1);
+      return now.toISOString().split('T')[0];
+    }
+    return '';
+  };
 
   const fetchPurchases = async () => {
     try {
       setLoading(true);
+      const fromDate = getFromDateByFilter();
       const response = await apiClient.get('/purchases', {
-        params: { search }
+        params: {
+          search,
+          fromDate: fromDate || undefined
+        }
       });
       setPurchases(response.data || []);
       setError('');
@@ -275,15 +305,6 @@ export default function Purchases() {
 
   const totalPurchases = purchases.length;
   const totalAmount = purchases.reduce((sum, purchase) => sum + Number(purchase.totalAmount || 0), 0);
-  const totalPayable = purchases.reduce((sum, purchase) => {
-    const pending = Math.max(
-      0,
-      Number(
-        purchase.balanceAmount ?? (Number(purchase.totalAmount || 0) - Number(purchase.paidAmount || 0))
-      )
-    );
-    return sum + pending;
-  }, 0);
   const entryPaymentPreviewBalance = Math.max(
     0,
     Number(formData.totalAmount || 0) - (formData.isBillWisePayment ? Number(formData.paymentAmount || 0) : 0)
@@ -297,7 +318,7 @@ export default function Purchases() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-6">
         {/* Total Purchases Card */}
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
@@ -329,22 +350,6 @@ export default function Purchases() {
           <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80"></div>
         </div>
 
-        {/* Total Payable Card */}
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Payable</p>
-              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
-                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
-                {totalPayable.toFixed(2)}
-              </p>
-            </div>
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-transform group-hover:scale-110">
-              <AlertCircle className="h-6 w-6" />
-            </div>
-          </div>
-          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-rose-500 to-orange-400 opacity-80"></div>
-        </div>
       </div>
 
       {showForm && (
@@ -659,6 +664,18 @@ export default function Purchases() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
+        <select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="w-full sm:w-56 bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+        >
+          <option value="">All Time</option>
+          <option value="7d">Last 7 Days</option>
+          <option value="30d">Last 30 Days</option>
+          <option value="3m">Last 3 Months</option>
+          <option value="6m">Last 6 Months</option>
+          <option value="1y">Last 1 Year</option>
+        </select>
         <button
           onClick={() => {
             setEditingId(null);
@@ -689,20 +706,11 @@ export default function Purchases() {
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice File</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Total</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Paid</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Pending</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
             <tbody>
               {purchases.map((purchase) => {
-                const paidAmount = Number(purchase.paidAmount || 0);
-                const pendingAmount = Math.max(
-                  0,
-                  Number(purchase.balanceAmount ?? (Number(purchase.totalAmount || 0) - paidAmount))
-                );
-                const status = purchase.paymentStatus || (pendingAmount === 0 ? 'paid' : (paidAmount > 0 ? 'partial' : 'unpaid'));
                 return (
                 <tr key={purchase._id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-6 py-3 font-medium text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
@@ -715,7 +723,7 @@ export default function Purchases() {
                       )
                       : '-'}
                   </td>
-                  <td className="px-6 py-3">{new Date(purchase.purchaseDate).toLocaleDateString()}</td>
+                  <td className="px-6 py-3">{new Date(purchase.purchaseDate).toLocaleDateString('en-GB')}</td>
                   <td className="px-6 py-3">
                     {purchase.invoiceLink ? (
                       <a
@@ -729,19 +737,6 @@ export default function Purchases() {
                     ) : '-'}
                   </td>
                   <td className="px-6 py-3">Rs {Number(purchase.totalAmount || 0).toFixed(2)}</td>
-                  <td className="px-6 py-3 text-emerald-700 font-medium">Rs {paidAmount.toFixed(2)}</td>
-                  <td className="px-6 py-3 text-rose-700 font-medium">Rs {pendingAmount.toFixed(2)}</td>
-                  <td className="px-6 py-3 capitalize">
-                    <span className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      status === 'paid'
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : status === 'partial'
-                          ? 'bg-amber-100 text-amber-700'
-                          : 'bg-rose-100 text-rose-700'
-                    }`}>
-                      {status}
-                    </span>
-                  </td>
                   <td className="px-6 py-3 space-x-2 text-sm">
                     <button
                       onClick={() => handleEdit(purchase)}

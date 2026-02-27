@@ -186,27 +186,43 @@ exports.createPurchase = async (req, res) => {
 // Get all purchases
 exports.getAllPurchases = async (req, res) => {
   try {
-    const { party, search } = req.query;
+    const { party, search, fromDate } = req.query;
     const userId = req.userId;
     const filter = { userId };
 
     if (party) filter.party = party;
+    if (fromDate) {
+      const parsedFromDate = new Date(fromDate);
+      if (!Number.isNaN(parsedFromDate.getTime())) {
+        filter.purchaseDate = { $gte: parsedFromDate };
+      }
+    }
 
     let query = Purchase.find(filter)
       .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     if (search) {
+      const matchingParties = await Party.find({
+        userId,
+        partyName: { $regex: search, $options: 'i' }
+      }, '_id');
+
+      const partySearchClause = matchingParties.length > 0
+        ? [{ party: { $in: matchingParties.map((doc) => doc._id) } }]
+        : [];
+
       query = query.where({
         $or: [
           { invoiceNo: { $regex: search, $options: 'i' } },
           { invoiceNumber: { $regex: search, $options: 'i' } },
-          { notes: { $regex: search, $options: 'i' } }
+          { notes: { $regex: search, $options: 'i' } },
+          ...partySearchClause
         ]
       });
     }
 
-    const purchases = await query.sort({ createdAt: -1 });
+    const purchases = await query.sort({ purchaseDate: -1, createdAt: -1 });
 
     res.status(200).json({
       success: true,

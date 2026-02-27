@@ -129,6 +129,31 @@ export default function Payments() {
   };
 
   const totalPayments = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+  const totalPurchaseAmount = purchases.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
+  const totalPayable = Math.max(0, totalPurchaseAmount - totalPayments);
+
+  const billWisePendingPurchases = useMemo(() => {
+    const billWiseRefSet = new Set(
+      payments
+        .filter((payment) => payment.refType === 'purchase' && payment.refId)
+        .map((payment) => String(payment.refId))
+    );
+
+    return purchases
+      .map((purchase) => {
+        const pendingAmount = Math.max(
+          0,
+          Number(purchase.balanceAmount ?? (Number(purchase.totalAmount || 0) - Number(purchase.paidAmount || 0)))
+        );
+        return {
+          ...purchase,
+          pendingAmount
+        };
+      })
+      .filter((purchase) => purchase.pendingAmount > 0 && billWiseRefSet.has(String(purchase._id)));
+  }, [purchases, payments]);
+
+  const billWisePendingTotal = billWisePendingPurchases.reduce((sum, p) => sum + Number(p.pendingAmount || 0), 0);
 
   return (
     <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
@@ -138,7 +163,7 @@ export default function Payments() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-6">
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -166,6 +191,36 @@ export default function Payments() {
           </div>
           <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80"></div>
         </div>
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Payable</p>
+              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
+                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
+                {totalPayable.toFixed(2)}
+              </p>
+            </div>
+            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600 transition-transform group-hover:scale-110">
+              <IndianRupee className="h-6 w-6" />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-amber-500 to-orange-400 opacity-80"></div>
+        </div>
+        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Bill-wise Pending</p>
+              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
+                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
+                {billWisePendingTotal.toFixed(2)}
+              </p>
+            </div>
+            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-transform group-hover:scale-110">
+              <Wallet className="h-6 w-6" />
+            </div>
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-rose-500 to-red-400 opacity-80"></div>
+        </div>
       </div>
 
       <div className="mb-4 flex flex-col md:flex-row gap-3">
@@ -182,6 +237,40 @@ export default function Payments() {
         >
           + Add Payment
         </button>
+      </div>
+
+      <div className="mb-6 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+        <div className="px-6 py-4 border-b border-slate-200">
+          <h3 className="text-base font-semibold text-slate-800">Pending Bill-wise Purchases</h3>
+          <p className="text-xs text-slate-500 mt-1">Only purchases with bill reference and pending balance are shown.</p>
+        </div>
+        <table className="w-full text-sm">
+          <thead className="bg-slate-100 border-b border-slate-200">
+            <tr>
+              <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice No</th>
+              <th className="px-6 py-3 text-left font-semibold text-gray-700">Supplier</th>
+              <th className="px-6 py-3 text-left font-semibold text-gray-700">Purchase Date</th>
+              <th className="px-6 py-3 text-left font-semibold text-gray-700">Due Date</th>
+              <th className="px-6 py-3 text-left font-semibold text-gray-700">Pending</th>
+            </tr>
+          </thead>
+          <tbody>
+            {billWisePendingPurchases.map((purchase) => (
+              <tr key={purchase._id} className="border-b border-slate-100">
+                <td className="px-6 py-3 font-medium text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
+                <td className="px-6 py-3">{purchase.party?.partyName || '-'}</td>
+                <td className="px-6 py-3">{purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString() : '-'}</td>
+                <td className="px-6 py-3">{purchase.dueDate ? new Date(purchase.dueDate).toLocaleDateString() : '-'}</td>
+                <td className="px-6 py-3 text-rose-700 font-semibold">Rs {Number(purchase.pendingAmount || 0).toFixed(2)}</td>
+              </tr>
+            ))}
+            {!loading && billWisePendingPurchases.length === 0 && (
+              <tr>
+                <td colSpan="5" className="px-6 py-8 text-center text-slate-500">No pending bill-wise purchases</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       {showForm && (
