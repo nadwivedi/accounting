@@ -108,9 +108,15 @@ function SettingsIcon() {
 
 const menuItems = [
   { name: 'Dashboard', path: '/dashboard', Icon: DashboardIcon },
-  { name: 'Stock Item', path: '/stock', Icon: ProductIcon },
-  { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
-  { name: 'Stock Adjustment', path: '/stock-adjustments', Icon: StockAdjustmentIcon },
+  {
+    name: 'Stock',
+    path: '/stock',
+    Icon: ProductIcon,
+    subItems: [
+      { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
+      { name: 'Stock Adjustment', path: '/stock-adjustments', Icon: StockAdjustmentIcon }
+    ]
+  },
   { name: 'Parties', path: '/parties', Icon: PartyIcon },
   { name: 'Purchase', path: '/purchases', Icon: PurchaseIcon },
   { name: 'Sale', path: '/sales', Icon: SaleIcon },
@@ -129,23 +135,30 @@ export default function Sidebar() {
     return location.pathname.startsWith(`${path}/`);
   };
 
+  const isItemOrSubItemActive = (item) => {
+    if (isActive(item.path)) return true;
+    if (item.subItems) {
+      return item.subItems.some(sub => isActive(sub.path));
+    }
+    return false;
+  };
+
   return (
     <>
       {/* Mobile Top Header */}
-      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-white/5 bg-[#0A0D14]/80 px-4 backdrop-blur-xl md:hidden">
+      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-slate-200 bg-white/80 px-4 backdrop-blur-xl md:hidden">
         <div className="relative flex h-full items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 shadow-sm shadow-indigo-200">
               <span className="text-sm font-bold tracking-wider text-white">BH</span>
-              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20"></div>
             </div>
-            <p className="bg-gradient-to-r from-white to-slate-400 bg-clip-text text-lg font-bold tracking-tight text-transparent">BillHub</p>
+            <p className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-lg font-bold tracking-tight text-transparent">BillHub</p>
           </div>
 
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="group relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/5 text-slate-300 ring-1 ring-inset ring-white/10 transition-all hover:bg-white/10 hover:text-white"
+            className="group relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900"
             aria-label="Open navigation menu"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5 transition-transform group-hover:scale-110">
@@ -158,34 +171,29 @@ export default function Sidebar() {
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 md:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Sidebar Container */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[17.5rem] max-w-[85vw] flex-col border-r border-white/5 bg-[#0A0D14] shadow-2xl transition-transform duration-400 ease-[cubic-bezier(0.25,1,0.5,1)] md:z-40 md:w-[17.5rem] ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
-
-        {/* Decorative ambient background glows */}
-        <div className="pointer-events-none absolute -left-20 top-0 h-64 w-64 rounded-full bg-indigo-500/10 blur-[80px]" />
-        <div className="pointer-events-none absolute bottom-0 right-0 h-64 w-64 rounded-full bg-cyan-500/5 blur-[80px]" />
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[17.5rem] max-w-[85vw] flex-col border-r border-slate-200/80 bg-slate-50/50 backdrop-blur-2xl shadow-2xl transition-transform duration-400 ease-[cubic-bezier(0.25,1,0.5,1)] md:z-40 md:w-[17.5rem] md:bg-white md:shadow-none ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
 
         {/* Inside Border Highlight */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-white/[0.05] to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-white to-transparent opacity-50" />
 
         {/* Sidebar Header / Logo */}
         <div className="relative z-10 flex h-[84px] items-center justify-between px-5 pt-2">
           <Link to="/dashboard" className="group flex items-center gap-3.5" onClick={() => setMobileOpen(false)}>
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 shadow-[0_0_20px_rgba(99,102,241,0.3)] transition-transform duration-300 group-hover:scale-[1.05] group-hover:shadow-[0_0_25px_rgba(99,102,241,0.5)]">
-              <span className="text-[15px] font-bold tracking-widest text-white drop-shadow-md">BH</span>
-              <div className="absolute inset-0 rounded-xl bg-white/[0.08] mix-blend-overlay"></div>
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 shadow-md shadow-indigo-200 transition-transform duration-300 group-hover:scale-[1.05]">
+              <span className="text-[15px] font-bold tracking-widest text-white drop-shadow-sm">BH</span>
               <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20"></div>
             </div>
             <div className="flex flex-col">
-              <p className="bg-gradient-to-br from-white via-white to-slate-400 bg-clip-text text-[17px] font-bold tracking-tight text-transparent">
+              <p className="bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-[17px] font-bold tracking-tight text-transparent">
                 BillHub
               </p>
-              <p className="text-[11px] font-medium tracking-[0.05em] text-indigo-400/80 uppercase">
+              <p className="text-[11px] font-bold tracking-[0.05em] text-indigo-500/80 uppercase">
                 Business Console
               </p>
             </div>
@@ -194,7 +202,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-slate-400 ring-1 ring-inset ring-white/10 transition-colors hover:bg-white/10 hover:text-white md:hidden"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-500 ring-1 ring-inset ring-slate-200 transition-colors hover:bg-slate-50 hover:text-slate-900 md:hidden shadow-sm"
             aria-label="Close sidebar"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -206,7 +214,7 @@ export default function Sidebar() {
         {/* Navigation Items */}
         <div className="relative z-10 mt-4 flex-1 overflow-y-auto px-4 pb-8 scrollbar-hide">
           <div className="mb-4 ml-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500/70">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
               Overview Menu
             </p>
           </div>
@@ -214,46 +222,73 @@ export default function Sidebar() {
           <nav className="flex flex-col gap-1.5">
             {menuItems.map((item) => {
               const active = isActive(item.path);
+              const isExpanded = isItemOrSubItemActive(item);
               const Icon = item.Icon;
 
               return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileOpen(false)}
-                  className={`group relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-indigo-500 ${active
-                      ? 'bg-gradient-to-r from-indigo-500/15 to-transparent text-white'
-                      : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
-                    }`}
-                >
-                  {/* Active Indicator Line */}
-                  {active && (
-                    <div className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-cyan-400 to-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.6)]" />
-                  )}
+                <div key={item.path} className="flex flex-col">
+                  <Link
+                    to={item.path}
+                    onClick={() => {
+                      if (window.innerWidth < 768 && !item.subItems) setMobileOpen(false);
+                    }}
+                    className={`group relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-indigo-500 ${active || (item.subItems && isExpanded)
+                        ? 'bg-indigo-50/50 text-indigo-700 shadow-sm ring-1 ring-slate-200/50'
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      }`}
+                  >
+                    {/* Active Indicator Line */}
+                    {(active || (item.subItems && isExpanded)) && (
+                      <div className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-cyan-400 to-indigo-500" />
+                    )}
 
-                  {/* Icon Container */}
-                  <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${active
-                      ? 'bg-gradient-to-br from-indigo-500 to-cyan-500 shadow-[0_0_15px_rgba(99,102,241,0.4)] text-white'
-                      : 'bg-[#131824] text-slate-400 ring-1 ring-inset ring-white/5 group-hover:bg-[#1A2030] group-hover:text-indigo-300'
-                    }`}>
-                    {/* Subtle inner glowing stroke on active */}
-                    {active && <div className="absolute inset-0 rounded-lg ring-1 ring-inset ring-white/20"></div>}
-                    <div className="transition-transform duration-300 group-hover:scale-110">
-                      <Icon />
+                    {/* Icon Container */}
+                    <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${active || (item.subItems && isExpanded)
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'bg-white text-slate-400 ring-1 ring-inset ring-slate-200 group-hover:text-indigo-500 group-hover:shadow-sm'
+                      }`}>
+                      <div className="transition-transform duration-300 group-hover:scale-110">
+                        <Icon />
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Item Label text */}
-                  <span className={`text-[14px] font-medium tracking-wide transition-colors duration-300 ${active ? 'font-semibold text-white' : 'group-hover:text-white'
-                    }`}>
-                    {item.name}
-                  </span>
+                    {/* Item Label text */}
+                    <span className={`text-[14px] font-medium tracking-wide transition-colors duration-300 ${active || (item.subItems && isExpanded) ? 'font-semibold text-slate-900' : 'group-hover:text-slate-900'
+                      }`}>
+                      {item.name}
+                    </span>
+                  </Link>
 
-                  {/* Hover background slide-in effect */}
-                  {!active && (
-                    <div className="absolute inset-0 -z-10 rounded-xl bg-gradient-to-r from-white/[0.03] to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                  {/* Submenu rendering */}
+                  {item.subItems && isExpanded && (
+                    <div className="mt-1 flex flex-col gap-1 overflow-hidden pb-1 pl-[3.25rem]">
+                      {item.subItems.map((subItem) => {
+                        const subActive = isActive(subItem.path);
+                        const SubIcon = subItem.Icon;
+                        return (
+                          <Link
+                            key={subItem.path}
+                            to={subItem.path}
+                            onClick={() => {
+                              if (window.innerWidth < 768) setMobileOpen(false);
+                            }}
+                            className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-300 ${subActive
+                                ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm ring-1 ring-indigo-100/50'
+                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                              }`}
+                          >
+                            <div className={`flex h-4 w-4 shrink-0 items-center justify-center ${subActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'}`}>
+                              <div className="scale-75">
+                                <SubIcon />
+                              </div>
+                            </div>
+                            <span className="text-[13px] tracking-wide">{subItem.name}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
                   )}
-                </Link>
+                </div>
               );
             })}
           </nav>
