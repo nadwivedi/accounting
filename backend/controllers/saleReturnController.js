@@ -1,14 +1,14 @@
-const Journal = require('../models/Journal');
+const SaleReturn = require('../models/SaleReturn');
 const { createVoucherHandlers } = require('./sharedVoucherController');
 
 const { createEntry, getAllEntries } = createVoucherHandlers({
-  Model: Journal,
-  entryName: 'Journal voucher',
+  Model: SaleReturn,
+  entryName: 'Sale return voucher',
   fields: [
     { name: 'debitAccount', label: 'Debit account', required: true },
     { name: 'creditAccount', label: 'Credit account', required: true }
   ]
 });
 
-exports.createJournal = createEntry;
-exports.getAllJournals = getAllEntries;
+exports.createSaleReturn = createEntry;
+exports.getAllSaleReturns = getAllEntries;

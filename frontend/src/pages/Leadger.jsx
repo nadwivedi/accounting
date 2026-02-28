@@ -59,9 +59,13 @@ export default function Leadger() {
   };
 
   const handleOpenForm = () => {
-    setFormData(getInitialForm());
+    const defaultGroup = groups[0] || null;
+    setFormData({
+      ...getInitialForm(),
+      group: defaultGroup?._id || ''
+    });
     setGroupQuery('');
-    setGroupListIndex(-1);
+    setGroupListIndex(defaultGroup ? 0 : -1);
     setIsGroupSectionActive(false);
     setError('');
     setShowForm(true);
@@ -76,6 +80,19 @@ export default function Leadger() {
   };
 
   const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+  const getMatchingGroups = (queryValue) => {
+    const normalized = normalizeText(queryValue);
+    if (!normalized) return groups;
+
+    const startsWith = groups.filter((group) => normalizeText(group.name).startsWith(normalized));
+    const includes = groups.filter((group) => (
+      !normalizeText(group.name).startsWith(normalized)
+      && normalizeText(group.name).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  };
 
   const findExactGroup = (value) => {
     const normalized = normalizeText(value);
@@ -92,18 +109,7 @@ export default function Leadger() {
       || null;
   };
 
-  const filteredGroups = useMemo(() => {
-    const normalized = normalizeText(groupQuery);
-    if (!normalized) return groups;
-
-    const startsWith = groups.filter((group) => normalizeText(group.name).startsWith(normalized));
-    const includes = groups.filter((group) => (
-      !normalizeText(group.name).startsWith(normalized)
-      && normalizeText(group.name).includes(normalized)
-    ));
-
-    return [...startsWith, ...includes];
-  }, [groups, groupQuery]);
+  const filteredGroups = useMemo(() => getMatchingGroups(groupQuery), [groups, groupQuery]);
 
   useEffect(() => {
     if (filteredGroups.length === 0) {
@@ -117,6 +123,18 @@ export default function Leadger() {
       return prev;
     });
   }, [filteredGroups]);
+
+  useEffect(() => {
+    if (!showForm) return;
+    if (formData.group) return;
+    if (groups.length === 0) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      group: groups[0]._id
+    }));
+    setGroupListIndex(0);
+  }, [showForm, groups, formData.group]);
 
   const selectGroup = (group, focusNotes = true) => {
     if (!group) return;
@@ -139,13 +157,23 @@ export default function Leadger() {
     setGroupQuery(value);
 
     const exactGroup = findExactGroup(value);
+    if (exactGroup) {
+      setFormData((prev) => ({
+        ...prev,
+        group: exactGroup._id
+      }));
+      const exactIndex = getMatchingGroups(value).findIndex((group) => String(group._id) === String(exactGroup._id));
+      setGroupListIndex(exactIndex >= 0 ? exactIndex : 0);
+      return;
+    }
+
+    const matchingGroups = getMatchingGroups(value);
+    const defaultGroup = matchingGroups[0] || null;
     setFormData((prev) => ({
       ...prev,
-      group: exactGroup?._id || ''
+      group: defaultGroup?._id || ''
     }));
-    if (!exactGroup) {
-      setGroupListIndex(0);
-    }
+    setGroupListIndex(defaultGroup ? 0 : -1);
   };
 
   const handleGroupInputKeyDown = (e) => {
@@ -263,12 +291,12 @@ export default function Leadger() {
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCloseForm}>
           <div className="w-full md:w-[30%] max-h-[90vh] overflow-y-auto md:overflow-visible rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
-              <h2 className="text-xl font-bold text-gray-800">Leadger/Account Voucher</h2>
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-600 bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-2xl">
+              <h2 className="text-xl font-bold text-slate-100">Leadger/Account Voucher</h2>
               <button
                 type="button"
                 onClick={handleCloseForm}
-                className="h-9 w-9 rounded-full border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition"
+                className="h-9 w-9 rounded-full border border-slate-500 text-slate-200 hover:bg-slate-600 hover:text-white hover:border-slate-300 transition"
                 aria-label="Close popup"
               >
                 &times;
@@ -315,7 +343,6 @@ export default function Leadger() {
                     onKeyDown={handleGroupInputKeyDown}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg"
                     placeholder="Type group, use Up/Down, press Enter"
-                    required
                   />
 
                   {isGroupSectionActive && (

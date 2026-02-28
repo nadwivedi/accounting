@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 
-const generateJournalNumber = () => {
+const generateStockAdjustmentVoucherNumber = () => {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const stamp = Date.now().toString().slice(-6);
   const rand = Math.floor(Math.random() * 90 + 10);
-  return `JRN-${date}-${stamp}${rand}`;
+  return `SAV-${date}-${stamp}${rand}`;
 };
 
-const journalSchema = new mongoose.Schema({
+const stockAdjustmentVoucherSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -26,15 +26,20 @@ const journalSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     default: null
   },
-  debitAccount: {
+  stockItem: {
     type: String,
     required: true,
     trim: true
   },
-  creditAccount: {
+  adjustmentType: {
     type: String,
+    enum: ['add', 'subtract'],
+    required: true
+  },
+  quantity: {
+    type: Number,
     required: true,
-    trim: true
+    min: 0.000001
   },
   amount: {
     type: Number,
@@ -58,12 +63,12 @@ const journalSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-journalSchema.pre('validate', function ensureVoucherNumber() {
+stockAdjustmentVoucherSchema.pre('validate', function ensureVoucherNumber() {
   if (!this.voucherNumber) {
-    this.voucherNumber = generateJournalNumber();
+    this.voucherNumber = generateStockAdjustmentVoucherNumber();
   }
 });
 
-journalSchema.index({ userId: 1, voucherNumber: 1 }, { unique: true });
+stockAdjustmentVoucherSchema.index({ userId: 1, voucherNumber: 1 }, { unique: true });
 
-module.exports = mongoose.model('Journal', journalSchema);
+module.exports = mongoose.model('StockAdjustmentVoucher', stockAdjustmentVoucherSchema);

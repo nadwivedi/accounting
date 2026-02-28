@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 
-const generateDebitNoteNumber = () => {
+const generateSaleReturnNumber = () => {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const stamp = Date.now().toString().slice(-6);
   const rand = Math.floor(Math.random() * 90 + 10);
-  return `DBN-${date}-${stamp}${rand}`;
+  return `SRT-${date}-${stamp}${rand}`;
 };
 
-const debitNoteSchema = new mongoose.Schema({
+const saleReturnSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -27,6 +27,11 @@ const debitNoteSchema = new mongoose.Schema({
     default: null
   },
   debitAccount: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  creditAccount: {
     type: String,
     required: true,
     trim: true
@@ -53,12 +58,12 @@ const debitNoteSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-debitNoteSchema.pre('validate', function ensureVoucherNumber() {
+saleReturnSchema.pre('validate', function ensureVoucherNumber() {
   if (!this.voucherNumber) {
-    this.voucherNumber = generateDebitNoteNumber();
+    this.voucherNumber = generateSaleReturnNumber();
   }
 });
 
-debitNoteSchema.index({ userId: 1, voucherNumber: 1 }, { unique: true });
+saleReturnSchema.index({ userId: 1, voucherNumber: 1 }, { unique: true });
 
-module.exports = mongoose.model('DebitNote', debitNoteSchema);
+module.exports = mongoose.model('SaleReturn', saleReturnSchema);

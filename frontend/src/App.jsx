@@ -17,9 +17,9 @@ import Payments from './pages/Payments';
 import Receipts from './pages/Receipts';
 import Leadger from './pages/Leadger';
 import Contra from './pages/Contra';
-import Journal from './pages/Journal';
-import DebitNote from './pages/DebitNote';
-import CreditNote from './pages/CreditNote';
+import StockAdjustmentVoucher from './pages/StockAdjustmentVoucher';
+import SaleReturn from './pages/SaleReturn';
+import PurchaseReturn from './pages/PurchaseReturn';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -175,28 +175,28 @@ function App() {
         />
 
         <Route
-          path="/journal"
+          path="/stock-adjustment-voucher"
           element={
             <ProtectedRoute>
-              <Journal />
+              <StockAdjustmentVoucher />
             </ProtectedRoute>
           }
         />
 
         <Route
-          path="/debit-note"
+          path="/sale-return"
           element={
             <ProtectedRoute>
-              <DebitNote />
+              <SaleReturn />
             </ProtectedRoute>
           }
         />
 
         <Route
-          path="/credit-note"
+          path="/purchase-return"
           element={
             <ProtectedRoute>
-              <CreditNote />
+              <PurchaseReturn />
             </ProtectedRoute>
           }
         />

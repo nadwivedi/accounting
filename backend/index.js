@@ -17,9 +17,9 @@ const paymentRoutes = require('./routes/paymentRoutes');
 const receiptRoutes = require('./routes/receiptRoutes');
 const ledgerRoutes = require('./routes/ledgerRoutes');
 const contraRoutes = require('./routes/contraRoutes');
-const journalRoutes = require('./routes/journalRoutes');
-const debitNoteRoutes = require('./routes/debitNoteRoutes');
-const creditNoteRoutes = require('./routes/creditNoteRoutes');
+const stockAdjustmentVoucherRoutes = require('./routes/stockAdjustmentVoucherRoutes');
+const saleReturnRoutes = require('./routes/saleReturnRoutes');
+const purchaseReturnRoutes = require('./routes/purchaseReturnRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
@@ -50,9 +50,9 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/receipts', receiptRoutes);
 app.use('/api/leadgers', ledgerRoutes);
 app.use('/api/contras', contraRoutes);
-app.use('/api/journals', journalRoutes);
-app.use('/api/debit-notes', debitNoteRoutes);
-app.use('/api/credit-notes', creditNoteRoutes);
+app.use('/api/stock-adjustment-vouchers', stockAdjustmentVoucherRoutes);
+app.use('/api/sale-returns', saleReturnRoutes);
+app.use('/api/purchase-returns', purchaseReturnRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/uploads', uploadRoutes);
 

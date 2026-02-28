@@ -1,13 +1,13 @@
 const mongoose = require('mongoose');
 
-const generateCreditNoteNumber = () => {
+const generatePurchaseReturnNumber = () => {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const stamp = Date.now().toString().slice(-6);
   const rand = Math.floor(Math.random() * 90 + 10);
-  return `CRN-${date}-${stamp}${rand}`;
+  return `PRT-${date}-${stamp}${rand}`;
 };
 
-const creditNoteSchema = new mongoose.Schema({
+const purchaseReturnSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -25,6 +25,11 @@ const creditNoteSchema = new mongoose.Schema({
   party: {
     type: mongoose.Schema.Types.ObjectId,
     default: null
+  },
+  debitAccount: {
+    type: String,
+    required: true,
+    trim: true
   },
   creditAccount: {
     type: String,
@@ -53,12 +58,12 @@ const creditNoteSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-creditNoteSchema.pre('validate', function ensureVoucherNumber() {
+purchaseReturnSchema.pre('validate', function ensureVoucherNumber() {
   if (!this.voucherNumber) {
-    this.voucherNumber = generateCreditNoteNumber();
+    this.voucherNumber = generatePurchaseReturnNumber();
   }
 });
 
-creditNoteSchema.index({ userId: 1, voucherNumber: 1 }, { unique: true });
+purchaseReturnSchema.index({ userId: 1, voucherNumber: 1 }, { unique: true });
 
-module.exports = mongoose.model('CreditNote', creditNoteSchema);
+module.exports = mongoose.model('PurchaseReturn', purchaseReturnSchema);

@@ -99,9 +99,26 @@ export default function VoucherRegisterPage({
     }
 
     for (const field of fieldDefinitions) {
-      if (field.required && !String(formData[field.name] || '').trim()) {
+      const rawValue = formData[field.name];
+      const normalizedValue = String(rawValue ?? '').trim();
+
+      if (field.required && !normalizedValue) {
         setError(`${field.label} is required`);
         return;
+      }
+
+      if (field.type === 'number' && normalizedValue) {
+        const numberValue = Number(rawValue);
+        if (!Number.isFinite(numberValue)) {
+          setError(`${field.label} must be a valid number`);
+          return;
+        }
+
+        const minValue = Number(field.min);
+        if (Number.isFinite(minValue) && numberValue < minValue) {
+          setError(`${field.label} must be at least ${field.min}`);
+          return;
+        }
       }
     }
 
@@ -117,7 +134,13 @@ export default function VoucherRegisterPage({
       };
 
       fieldDefinitions.forEach((field) => {
-        payload[field.name] = String(formData[field.name] || '').trim();
+        const value = formData[field.name];
+        if (field.type === 'number') {
+          payload[field.name] = String(value ?? '').trim() ? Number(value) : null;
+          return;
+        }
+
+        payload[field.name] = String(value || '').trim();
       });
 
       await apiClient.post(endpoint, payload);
@@ -259,14 +282,32 @@ export default function VoucherRegisterPage({
               {fieldDefinitions.map((field) => (
                 <div key={field.name}>
                   <label className="block text-sm text-slate-600 mb-1">{field.label} {field.required ? '*' : ''}</label>
-                  <input
-                    type="text"
-                    name={field.name}
-                    value={formData[field.name]}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    placeholder={field.placeholder || field.label}
-                  />
+                  {field.type === 'select' ? (
+                    <select
+                      name={field.name}
+                      value={formData[field.name]}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    >
+                      <option value="">{field.placeholder || `Select ${field.label}`}</option>
+                      {(field.options || []).map((option) => (
+                        <option key={String(option.value)} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type={field.type || 'text'}
+                      name={field.name}
+                      value={formData[field.name]}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                      placeholder={field.placeholder || field.label}
+                      step={field.step}
+                      min={field.min}
+                    />
+                  )}
                 </div>
               ))}
 

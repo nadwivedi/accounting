@@ -152,29 +152,24 @@ function ContraIcon() {
   );
 }
 
-function JournalIcon() {
+function SaleReturnIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <rect x="4" y="4" width="16" height="16" rx="2" />
-      <path d="M8 9h8M8 13h8M8 17h4" />
+      <path d="M20 8H7" />
+      <path d="m11 4-4 4 4 4" />
+      <path d="M4 16h13" />
+      <path d="m13 12 4 4-4 4" />
     </svg>
   );
 }
 
-function DebitNoteIcon() {
+function PurchaseReturnIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M12 4v16M5 11h7" />
-      <path d="M5 19h14" />
-    </svg>
-  );
-}
-
-function CreditNoteIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M12 4v16M12 11h7" />
-      <path d="M5 19h14" />
+      <path d="M4 8h13" />
+      <path d="m11 4 4 4-4 4" />
+      <path d="M20 16H7" />
+      <path d="m13 12-4 4 4 4" />
     </svg>
   );
 }
@@ -198,12 +193,12 @@ const menuItems = [
     subItems: [
       { name: 'Sale', path: '/sales', Icon: SaleIcon },
       { name: 'Purchase', path: '/purchases', Icon: PurchaseIcon },
+      { name: 'Sale Return', path: '/sale-return', Icon: SaleReturnIcon },
+      { name: 'Purchase Return', path: '/purchase-return', Icon: PurchaseReturnIcon },
+      { name: 'Stock Adjustment', path: '/stock-adjustment-voucher', Icon: StockAdjustmentIcon },
       { name: 'Payment', path: '/payments', Icon: PaymentIcon },
       { name: 'Receipt', path: '/receipts', Icon: ReceiptIcon },
-      { name: 'Contra', path: '/contra', Icon: ContraIcon },
-      { name: 'Journal', path: '/journal', Icon: JournalIcon },
-      { name: 'Debit Note', path: '/debit-note', Icon: DebitNoteIcon },
-      { name: 'Credit Note', path: '/credit-note', Icon: CreditNoteIcon }
+      { name: 'Contra', path: '/contra', Icon: ContraIcon }
     ]
   },
   { name: 'Reports', path: '/reports', Icon: ReportIcon },
