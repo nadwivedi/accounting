@@ -4,8 +4,6 @@ const Purchase = require('../models/Purchase');
 const Payment = require('../models/Payment');
 const Receipt = require('../models/Receipt');
 const Product = require('../models/Stock');
-const Party = require('../models/Party');
-const StockAdjustment = require('../models/StockAdjustment');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -19,27 +17,41 @@ const withDateFilters = (filter, dateField, fromDate, toDate) => {
   if (toDate) filter[dateField].$lte = new Date(toDate);
 };
 
+const getRawPartyId = (party) => {
+  if (!party) return null;
+  if (typeof party === 'object' && party !== null) {
+    return party._id || null;
+  }
+  return party;
+};
+
+const getPartyLabel = (partyId, fallback = 'Account') => {
+  if (!partyId) return '-';
+  const suffix = String(partyId).slice(-6).toUpperCase();
+  return `${fallback} ${suffix}`;
+};
+
 exports.getOutstandingReport = async (req, res) => {
   try {
     const userId = req.userId;
 
-    const [sales, purchases, payments, receipts, parties] = await Promise.all([
-      Sale.find({ userId }).populate('party', 'partyName'),
-      Purchase.find({ userId }).populate('party', 'partyName'),
+    const [sales, purchases, payments, receipts] = await Promise.all([
+      Sale.find({ userId }),
+      Purchase.find({ userId }),
       Payment.find({ userId }),
-      Receipt.find({ userId }),
-      Party.find({ userId }, 'partyName type')
+      Receipt.find({ userId })
     ]);
 
     const salePending = sales
       .map((sale) => {
+        const partyId = getRawPartyId(sale.party);
         const pending = Math.max(0, toNumber(sale.totalAmount) - toNumber(sale.paidAmount));
         return {
           id: sale._id,
           invoiceNumber: sale.invoiceNumber,
           date: sale.saleDate,
-          partyId: sale.party?._id || null,
-          partyName: sale.party?.partyName || sale.customerName || 'Walk-in',
+          partyId: partyId || null,
+          partyName: sale.customerName || getPartyLabel(partyId, 'Account') || 'Walk-in',
           totalAmount: toNumber(sale.totalAmount),
           paidAmount: toNumber(sale.paidAmount),
           pendingAmount: pending,
@@ -51,6 +63,7 @@ exports.getOutstandingReport = async (req, res) => {
 
     const purchasePending = purchases
       .map((purchase) => {
+        const partyId = getRawPartyId(purchase.party);
         const pending = Math.max(
           0,
           toNumber(
@@ -62,8 +75,8 @@ exports.getOutstandingReport = async (req, res) => {
           id: purchase._id,
           invoiceNo: purchase.invoiceNo || purchase.invoiceNumber || '-',
           date: purchase.purchaseDate,
-          partyId: purchase.party?._id || null,
-          partyName: purchase.party?.partyName || '-',
+          partyId: partyId || null,
+          partyName: getPartyLabel(partyId, 'Account'),
           totalAmount: toNumber(purchase.totalAmount),
           paidAmount: toNumber(purchase.paidAmount),
           pendingAmount: pending,
@@ -74,49 +87,54 @@ exports.getOutstandingReport = async (req, res) => {
       .sort((a, b) => new Date(b.date) - new Date(a.date));
 
     const partyMap = new Map();
-    parties.forEach((party) => {
-      partyMap.set(String(party._id), {
-        partyId: party._id,
-        partyName: party.partyName,
-        type: party.type,
-        totalSales: 0,
-        totalReceipts: 0,
-        totalPurchases: 0,
-        totalPayments: 0,
-        receivable: 0,
-        payable: 0,
-        netBalance: 0
-      });
-    });
+
+    const ensurePartyRow = (partyId, fallbackName = 'Account') => {
+      if (!partyId) return null;
+      const key = String(partyId);
+      if (!partyMap.has(key)) {
+        partyMap.set(key, {
+          partyId,
+          partyName: getPartyLabel(partyId, fallbackName),
+          type: 'account',
+          totalSales: 0,
+          totalReceipts: 0,
+          totalPurchases: 0,
+          totalPayments: 0,
+          receivable: 0,
+          payable: 0,
+          netBalance: 0
+        });
+      }
+      return partyMap.get(key);
+    };
 
     sales.forEach((sale) => {
-      if (!sale.party) return;
-      const key = String(sale.party._id || sale.party);
-      const row = partyMap.get(key);
+      const partyId = getRawPartyId(sale.party);
+      const row = ensurePartyRow(partyId, sale.customerName || 'Account');
       if (!row) return;
+      if (sale.customerName) {
+        row.partyName = sale.customerName;
+      }
       row.totalSales += toNumber(sale.totalAmount);
     });
 
     receipts.forEach((receipt) => {
-      if (!receipt.party) return;
-      const key = String(receipt.party);
-      const row = partyMap.get(key);
+      const partyId = getRawPartyId(receipt.party);
+      const row = ensurePartyRow(partyId);
       if (!row) return;
       row.totalReceipts += toNumber(receipt.amount);
     });
 
     purchases.forEach((purchase) => {
-      if (!purchase.party) return;
-      const key = String(purchase.party._id || purchase.party);
-      const row = partyMap.get(key);
+      const partyId = getRawPartyId(purchase.party);
+      const row = ensurePartyRow(partyId);
       if (!row) return;
       row.totalPurchases += toNumber(purchase.totalAmount);
     });
 
     payments.forEach((payment) => {
-      if (!payment.party) return;
-      const key = String(payment.party);
-      const row = partyMap.get(key);
+      const partyId = getRawPartyId(payment.party);
+      const row = ensurePartyRow(partyId);
       if (!row) return;
       row.totalPayments += toNumber(payment.amount);
     });
@@ -186,70 +204,74 @@ exports.getPartyLedger = async (req, res) => {
     withDateFilters(receiptFilter, 'receiptDate', fromDate, toDate);
 
     const [sales, purchases, payments, receipts] = await Promise.all([
-      Sale.find(saleFilter).populate('party', 'partyName'),
-      Purchase.find(purchaseFilter).populate('party', 'partyName'),
-      Payment.find(paymentFilter).populate('party', 'partyName'),
-      Receipt.find(receiptFilter).populate('party', 'partyName')
+      Sale.find(saleFilter),
+      Purchase.find(purchaseFilter),
+      Payment.find(paymentFilter),
+      Receipt.find(receiptFilter)
     ]);
 
     const entries = [];
 
     sales.forEach((sale) => {
+      const salePartyId = getRawPartyId(sale.party);
       entries.push({
         date: sale.saleDate,
         entryCreatedAt: sale.createdAt || sale.saleDate,
         type: 'sale',
         refId: sale._id,
         refNumber: sale.invoiceNumber,
-        partyId: sale.party?._id || null,
-        partyName: sale.party?.partyName || sale.customerName || 'Walk-in',
+        partyId: salePartyId || null,
+        partyName: sale.customerName || (salePartyId ? getPartyLabel(salePartyId, 'Account') : 'Walk-in'),
         amount: toNumber(sale.totalAmount),
-        impact: toNumber(sale.totalAmount), // increases receivable
+        impact: toNumber(sale.totalAmount),
         note: sale.notes || ''
       });
     });
 
     receipts.forEach((receipt) => {
+      const receiptPartyId = getRawPartyId(receipt.party);
       entries.push({
         date: receipt.receiptDate,
         entryCreatedAt: receipt.createdAt || receipt.receiptDate,
         type: 'receipt',
         refId: receipt._id,
         refNumber: receipt.refId || null,
-        partyId: receipt.party?._id || null,
-        partyName: receipt.party?.partyName || '-',
+        partyId: receiptPartyId || null,
+        partyName: getPartyLabel(receiptPartyId, 'Account'),
         amount: toNumber(receipt.amount),
-        impact: -toNumber(receipt.amount), // reduces receivable
+        impact: -toNumber(receipt.amount),
         note: receipt.notes || ''
       });
     });
 
     purchases.forEach((purchase) => {
+      const purchasePartyId = getRawPartyId(purchase.party);
       entries.push({
         date: purchase.purchaseDate,
         entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
         type: 'purchase',
         refId: purchase._id,
         refNumber: purchase.invoiceNo || purchase.invoiceNumber || '-',
-        partyId: purchase.party?._id || null,
-        partyName: purchase.party?.partyName || '-',
+        partyId: purchasePartyId || null,
+        partyName: getPartyLabel(purchasePartyId, 'Account'),
         amount: toNumber(purchase.totalAmount),
-        impact: -toNumber(purchase.totalAmount), // increases payable
+        impact: -toNumber(purchase.totalAmount),
         note: purchase.notes || ''
       });
     });
 
     payments.forEach((payment) => {
+      const paymentPartyId = getRawPartyId(payment.party);
       entries.push({
         date: payment.paymentDate,
         entryCreatedAt: payment.createdAt || payment.paymentDate,
         type: 'payment',
         refId: payment._id,
         refNumber: payment.refId || null,
-        partyId: payment.party?._id || null,
-        partyName: payment.party?.partyName || '-',
+        partyId: paymentPartyId || null,
+        partyName: getPartyLabel(paymentPartyId, 'Account'),
         amount: toNumber(payment.amount),
-        impact: toNumber(payment.amount), // reduces payable
+        impact: toNumber(payment.amount),
         note: payment.notes || ''
       });
     });
@@ -301,16 +323,12 @@ exports.getStockLedger = async (req, res) => {
 
     const purchaseFilter = { userId };
     const saleFilter = { userId };
-    const adjustmentFilter = { userId };
-
     withDateFilters(purchaseFilter, 'purchaseDate', fromDate, toDate);
     withDateFilters(saleFilter, 'saleDate', fromDate, toDate);
-    withDateFilters(adjustmentFilter, 'adjustmentDate', fromDate, toDate);
 
-    const [purchases, sales, adjustments, products] = await Promise.all([
+    const [purchases, sales, products] = await Promise.all([
       Purchase.find(purchaseFilter).populate('items.product', 'name'),
       Sale.find(saleFilter).populate('items.product', 'name'),
-      StockAdjustment.find(adjustmentFilter).populate('product', 'name'),
       Product.find({ userId }, 'name currentStock')
     ]);
 
@@ -353,28 +371,6 @@ exports.getStockLedger = async (req, res) => {
           outQty: toNumber(item.quantity),
           note: sale.notes || ''
         });
-      });
-    });
-
-    adjustments.forEach((adjustment) => {
-      if (!adjustment.product) return;
-      const adjustmentProductId = String(adjustment.product._id || adjustment.product);
-      if (productId && adjustmentProductId !== String(productId)) return;
-
-      const quantity = toNumber(adjustment.quantity);
-      const isAdd = adjustment.type === 'add';
-
-      rows.push({
-        date: adjustment.adjustmentDate || adjustment.createdAt,
-        entryCreatedAt: adjustment.createdAt || adjustment.adjustmentDate,
-        type: 'adjustment',
-        refId: adjustment._id,
-        refNumber: `ADJ-${String(adjustment._id).slice(-6).toUpperCase()}`,
-        productId: adjustment.product._id,
-        productName: adjustment.product.name,
-        inQty: isAdd ? quantity : 0,
-        outQty: isAdd ? 0 : quantity,
-        note: adjustment.notes || ''
       });
     });
 

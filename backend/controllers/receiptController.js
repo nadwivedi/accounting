@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Receipt = require('../models/Receipt');
 const Sale = require('../models/Sales');
-const Party = require('../models/Party');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -99,16 +98,6 @@ exports.createReceipt = async (req, res) => {
       resolvedParty = resolvedParty || sale.party || null;
     }
 
-    if (resolvedParty) {
-      const partyDoc = await Party.findOne({ _id: resolvedParty, userId });
-      if (!partyDoc) {
-        return res.status(404).json({
-          success: false,
-          message: 'Party not found'
-        });
-      }
-    }
-
     const receipt = await Receipt.create({
       userId,
       party: resolvedParty,
@@ -120,14 +109,13 @@ exports.createReceipt = async (req, res) => {
       notes
     });
 
-    const populatedReceipt = await Receipt.findById(receipt._id)
-      .populate('party', 'partyName phone');
+    const savedReceipt = await Receipt.findById(receipt._id);
 
     res.status(201).json({
       success: true,
       message: 'Receipt created successfully',
       data: {
-        receipt: populatedReceipt,
+        receipt: savedReceipt,
         sale: linkedSale
       }
     });
@@ -163,7 +151,6 @@ exports.getAllReceipts = async (req, res) => {
     }
 
     const receipts = await Receipt.find(filter)
-      .populate('party', 'partyName phone')
       .sort({ receiptDate: -1, createdAt: -1 });
 
     res.status(200).json({

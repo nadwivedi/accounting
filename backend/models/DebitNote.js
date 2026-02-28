@@ -24,8 +24,7 @@ const debitNoteSchema = new mongoose.Schema({
   },
   party: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Party',
-    required: true
+    default: null
   },
   debitAccount: {
     type: String,

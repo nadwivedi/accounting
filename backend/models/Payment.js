@@ -8,7 +8,6 @@ const paymentSchema = new mongoose.Schema({
   },
   party: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Party',
     default: null
   },
   refType: {

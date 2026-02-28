@@ -53,8 +53,7 @@ const purchaseSchema = new mongoose.Schema({
   },
   party: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Party',
-    required: [true, 'Supplier is required']
+    default: null
   },
   items: [purchaseItemSchema],
   purchaseDate: {

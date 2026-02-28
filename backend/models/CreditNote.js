@@ -24,8 +24,7 @@ const creditNoteSchema = new mongoose.Schema({
   },
   party: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Party',
-    required: true
+    default: null
   },
   creditAccount: {
     type: String,

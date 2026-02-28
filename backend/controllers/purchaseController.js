@@ -1,6 +1,5 @@
 const Purchase = require('../models/Purchase');
 const Product = require('../models/Stock');
-const Party = require('../models/Party');
 const Payment = require('../models/Payment');
 
 const toNumber = (value, fallback = 0) => {
@@ -81,21 +80,6 @@ exports.createPurchase = async (req, res) => {
     } = req.body;
     const userId = req.userId;
 
-    if (!party) {
-      return res.status(400).json({
-        success: false,
-        message: 'Supplier is required'
-      });
-    }
-
-    const partyDoc = await Party.findOne({ _id: party, userId });
-    if (!partyDoc) {
-      return res.status(404).json({
-        success: false,
-        message: 'Supplier not found'
-      });
-    }
-
     const normalizedItems = normalizeItems(items || []);
     const itemError = validateItems(normalizedItems);
     if (itemError) {
@@ -123,7 +107,7 @@ exports.createPurchase = async (req, res) => {
       userId,
       invoiceNo: resolvedInvoiceNumber,
       invoiceNumber: resolvedInvoiceNumber,
-      party,
+      party: party || null,
       items: normalizedItems,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : new Date(),
       dueDate: dueDate ? new Date(dueDate) : null,
@@ -147,7 +131,7 @@ exports.createPurchase = async (req, res) => {
     if (resolvedPaymentAmount > 0) {
       await Payment.create({
         userId,
-        party,
+        party: party || null,
         refType: resolvedBillWiseFlag ? 'purchase' : 'none',
         refId: resolvedBillWiseFlag ? purchase._id : null,
         amount: resolvedPaymentAmount,
@@ -160,7 +144,6 @@ exports.createPurchase = async (req, res) => {
     }
 
     const populatedPurchase = await Purchase.findById(purchase._id)
-      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     res.status(201).json({
@@ -199,25 +182,14 @@ exports.getAllPurchases = async (req, res) => {
     }
 
     let query = Purchase.find(filter)
-      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     if (search) {
-      const matchingParties = await Party.find({
-        userId,
-        partyName: { $regex: search, $options: 'i' }
-      }, '_id');
-
-      const partySearchClause = matchingParties.length > 0
-        ? [{ party: { $in: matchingParties.map((doc) => doc._id) } }]
-        : [];
-
       query = query.where({
         $or: [
           { invoiceNo: { $regex: search, $options: 'i' } },
           { invoiceNumber: { $regex: search, $options: 'i' } },
-          { notes: { $regex: search, $options: 'i' } },
-          ...partySearchClause
+          { notes: { $regex: search, $options: 'i' } }
         ]
       });
     }
@@ -245,7 +217,6 @@ exports.getPurchaseById = async (req, res) => {
     const userId = req.userId;
 
     const purchase = await Purchase.findOne({ _id: id, userId })
-      .populate('party', 'partyName phone email')
       .populate('items.product', 'name');
 
     if (!purchase) {
@@ -294,13 +265,6 @@ exports.updatePurchase = async (req, res) => {
     }
 
     if (party) {
-      const partyDoc = await Party.findOne({ _id: party, userId });
-      if (!partyDoc) {
-        return res.status(404).json({
-          success: false,
-          message: 'Supplier not found'
-        });
-      }
       purchase.party = party;
     }
 
@@ -384,7 +348,6 @@ exports.updatePurchase = async (req, res) => {
     await purchase.save();
 
     const updatedPurchase = await Purchase.findById(id)
-      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     res.status(200).json({

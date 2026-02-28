@@ -138,7 +138,7 @@ export default function Leadger() {
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Leadger Voucher Count</p>
+              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Leadger/Account Voucher Count</p>
               <p className="mt-1 sm:mt-2 text-base sm:text-2xl font-bold text-slate-800 leading-tight">{leadgers.length}</p>
             </div>
             <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform group-hover:scale-110">
@@ -176,7 +176,7 @@ export default function Leadger() {
           onClick={handleOpenForm}
           className="bg-indigo-600 text-white px-6 py-2.5 rounded-lg hover:bg-indigo-700 transition shadow-sm whitespace-nowrap"
         >
-          + Add Leadger Voucher
+          + Add Leadger/Account Voucher
         </button>
       </div>
 
@@ -184,7 +184,7 @@ export default function Leadger() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCloseForm}>
           <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
-              <h2 className="text-xl font-bold text-gray-800">Leadger Voucher</h2>
+              <h2 className="text-xl font-bold text-gray-800">Leadger/Account Voucher</h2>
               <button
                 type="button"
                 onClick={handleCloseForm}
@@ -322,7 +322,7 @@ export default function Leadger() {
                   disabled={loading}
                   className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  {loading ? 'Saving...' : 'Save Leadger Voucher'}
+                  {loading ? 'Saving...' : 'Save Leadger/Account Voucher'}
                 </button>
               </div>
             </form>

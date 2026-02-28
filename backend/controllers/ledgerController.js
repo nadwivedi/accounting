@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Leadger = require('../models/Leadger');
 const Group = require('../models/Group');
-const Party = require('../models/Party');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -53,16 +52,6 @@ exports.createLeadger = async (req, res) => {
       });
     }
 
-    if (party) {
-      const partyDoc = await Party.findOne({ _id: party, userId });
-      if (!partyDoc) {
-        return res.status(404).json({
-          success: false,
-          message: 'Party not found'
-        });
-      }
-    }
-
     if (!String(debitAccount || '').trim() || !String(creditAccount || '').trim()) {
       return res.status(400).json({
         success: false,
@@ -84,8 +73,7 @@ exports.createLeadger = async (req, res) => {
     });
 
     const populatedLeadger = await Leadger.findById(leadger._id)
-      .populate('group', 'name')
-      .populate('party', 'partyName phone type');
+      .populate('group', 'name');
 
     return res.status(201).json({
       success: true,
@@ -151,7 +139,6 @@ exports.getAllLeadgers = async (req, res) => {
 
     const leadgers = await Leadger.find(filter)
       .populate('group', 'name')
-      .populate('party', 'partyName phone type')
       .sort({ voucherDate: -1, createdAt: -1 });
 
     return res.status(200).json({

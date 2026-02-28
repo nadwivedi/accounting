@@ -10,8 +10,6 @@ import StockAdjustments from './pages/StockAdjustments';
 import StockGroups from './pages/StockGroups';
 import Group from './pages/Group';
 import Unit from './pages/Unit';
-import Parties from './pages/Parties';
-import PartyDetail from './pages/PartyDetail';
 import Sales from './pages/Sales';
 import Purchases from './pages/Purchases';
 import Payments from './pages/Payments';
@@ -102,24 +100,6 @@ function App() {
         />
 
         <Route path="/products" element={<Navigate to="/stock" replace />} />
-
-        <Route
-          path="/parties"
-          element={
-            <ProtectedRoute>
-              <Parties />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/parties/:id"
-          element={
-            <ProtectedRoute>
-              <PartyDetail />
-            </ProtectedRoute>
-          }
-        />
 
         <Route
           path="/purchases"

@@ -186,7 +186,7 @@ const menuItems = [
     Icon: MasterIcon,
     subItems: [
       { name: 'Group', path: '/groups', Icon: MasterIcon },
-      { name: 'Leadger', path: '/leadger', Icon: LeadgerIcon },
+      { name: 'Leadger/Account', path: '/leadger', Icon: LeadgerIcon },
       { name: 'Stock Item', path: '/stock', Icon: ProductIcon, dividerBefore: true },
       { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
       { name: 'Unit', path: '/units', Icon: UnitIcon }

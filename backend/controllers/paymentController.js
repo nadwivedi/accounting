@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const Payment = require('../models/Payment');
 const Purchase = require('../models/Purchase');
-const Party = require('../models/Party');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -99,16 +98,6 @@ exports.createPayment = async (req, res) => {
       resolvedParty = resolvedParty || purchase.party || null;
     }
 
-    if (resolvedParty) {
-      const partyDoc = await Party.findOne({ _id: resolvedParty, userId });
-      if (!partyDoc) {
-        return res.status(404).json({
-          success: false,
-          message: 'Party not found'
-        });
-      }
-    }
-
     const payment = await Payment.create({
       userId,
       party: resolvedParty,
@@ -120,14 +109,13 @@ exports.createPayment = async (req, res) => {
       notes
     });
 
-    const populatedPayment = await Payment.findById(payment._id)
-      .populate('party', 'partyName phone');
+    const savedPayment = await Payment.findById(payment._id);
 
     res.status(201).json({
       success: true,
       message: 'Payment created successfully',
       data: {
-        payment: populatedPayment,
+        payment: savedPayment,
         purchase: linkedPurchase
       }
     });
@@ -163,7 +151,6 @@ exports.getAllPayments = async (req, res) => {
     }
 
     const payments = await Payment.find(filter)
-      .populate('party', 'partyName phone')
       .sort({ paymentDate: -1, createdAt: -1 });
 
     res.status(200).json({

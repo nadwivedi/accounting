@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const Party = require('../models/Party');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -10,7 +9,6 @@ const createVoucherHandlers = ({
   Model,
   entryName,
   fields,
-  requireParty = false,
   dateField = 'voucherDate'
 }) => {
   const fieldNames = fields.map((field) => field.name);
@@ -35,23 +33,6 @@ const createVoucherHandlers = ({
         });
       }
 
-      if (requireParty && !party) {
-        return res.status(400).json({
-          success: false,
-          message: 'Party is required'
-        });
-      }
-
-      if (party) {
-        const partyDoc = await Party.findOne({ _id: party, userId });
-        if (!partyDoc) {
-          return res.status(404).json({
-            success: false,
-            message: 'Party not found'
-          });
-        }
-      }
-
       const payload = {
         userId,
         party,
@@ -74,12 +55,11 @@ const createVoucherHandlers = ({
       }
 
       const entry = await Model.create(payload);
-      const populatedEntry = await Model.findById(entry._id).populate('party', 'partyName phone type');
 
       return res.status(201).json({
         success: true,
         message: `${entryName} created successfully`,
-        data: populatedEntry
+        data: entry
       });
     } catch (error) {
       console.error(`Create ${entryName} error:`, error);
@@ -134,7 +114,6 @@ const createVoucherHandlers = ({
       }
 
       const entries = await Model.find(filter)
-        .populate('party', 'partyName phone type')
         .sort({ [dateField]: -1, createdAt: -1 });
 
       return res.status(200).json({

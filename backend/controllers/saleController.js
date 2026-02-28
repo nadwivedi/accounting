@@ -1,6 +1,5 @@
 const Sale = require('../models/Sales');
 const Product = require('../models/Stock');
-const Party = require('../models/Party');
 const Receipt = require('../models/Receipt');
 
 const toNumber = (value, fallback = 0) => {
@@ -102,25 +101,6 @@ exports.createSale = async (req, res) => {
       }
     }
 
-    let partySnapshot = undefined;
-    if (party) {
-      const partyDoc = await Party.findOne({ _id: party, userId });
-      if (!partyDoc) {
-        return res.status(404).json({
-          success: false,
-          message: 'Party not found'
-        });
-      }
-
-      partySnapshot = {
-        partyName: partyDoc.partyName,
-        phone: partyDoc.phone,
-        email: partyDoc.email,
-        gstin: partyDoc.gstin,
-        address: partyDoc.address
-      };
-    }
-
     const totals = calculateTotals({
       items,
       subtotal,
@@ -137,7 +117,6 @@ exports.createSale = async (req, res) => {
       userId,
       invoiceNumber: invoiceNumber || generateInvoiceNumber(),
       party: party || null,
-      partySnapshot,
       customerName,
       customerPhone,
       customerAddress,
@@ -179,7 +158,6 @@ exports.createSale = async (req, res) => {
     }
 
     const populatedSale = await Sale.findById(sale._id)
-      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     res.status(201).json({
@@ -212,7 +190,6 @@ exports.getAllSales = async (req, res) => {
     if (party) filter.party = party;
 
     let query = Sale.find(filter)
-      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     if (search) {
@@ -247,7 +224,6 @@ exports.getSaleById = async (req, res) => {
     const userId = req.userId;
 
     const sale = await Sale.findOne({ _id: id, userId })
-      .populate('party', 'partyName phone email')
       .populate('items.product', 'name');
 
     if (!sale) {
@@ -288,7 +264,6 @@ exports.updateSale = async (req, res) => {
       { customerName, customerPhone, customerAddress, dueDate, notes },
       { new: true, runValidators: true }
     )
-      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     if (!sale) {
@@ -402,7 +377,6 @@ exports.updatePaymentStatus = async (req, res) => {
     });
 
     const updatedSale = await Sale.findById(id)
-      .populate('party', 'partyName phone')
       .populate('items.product', 'name');
 
     res.status(200).json({

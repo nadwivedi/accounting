@@ -1,5 +1,4 @@
 const Product = require('../models/Stock');
-const StockAdjustment = require('../models/StockAdjustment');
 const Unit = require('../models/Unit');
 
 // Create product
@@ -234,7 +233,7 @@ exports.updateStock = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const { quantity, type, notes, adjustmentDate } = req.body;
+    const { quantity, type } = req.body;
     const normalizedQuantity = Number(quantity);
 
     if (!type || !['add', 'subtract'].includes(type)) {
@@ -276,18 +275,6 @@ exports.updateStock = async (req, res) => {
     }
 
     await product.save();
-    const stockAfter = Number(product.currentStock || 0);
-
-    await StockAdjustment.create({
-      userId,
-      product: product._id,
-      type,
-      quantity: normalizedQuantity,
-      stockBefore,
-      stockAfter,
-      notes: String(notes || '').trim(),
-      adjustmentDate: adjustmentDate ? new Date(adjustmentDate) : new Date()
-    });
 
     res.status(200).json({
       success: true,
