@@ -435,11 +435,10 @@ export default function Purchases() {
                   />
                   <label
                     htmlFor="purchase-invoice-upload"
-                    className={`flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center transition ${
-                      uploadingInvoice
+                    className={`flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center transition ${uploadingInvoice
                         ? 'border-blue-200 bg-blue-50 text-blue-600 opacity-75'
                         : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                    }`}
+                      }`}
                   >
                     <Upload className="h-5 w-5" />
                     <span className="text-sm font-medium">
@@ -489,29 +488,29 @@ export default function Purchases() {
                 </div>
 
                 {formData.items.length > 0 && (
-                  <div className="overflow-x-auto mb-4">
-                    <table className="w-full text-sm border">
-                      <thead className="bg-gray-100">
+                  <div className="overflow-hidden mb-4 rounded-xl border border-slate-200 shadow-sm">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-slate-800 text-white">
                         <tr>
-                          <th className="px-4 py-2 text-left">Product</th>
-                          <th className="px-4 py-2 text-left">Qty</th>
-                          <th className="px-4 py-2 text-left">Price</th>
-                          <th className="px-4 py-2 text-left">Total</th>
-                          <th className="px-4 py-2 text-left">Action</th>
+                          <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Product</th>
+                          <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Qty</th>
+                          <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Price</th>
+                          <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Total</th>
+                          <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Action</th>
                         </tr>
                       </thead>
-                      <tbody>
+                      <tbody className="divide-y divide-slate-100">
                         {formData.items.map((item, index) => (
-                          <tr key={index} className="border-b">
-                            <td className="px-4 py-2">{item.productName}</td>
-                            <td className="px-4 py-2">{item.quantity}</td>
-                            <td className="px-4 py-2">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
-                            <td className="px-4 py-2 font-semibold">Rs {Number(item.total || 0).toFixed(2)}</td>
-                            <td className="px-4 py-2">
+                          <tr key={index} className="bg-white hover:bg-slate-50 transition-colors duration-150">
+                            <td className="px-4 py-3 text-slate-800 font-medium">{item.productName}</td>
+                            <td className="px-4 py-3 text-slate-600">{item.quantity}</td>
+                            <td className="px-4 py-3 text-slate-600">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-slate-800 font-semibold">Rs {Number(item.total || 0).toFixed(2)}</td>
+                            <td className="px-4 py-3">
                               <button
                                 type="button"
                                 onClick={() => handleRemoveItem(index)}
-                                className="text-red-600 hover:text-red-800"
+                                className="text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
                               >
                                 Remove
                               </button>
@@ -696,66 +695,88 @@ export default function Purchases() {
           No purchases found. Create your first purchase!
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-100 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice No</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Supplier</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Products</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice File</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Total</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {purchases.map((purchase) => {
-                return (
-                <tr key={purchase._id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-6 py-3 font-medium text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
-                  <td className="px-6 py-3">{purchase.party?.partyName || '-'}</td>
-                  <td className="px-6 py-3 text-slate-700">
-                    {purchase.items?.length
-                      ? (
-                        purchase.items.slice(0, 2).map((item) => item.productName).join(', ') +
-                        (purchase.items.length > 2 ? ` +${purchase.items.length - 2} more` : '')
-                      )
-                      : '-'}
-                  </td>
-                  <td className="px-6 py-3">{new Date(purchase.purchaseDate).toLocaleDateString('en-GB')}</td>
-                  <td className="px-6 py-3">
-                    {purchase.invoiceLink ? (
-                      <a
-                        href={purchase.invoiceLink}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-blue-600 hover:text-blue-800 underline"
-                      >
-                        View
-                      </a>
-                    ) : '-'}
-                  </td>
-                  <td className="px-6 py-3">Rs {Number(purchase.totalAmount || 0).toFixed(2)}</td>
-                  <td className="px-6 py-3 space-x-2 text-sm">
-                    <button
-                      onClick={() => handleEdit(purchase)}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(purchase._id)}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      Delete
-                    </button>
-                  </td>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left whitespace-nowrap">
+              <thead className="bg-slate-800 text-white">
+                <tr>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice No</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Supplier</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Products</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice File</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider text-right pr-8">Actions</th>
                 </tr>
-                );
-              })}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {purchases.map((purchase) => {
+                  return (
+                    <tr key={purchase._id} className="bg-white hover:bg-slate-50 transition-colors duration-200 group">
+                      <td className="px-6 py-4 font-semibold text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
+                      <td className="px-6 py-4 font-medium text-slate-700">{purchase.party?.partyName || '-'}</td>
+                      <td className="px-6 py-4 text-slate-600">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {purchase.items?.length
+                            ? (
+                              <>
+                                <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-medium border border-blue-100">
+                                  {purchase.items[0]?.productName}
+                                </span>
+                                {purchase.items.length > 1 && (
+                                  <span className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-medium border border-blue-100">
+                                    {purchase.items[1]?.productName}
+                                  </span>
+                                )}
+                                {purchase.items.length > 2 && (
+                                  <span className="text-xs font-medium text-slate-500 ml-1">
+                                    +{purchase.items.length - 2} more
+                                  </span>
+                                )}
+                              </>
+                            )
+                            : <span className="text-slate-400 italic">No items</span>}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-slate-600">{new Date(purchase.purchaseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                      <td className="px-6 py-4">
+                        {purchase.invoiceLink ? (
+                          <a
+                            href={purchase.invoiceLink}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                          >
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                            View
+                          </a>
+                        ) : <span className="text-slate-400">-</span>}
+                      </td>
+                      <td className="px-6 py-4 font-semibold text-emerald-600">
+                        Rs {Number(purchase.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-6 py-4 text-right pr-6 space-x-2">
+                        <button
+                          onClick={() => handleEdit(purchase)}
+                          className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(purchase._id)}
+                          className="inline-flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
