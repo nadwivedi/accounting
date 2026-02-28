@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 function DashboardIcon() {
   return (
@@ -106,42 +106,165 @@ function SettingsIcon() {
   );
 }
 
+function MasterIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5v-11Z" />
+      <path d="M8 8h8M8 12h8M8 16h5" />
+    </svg>
+  );
+}
+
+function VoucherIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-13Z" />
+      <path d="M8 8h8M8 12h8M8 16h4" />
+    </svg>
+  );
+}
+
+function LeadgerIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M6 3.5h12v17l-2.2-1.6L13.6 21l-2.1-2.1L9.4 21 7.2 18.9 5 20.5v-17Z" />
+      <path d="M8.5 8h7M8.5 12h7M8.5 16h5" />
+    </svg>
+  );
+}
+
+function ContraIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M6 7h12M6 17h12" />
+      <path d="m9 4-3 3 3 3M15 14l3 3-3 3" />
+    </svg>
+  );
+}
+
+function JournalIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <rect x="4" y="4" width="16" height="16" rx="2" />
+      <path d="M8 9h8M8 13h8M8 17h4" />
+    </svg>
+  );
+}
+
+function DebitNoteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M12 4v16M5 11h7" />
+      <path d="M5 19h14" />
+    </svg>
+  );
+}
+
+function CreditNoteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M12 4v16M12 11h7" />
+      <path d="M5 19h14" />
+    </svg>
+  );
+}
+
 const menuItems = [
   { name: 'Dashboard', path: '/dashboard', Icon: DashboardIcon },
   {
-    name: 'Stock',
-    path: '/stock',
-    Icon: ProductIcon,
+    name: 'Masters',
+    Icon: MasterIcon,
     subItems: [
+      { name: 'Stock', path: '/stock', Icon: ProductIcon },
       { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
-      { name: 'Stock Adjustment', path: '/stock-adjustments', Icon: StockAdjustmentIcon }
+      { name: 'Group', path: '/groups', Icon: MasterIcon },
+      { name: 'Parties', path: '/parties', Icon: PartyIcon },
+      { name: 'Leadger', path: '/leadger', Icon: LeadgerIcon }
     ]
   },
-  { name: 'Parties', path: '/parties', Icon: PartyIcon },
-  { name: 'Purchase', path: '/purchases', Icon: PurchaseIcon },
-  { name: 'Sale', path: '/sales', Icon: SaleIcon },
-  { name: 'Payment', path: '/payments', Icon: PaymentIcon },
-  { name: 'Receipt', path: '/receipts', Icon: ReceiptIcon },
+  {
+    name: 'Vouchers',
+    Icon: VoucherIcon,
+    subItems: [
+      { name: 'Sale', path: '/sales', Icon: SaleIcon },
+      { name: 'Purchase', path: '/purchases', Icon: PurchaseIcon },
+      { name: 'Payment', path: '/payments', Icon: PaymentIcon },
+      { name: 'Receipt', path: '/receipts', Icon: ReceiptIcon },
+      { name: 'Contra', path: '/contra', Icon: ContraIcon },
+      { name: 'Journal', path: '/journal', Icon: JournalIcon },
+      { name: 'Debit Note', path: '/debit-note', Icon: DebitNoteIcon },
+      { name: 'Credit Note', path: '/credit-note', Icon: CreditNoteIcon }
+    ]
+  },
   { name: 'Reports', path: '/reports', Icon: ReportIcon },
   { name: 'Settings', path: '/settings', Icon: SettingsIcon }
 ];
 
 export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [expandedMenus, setExpandedMenus] = useState({
+    Masters: true,
+    Vouchers: true
+  });
   const location = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path) => {
+    if (!path) return false;
     if (location.pathname === path) return true;
     return location.pathname.startsWith(`${path}/`);
   };
 
   const isItemOrSubItemActive = (item) => {
-    if (isActive(item.path)) return true;
+    if (item.path && isActive(item.path)) return true;
     if (item.subItems) {
       return item.subItems.some(sub => isActive(sub.path));
     }
     return false;
   };
+
+  useEffect(() => {
+    setExpandedMenus((prev) => {
+      const next = { ...prev };
+
+      menuItems.forEach((item) => {
+        if (item.subItems && isItemOrSubItemActive(item)) {
+          next[item.name] = true;
+        }
+      });
+
+      return next;
+    });
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const isTypingTarget = (target) => {
+      const tagName = target?.tagName?.toLowerCase();
+      return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target?.isContentEditable;
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+
+      const key = event.key?.toLowerCase();
+
+      if (key === 'v') {
+        event.preventDefault();
+        setExpandedMenus((prev) => ({ ...prev, Vouchers: true }));
+        if (window.innerWidth < 768) setMobileOpen(true);
+        navigate('/sales');
+      } else if (key === 'm') {
+        event.preventDefault();
+        setExpandedMenus((prev) => ({ ...prev, Masters: true }));
+        if (window.innerWidth < 768) setMobileOpen(true);
+        navigate('/stock');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   return (
     <>
@@ -221,46 +344,115 @@ export default function Sidebar() {
 
           <nav className="flex flex-col gap-1.5">
             {menuItems.map((item) => {
-              const active = isActive(item.path);
-              const isExpanded = isItemOrSubItemActive(item);
+              const hasSubItems = Boolean(item.subItems?.length);
+              const active = item.path ? isActive(item.path) : false;
+              const groupActive = hasSubItems ? isItemOrSubItemActive(item) : active;
+              const isExpanded = hasSubItems ? Boolean(expandedMenus[item.name]) : false;
               const Icon = item.Icon;
 
               return (
-                <div key={item.path} className="flex flex-col">
-                  <Link
-                    to={item.path}
-                    onClick={() => {
-                      if (window.innerWidth < 768 && !item.subItems) setMobileOpen(false);
-                    }}
-                    className={`group relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-indigo-500 ${active || (item.subItems && isExpanded)
-                        ? 'bg-indigo-50/50 text-indigo-700 shadow-sm ring-1 ring-slate-200/50'
-                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                      }`}
-                  >
-                    {/* Active Indicator Line */}
-                    {(active || (item.subItems && isExpanded)) && (
-                      <div className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-cyan-400 to-indigo-500" />
-                    )}
+                <div key={item.name} className="flex flex-col">
+                  {hasSubItems ? (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedMenus((prev) => ({ ...prev, [item.name]: !isExpanded }))}
+                      className={`group relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-left outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-indigo-500 ${groupActive
+                          ? 'bg-indigo-50/50 text-indigo-700 shadow-sm ring-1 ring-slate-200/50'
+                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                        }`}
+                    >
+                      {groupActive && (
+                        <div className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-cyan-400 to-indigo-500" />
+                      )}
 
-                    {/* Icon Container */}
-                    <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${active || (item.subItems && isExpanded)
-                        ? 'bg-white text-indigo-600 shadow-sm'
-                        : 'bg-white text-slate-400 ring-1 ring-inset ring-slate-200 group-hover:text-indigo-500 group-hover:shadow-sm'
-                      }`}>
-                      <div className="transition-transform duration-300 group-hover:scale-110">
-                        <Icon />
+                      <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${groupActive
+                          ? 'bg-white text-indigo-600 shadow-sm'
+                          : 'bg-white text-slate-400 ring-1 ring-inset ring-slate-200 group-hover:text-indigo-500 group-hover:shadow-sm'
+                        }`}>
+                        <div className="transition-transform duration-300 group-hover:scale-110">
+                          <Icon />
+                        </div>
                       </div>
-                    </div>
 
-                    {/* Item Label text */}
-                    <span className={`text-[14px] font-medium tracking-wide transition-colors duration-300 ${active || (item.subItems && isExpanded) ? 'font-semibold text-slate-900' : 'group-hover:text-slate-900'
-                      }`}>
-                      {item.name}
-                    </span>
-                  </Link>
+                      <span className={`text-[14px] font-medium tracking-wide transition-colors duration-300 ${groupActive ? 'font-semibold text-slate-900' : 'group-hover:text-slate-900'
+                        }`}>
+                        {item.name === 'Vouchers' ? (
+                          <>
+                            <span className={`font-bold ${groupActive ? 'text-indigo-700' : 'text-blue-600'}`}>V</span>
+                            ouchers
+                          </>
+                        ) : item.name === 'Masters' ? (
+                          <>
+                            <span className={`font-bold ${groupActive ? 'text-indigo-700' : 'text-blue-600'}`}>M</span>
+                            asters
+                          </>
+                        ) : item.name}
+                      </span>
 
-                  {/* Submenu rendering */}
-                  {item.subItems && isExpanded && (
+                      {item.name === 'Vouchers' && (
+                        <span
+                          className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${groupActive
+                              ? 'border-indigo-200 bg-white text-indigo-700'
+                              : 'border-slate-300 bg-white text-slate-500 group-hover:border-indigo-200 group-hover:text-indigo-600'
+                            }`}
+                        >
+                          V
+                        </span>
+                      )}
+
+                      {item.name === 'Masters' && (
+                        <span
+                          className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${groupActive
+                              ? 'border-indigo-200 bg-white text-indigo-700'
+                              : 'border-slate-300 bg-white text-slate-500 group-hover:border-indigo-200 group-hover:text-indigo-600'
+                            }`}
+                        >
+                          M
+                        </span>
+                      )}
+
+                      <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        className={`ml-auto h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
+                      </svg>
+                    </button>
+                  ) : (
+                    <Link
+                      to={item.path}
+                      onClick={() => {
+                        if (window.innerWidth < 768) setMobileOpen(false);
+                      }}
+                      className={`group relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-indigo-500 ${active
+                          ? 'bg-indigo-50/50 text-indigo-700 shadow-sm ring-1 ring-slate-200/50'
+                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                        }`}
+                    >
+                      {active && (
+                        <div className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-cyan-400 to-indigo-500" />
+                      )}
+
+                      <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${active
+                          ? 'bg-white text-indigo-600 shadow-sm'
+                          : 'bg-white text-slate-400 ring-1 ring-inset ring-slate-200 group-hover:text-indigo-500 group-hover:shadow-sm'
+                        }`}>
+                        <div className="transition-transform duration-300 group-hover:scale-110">
+                          <Icon />
+                        </div>
+                      </div>
+
+                      <span className={`text-[14px] font-medium tracking-wide transition-colors duration-300 ${active ? 'font-semibold text-slate-900' : 'group-hover:text-slate-900'
+                        }`}>
+                        {item.name}
+                      </span>
+                    </Link>
+                  )}
+
+                  {hasSubItems && isExpanded && (
                     <div className="mt-1 flex flex-col gap-1 overflow-hidden pb-1 pl-[3.25rem]">
                       {item.subItems.map((subItem) => {
                         const subActive = isActive(subItem.path);

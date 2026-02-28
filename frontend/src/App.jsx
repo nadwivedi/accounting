@@ -8,12 +8,18 @@ import Products from './pages/Products';
 import StockDetail from './pages/StockDetail';
 import StockAdjustments from './pages/StockAdjustments';
 import StockGroups from './pages/StockGroups';
+import Group from './pages/Group';
 import Parties from './pages/Parties';
 import PartyDetail from './pages/PartyDetail';
 import Sales from './pages/Sales';
 import Purchases from './pages/Purchases';
 import Payments from './pages/Payments';
 import Receipts from './pages/Receipts';
+import Leadger from './pages/Leadger';
+import Contra from './pages/Contra';
+import Journal from './pages/Journal';
+import DebitNote from './pages/DebitNote';
+import CreditNote from './pages/CreditNote';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -45,6 +51,15 @@ function App() {
           element={
             <ProtectedRoute>
               <StockGroups />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/groups"
+          element={
+            <ProtectedRoute>
+              <Group />
             </ProtectedRoute>
           }
         />
@@ -137,6 +152,51 @@ function App() {
           element={
             <ProtectedRoute>
               <Receipts />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/leadger"
+          element={
+            <ProtectedRoute>
+              <Leadger />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/contra"
+          element={
+            <ProtectedRoute>
+              <Contra />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/journal"
+          element={
+            <ProtectedRoute>
+              <Journal />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/debit-note"
+          element={
+            <ProtectedRoute>
+              <DebitNote />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/credit-note"
+          element={
+            <ProtectedRoute>
+              <CreditNote />
             </ProtectedRoute>
           }
         />

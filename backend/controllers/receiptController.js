@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const Receipt = require('../models/Receipt');
-const Sale = require('../models/Sale');
+const Sale = require('../models/Sales');
 const Party = require('../models/Party');
 
 const toNumber = (value, fallback = 0) => {

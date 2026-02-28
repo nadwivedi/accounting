@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const Sale = require('../models/Sale');
+const Sale = require('../models/Sales');
 const Purchase = require('../models/Purchase');
 const Payment = require('../models/Payment');
 const Receipt = require('../models/Receipt');

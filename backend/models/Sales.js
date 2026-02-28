@@ -26,7 +26,7 @@ const saleItemSchema = new mongoose.Schema({
   }
 });
 
-const saleSchema = new mongoose.Schema({
+const salesSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -114,6 +114,6 @@ const saleSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-saleSchema.index({ userId: 1, invoiceNumber: 1 }, { unique: true });
+salesSchema.index({ userId: 1, invoiceNumber: 1 }, { unique: true });
 
-module.exports = mongoose.model('Sale', saleSchema);
+module.exports = mongoose.model('Sale', salesSchema);
