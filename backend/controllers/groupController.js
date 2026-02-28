@@ -2,10 +2,9 @@ const Group = require('../models/Group');
 const Leadger = require('../models/Leadger');
 
 const DEFAULT_GROUPS = [
-  { name: 'Sundry Debtors', description: 'Customer outstanding accounts' },
-  { name: 'Sundry Creditors', description: 'Supplier outstanding accounts' },
-  { name: 'Cash-in-Hand', description: 'Cash accounts' },
-  { name: 'Bank Accounts', description: 'Bank accounts' }
+  { name: 'Capital Account', description: 'Default capital account group' },
+  { name: 'Supplier', description: 'Default supplier account group' },
+  { name: 'Customer', description: 'Default customer account group' }
 ];
 
 const isDuplicateGroupNameError = (error) => (
@@ -16,17 +15,22 @@ const isDuplicateGroupNameError = (error) => (
 );
 
 const ensureDefaultGroups = async (userId) => {
-  const total = await Group.countDocuments({ userId });
-  if (total > 0) return;
+  const operations = DEFAULT_GROUPS.map((group) => ({
+    updateOne: {
+      filter: { userId, name: group.name },
+      update: {
+        $setOnInsert: {
+          userId,
+          name: group.name,
+          description: group.description,
+          isActive: true
+        }
+      },
+      upsert: true
+    }
+  }));
 
-  await Group.insertMany(
-    DEFAULT_GROUPS.map((group) => ({
-      userId,
-      name: group.name,
-      description: group.description,
-      isActive: true
-    }))
-  );
+  await Group.bulkWrite(operations);
 };
 
 exports.createGroup = async (req, res) => {

@@ -1,6 +1,41 @@
 const User = require('../models/User');
+const Group = require('../models/Group');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+
+const DEFAULT_GROUPS = [
+  {
+    name: 'Capital Account',
+    description: 'Default capital account group'
+  },
+  {
+    name: 'Supplier',
+    description: 'Default supplier account group'
+  },
+  {
+    name: 'Customer',
+    description: 'Default customer account group'
+  }
+];
+
+const ensureDefaultGroups = async (userId) => {
+  const operations = DEFAULT_GROUPS.map((group) => ({
+    updateOne: {
+      filter: { userId, name: group.name },
+      update: {
+        $setOnInsert: {
+          userId,
+          name: group.name,
+          description: group.description,
+          isActive: true
+        }
+      },
+      upsert: true
+    }
+  }));
+
+  await Group.bulkWrite(operations);
+};
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -41,6 +76,13 @@ exports.register = async (req, res) => {
       department,
       isActive: true
     });
+
+    try {
+      await ensureDefaultGroups(user._id);
+    } catch (groupError) {
+      await User.findByIdAndDelete(user._id).catch(() => {});
+      throw new Error('Error creating default groups for user');
+    }
 
     const token = generateToken(user._id);
 

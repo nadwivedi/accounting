@@ -31,7 +31,7 @@ export default function Purchases() {
   };
 
   const [purchases, setPurchases] = useState([]);
-  const [parties, setParties] = useState([]);
+  const [leadgers, setLeadgers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -45,7 +45,7 @@ export default function Purchases() {
 
   useEffect(() => {
     fetchPurchases();
-    fetchParties();
+    fetchLeadgers();
     fetchProducts();
   }, [search, dateFilter]);
 
@@ -93,13 +93,27 @@ export default function Purchases() {
     }
   };
 
-  const fetchParties = async () => {
+  const fetchLeadgers = async () => {
     try {
-      const response = await apiClient.get('/parties?type=supplier');
-      setParties(response.data || []);
+      const response = await apiClient.get('/leadgers');
+      setLeadgers(response.data || []);
     } catch (err) {
-      console.error('Error fetching parties:', err);
+      console.error('Error fetching leadgers:', err);
     }
+  };
+
+  const getLeadgerDisplayName = (leadger) => {
+    const name = String(leadger?.name || '').trim();
+
+    if (name) return name;
+    return 'Leadger/Account';
+  };
+
+  const resolveLeadgerNameById = (leadgerId) => {
+    const resolvedId = typeof leadgerId === 'object' ? leadgerId?._id : leadgerId;
+    if (!resolvedId) return '-';
+    const matching = leadgers.find((leadger) => String(leadger._id) === String(resolvedId));
+    return matching ? getLeadgerDisplayName(matching) : '-';
   };
 
   const fetchProducts = async () => {
@@ -173,7 +187,7 @@ export default function Purchases() {
     e.preventDefault();
 
     if (!formData.party || formData.items.length === 0) {
-      setError('Supplier and at least one item are required');
+      setError('Leadger/Account and at least one item are required');
       return;
     }
 
@@ -372,7 +386,7 @@ export default function Purchases() {
             <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-6 px-6 py-6">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">Supplier *</label>
+                  <label className="block text-gray-700 font-medium mb-2">Leadger/Account *</label>
                   <select
                     name="party"
                     value={formData.party}
@@ -380,10 +394,10 @@ export default function Purchases() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                     required
                   >
-                    <option value="">Select supplier</option>
-                    {parties.map((party) => (
-                      <option key={party._id} value={party._id}>
-                        {party.partyName}
+                    <option value="">Select leadger/account</option>
+                    {leadgers.map((leadger) => (
+                      <option key={leadger._id} value={leadger._id}>
+                        {getLeadgerDisplayName(leadger)}
                       </option>
                     ))}
                   </select>
@@ -401,7 +415,7 @@ export default function Purchases() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">Supplier Invoice No.</label>
+                  <label className="block text-gray-700 font-medium mb-2">Invoice No.</label>
                   <input
                     type="text"
                     name="invoiceNo"
@@ -701,7 +715,7 @@ export default function Purchases() {
               <thead className="bg-slate-800 text-white">
                 <tr>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice No</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Supplier</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Leadger/Account</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Products</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Date</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice File</th>
@@ -714,7 +728,7 @@ export default function Purchases() {
                   return (
                     <tr key={purchase._id} className="bg-white hover:bg-slate-50 transition-colors duration-200 group">
                       <td className="px-6 py-4 font-semibold text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
-                      <td className="px-6 py-4 font-medium text-slate-700">{purchase.party?.partyName || '-'}</td>
+                      <td className="px-6 py-4 font-medium text-slate-700">{resolveLeadgerNameById(purchase.party)}</td>
                       <td className="px-6 py-4 text-slate-600">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {purchase.items?.length

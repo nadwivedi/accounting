@@ -1,29 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Wallet, IndianRupee } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Wallet } from 'lucide-react';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 const getInitialForm = () => ({
   group: '',
-  party: '',
-  amount: '',
-  method: 'cash',
-  voucherDate: new Date().toISOString().split('T')[0],
-  debitAccount: '',
-  creditAccount: '',
-  referenceNo: '',
+  name: '',
   notes: ''
 });
 
 export default function Leadger() {
   const [leadgers, setLeadgers] = useState([]);
   const [groups, setGroups] = useState([]);
-  const [parties, setParties] = useState([]);
   const [formData, setFormData] = useState(getInitialForm());
+  const [groupQuery, setGroupQuery] = useState('');
+  const [groupListIndex, setGroupListIndex] = useState(-1);
+  const [isGroupSectionActive, setIsGroupSectionActive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const notesInputRef = useRef(null);
+  const groupSectionRef = useRef(null);
 
   useEffect(() => {
     fetchLeadgers();
@@ -31,7 +29,6 @@ export default function Leadger() {
 
   useEffect(() => {
     fetchGroups();
-    fetchParties();
   }, []);
 
   const fetchLeadgers = async () => {
@@ -56,15 +53,6 @@ export default function Leadger() {
     }
   };
 
-  const fetchParties = async () => {
-    try {
-      const response = await apiClient.get('/parties');
-      setParties(response.data || []);
-    } catch (err) {
-      console.error('Error fetching parties:', err);
-    }
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -72,6 +60,9 @@ export default function Leadger() {
 
   const handleOpenForm = () => {
     setFormData(getInitialForm());
+    setGroupQuery('');
+    setGroupListIndex(-1);
+    setIsGroupSectionActive(false);
     setError('');
     setShowForm(true);
   };
@@ -79,35 +70,144 @@ export default function Leadger() {
   const handleCloseForm = () => {
     setShowForm(false);
     setFormData(getInitialForm());
+    setGroupQuery('');
+    setGroupListIndex(-1);
+    setIsGroupSectionActive(false);
+  };
+
+  const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+  const findExactGroup = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return groups.find((group) => normalizeText(group.name) === normalized) || null;
+  };
+
+  const findBestGroupMatch = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+
+    return groups.find((group) => normalizeText(group.name).startsWith(normalized))
+      || groups.find((group) => normalizeText(group.name).includes(normalized))
+      || null;
+  };
+
+  const filteredGroups = useMemo(() => {
+    const normalized = normalizeText(groupQuery);
+    if (!normalized) return groups;
+
+    const startsWith = groups.filter((group) => normalizeText(group.name).startsWith(normalized));
+    const includes = groups.filter((group) => (
+      !normalizeText(group.name).startsWith(normalized)
+      && normalizeText(group.name).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  }, [groups, groupQuery]);
+
+  useEffect(() => {
+    if (filteredGroups.length === 0) {
+      setGroupListIndex(-1);
+      return;
+    }
+
+    setGroupListIndex((prev) => {
+      if (prev < 0) return 0;
+      if (prev >= filteredGroups.length) return filteredGroups.length - 1;
+      return prev;
+    });
+  }, [filteredGroups]);
+
+  const selectGroup = (group, focusNotes = true) => {
+    if (!group) return;
+    setGroupQuery(group.name);
+    setFormData((prev) => ({
+      ...prev,
+      group: group._id
+    }));
+
+    const selectedIndex = filteredGroups.findIndex((item) => String(item._id) === String(group._id));
+    setGroupListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+
+    if (focusNotes && notesInputRef.current) {
+      notesInputRef.current.focus();
+    }
+  };
+
+  const handleGroupInputChange = (e) => {
+    const value = e.target.value;
+    setGroupQuery(value);
+
+    const exactGroup = findExactGroup(value);
+    setFormData((prev) => ({
+      ...prev,
+      group: exactGroup?._id || ''
+    }));
+    if (!exactGroup) {
+      setGroupListIndex(0);
+    }
+  };
+
+  const handleGroupInputKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredGroups.length === 0) return;
+      setGroupListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredGroups.length - 1);
+      });
+      return;
+    }
+
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredGroups.length === 0) return;
+      setGroupListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const activeGroup = groupListIndex >= 0 ? filteredGroups[groupListIndex] : null;
+      const matchedGroup = activeGroup || findExactGroup(groupQuery) || findBestGroupMatch(groupQuery);
+      if (matchedGroup) {
+        selectGroup(matchedGroup, true);
+        return;
+      }
+
+      if (notesInputRef.current) {
+        notesInputRef.current.focus();
+      }
+      return;
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.group) {
+    if (!formData.name || !String(formData.name).trim()) {
+      setError('Leadger name is required');
+      return;
+    }
+    const matchedGroup = findExactGroup(groupQuery) || findBestGroupMatch(groupQuery);
+    const selectedGroupId = formData.group || matchedGroup?._id || '';
+    if (!selectedGroupId) {
       setError('Group is required');
-      return;
-    }
-    if (!formData.amount || Number(formData.amount) <= 0) {
-      setError('Valid amount is required');
-      return;
-    }
-    if (!formData.debitAccount || !formData.creditAccount) {
-      setError('Debit account and credit account are required');
       return;
     }
 
     try {
       setLoading(true);
       await apiClient.post('/leadgers', {
-        group: formData.group,
-        party: formData.party || null,
-        amount: Number(formData.amount),
-        method: formData.method,
-        voucherDate: formData.voucherDate ? new Date(formData.voucherDate) : new Date(),
-        debitAccount: formData.debitAccount,
-        creditAccount: formData.creditAccount,
-        referenceNo: formData.referenceNo,
+        group: selectedGroupId,
+        name: String(formData.name || '').trim(),
         notes: formData.notes
       });
 
@@ -121,11 +221,6 @@ export default function Leadger() {
     }
   };
 
-  const totalAmount = useMemo(
-    () => leadgers.reduce((sum, item) => sum + Number(item.amount || 0), 0),
-    [leadgers]
-  );
-
   return (
     <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
       {error && (
@@ -134,7 +229,7 @@ export default function Leadger() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-6">
+      <div className="grid grid-cols-1 gap-2 sm:gap-4 mb-6">
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -146,21 +241,6 @@ export default function Leadger() {
             </div>
           </div>
           <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-80"></div>
-        </div>
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Amount</p>
-              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
-                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
-                {totalAmount.toFixed(2)}
-              </p>
-            </div>
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
-              <IndianRupee className="h-6 w-6" />
-            </div>
-          </div>
-          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80"></div>
         </div>
       </div>
 
@@ -182,7 +262,7 @@ export default function Leadger() {
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCloseForm}>
-          <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full md:w-[30%] max-h-[90vh] overflow-y-auto md:overflow-visible rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
               <h2 className="text-xl font-bold text-gray-800">Leadger/Account Voucher</h2>
               <button
@@ -195,120 +275,94 @@ export default function Leadger() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCloseForm)} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-6">
+            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCloseForm)} className="grid grid-cols-1 gap-4 p-6">
+              <div>
+                <label className="block text-sm text-slate-600 mb-1">Leadger Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  placeholder="Enter leadger name"
+                  autoFocus
+                  required
+                />
+              </div>
+
               <div>
                 <label className="block text-sm text-slate-600 mb-1">Group *</label>
-                <select
-                  name="group"
-                  value={formData.group}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  required
+                <div
+                  ref={groupSectionRef}
+                  className="relative"
+                  onFocusCapture={() => setIsGroupSectionActive(true)}
+                  onBlurCapture={(event) => {
+                    const nextFocused = event.relatedTarget;
+                    if (
+                      groupSectionRef.current
+                      && nextFocused instanceof Node
+                      && groupSectionRef.current.contains(nextFocused)
+                    ) {
+                      return;
+                    }
+                    setIsGroupSectionActive(false);
+                  }}
                 >
-                  <option value="">Select group</option>
-                  {groups.map((group) => (
-                    <option key={group._id} value={group._id}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
+                  <input
+                    type="text"
+                    value={groupQuery}
+                    onChange={handleGroupInputChange}
+                    onKeyDown={handleGroupInputKeyDown}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                    placeholder="Type group, use Up/Down, press Enter"
+                    required
+                  />
+
+                  {isGroupSectionActive && (
+                    <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
+                      <div className="rounded-lg border border-slate-300 bg-white shadow-sm overflow-hidden md:h-full md:flex md:flex-col">
+                        <div className="px-3 py-2 text-xs font-semibold text-slate-500 border-b border-slate-200 bg-slate-50">
+                          Group List
+                        </div>
+                        <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto">
+                          {filteredGroups.length === 0 ? (
+                            <div className="px-3 py-2 text-sm text-slate-500">No matching groups</div>
+                          ) : (
+                            filteredGroups.map((group, index) => {
+                              const isActive = index === groupListIndex;
+                              const isSelected = String(formData.group || '') === String(group._id);
+                              return (
+                                <button
+                                  key={group._id}
+                                  type="button"
+                                  onMouseDown={(event) => event.preventDefault()}
+                                  onClick={() => selectGroup(group, true)}
+                                  className={`w-full text-left px-3 py-2 text-sm border-b border-slate-100 last:border-b-0 ${
+                                    isActive
+                                      ? 'bg-indigo-50 text-indigo-700'
+                                      : isSelected
+                                        ? 'bg-emerald-50 text-emerald-700'
+                                        : 'hover:bg-slate-50 text-slate-700'
+                                  }`}
+                                >
+                                  {group.name}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm text-slate-600 mb-1">Party</label>
-                <select
-                  name="party"
-                  value={formData.party}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                >
-                  <option value="">Select party</option>
-                  {parties.map((party) => (
-                    <option key={party._id} value={party._id}>
-                      {party.partyName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Amount *</label>
-                <input
-                  type="number"
-                  name="amount"
-                  value={formData.amount}
-                  onChange={handleChange}
-                  step="0.01"
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Date</label>
-                <input
-                  type="date"
-                  name="voucherDate"
-                  value={formData.voucherDate}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Debit Account *</label>
-                <input
-                  type="text"
-                  name="debitAccount"
-                  value={formData.debitAccount}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Credit Account *</label>
-                <input
-                  type="text"
-                  name="creditAccount"
-                  value={formData.creditAccount}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Method</label>
-                <select
-                  name="method"
-                  value={formData.method}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                >
-                  <option value="cash">Cash</option>
-                  <option value="bank">Bank</option>
-                  <option value="upi">UPI</option>
-                  <option value="card">Card</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Reference No</label>
-                <input
-                  type="text"
-                  name="referenceNo"
-                  value={formData.referenceNo}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                />
-              </div>
-
-              <div className="md:col-span-3">
                 <label className="block text-sm text-slate-600 mb-1">Notes</label>
                 <input
                   type="text"
                   name="notes"
+                  ref={notesInputRef}
                   value={formData.notes}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg"
@@ -316,7 +370,7 @@ export default function Leadger() {
                 />
               </div>
 
-              <div className="md:col-span-3 flex items-end gap-3">
+              <div className="flex items-end gap-3">
                 <button
                   type="submit"
                   disabled={loading}
@@ -335,36 +389,22 @@ export default function Leadger() {
           <table className="w-full text-sm text-left whitespace-nowrap">
             <thead className="bg-slate-800 text-white">
               <tr>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Date</th>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Voucher No</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Leadger Name</th>
                 <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Group</th>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Party</th>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Accounts</th>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Amount</th>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Method</th>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Reference</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Notes</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {leadgers.map((item) => (
                 <tr key={item._id} className="bg-white hover:bg-slate-50 transition-colors duration-200">
-                  <td className="px-6 py-4 text-slate-600 font-medium">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString() : '-'}</td>
-                  <td className="px-6 py-4 font-semibold text-slate-800">{item.voucherNumber || '-'}</td>
+                  <td className="px-6 py-4 text-slate-700">{item.name || '-'}</td>
                   <td className="px-6 py-4 text-slate-700 font-semibold">{item.group?.name || '-'}</td>
-                  <td className="px-6 py-4 text-slate-700">{item.party?.partyName || '-'}</td>
-                  <td className="px-6 py-4 text-slate-600">Dr: {item.debitAccount || '-'} | Cr: {item.creditAccount || '-'}</td>
-                  <td className="px-6 py-4 text-emerald-600 font-semibold">Rs {Number(item.amount || 0).toFixed(2)}</td>
-                  <td className="px-6 py-4">
-                    <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200 capitalize">
-                      {item.method || '-'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-slate-600">{item.referenceNo || '-'}</td>
+                  <td className="px-6 py-4 text-slate-600">{item.notes || '-'}</td>
                 </tr>
               ))}
               {!loading && leadgers.length === 0 && (
                 <tr>
-                  <td colSpan="8" className="px-6 py-8 text-center text-slate-500 italic bg-slate-50/50">
+                  <td colSpan="3" className="px-6 py-8 text-center text-slate-500 italic bg-slate-50/50">
                     No leadger vouchers found
                   </td>
                 </tr>

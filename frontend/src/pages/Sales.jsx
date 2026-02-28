@@ -35,42 +35,58 @@ export default function Sales() {
     discount: 0
   };
 
-  const initialNewCustomerForm = {
-    partyName: '',
-    phone: '',
-    email: '',
-    street: '',
-    city: '',
-    state: '',
-    pincode: '',
-    country: 'India'
-  };
-
   const [sales, setSales] = useState([]);
-  const [parties, setParties] = useState([]);
+  const [leadgers, setLeadgers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [formData, setFormData] = useState(initialFormData);
   const [currentItem, setCurrentItem] = useState(initialCurrentItem);
-  const [showNewCustomerForm, setShowNewCustomerForm] = useState(false);
-  const [newCustomerForm, setNewCustomerForm] = useState(initialNewCustomerForm);
-  const [savingCustomer, setSavingCustomer] = useState(false);
 
   useEffect(() => {
     fetchSales();
-    fetchParties();
+    fetchLeadgers();
     fetchProducts();
-  }, [search]);
+  }, [search, dateFilter]);
+
+  const getFromDateByFilter = () => {
+    const now = new Date();
+    if (dateFilter === '7d') {
+      now.setDate(now.getDate() - 7);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '30d') {
+      now.setDate(now.getDate() - 30);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '3m') {
+      now.setMonth(now.getMonth() - 3);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '6m') {
+      now.setMonth(now.getMonth() - 6);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '1y') {
+      now.setFullYear(now.getFullYear() - 1);
+      return now.toISOString().split('T')[0];
+    }
+    return '';
+  };
 
   const fetchSales = async () => {
     try {
       setLoading(true);
+      const fromDate = getFromDateByFilter();
       const response = await apiClient.get('/sales', {
-        params: { search }
+        params: {
+          search,
+          fromDate: fromDate || undefined
+        }
       });
       setSales(response.data || []);
       setError('');
@@ -81,13 +97,13 @@ export default function Sales() {
     }
   };
 
-  const fetchParties = async () => {
+  const fetchLeadgers = async () => {
     try {
-      const response = await apiClient.get('/parties?type=customer');
-      setParties(response.data || []);
+      const response = await apiClient.get('/leadgers');
+      setLeadgers(response.data || []);
       return response.data || [];
     } catch (err) {
-      console.error('Error fetching parties:', err);
+      console.error('Error fetching leadgers:', err);
       return [];
     }
   };
@@ -101,83 +117,16 @@ export default function Sales() {
     }
   };
 
-  const buildPartyAddress = (party) => {
-    if (!party?.address) return '';
-    const { street, city, state, pincode, country } = party.address;
-    return [street, city, state, pincode, country].filter(Boolean).join(', ');
+  const getLeadgerDisplayName = (leadger) => {
+    const name = String(leadger?.name || '').trim();
+
+    if (name) return name;
+    return 'Leadger/Account';
   };
 
-  const resetNewCustomerForm = () => {
-    setNewCustomerForm(initialNewCustomerForm);
-    setShowNewCustomerForm(false);
-  };
-
-  const handleNewCustomerChange = (e) => {
-    const { name, value } = e.target;
-    if (name === 'phone') {
-      const normalizedPhone = String(value || '').replace(/\D/g, '').slice(0, 10);
-      setNewCustomerForm((prev) => ({ ...prev, phone: normalizedPhone }));
-      return;
-    }
-    setNewCustomerForm((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleCreateCustomer = async () => {
-    const partyName = String(newCustomerForm.partyName || '').trim();
-    if (!partyName) {
-      setError('Customer name is required');
-      return;
-    }
-
-    try {
-      setSavingCustomer(true);
-      const payload = {
-        partyName,
-        type: 'customer',
-        phone: String(newCustomerForm.phone || '').replace(/\D/g, '').slice(0, 10),
-        email: String(newCustomerForm.email || '').trim(),
-        address: {
-          street: String(newCustomerForm.street || '').trim(),
-          city: String(newCustomerForm.city || '').trim(),
-          state: String(newCustomerForm.state || '').trim(),
-          pincode: String(newCustomerForm.pincode || '').trim(),
-          country: String(newCustomerForm.country || '').trim() || 'India'
-        },
-        isActive: true
-      };
-
-      const response = await apiClient.post('/parties', payload);
-      const createdCustomer = response.data;
-
-      if (!createdCustomer?._id) {
-        await fetchParties();
-        toast.success('Customer added successfully', toastOptions);
-        resetNewCustomerForm();
-        setError('');
-        return;
-      }
-
-      setParties((prev) => [createdCustomer, ...prev]);
-      setFormData((prev) => ({
-        ...prev,
-        party: createdCustomer._id,
-        customerName: createdCustomer.partyName || '',
-        customerPhone: String(createdCustomer.phone || '').replace(/\D/g, '').slice(0, 10),
-        customerAddress: buildPartyAddress(createdCustomer)
-      }));
-      toast.success('Customer added successfully', toastOptions);
-      resetNewCustomerForm();
-      setError('');
-    } catch (err) {
-      setError(err.message || 'Error adding customer');
-    } finally {
-      setSavingCustomer(false);
-    }
-  };
-
-  const handleCustomerChange = (e) => {
-    const selectedPartyId = e.target.value;
-    if (!selectedPartyId) {
+  const handleLeadgerChange = (e) => {
+    const selectedLeadgerId = e.target.value;
+    if (!selectedLeadgerId) {
       setFormData({
         ...formData,
         party: '',
@@ -188,13 +137,13 @@ export default function Sales() {
       return;
     }
 
-    const selectedParty = parties.find((party) => String(party._id) === String(selectedPartyId));
+    const selectedLeadger = leadgers.find((leadger) => String(leadger._id) === String(selectedLeadgerId));
     setFormData({
       ...formData,
-      party: selectedPartyId,
-      customerName: selectedParty?.partyName || '',
-      customerPhone: String(selectedParty?.phone || '').replace(/\D/g, '').slice(0, 10),
-      customerAddress: buildPartyAddress(selectedParty)
+      party: selectedLeadgerId,
+      customerName: getLeadgerDisplayName(selectedLeadger),
+      customerPhone: '',
+      customerAddress: ''
     });
   };
 
@@ -296,7 +245,6 @@ export default function Sales() {
       fetchSales();
       setFormData(initialFormData);
       setCurrentItem(initialCurrentItem);
-      resetNewCustomerForm();
       setEditingId(null);
       setShowForm(false);
       setError('');
@@ -316,11 +264,10 @@ export default function Sales() {
       ...initialFormData,
       ...sale,
       party: normalizedPartyId,
-      customerName: sale.customerName || sale.party?.partyName || '',
-      customerPhone: String(sale.customerPhone || sale.party?.phone || '').replace(/\D/g, '').slice(0, 10),
+      customerName: sale.customerName || resolveLeadgerNameById(normalizedPartyId) || '',
+      customerPhone: String(sale.customerPhone || '').replace(/\D/g, '').slice(0, 10),
       customerAddress: sale.customerAddress || ''
     });
-    resetNewCustomerForm();
     setEditingId(sale._id);
     setShowForm(true);
   };
@@ -342,7 +289,13 @@ export default function Sales() {
     setEditingId(null);
     setFormData(initialFormData);
     setCurrentItem(initialCurrentItem);
-    resetNewCustomerForm();
+  };
+
+  const resolveLeadgerNameById = (leadgerId) => {
+    const resolvedId = typeof leadgerId === 'object' ? leadgerId?._id : leadgerId;
+    if (!resolvedId) return '';
+    const matching = leadgers.find((leadger) => String(leadger._id) === String(resolvedId));
+    return matching ? getLeadgerDisplayName(matching) : '';
   };
 
   const totalSales = sales.length;
@@ -427,26 +380,17 @@ export default function Sales() {
             {/* Customer Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-gray-700 font-medium">Customer Name</label>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewCustomerForm((prev) => !prev)}
-                    className="text-sm font-medium text-blue-600 hover:text-blue-800"
-                  >
-                    {showNewCustomerForm ? 'Close' : '+ Add Customer'}
-                  </button>
-                </div>
+                <label className="block text-gray-700 font-medium mb-2">Leadger/Account</label>
                 <select
                   name="party"
                   value={formData.party || ''}
-                  onChange={handleCustomerChange}
+                  onChange={handleLeadgerChange}
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
                 >
-                  <option value="">Select customer</option>
-                  {parties.map((party) => (
-                    <option key={party._id} value={party._id}>
-                      {party.partyName}
+                  <option value="">Select leadger/account</option>
+                  {leadgers.map((leadger) => (
+                    <option key={leadger._id} value={leadger._id}>
+                      {getLeadgerDisplayName(leadger)}
                     </option>
                   ))}
                 </select>
@@ -506,97 +450,6 @@ export default function Sales() {
                 />
               </div>
             </div>
-
-            {showNewCustomerForm && (
-              <div className="rounded-xl border border-blue-200 bg-blue-50/60 p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-blue-800">Add New Customer</h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <input
-                    type="text"
-                    name="partyName"
-                    value={newCustomerForm.partyName}
-                    onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Customer name *"
-                  />
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={newCustomerForm.phone}
-                    onChange={handleNewCustomerChange}
-                    maxLength={10}
-                    inputMode="numeric"
-                    className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Phone"
-                  />
-                  <input
-                    type="email"
-                    name="email"
-                    value={newCustomerForm.email}
-                    onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Email"
-                  />
-                  <input
-                    type="text"
-                    name="street"
-                    value={newCustomerForm.street}
-                    onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Street"
-                  />
-                  <input
-                    type="text"
-                    name="city"
-                    value={newCustomerForm.city}
-                    onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="City"
-                  />
-                  <input
-                    type="text"
-                    name="state"
-                    value={newCustomerForm.state}
-                    onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="State"
-                  />
-                  <input
-                    type="text"
-                    name="pincode"
-                    value={newCustomerForm.pincode}
-                    onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Pincode"
-                  />
-                  <input
-                    type="text"
-                    name="country"
-                    value={newCustomerForm.country}
-                    onChange={handleNewCustomerChange}
-                    className="w-full px-3 py-2 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Country"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleCreateCustomer}
-                    disabled={savingCustomer}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                  >
-                    {savingCustomer ? 'Saving...' : 'Save Customer'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={resetNewCustomerForm}
-                    className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            )}
 
             <div>
               <label className="block text-gray-700 font-medium mb-2">Customer Address</label>
@@ -827,12 +680,23 @@ export default function Sales() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
         />
+        <select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="w-full sm:w-56 bg-white px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+        >
+          <option value="">Sale History - All Time</option>
+          <option value="7d">Sale History - 7 Days</option>
+          <option value="30d">Sale History - 30 Days</option>
+          <option value="3m">Sale History - 3 Months</option>
+          <option value="6m">Sale History - 6 Months</option>
+          <option value="1y">Sale History - 1 Year</option>
+        </select>
         <button
           onClick={() => {
             setEditingId(null);
             setFormData(initialFormData);
             setCurrentItem(initialCurrentItem);
-            resetNewCustomerForm();
             setShowForm(true);
           }}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
@@ -855,7 +719,7 @@ export default function Sales() {
               <thead className="bg-slate-800 text-white">
                 <tr>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Leadger/Account</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Products</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Date</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Total</th>
@@ -869,7 +733,7 @@ export default function Sales() {
                 {sales.map((sale) => (
                   <tr key={sale._id} className="bg-white hover:bg-slate-50 transition-colors duration-200 group">
                     <td className="px-6 py-4 font-semibold text-slate-800">{sale.invoiceNumber}</td>
-                    <td className="px-6 py-4 font-medium text-slate-700">{sale.party?.partyName || sale.customerName || 'Walk-in'}</td>
+                    <td className="px-6 py-4 font-medium text-slate-700">{resolveLeadgerNameById(sale.party) || sale.customerName || 'Walk-in'}</td>
                     <td className="px-6 py-4 text-slate-600">
                       {sale.items?.length
                         ? (

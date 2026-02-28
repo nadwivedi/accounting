@@ -21,21 +21,53 @@ export default function Receipts() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     fetchReceipts();
-  }, [search]);
+  }, [search, dateFilter]);
 
   useEffect(() => {
     fetchParties();
     fetchSales();
   }, []);
 
+  const getFromDateByFilter = () => {
+    const now = new Date();
+    if (dateFilter === '7d') {
+      now.setDate(now.getDate() - 7);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '30d') {
+      now.setDate(now.getDate() - 30);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '3m') {
+      now.setMonth(now.getMonth() - 3);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '6m') {
+      now.setMonth(now.getMonth() - 6);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '1y') {
+      now.setFullYear(now.getFullYear() - 1);
+      return now.toISOString().split('T')[0];
+    }
+    return '';
+  };
+
   const fetchReceipts = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/receipts', { params: { search } });
+      const fromDate = getFromDateByFilter();
+      const response = await apiClient.get('/receipts', {
+        params: {
+          search,
+          fromDate: fromDate || undefined
+        }
+      });
       setReceipts(response.data || []);
       setError('');
     } catch (err) {
@@ -173,6 +205,18 @@ export default function Receipts() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg"
         />
+        <select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="w-full md:w-56 bg-white px-4 py-2.5 text-sm border border-gray-300 rounded-lg"
+        >
+          <option value="">Receipt History - All Time</option>
+          <option value="7d">Receipt History - 7 Days</option>
+          <option value="30d">Receipt History - 30 Days</option>
+          <option value="3m">Receipt History - 3 Months</option>
+          <option value="6m">Receipt History - 6 Months</option>
+          <option value="1y">Receipt History - 1 Year</option>
+        </select>
         <button
           onClick={handleOpenForm}
           className="bg-emerald-600 text-white px-6 py-2.5 rounded-lg hover:bg-emerald-700 transition shadow-sm whitespace-nowrap"

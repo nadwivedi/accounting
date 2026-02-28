@@ -183,11 +183,17 @@ exports.createSale = async (req, res) => {
 // Get all sales
 exports.getAllSales = async (req, res) => {
   try {
-    const { party, search } = req.query;
+    const { party, search, fromDate } = req.query;
     const userId = req.userId;
     const filter = { userId };
 
     if (party) filter.party = party;
+    if (fromDate) {
+      const parsedFromDate = new Date(fromDate);
+      if (!Number.isNaN(parsedFromDate.getTime())) {
+        filter.saleDate = { $gte: parsedFromDate };
+      }
+    }
 
     let query = Sale.find(filter)
       .populate('items.product', 'name');

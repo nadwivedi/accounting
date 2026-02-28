@@ -21,21 +21,53 @@ export default function Payments() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const [dateFilter, setDateFilter] = useState('');
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     fetchPayments();
-  }, [search]);
+  }, [search, dateFilter]);
 
   useEffect(() => {
     fetchParties();
     fetchPurchases();
   }, []);
 
+  const getFromDateByFilter = () => {
+    const now = new Date();
+    if (dateFilter === '7d') {
+      now.setDate(now.getDate() - 7);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '30d') {
+      now.setDate(now.getDate() - 30);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '3m') {
+      now.setMonth(now.getMonth() - 3);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '6m') {
+      now.setMonth(now.getMonth() - 6);
+      return now.toISOString().split('T')[0];
+    }
+    if (dateFilter === '1y') {
+      now.setFullYear(now.getFullYear() - 1);
+      return now.toISOString().split('T')[0];
+    }
+    return '';
+  };
+
   const fetchPayments = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/payments', { params: { search } });
+      const fromDate = getFromDateByFilter();
+      const response = await apiClient.get('/payments', {
+        params: {
+          search,
+          fromDate: fromDate || undefined
+        }
+      });
       setPayments(response.data || []);
       setError('');
     } catch (err) {
@@ -231,6 +263,18 @@ export default function Payments() {
           onChange={(e) => setSearch(e.target.value)}
           className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg"
         />
+        <select
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="w-full md:w-56 bg-white px-4 py-2.5 text-sm border border-gray-300 rounded-lg"
+        >
+          <option value="">Payment History - All Time</option>
+          <option value="7d">Payment History - 7 Days</option>
+          <option value="30d">Payment History - 30 Days</option>
+          <option value="3m">Payment History - 3 Months</option>
+          <option value="6m">Payment History - 6 Months</option>
+          <option value="1y">Payment History - 1 Year</option>
+        </select>
         <button
           onClick={handleOpenForm}
           className="bg-rose-600 text-white px-6 py-2.5 rounded-lg hover:bg-rose-700 transition shadow-sm whitespace-nowrap"

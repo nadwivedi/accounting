@@ -130,7 +130,7 @@ exports.createPayment = async (req, res) => {
 
 exports.getAllPayments = async (req, res) => {
   try {
-    const { refType, refId, party, search } = req.query;
+    const { refType, refId, party, search, fromDate } = req.query;
     const userId = req.userId;
     const filter = { userId };
 
@@ -148,6 +148,13 @@ exports.getAllPayments = async (req, res) => {
 
     if (search) {
       filter.notes = { $regex: search, $options: 'i' };
+    }
+
+    if (fromDate) {
+      const parsedFromDate = new Date(fromDate);
+      if (!Number.isNaN(parsedFromDate.getTime())) {
+        filter.paymentDate = { $gte: parsedFromDate };
+      }
     }
 
     const payments = await Payment.find(filter)
