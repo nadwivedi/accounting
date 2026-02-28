@@ -16,6 +16,31 @@ const leadgerSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  mobile: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  email: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  address: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  state: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  pincode: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   notes: {
     type: String,
     trim: true,

@@ -7,6 +7,11 @@ exports.createLeadger = async (req, res) => {
     const {
       group,
       name,
+      mobile,
+      email,
+      address,
+      state,
+      pincode,
       notes
     } = req.body;
     const userId = req.userId;
@@ -37,6 +42,11 @@ exports.createLeadger = async (req, res) => {
       userId,
       group,
       name: String(name || '').trim(),
+      mobile: String(mobile || '').trim(),
+      email: String(email || '').trim(),
+      address: String(address || '').trim(),
+      state: String(state || '').trim(),
+      pincode: String(pincode || '').trim(),
       notes: String(notes || '').trim()
     });
 
@@ -71,6 +81,11 @@ exports.getAllLeadgers = async (req, res) => {
       const searchRegex = { $regex: search, $options: 'i' };
       filter.$or = [
         { name: searchRegex },
+        { mobile: searchRegex },
+        { email: searchRegex },
+        { address: searchRegex },
+        { state: searchRegex },
+        { pincode: searchRegex },
         { notes: searchRegex }
       ];
     }

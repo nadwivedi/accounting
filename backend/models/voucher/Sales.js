@@ -73,14 +73,6 @@ const salesSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  shippingCharges: {
-    type: Number,
-    default: 0
-  },
-  otherCharges: {
-    type: Number,
-    default: 0
-  },
   roundOff: {
     type: Number,
     default: 0

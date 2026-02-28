@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Receipt, IndianRupee } from 'lucide-react';
+import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
@@ -12,6 +13,7 @@ const getInitialForm = () => ({
   refType: 'none',
   refId: ''
 });
+const TOAST_OPTIONS = { autoClose: 1200 };
 
 export default function Receipts() {
   const [receipts, setReceipts] = useState([]);
@@ -150,6 +152,7 @@ export default function Receipts() {
       setError('');
       fetchReceipts();
       fetchSales();
+      toast.success('Receipt created successfully', TOAST_OPTIONS);
     } catch (err) {
       setError(err.message || 'Error creating receipt');
     } finally {

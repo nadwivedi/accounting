@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { ShoppingCart, IndianRupee, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
@@ -18,8 +18,6 @@ export default function Sales() {
     subtotal: 0,
     discountAmount: 0,
     taxAmount: 0,
-    shippingCharges: 0,
-    otherCharges: 0,
     roundOff: 0,
     totalAmount: 0,
     paidAmount: 0,
@@ -46,6 +44,10 @@ export default function Sales() {
   const [dateFilter, setDateFilter] = useState('');
   const [formData, setFormData] = useState(initialFormData);
   const [currentItem, setCurrentItem] = useState(initialCurrentItem);
+  const [leadgerQuery, setLeadgerQuery] = useState('');
+  const [leadgerListIndex, setLeadgerListIndex] = useState(-1);
+  const [isLeadgerSectionActive, setIsLeadgerSectionActive] = useState(false);
+  const leadgerSectionRef = useRef(null);
 
   useEffect(() => {
     fetchSales();
@@ -121,30 +123,154 @@ export default function Sales() {
     const name = String(leadger?.name || '').trim();
 
     if (name) return name;
-    return 'Leadger/Account';
+    return 'Party Name';
+  };
+  const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+  const getMatchingLeadgers = (queryValue) => {
+    const normalized = normalizeText(queryValue);
+    if (!normalized) return leadgers;
+
+    const startsWith = leadgers.filter((leadger) => normalizeText(getLeadgerDisplayName(leadger)).startsWith(normalized));
+    const includes = leadgers.filter((leadger) => (
+      !normalizeText(getLeadgerDisplayName(leadger)).startsWith(normalized)
+      && normalizeText(getLeadgerDisplayName(leadger)).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
   };
 
-  const handleLeadgerChange = (e) => {
-    const selectedLeadgerId = e.target.value;
-    if (!selectedLeadgerId) {
-      setFormData({
-        ...formData,
+  const filteredLeadgers = useMemo(() => getMatchingLeadgers(leadgerQuery), [leadgers, leadgerQuery]);
+
+  useEffect(() => {
+    if (!showForm) return;
+
+    if (filteredLeadgers.length === 0) {
+      setLeadgerListIndex(-1);
+      return;
+    }
+
+    setLeadgerListIndex((prev) => {
+      if (prev < 0) return 0;
+      if (prev >= filteredLeadgers.length) return filteredLeadgers.length - 1;
+      return prev;
+    });
+  }, [showForm, filteredLeadgers]);
+
+  const findExactLeadger = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return leadgers.find((leadger) => normalizeText(getLeadgerDisplayName(leadger)) === normalized) || null;
+  };
+
+  const findBestLeadgerMatch = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return leadgers.find((leadger) => normalizeText(getLeadgerDisplayName(leadger)).startsWith(normalized))
+      || leadgers.find((leadger) => normalizeText(getLeadgerDisplayName(leadger)).includes(normalized))
+      || null;
+  };
+
+  const selectLeadger = (leadger) => {
+    if (!leadger) {
+      setLeadgerQuery('');
+      setFormData((prev) => ({
+        ...prev,
         party: '',
         customerName: '',
         customerPhone: '',
         customerAddress: ''
+      }));
+      setLeadgerListIndex(-1);
+      return;
+    }
+
+    const leadgerName = getLeadgerDisplayName(leadger);
+    setLeadgerQuery(leadgerName);
+    setFormData((prev) => ({
+      ...prev,
+      party: leadger._id,
+      customerName: leadgerName,
+      customerPhone: '',
+      customerAddress: ''
+    }));
+
+    const selectedIndex = filteredLeadgers.findIndex((item) => String(item._id) === String(leadger._id));
+    setLeadgerListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  };
+
+  const handleLeadgerInputChange = (e) => {
+    const value = e.target.value;
+    setLeadgerQuery(value);
+
+    if (!normalizeText(value)) {
+      selectLeadger(null);
+      return;
+    }
+
+    const exactLeadger = findExactLeadger(value);
+    if (exactLeadger) {
+      setFormData((prev) => ({
+        ...prev,
+        party: exactLeadger._id,
+        customerName: getLeadgerDisplayName(exactLeadger),
+        customerPhone: '',
+        customerAddress: ''
+      }));
+      const exactIndex = getMatchingLeadgers(value).findIndex((item) => String(item._id) === String(exactLeadger._id));
+      setLeadgerListIndex(exactIndex >= 0 ? exactIndex : 0);
+      return;
+    }
+
+    const matches = getMatchingLeadgers(value);
+    const firstMatch = matches[0] || null;
+    setFormData((prev) => ({
+      ...prev,
+      party: firstMatch?._id || '',
+      customerName: firstMatch ? getLeadgerDisplayName(firstMatch) : '',
+      customerPhone: '',
+      customerAddress: ''
+    }));
+    setLeadgerListIndex(firstMatch ? 0 : -1);
+  };
+
+  const handleLeadgerInputKeyDown = (e) => {
+    const key = e.key?.toLowerCase();
+    const isMoveDownKey = key === 'control';
+    const isMoveUpKey = key === 'shift' && !e.ctrlKey;
+
+    if (isMoveDownKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredLeadgers.length === 0) return;
+      setLeadgerListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredLeadgers.length - 1);
       });
       return;
     }
 
-    const selectedLeadger = leadgers.find((leadger) => String(leadger._id) === String(selectedLeadgerId));
-    setFormData({
-      ...formData,
-      party: selectedLeadgerId,
-      customerName: getLeadgerDisplayName(selectedLeadger),
-      customerPhone: '',
-      customerAddress: ''
-    });
+    if (isMoveUpKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredLeadgers.length === 0) return;
+      setLeadgerListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const activeLeadger = leadgerListIndex >= 0 ? filteredLeadgers[leadgerListIndex] : null;
+      const matchedLeadger = activeLeadger || findExactLeadger(leadgerQuery) || findBestLeadgerMatch(leadgerQuery);
+      if (matchedLeadger) {
+        selectLeadger(matchedLeadger);
+      }
+    }
   };
 
   const handleAddItem = () => {
@@ -197,7 +323,7 @@ export default function Sales() {
       totalTax += item.taxAmount || 0;
     });
 
-    const total = subtotal + totalTax + (formData.shippingCharges || 0) + (formData.otherCharges || 0) - (formData.discountAmount || 0);
+    const total = subtotal + totalTax - (formData.discountAmount || 0);
 
     setFormData(prev => ({
       ...prev,
@@ -246,6 +372,9 @@ export default function Sales() {
       setFormData(initialFormData);
       setCurrentItem(initialCurrentItem);
       setEditingId(null);
+      setLeadgerQuery('');
+      setLeadgerListIndex(-1);
+      setIsLeadgerSectionActive(false);
       setShowForm(false);
       setError('');
     } catch (err) {
@@ -259,15 +388,19 @@ export default function Sales() {
     const normalizedPartyId = typeof sale.party === 'object'
       ? sale.party?._id || ''
       : (sale.party || '');
+    const resolvedLeadgerName = resolveLeadgerNameById(normalizedPartyId) || sale.customerName || '';
 
     setFormData({
       ...initialFormData,
       ...sale,
       party: normalizedPartyId,
-      customerName: sale.customerName || resolveLeadgerNameById(normalizedPartyId) || '',
+      customerName: resolvedLeadgerName,
       customerPhone: String(sale.customerPhone || '').replace(/\D/g, '').slice(0, 10),
       customerAddress: sale.customerAddress || ''
     });
+    setLeadgerQuery(resolvedLeadgerName);
+    setLeadgerListIndex(resolvedLeadgerName ? 0 : -1);
+    setIsLeadgerSectionActive(true);
     setEditingId(sale._id);
     setShowForm(true);
   };
@@ -289,6 +422,19 @@ export default function Sales() {
     setEditingId(null);
     setFormData(initialFormData);
     setCurrentItem(initialCurrentItem);
+    setLeadgerQuery('');
+    setLeadgerListIndex(-1);
+    setIsLeadgerSectionActive(false);
+  };
+
+  const handleOpenForm = () => {
+    setEditingId(null);
+    setFormData(initialFormData);
+    setCurrentItem(initialCurrentItem);
+    setLeadgerQuery('');
+    setLeadgerListIndex(0);
+    setIsLeadgerSectionActive(true);
+    setShowForm(true);
   };
 
   const resolveLeadgerNameById = (leadgerId) => {
@@ -304,6 +450,9 @@ export default function Sales() {
     (sum, sale) => sum + (Number(sale.totalAmount || 0) - Number(sale.paidAmount || 0)),
     0
   );
+  const popupFieldClass = 'w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 py-2 text-slate-800 shadow-sm transition focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100';
+  const popupLabelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500';
+  const popupSectionClass = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.55)]';
 
   return (
     <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
@@ -360,317 +509,309 @@ export default function Sales() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCancel}>
-          <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
-              <h2 className="text-xl font-bold text-gray-800">
-                {editingId ? 'Edit Sale' : 'Create New Sale'}
-              </h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-2 sm:p-3 backdrop-blur-[2px]" onClick={handleCancel}>
+          <div className="h-[95vh] w-[95vw] sm:w-[88vw] lg:w-[40%] overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100 shadow-[0_35px_80px_-35px_rgba(2,6,23,0.65)]" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-slate-700 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 px-5 py-4 sm:px-6">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-100">
+                  {editingId ? 'Edit Sale' : 'Create New Sale'}
+                </h2>
+                <p className="mt-0.5 text-xs sm:text-sm text-slate-300">Party details, item entry, and quick totals</p>
+              </div>
               <button
                 type="button"
                 onClick={handleCancel}
-                className="h-9 w-9 rounded-full border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition"
+                className="h-9 w-9 rounded-full border border-slate-500 text-slate-200 hover:bg-slate-600 hover:text-white hover:border-slate-300 transition"
                 aria-label="Close popup"
               >
                 &times;
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-6 px-6 py-6">
-            {/* Customer Info */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Leadger/Account</label>
-                <select
-                  name="party"
-                  value={formData.party || ''}
-                  onChange={handleLeadgerChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                >
-                  <option value="">Select leadger/account</option>
-                  {leadgers.map((leadger) => (
-                    <option key={leadger._id} value={leadger._id}>
-                      {getLeadgerDisplayName(leadger)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex h-[calc(95vh-82px)] flex-col">
+              <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 via-white to-cyan-50/40">
+                <div className="space-y-4 p-4 sm:p-5">
+                  <div className={popupSectionClass}>
+                    <div className="mb-4 flex items-start justify-between gap-3">
+                      <div>
+                        <span className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-700">
+                          Party
+                        </span>
+                        <h3 className="mt-2 text-base font-semibold text-slate-800">Customer Information</h3>
+                        <p className="mt-0.5 text-xs text-slate-500">Select party name and fill billing details.</p>
+                      </div>
+                    </div>
 
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Phone</label>
-                <input
-                  type="tel"
-                  name="customerPhone"
-                  value={formData.customerPhone}
-                  onChange={handleInputChange}
-                  maxLength={10}
-                  inputMode="numeric"
-                  pattern="[0-9]{10}"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  placeholder="10-digit phone number"
-                />
-              </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className={popupLabelClass}>Party Name</label>
+                        <div
+                          ref={leadgerSectionRef}
+                          className="relative"
+                          onFocusCapture={() => setIsLeadgerSectionActive(true)}
+                          onBlurCapture={(event) => {
+                            const nextFocused = event.relatedTarget;
+                            if (
+                              leadgerSectionRef.current
+                              && nextFocused instanceof Node
+                              && leadgerSectionRef.current.contains(nextFocused)
+                            ) {
+                              return;
+                            }
+                            setIsLeadgerSectionActive(false);
+                          }}
+                        >
+                          <input
+                            type="text"
+                            value={leadgerQuery}
+                            onChange={handleLeadgerInputChange}
+                            onKeyDown={handleLeadgerInputKeyDown}
+                            autoFocus
+                            className={popupFieldClass}
+                            placeholder="Select party name only"
+                          />
 
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Sale Date</label>
-                <input
-                  type="date"
-                  name="saleDate"
-                  value={formData.saleDate}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
+                          {isLeadgerSectionActive && (
+                            <div className="mt-2 w-full z-30 lg:fixed lg:right-4 lg:top-20 lg:bottom-6 lg:mt-0 lg:w-80">
+                              <div className="overflow-hidden rounded-xl border border-cyan-200 bg-gradient-to-b from-cyan-50 via-sky-50 to-white shadow-xl lg:h-full lg:flex lg:flex-col">
+                                <div className="border-b border-cyan-300 bg-gradient-to-r from-cyan-700 to-sky-700 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white">
+                                  Party List
+                                </div>
+                                <div className="max-h-60 overflow-y-auto bg-white/90 lg:max-h-none lg:flex-1">
+                                  <button
+                                    type="button"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onClick={() => selectLeadger(null)}
+                                    className={`w-full border-b border-slate-100 px-3 py-2 text-left text-sm transition-colors ${
+                                      !formData.party
+                                        ? 'bg-emerald-100 text-emerald-800 font-medium'
+                                        : 'text-slate-700 hover:bg-blue-50'
+                                    }`}
+                                  >
+                                    Walk-in / No Party
+                                  </button>
+                                  {filteredLeadgers.length === 0 ? (
+                                    <div className="px-3 py-2 text-sm text-slate-500">No matching parties</div>
+                                  ) : (
+                                    filteredLeadgers.map((leadger, index) => {
+                                      const isActive = index === leadgerListIndex;
+                                      const isSelected = String(formData.party || '') === String(leadger._id);
+                                      return (
+                                        <button
+                                          key={leadger._id}
+                                          type="button"
+                                          onMouseDown={(event) => event.preventDefault()}
+                                          onClick={() => selectLeadger(leadger)}
+                                          className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
+                                            isActive
+                                              ? 'bg-blue-100 text-blue-800 font-semibold'
+                                              : isSelected
+                                                ? 'bg-emerald-100 text-emerald-800 font-medium'
+                                                : 'text-slate-700 hover:bg-blue-50'
+                                          }`}
+                                        >
+                                          {getLeadgerDisplayName(leadger)}
+                                        </button>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
 
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Payment Mode</label>
-                <select
-                  name="paymentMode"
-                  value={formData.paymentMode}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                >
-                  <option value="cash">Cash</option>
-                  <option value="upi">UPI</option>
-                  <option value="card">Card</option>
-                  <option value="bank">Bank Transfer</option>
-                  <option value="credit">Credit</option>
-                  <option value="cheque">Cheque</option>
-                </select>
-              </div>
+                      <div>
+                        <label className={popupLabelClass}>Sale Date</label>
+                        <input
+                          type="date"
+                          name="saleDate"
+                          value={formData.saleDate}
+                          onChange={handleInputChange}
+                          className={popupFieldClass}
+                        />
+                      </div>
 
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Due Date</label>
-                <input
-                  type="date"
-                  name="dueDate"
-                  value={formData.dueDate}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-              </div>
-            </div>
+                      <div>
+                        <label className={popupLabelClass}>Due Date</label>
+                        <input
+                          type="date"
+                          name="dueDate"
+                          value={formData.dueDate}
+                          onChange={handleInputChange}
+                          className={popupFieldClass}
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Customer Address</label>
-              <textarea
-                name="customerAddress"
-                value={formData.customerAddress}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                placeholder="Customer address"
-                rows="2"
-              />
-            </div>
+                  <div className={popupSectionClass}>
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <span className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700">
+                          Billing
+                        </span>
+                        <h3 className="mt-2 text-base font-semibold text-slate-800">Add Items</h3>
+                        <p className="mt-0.5 text-xs text-slate-500">Add products one by one and build the sale bill.</p>
+                      </div>
+                      <span className="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 shadow-sm">
+                        {formData.items.length} item(s)
+                      </span>
+                    </div>
 
-            {/* Add Items Section */}
-            <div className="border-t pt-4">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Add Items</h3>
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-4">
-                <select
-                  value={currentItem.product}
-                  onChange={(e) => setCurrentItem({ ...currentItem, product: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-                >
-                  <option value="">Product</option>
-                  {products.map((p) => (
-                    <option key={p._id} value={p._id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  placeholder="Qty"
-                  value={currentItem.quantity}
-                  onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-                <input
-                  type="number"
-                  placeholder="Price"
-                  value={currentItem.unitPrice}
-                  onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  step="0.01"
-                />
-                <input
-                  type="number"
-                  placeholder="Tax %"
-                  value={currentItem.taxRate}
-                  onChange={(e) => setCurrentItem({ ...currentItem, taxRate: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-                <input
-                  type="number"
-                  placeholder="Discount"
-                  value={currentItem.discount}
-                  onChange={(e) => setCurrentItem({ ...currentItem, discount: e.target.value })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddItem}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
-                >
-                  Add
-                </button>
-              </div>
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <select
+                        value={currentItem.product}
+                        onChange={(e) => setCurrentItem({ ...currentItem, product: e.target.value })}
+                        className={`col-span-2 ${popupFieldClass}`}
+                      >
+                        <option value="">Select product</option>
+                        {products.map((p) => (
+                          <option key={p._id} value={p._id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="number"
+                        placeholder="Qty"
+                        value={currentItem.quantity}
+                        onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
+                        className={popupFieldClass}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Price"
+                        value={currentItem.unitPrice}
+                        onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
+                        className={popupFieldClass}
+                        step="0.01"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Tax %"
+                        value={currentItem.taxRate}
+                        onChange={(e) => setCurrentItem({ ...currentItem, taxRate: e.target.value })}
+                        className={popupFieldClass}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Discount"
+                        value={currentItem.discount}
+                        onChange={(e) => setCurrentItem({ ...currentItem, discount: e.target.value })}
+                        className={popupFieldClass}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleAddItem}
+                        className="col-span-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition shadow-sm"
+                      >
+                        Add Item
+                      </button>
+                    </div>
 
-              {/* Items Table */}
-              {formData.items.length > 0 && (
-                <div className="overflow-x-auto mb-4">
-                  <table className="w-full text-sm border">
-                    <thead className="bg-gray-100">
-                      <tr>
-                        <th className="px-4 py-2 text-left">Product</th>
-                        <th className="px-4 py-2 text-left">Qty</th>
-                        <th className="px-4 py-2 text-left">Price</th>
-                        <th className="px-4 py-2 text-left">Tax</th>
-                        <th className="px-4 py-2 text-left">Discount</th>
-                        <th className="px-4 py-2 text-left">Total</th>
-                        <th className="px-4 py-2 text-left">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {formData.items.map((item, index) => (
-                        <tr key={index} className="border-b">
-                          <td className="px-4 py-2">{item.productName}</td>
-                          <td className="px-4 py-2">{item.quantity}</td>
-                          <td className="px-4 py-2">₹{item.unitPrice}</td>
-                          <td className="px-4 py-2">₹{item.taxAmount.toFixed(2)}</td>
-                          <td className="px-4 py-2">₹{item.discount}</td>
-                          <td className="px-4 py-2 font-semibold">₹{item.total.toFixed(2)}</td>
-                          <td className="px-4 py-2">
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveItem(index)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              Remove
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                    {formData.items.length > 0 && (
+                      <div className="overflow-hidden rounded-xl border border-slate-200">
+                        <table className="w-full text-xs sm:text-sm">
+                          <thead className="bg-slate-100 text-slate-700">
+                            <tr>
+                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Product</th>
+                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Qty</th>
+                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Price</th>
+                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Tax</th>
+                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Discount</th>
+                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Total</th>
+                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Action</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-slate-100 bg-white">
+                            {formData.items.map((item, index) => (
+                              <tr key={index}>
+                                <td className="px-2 py-2 font-medium text-slate-700 sm:px-3">{item.productName}</td>
+                                <td className="px-2 py-2 text-slate-600 sm:px-3">{item.quantity}</td>
+                                <td className="px-2 py-2 text-slate-600 sm:px-3">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
+                                <td className="px-2 py-2 text-slate-600 sm:px-3">Rs {Number(item.taxAmount || 0).toFixed(2)}</td>
+                                <td className="px-2 py-2 text-slate-600 sm:px-3">Rs {Number(item.discount || 0).toFixed(2)}</td>
+                                <td className="px-2 py-2 font-semibold text-slate-800 sm:px-3">Rs {Number(item.total || 0).toFixed(2)}</td>
+                                <td className="px-2 py-2 sm:px-3">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveItem(index)}
+                                    className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition"
+                                  >
+                                    Remove
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+
                 </div>
-              )}
-            </div>
 
-            {/* Charges */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 border-t pt-4">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Discount</label>
-                <input
-                  type="number"
-                  name="discountAmount"
-                  value={formData.discountAmount}
-                  onChange={(e) => {
-                    handleInputChange(e);
-                    calculateTotals(formData.items);
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  step="0.01"
-                />
-              </div>
+                <div className="space-y-3 p-4 pt-0 sm:p-5 sm:pt-0">
+                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)]">
+                    <h4 className="mb-3 text-sm font-semibold text-slate-700">Bill Summary</h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                        <p className="text-slate-500">Subtotal</p>
+                        <p className="font-semibold text-slate-800">Rs {formData.subtotal.toFixed(2)}</p>
+                      </div>
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                        <p className="text-slate-500">Tax</p>
+                        <p className="font-semibold text-slate-800">Rs {formData.taxAmount.toFixed(2)}</p>
+                      </div>
+                      <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
+                        <p className="text-blue-600">Total</p>
+                        <p className="font-bold text-blue-700">Rs {formData.totalAmount.toFixed(2)}</p>
+                      </div>
+                      <div className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2">
+                        <p className="text-rose-600">Due</p>
+                        <p className="font-bold text-rose-700">Rs {(formData.totalAmount - formData.paidAmount).toFixed(2)}</p>
+                      </div>
+                    </div>
+                  </div>
 
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Shipping</label>
-                <input
-                  type="number"
-                  name="shippingCharges"
-                  value={formData.shippingCharges}
-                  onChange={(e) => {
-                    handleInputChange(e);
-                    calculateTotals(formData.items);
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  step="0.01"
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Other Charges</label>
-                <input
-                  type="number"
-                  name="otherCharges"
-                  value={formData.otherCharges}
-                  onChange={(e) => {
-                    handleInputChange(e);
-                    calculateTotals(formData.items);
-                  }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  step="0.01"
-                />
+                  <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_12px_24px_-22px_rgba(15,23,42,0.55)]">
+                    <label className="mb-1 block text-xs font-semibold text-slate-600">Notes</label>
+                    <textarea
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleInputChange}
+                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-100 transition"
+                      placeholder="Notes"
+                      rows="1"
+                    />
+                  </div>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Paid Amount</label>
-                <input
-                  type="number"
-                  name="paidAmount"
-                  value={formData.paidAmount}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  step="0.01"
-                />
+              <div className="border-t border-slate-200 bg-white/95 p-3 sm:p-4">
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="rounded-xl border border-slate-300 bg-slate-100 px-6 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-6 py-2.5 font-semibold text-white transition hover:from-sky-700 hover:to-indigo-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Saving...' : 'Save Sale'}
+                  </button>
+                </div>
               </div>
-            </div>
-
-            {/* Totals */}
-            <div className="bg-gray-50 p-4 rounded-lg grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-gray-600 text-sm">Subtotal</p>
-                <p className="text-xl font-bold">₹{formData.subtotal.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">Tax</p>
-                <p className="text-xl font-bold">₹{formData.taxAmount.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">Total</p>
-                <p className="text-2xl font-bold text-blue-600">₹{formData.totalAmount.toFixed(2)}</p>
-              </div>
-              <div>
-                <p className="text-gray-600 text-sm">Due</p>
-                <p className="text-2xl font-bold text-red-600">₹{(formData.totalAmount - formData.paidAmount).toFixed(2)}</p>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Notes</label>
-              <textarea
-                name="notes"
-                value={formData.notes}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                placeholder="Additional notes"
-                rows="2"
-              />
-            </div>
-
-            <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-              >
-                {loading ? 'Saving...' : 'Save Sale'}
-              </button>
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
-              >
-                Cancel
-              </button>
-            </div>
             </form>
           </div>
         </div>
       )}
-
       {/* Search */}
       <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <input
@@ -693,12 +834,7 @@ export default function Sales() {
           <option value="1y">Sale History - 1 Year</option>
         </select>
         <button
-          onClick={() => {
-            setEditingId(null);
-            setFormData(initialFormData);
-            setCurrentItem(initialCurrentItem);
-            setShowForm(true);
-          }}
+          onClick={handleOpenForm}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
         >
           + New Sale
@@ -719,7 +855,7 @@ export default function Sales() {
               <thead className="bg-slate-800 text-white">
                 <tr>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Leadger/Account</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Party Name</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Products</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Date</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Total</th>

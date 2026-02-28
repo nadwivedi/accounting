@@ -34,10 +34,8 @@ const calculateTotals = (payload = {}) => {
   }, 0));
 
   const discountAmount = toNumber(payload.discountAmount);
-  const shippingCharges = toNumber(payload.shippingCharges);
-  const otherCharges = toNumber(payload.otherCharges);
   const roundOff = toNumber(payload.roundOff);
-  const computedTotal = subtotal + taxAmount + shippingCharges + otherCharges - discountAmount + roundOff;
+  const computedTotal = subtotal + taxAmount - discountAmount + roundOff;
   const totalAmount = toNumber(payload.totalAmount, computedTotal);
   const paidAmount = Math.max(0, toNumber(payload.paidAmount));
   const normalizedPaid = Math.min(paidAmount, totalAmount);
@@ -48,8 +46,6 @@ const calculateTotals = (payload = {}) => {
     subtotal,
     taxAmount,
     discountAmount,
-    shippingCharges,
-    otherCharges,
     roundOff,
     totalAmount,
     paidAmount: normalizedPaid,
@@ -72,8 +68,6 @@ exports.createSale = async (req, res) => {
       subtotal,
       discountAmount,
       taxAmount,
-      shippingCharges,
-      otherCharges,
       roundOff,
       totalAmount,
       paidAmount,
@@ -106,8 +100,6 @@ exports.createSale = async (req, res) => {
       subtotal,
       discountAmount,
       taxAmount,
-      shippingCharges,
-      otherCharges,
       roundOff,
       totalAmount,
       paidAmount
@@ -126,8 +118,6 @@ exports.createSale = async (req, res) => {
       subtotal: totals.subtotal,
       discountAmount: totals.discountAmount,
       taxAmount: totals.taxAmount,
-      shippingCharges: totals.shippingCharges,
-      otherCharges: totals.otherCharges,
       roundOff: totals.roundOff,
       totalAmount: totals.totalAmount,
       paidAmount: totals.paidAmount,

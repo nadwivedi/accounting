@@ -1,13 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Wallet } from 'lucide-react';
+import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 const getInitialForm = () => ({
   group: '',
   name: '',
+  mobile: '',
+  email: '',
+  address: '',
+  state: '',
+  pincode: '',
   notes: ''
 });
+const TOAST_OPTIONS = { autoClose: 1200 };
 
 export default function Leadger() {
   const [leadgers, setLeadgers] = useState([]);
@@ -20,7 +27,7 @@ export default function Leadger() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
-  const notesInputRef = useRef(null);
+  const mobileInputRef = useRef(null);
   const groupSectionRef = useRef(null);
 
   useEffect(() => {
@@ -55,6 +62,16 @@ export default function Leadger() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'mobile') {
+      const normalized = String(value || '').replace(/\D/g, '').slice(0, 10);
+      setFormData((prev) => ({ ...prev, [name]: normalized }));
+      return;
+    }
+    if (name === 'pincode') {
+      const normalized = String(value || '').replace(/\D/g, '').slice(0, 6);
+      setFormData((prev) => ({ ...prev, [name]: normalized }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -147,8 +164,8 @@ export default function Leadger() {
     const selectedIndex = filteredGroups.findIndex((item) => String(item._id) === String(group._id));
     setGroupListIndex(selectedIndex >= 0 ? selectedIndex : 0);
 
-    if (focusNotes && notesInputRef.current) {
-      notesInputRef.current.focus();
+    if (focusNotes && mobileInputRef.current) {
+      mobileInputRef.current.focus();
     }
   };
 
@@ -210,8 +227,8 @@ export default function Leadger() {
         return;
       }
 
-      if (notesInputRef.current) {
-        notesInputRef.current.focus();
+      if (mobileInputRef.current) {
+        mobileInputRef.current.focus();
       }
       return;
     }
@@ -236,12 +253,18 @@ export default function Leadger() {
       await apiClient.post('/leadgers', {
         group: selectedGroupId,
         name: String(formData.name || '').trim(),
+        mobile: String(formData.mobile || '').trim(),
+        email: String(formData.email || '').trim(),
+        address: String(formData.address || '').trim(),
+        state: String(formData.state || '').trim(),
+        pincode: String(formData.pincode || '').trim(),
         notes: formData.notes
       });
 
       handleCloseForm();
       fetchLeadgers();
       setError('');
+      toast.success('Leadger created successfully', TOAST_OPTIONS);
     } catch (err) {
       setError(err.message || 'Error creating leadger voucher');
     } finally {
@@ -385,11 +408,77 @@ export default function Leadger() {
               </div>
 
               <div>
+                <label className="block text-sm text-slate-600 mb-1">Mobile (Optional)</label>
+                <input
+                  type="tel"
+                  name="mobile"
+                  value={formData.mobile}
+                  onChange={handleChange}
+                  ref={mobileInputRef}
+                  inputMode="numeric"
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  placeholder="10-digit mobile number"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-600 mb-1">Email (Optional)</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  placeholder="Enter email"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-600 mb-1">State (Optional)</label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  placeholder="Enter state"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-600 mb-1">Pincode (Optional)</label>
+                <input
+                  type="text"
+                  name="pincode"
+                  value={formData.pincode}
+                  onChange={handleChange}
+                  inputMode="numeric"
+                  pattern="[0-9]{6}"
+                  maxLength={6}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  placeholder="6-digit pincode"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-600 mb-1">Address (Optional)</label>
+                <textarea
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
+                  placeholder="Enter address"
+                  rows={2}
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm text-slate-600 mb-1">Notes</label>
                 <input
                   type="text"
                   name="notes"
-                  ref={notesInputRef}
                   value={formData.notes}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg"

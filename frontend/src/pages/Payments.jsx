@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Wallet, IndianRupee } from 'lucide-react';
+import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
@@ -12,6 +13,7 @@ const getInitialForm = () => ({
   refType: 'none',
   refId: ''
 });
+const TOAST_OPTIONS = { autoClose: 1200 };
 
 export default function Payments() {
   const [payments, setPayments] = useState([]);
@@ -153,6 +155,7 @@ export default function Payments() {
       setError('');
       fetchPayments();
       fetchPurchases();
+      toast.success('Payment created successfully', TOAST_OPTIONS);
     } catch (err) {
       setError(err.message || 'Error creating payment');
     } finally {

@@ -295,8 +295,10 @@ export default function Sidebar() {
     const handleKeyDown = (event) => {
       const key = event.key?.toLowerCase();
       const isAltN = event.altKey && !event.ctrlKey && !event.metaKey && key === 'n';
+      const isMoveDownKey = key === 'control' && !event.altKey && !event.metaKey;
+      const isMoveUpKey = key === 'shift' && !event.altKey && !event.metaKey && !event.ctrlKey;
 
-      if (event.defaultPrevented || event.ctrlKey || event.metaKey) return;
+      if (event.defaultPrevented || event.metaKey) return;
 
       if (key === 'escape' && isPopupOpen()) {
         event.preventDefault();
@@ -321,7 +323,7 @@ export default function Sidebar() {
       const vouchersMenu = menuItems.find((item) => item.name === 'Vouchers');
       const voucherSubItems = (vouchersMenu?.subItems || []).filter((subItem) => Boolean(subItem.path));
 
-      if ((key === 'arrowdown' || key === 'arrowup') && (masterSubItems.length > 0 || voucherSubItems.length > 0)) {
+      if ((isMoveDownKey || isMoveUpKey) && (masterSubItems.length > 0 || voucherSubItems.length > 0)) {
         const currentMasterIndex = masterSubItems.findIndex((subItem) => isActive(subItem.path));
         const currentVoucherIndex = voucherSubItems.findIndex((subItem) => isActive(subItem.path));
 
@@ -329,7 +331,7 @@ export default function Sidebar() {
           event.preventDefault();
           if (window.innerWidth < 768) setMobileOpen(true);
 
-          const move = key === 'arrowdown' ? 1 : -1;
+          const move = isMoveDownKey ? 1 : -1;
           if (currentMasterIndex !== -1) {
             setExpandedMenus({ Masters: true, Vouchers: false });
             const nextIndex = (currentMasterIndex + move + masterSubItems.length) % masterSubItems.length;
@@ -342,6 +344,8 @@ export default function Sidebar() {
           return;
         }
       }
+
+      if (event.ctrlKey) return;
 
       if (key === 'v') {
         event.preventDefault();

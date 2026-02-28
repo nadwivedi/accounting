@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Wallet, IndianRupee } from 'lucide-react';
+import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 const PAYMENT_METHODS = ['cash', 'bank', 'upi', 'card', 'other'];
+const TOAST_OPTIONS = { autoClose: 1200 };
 
 export default function VoucherRegisterPage({
   title,
@@ -168,6 +170,7 @@ export default function VoucherRegisterPage({
       handleCloseForm();
       fetchEntries();
       setError('');
+      toast.success(`${title} created successfully`, TOAST_OPTIONS);
     } catch (err) {
       setError(err.message || `Error saving ${title.toLowerCase()}`);
     } finally {
