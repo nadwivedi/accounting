@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
-const Sale = require('../models/Sales');
-const Purchase = require('../models/Purchase');
-const Payment = require('../models/Payment');
-const Receipt = require('../models/Receipt');
-const Product = require('../models/Stock');
+const Sale = require('../models/voucher/Sales');
+const Purchase = require('../models/voucher/Purchase');
+const Payment = require('../models/voucher/Payment');
+const Receipt = require('../models/voucher/Receipt');
+const Product = require('../models/master/Stock');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);

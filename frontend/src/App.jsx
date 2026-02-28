@@ -17,7 +17,7 @@ import Payments from './pages/Payments';
 import Receipts from './pages/Receipts';
 import Leadger from './pages/Leadger';
 import Contra from './pages/Contra';
-import StockAdjustmentVoucher from './pages/StockAdjustmentVoucher';
+import StockAdjustment from './pages/StockAdjustment';
 import SaleReturn from './pages/SaleReturn';
 import PurchaseReturn from './pages/PurchaseReturn';
 import Reports from './pages/Reports';
@@ -175,10 +175,10 @@ function App() {
         />
 
         <Route
-          path="/stock-adjustment-voucher"
+          path="/stock-adjustment"
           element={
             <ProtectedRoute>
-              <StockAdjustmentVoucher />
+              <StockAdjustment />
             </ProtectedRoute>
           }
         />

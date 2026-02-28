@@ -1,5 +1,5 @@
 const User = require('../models/User');
-const Group = require('../models/Group');
+const Group = require('../models/master/Group');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 

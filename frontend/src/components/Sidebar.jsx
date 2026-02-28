@@ -195,7 +195,7 @@ const menuItems = [
       { name: 'Purchase', path: '/purchases', Icon: PurchaseIcon },
       { name: 'Sale Return', path: '/sale-return', Icon: SaleReturnIcon },
       { name: 'Purchase Return', path: '/purchase-return', Icon: PurchaseReturnIcon },
-      { name: 'Stock Adjustment', path: '/stock-adjustment-voucher', Icon: StockAdjustmentIcon },
+      { name: 'Stock Adjustment', path: '/stock-adjustment', Icon: StockAdjustmentIcon },
       { name: 'Payment', path: '/payments', Icon: PaymentIcon },
       { name: 'Receipt', path: '/receipts', Icon: ReceiptIcon },
       { name: 'Contra', path: '/contra', Icon: ContraIcon }
