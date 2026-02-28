@@ -38,6 +38,16 @@ function StockAdjustmentIcon() {
   );
 }
 
+function UnitIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M4 7.5 12 3l8 4.5-8 4.5-8-4.5Z" />
+      <path d="M4 7.5V16.5L12 21l8-4.5V7.5" />
+      <path d="M12 12v9" />
+    </svg>
+  );
+}
+
 function PartyIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
@@ -175,11 +185,11 @@ const menuItems = [
     name: 'Masters',
     Icon: MasterIcon,
     subItems: [
-      { name: 'Stock', path: '/stock', Icon: ProductIcon },
-      { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
       { name: 'Group', path: '/groups', Icon: MasterIcon },
-      { name: 'Parties', path: '/parties', Icon: PartyIcon },
-      { name: 'Leadger', path: '/leadger', Icon: LeadgerIcon }
+      { name: 'Leadger', path: '/leadger', Icon: LeadgerIcon },
+      { name: 'Stock Item', path: '/stock', Icon: ProductIcon, dividerBefore: true },
+      { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
+      { name: 'Unit', path: '/units', Icon: UnitIcon }
     ]
   },
   {
@@ -204,7 +214,7 @@ export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedMenus, setExpandedMenus] = useState({
     Masters: true,
-    Vouchers: true
+    Vouchers: false
   });
   const location = useLocation();
   const navigate = useNavigate();
@@ -223,18 +233,29 @@ export default function Sidebar() {
     return false;
   };
 
-  useEffect(() => {
+  const setExclusiveMenu = (menuName, shouldOpen = true) => {
     setExpandedMenus((prev) => {
-      const next = { ...prev };
-
-      menuItems.forEach((item) => {
-        if (item.subItems && isItemOrSubItemActive(item)) {
-          next[item.name] = true;
-        }
+      const next = {};
+      Object.keys(prev).forEach((key) => {
+        next[key] = false;
       });
-
+      next[menuName] = shouldOpen;
       return next;
     });
+  };
+
+  useEffect(() => {
+    const mastersItem = menuItems.find((item) => item.name === 'Masters');
+    const vouchersItem = menuItems.find((item) => item.name === 'Vouchers');
+
+    const mastersActive = Boolean(mastersItem && isItemOrSubItemActive(mastersItem));
+    const vouchersActive = Boolean(vouchersItem && isItemOrSubItemActive(vouchersItem));
+
+    if (mastersActive) {
+      setExpandedMenus({ Masters: true, Vouchers: false });
+    } else if (vouchersActive) {
+      setExpandedMenus({ Masters: false, Vouchers: true });
+    }
   }, [location.pathname]);
 
   useEffect(() => {
@@ -243,28 +264,106 @@ export default function Sidebar() {
       return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target?.isContentEditable;
     };
 
-    const handleKeyDown = (event) => {
-      if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
-      if (isTypingTarget(event.target)) return;
+    const isPopupOpen = () => Boolean(document.querySelector('.fixed.inset-0.z-50'));
 
+    const triggerNewAction = () => {
+      const visibleButtons = Array.from(document.querySelectorAll('button')).filter(
+        (button) => !button.disabled && button.offsetParent !== null
+      );
+
+      const patterns = [
+        /^\s*\+\s*add\b/i,
+        /^\s*\+\s*new\b/i,
+        /^\s*new\b/i
+      ];
+
+      for (const pattern of patterns) {
+        const match = visibleButtons.find((button) => pattern.test((button.textContent || '').trim()));
+        if (match) {
+          match.click();
+          return true;
+        }
+      }
+
+      return false;
+    };
+
+    const closeActivePopup = () => {
+      const closeButton = document.querySelector('.fixed.inset-0.z-50 button[aria-label="Close popup"]');
+      if (closeButton instanceof HTMLButtonElement) {
+        closeButton.click();
+        return true;
+      }
+      return false;
+    };
+
+    const handleKeyDown = (event) => {
       const key = event.key?.toLowerCase();
+      const isAltN = event.altKey && !event.ctrlKey && !event.metaKey && key === 'n';
+
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey) return;
+
+      if (key === 'escape' && isPopupOpen()) {
+        event.preventDefault();
+        closeActivePopup();
+        return;
+      }
+
+      if (isAltN) {
+        if (isPopupOpen()) return;
+        if (isTypingTarget(event.target)) return;
+        event.preventDefault();
+        triggerNewAction();
+        return;
+      }
+
+      if (event.altKey) return;
+      if (isTypingTarget(event.target)) return;
+      if (isPopupOpen()) return;
+
+      const mastersMenu = menuItems.find((item) => item.name === 'Masters');
+      const masterSubItems = (mastersMenu?.subItems || []).filter((subItem) => Boolean(subItem.path));
+      const vouchersMenu = menuItems.find((item) => item.name === 'Vouchers');
+      const voucherSubItems = (vouchersMenu?.subItems || []).filter((subItem) => Boolean(subItem.path));
+
+      if ((key === 'arrowdown' || key === 'arrowup') && (masterSubItems.length > 0 || voucherSubItems.length > 0)) {
+        const currentMasterIndex = masterSubItems.findIndex((subItem) => isActive(subItem.path));
+        const currentVoucherIndex = voucherSubItems.findIndex((subItem) => isActive(subItem.path));
+
+        if (currentMasterIndex !== -1 || currentVoucherIndex !== -1) {
+          event.preventDefault();
+          if (window.innerWidth < 768) setMobileOpen(true);
+
+          const move = key === 'arrowdown' ? 1 : -1;
+          if (currentMasterIndex !== -1) {
+            setExpandedMenus({ Masters: true, Vouchers: false });
+            const nextIndex = (currentMasterIndex + move + masterSubItems.length) % masterSubItems.length;
+            navigate(masterSubItems[nextIndex].path);
+          } else {
+            setExpandedMenus({ Masters: false, Vouchers: true });
+            const nextIndex = (currentVoucherIndex + move + voucherSubItems.length) % voucherSubItems.length;
+            navigate(voucherSubItems[nextIndex].path);
+          }
+          return;
+        }
+      }
 
       if (key === 'v') {
         event.preventDefault();
-        setExpandedMenus((prev) => ({ ...prev, Vouchers: true }));
+        setExpandedMenus({ Masters: false, Vouchers: true });
         if (window.innerWidth < 768) setMobileOpen(true);
         navigate('/sales');
       } else if (key === 'm') {
         event.preventDefault();
-        setExpandedMenus((prev) => ({ ...prev, Masters: true }));
+        setExpandedMenus({ Masters: true, Vouchers: false });
         if (window.innerWidth < 768) setMobileOpen(true);
-        navigate('/stock');
+        navigate('/groups');
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate]);
+  }, [navigate, location.pathname]);
 
   return (
     <>
@@ -355,7 +454,7 @@ export default function Sidebar() {
                   {hasSubItems ? (
                     <button
                       type="button"
-                      onClick={() => setExpandedMenus((prev) => ({ ...prev, [item.name]: !isExpanded }))}
+                      onClick={() => setExclusiveMenu(item.name, !isExpanded)}
                       className={`group relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-left outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-indigo-500 ${groupActive
                           ? 'bg-indigo-50/50 text-indigo-700 shadow-sm ring-1 ring-slate-200/50'
                           : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -464,7 +563,7 @@ export default function Sidebar() {
                             onClick={() => {
                               if (window.innerWidth < 768) setMobileOpen(false);
                             }}
-                            className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-300 ${subActive
+                            className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-300 ${subItem.dividerBefore ? 'mt-2 border-t border-slate-200 pt-3' : ''} ${subActive
                                 ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm ring-1 ring-indigo-100/50'
                                 : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
                               }`}

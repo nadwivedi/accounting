@@ -9,6 +9,7 @@ import StockDetail from './pages/StockDetail';
 import StockAdjustments from './pages/StockAdjustments';
 import StockGroups from './pages/StockGroups';
 import Group from './pages/Group';
+import Unit from './pages/Unit';
 import Parties from './pages/Parties';
 import PartyDetail from './pages/PartyDetail';
 import Sales from './pages/Sales';
@@ -60,6 +61,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Group />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/units"
+          element={
+            <ProtectedRoute>
+              <Unit />
             </ProtectedRoute>
           }
         />

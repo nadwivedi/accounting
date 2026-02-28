@@ -9,6 +9,7 @@ const connectDB = require('./utils/mongodb');
 const userRoutes = require('./routes/userRoutes');
 const stockGroupRoutes = require('./routes/stockGroupRoutes');
 const groupRoutes = require('./routes/groupRoutes');
+const unitRoutes = require('./routes/unitRoutes');
 const productRoutes = require('./routes/productRoutes');
 const partyRoutes = require('./routes/partyRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
@@ -42,6 +43,7 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/stock-groups', stockGroupRoutes);
 app.use('/api/groups', groupRoutes);
+app.use('/api/units', unitRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/parties', partyRoutes);
 app.use('/api/purchases', purchaseRoutes);

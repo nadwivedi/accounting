@@ -20,6 +20,7 @@ export default function Products() {
 
   const [products, setProducts] = useState([]);
   const [stockGroups, setStockGroups] = useState([]);
+  const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -29,8 +30,12 @@ export default function Products() {
 
   useEffect(() => {
     fetchProducts();
-    fetchStockGroups();
   }, [search]);
+
+  useEffect(() => {
+    fetchStockGroups();
+    fetchUnits();
+  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -53,6 +58,18 @@ export default function Products() {
       setStockGroups(response.data || []);
     } catch (err) {
       console.error('Error fetching stock groups:', err);
+    }
+  };
+
+  const fetchUnits = async () => {
+    try {
+      const response = await apiClient.get('/units', {
+        params: { isActive: true }
+      });
+      setUnits(response.data || []);
+    } catch (err) {
+      console.error('Error fetching units:', err);
+      setUnits([]);
     }
   };
 
@@ -136,6 +153,14 @@ export default function Products() {
   const handleOpenLedger = (productId) => {
     navigate(`/stock/${productId}`);
   };
+
+  const unitOptions = units.length > 0
+    ? units.map((unit) => unit.name)
+    : ['pcs', 'kg', 'g', 'ltr', 'ml', 'box', 'hrs', 'minutes'];
+
+  if (formData.unit && !unitOptions.includes(formData.unit)) {
+    unitOptions.unshift(formData.unit);
+  }
 
   const totalProducts = products.length;
   const activeProducts = products.filter((product) => product.isActive).length;
@@ -252,14 +277,11 @@ export default function Products() {
                       onChange={handleInputChange}
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value="pcs">Pieces</option>
-                      <option value="kg">Kilogram</option>
-                      <option value="g">Gram</option>
-                      <option value="ltr">Liter</option>
-                      <option value="ml">Milliliter</option>
-                      <option value="box">Box</option>
-                      <option value="hrs">Hours</option>
-                      <option value="minutes">Minutes</option>
+                      {unitOptions.map((unitName) => (
+                        <option key={unitName} value={unitName}>
+                          {unitName}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>

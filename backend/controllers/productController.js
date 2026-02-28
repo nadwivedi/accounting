@@ -1,5 +1,6 @@
 const Product = require('../models/Stock');
 const StockAdjustment = require('../models/StockAdjustment');
+const Unit = require('../models/Unit');
 
 // Create product
 exports.createProduct = async (req, res) => {
@@ -23,13 +24,34 @@ exports.createProduct = async (req, res) => {
       });
     }
 
+    const normalizedUnit = String(unit || 'pcs').trim();
+    if (!normalizedUnit) {
+      return res.status(400).json({
+        success: false,
+        message: 'Unit is required'
+      });
+    }
+
+    const unitDoc = await Unit.findOne({
+      userId,
+      name: normalizedUnit,
+      isActive: true
+    });
+
+    if (!unitDoc) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select a valid active unit'
+      });
+    }
+
     const normalizedStockGroup = stockGroup ? stockGroup : null;
 
     const product = await Product.create({
       userId,
       name,
       stockGroup: normalizedStockGroup,
-      unit: unit || 'pcs',
+      unit: normalizedUnit,
       minStockLevel: minStockLevel || 10,
       purchasePrice: Number(purchasePrice || 0),
       salePrice: Number(salePrice || 0),
@@ -120,6 +142,30 @@ exports.updateProduct = async (req, res) => {
 
     if (Object.prototype.hasOwnProperty.call(updateData, 'stockGroup')) {
       updateData.stockGroup = updateData.stockGroup ? updateData.stockGroup : null;
+    }
+    if (Object.prototype.hasOwnProperty.call(updateData, 'unit')) {
+      const normalizedUnit = String(updateData.unit || '').trim();
+      if (!normalizedUnit) {
+        return res.status(400).json({
+          success: false,
+          message: 'Unit is required'
+        });
+      }
+
+      const unitDoc = await Unit.findOne({
+        userId,
+        name: normalizedUnit,
+        isActive: true
+      });
+
+      if (!unitDoc) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please select a valid active unit'
+        });
+      }
+
+      updateData.unit = normalizedUnit;
     }
     if (Object.prototype.hasOwnProperty.call(updateData, 'purchasePrice')) {
       updateData.purchasePrice = Number(updateData.purchasePrice || 0);
