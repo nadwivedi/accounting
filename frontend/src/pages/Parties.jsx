@@ -482,7 +482,7 @@ export default function Parties() {
       )}
 
       {/* Search and Filters */}
-      <div className="mb-6 flex flex-col md:flex-row gap-3">
+      <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <input
           type="text"
           placeholder="Search parties..."
@@ -493,7 +493,7 @@ export default function Parties() {
         <select
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value)}
-          className="w-full md:w-56 bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full sm:w-56 bg-white px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
         >
           <option value="">All Types</option>
           <option value="supplier">Suppliers</option>
@@ -521,91 +521,101 @@ export default function Parties() {
           No parties found. Create your first party!
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-100 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Name</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Image</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Type</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Phone</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Email</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">City</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Balance</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {parties.map((party) => (
-                <tr
-                  key={party._id}
-                  className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
-                  onClick={() => handleOpenPartyDetails(party._id)}
-                >
-                  <td className="px-6 py-3 font-medium text-slate-800">
-                    <div className="flex flex-col">
-                      <span>{party.partyName}</span>
-                      <span className="text-xs font-normal text-blue-600">View ledger</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-3">
-                    <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
-                      {party.partyImg ? (
-                        <img
-                          src={party.partyImg}
-                          alt={`${party.partyName} image`}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-slate-700">
-                          {(party.partyName || '?').trim().charAt(0) || '?'}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-3 capitalize">{party.type}</td>
-                  <td className="px-6 py-3">{party.phone || '-'}</td>
-                  <td className="px-6 py-3">{party.email || '-'}</td>
-                  <td className="px-6 py-3">{party.address?.city || '-'}</td>
-                  <td className="px-6 py-3">
-                    <span className={party.currentBalance >= 0 ? 'text-green-600' : 'text-red-600'}>
-                      ₹{party.currentBalance}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      party.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {party.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(party);
-                      }}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(party._id);
-                      }}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      Delete
-                    </button>
-                  </td>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left whitespace-nowrap">
+              <thead className="bg-slate-800 text-white">
+                <tr>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Image</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Phone</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Email</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">City</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Balance</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider text-right pr-8">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {parties.map((party) => (
+                  <tr
+                    key={party._id}
+                    className="bg-white hover:bg-slate-50 transition-colors duration-200 cursor-pointer group"
+                    onClick={() => handleOpenPartyDetails(party._id)}
+                  >
+                    <td className="px-6 py-4 font-semibold text-slate-800">
+                      <div className="flex flex-col">
+                        <span>{party.partyName}</span>
+                        <span className="text-xs font-normal text-blue-600">View ledger</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="h-10 w-10 overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+                        {party.partyImg ? (
+                          <img
+                            src={party.partyImg}
+                            alt={`${party.partyName} image`}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center text-sm font-semibold uppercase text-slate-700">
+                            {(party.partyName || '?').trim().charAt(0) || '?'}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`capitalize px-3 py-1.5 rounded-full text-xs font-medium ${
+                        party.type === 'customer' 
+                          ? 'bg-blue-50 text-blue-700 border border-blue-100' 
+                          : 'bg-purple-50 text-purple-700 border border-purple-100'
+                      }`}>
+                        {party.type}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">{party.phone || '-'}</td>
+                    <td className="px-6 py-4 text-slate-600">{party.email || '-'}</td>
+                    <td className="px-6 py-4 text-slate-600">{party.address?.city || '-'}</td>
+                    <td className="px-6 py-4 font-semibold">
+                      <span className={party.currentBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}>
+                        Rs {Number(party.currentBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                        party.isActive
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {party.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right pr-6 space-x-2" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(party);
+                        }}
+                        className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(party._id);
+                        }}
+                        className="inline-flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

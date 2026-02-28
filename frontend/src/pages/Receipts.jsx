@@ -314,38 +314,48 @@ export default function Receipts() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-slate-100 border-b border-slate-200">
-            <tr>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Party</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Amount</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Method</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Reference</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {receipts.map((receipt) => (
-              <tr key={receipt._id} className="border-b border-slate-100">
-                <td className="px-6 py-3">{new Date(receipt.receiptDate).toLocaleDateString()}</td>
-                <td className="px-6 py-3">{receipt.party?.partyName || '-'}</td>
-                <td className="px-6 py-3 text-emerald-700 font-semibold">Rs {Number(receipt.amount || 0).toFixed(2)}</td>
-                <td className="px-6 py-3 capitalize">{receipt.method}</td>
-                <td className="px-6 py-3">{receipt.refType === 'sale' ? 'Against Sale' : 'On Account'}</td>
-                <td className="px-6 py-3">{receipt.notes || '-'}</td>
-              </tr>
-            ))}
-            {!loading && receipts.length === 0 && (
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left whitespace-nowrap">
+            <thead className="bg-slate-800 text-white">
               <tr>
-                <td colSpan="6" className="px-6 py-8 text-center text-slate-500">
-                  No receipts found
-                </td>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Date</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Party</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Method</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Reference</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Notes</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {receipts.map((receipt) => (
+                <tr key={receipt._id} className="bg-white hover:bg-slate-50 transition-colors duration-200">
+                  <td className="px-6 py-4 text-slate-600 font-medium">{new Date(receipt.receiptDate).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-800">{receipt.party?.partyName || '-'}</td>
+                  <td className="px-6 py-4 text-emerald-600 font-semibold">Rs {Number(receipt.amount || 0).toFixed(2)}</td>
+                  <td className="px-6 py-4">
+                    <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200 capitalize">
+                      {receipt.method}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200 whitespace-nowrap">
+                      {receipt.refType === 'sale' ? 'Against Sale' : 'On Account'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-500 italic max-w-xs truncate">{receipt.notes || '-'}</td>
+                </tr>
+              ))}
+              {!loading && receipts.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-500 italic bg-slate-50/50">
+                    No receipts found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

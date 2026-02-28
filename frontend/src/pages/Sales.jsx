@@ -849,67 +849,85 @@ export default function Sales() {
           No sales found. Create your first sale!
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-100 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Customer</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Products</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Total</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Paid</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Due</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sales.map((sale) => (
-                <tr key={sale._id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-6 py-3 font-medium text-slate-800">{sale.invoiceNumber}</td>
-                  <td className="px-6 py-3">{sale.party?.partyName || sale.customerName || 'Walk-in'}</td>
-                  <td className="px-6 py-3 text-slate-700">
-                    {sale.items?.length
-                      ? (
-                        sale.items.slice(0, 2).map((item) => item.productName).join(', ') +
-                        (sale.items.length > 2 ? ` +${sale.items.length - 2} more` : '')
-                      )
-                      : '-'}
-                  </td>
-                  <td className="px-6 py-3">{new Date(sale.saleDate).toLocaleDateString()}</td>
-                  <td className="px-6 py-3">₹{sale.totalAmount.toFixed(2)}</td>
-                  <td className="px-6 py-3">₹{sale.paidAmount.toFixed(2)}</td>
-                  <td className="px-6 py-3">₹{(sale.totalAmount - sale.paidAmount).toFixed(2)}</td>
-                  <td className="px-6 py-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      sale.paymentStatus === 'paid'
-                        ? 'bg-green-100 text-green-800'
-                        : sale.paymentStatus === 'partial'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {sale.paymentStatus}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 space-x-2 text-sm">
-                    <button
-                      onClick={() => handleEdit(sale)}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(sale._id)}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      Delete
-                    </button>
-                  </td>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left whitespace-nowrap">
+              <thead className="bg-slate-800 text-white">
+                <tr>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Customer</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Products</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Date</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Paid</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Due</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider text-right pr-8">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {sales.map((sale) => (
+                  <tr key={sale._id} className="bg-white hover:bg-slate-50 transition-colors duration-200 group">
+                    <td className="px-6 py-4 font-semibold text-slate-800">{sale.invoiceNumber}</td>
+                    <td className="px-6 py-4 font-medium text-slate-700">{sale.party?.partyName || sale.customerName || 'Walk-in'}</td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {sale.items?.length
+                        ? (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {sale.items.slice(0, 2).map((item, idx) => (
+                              <span key={idx} className="bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-medium border border-blue-100">
+                                {item.productName}
+                              </span>
+                            ))}
+                            {sale.items.length > 2 && (
+                              <span className="text-xs font-medium text-slate-500 ml-1">
+                                +{sale.items.length - 2} more
+                              </span>
+                            )}
+                          </div>
+                        )
+                        : '-'}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">{new Date(sale.saleDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                    <td className="px-6 py-4 font-semibold text-emerald-600">
+                      Rs {Number(sale.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">
+                      Rs {Number(sale.paidAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-rose-600">
+                      Rs {Number((sale.totalAmount || 0) - (sale.paidAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        sale.paymentStatus === 'paid'
+                          ? 'bg-green-100 text-green-800'
+                          : sale.paymentStatus === 'partial'
+                          ? 'bg-yellow-100 text-yellow-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {sale.paymentStatus}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right pr-6 space-x-2">
+                      <button
+                        onClick={() => handleEdit(sale)}
+                        className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(sale._id)}
+                        className="inline-flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

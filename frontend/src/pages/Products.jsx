@@ -356,75 +356,77 @@ export default function Products() {
           No stock items found. Create your first stock item!
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-100 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Name</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Stock Group</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Unit</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Stock</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map((product) => (
-                <tr
-                  key={product._id}
-                  className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
-                  onClick={() => handleOpenLedger(product._id)}
-                >
-                  <td className="px-6 py-3 font-medium text-slate-800">
-                    <div className="flex flex-col">
-                      <span>{product.name}</span>
-                      <span className="text-xs font-normal text-blue-600">View ledger</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-3">{product.stockGroup?.name || '-'}</td>
-                  <td className="px-6 py-3">{product.unit || '-'}</td>
-                  <td className="px-6 py-3">
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                      Number(product.currentStock || 0) > Number(product.minStockLevel || 0)
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-orange-100 text-orange-800'
-                    }`}>
-                      {product.currentStock}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3">
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      product.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {product.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-3 space-x-2">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(product);
-                      }}
-                      className="text-blue-600 hover:text-blue-800 font-medium"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete(product._id);
-                      }}
-                      className="text-red-600 hover:text-red-800 font-medium"
-                    >
-                      Delete
-                    </button>
-                  </td>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-left whitespace-nowrap">
+              <thead className="bg-slate-800 text-white">
+                <tr>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Name</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Stock Group</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Unit</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Stock</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider text-right pr-8">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {products.map((product) => (
+                  <tr
+                    key={product._id}
+                    className="bg-white hover:bg-slate-50 transition-colors duration-200 cursor-pointer group"
+                    onClick={() => handleOpenLedger(product._id)}
+                  >
+                    <td className="px-6 py-4-slate-800 font-semibold text">
+                      <div className="flex flex-col">
+                        <span>{product.name}</span>
+                        <span className="text-xs font-normal text-blue-600">View ledger</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-slate-600">{product.stockGroup?.name || '-'}</td>
+                    <td className="px-6 py-4 text-slate-600">{product.unit || '-'}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                        Number(product.currentStock || 0) > Number(product.minStockLevel || 0)
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-orange-100 text-orange-800'
+                      }`}>
+                        {product.currentStock}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                        product.isActive
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {product.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right pr-6 space-x-2" onClick={(e) => e.stopPropagation()}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(product);
+                        }}
+                        className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(product._id);
+                        }}
+                        className="inline-flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

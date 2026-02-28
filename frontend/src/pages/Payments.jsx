@@ -239,38 +239,40 @@ export default function Payments() {
         </button>
       </div>
 
-      <div className="mb-6 bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-        <div className="px-6 py-4 border-b border-slate-200">
+      <div className="mb-6 bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 bg-white">
           <h3 className="text-base font-semibold text-slate-800">Pending Bill-wise Purchases</h3>
           <p className="text-xs text-slate-500 mt-1">Only purchases with bill reference and pending balance are shown.</p>
         </div>
-        <table className="w-full text-sm">
-          <thead className="bg-slate-100 border-b border-slate-200">
-            <tr>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Invoice No</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Supplier</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Purchase Date</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Due Date</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Pending</th>
-            </tr>
-          </thead>
-          <tbody>
-            {billWisePendingPurchases.map((purchase) => (
-              <tr key={purchase._id} className="border-b border-slate-100">
-                <td className="px-6 py-3 font-medium text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
-                <td className="px-6 py-3">{purchase.party?.partyName || '-'}</td>
-                <td className="px-6 py-3">{purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString() : '-'}</td>
-                <td className="px-6 py-3">{purchase.dueDate ? new Date(purchase.dueDate).toLocaleDateString() : '-'}</td>
-                <td className="px-6 py-3 text-rose-700 font-semibold">Rs {Number(purchase.pendingAmount || 0).toFixed(2)}</td>
-              </tr>
-            ))}
-            {!loading && billWisePendingPurchases.length === 0 && (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left whitespace-nowrap">
+            <thead className="bg-slate-800 text-white">
               <tr>
-                <td colSpan="5" className="px-6 py-8 text-center text-slate-500">No pending bill-wise purchases</td>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice No</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Supplier</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Purchase Date</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Due Date</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Pending</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {billWisePendingPurchases.map((purchase) => (
+                <tr key={purchase._id} className="bg-white hover:bg-slate-50 transition-colors duration-200">
+                  <td className="px-6 py-4 font-semibold text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
+                  <td className="px-6 py-4 font-medium text-slate-700">{purchase.party?.partyName || '-'}</td>
+                  <td className="px-6 py-4 text-slate-600">{purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString() : '-'}</td>
+                  <td className="px-6 py-4 text-slate-600">{purchase.dueDate ? new Date(purchase.dueDate).toLocaleDateString() : '-'}</td>
+                  <td className="px-6 py-4 text-rose-600 font-semibold">Rs {Number(purchase.pendingAmount || 0).toFixed(2)}</td>
+                </tr>
+              ))}
+              {!loading && billWisePendingPurchases.length === 0 && (
+                <tr>
+                  <td colSpan="5" className="px-6 py-8 text-center text-slate-500 italic bg-slate-50/50">No pending bill-wise purchases</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {showForm && (
@@ -409,38 +411,48 @@ export default function Payments() {
         </div>
       )}
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-slate-100 border-b border-slate-200">
-            <tr>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Party</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Amount</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Method</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Reference</th>
-              <th className="px-6 py-3 text-left font-semibold text-gray-700">Notes</th>
-            </tr>
-          </thead>
-          <tbody>
-            {payments.map((payment) => (
-              <tr key={payment._id} className="border-b border-slate-100">
-                <td className="px-6 py-3">{new Date(payment.paymentDate).toLocaleDateString()}</td>
-                <td className="px-6 py-3">{payment.party?.partyName || '-'}</td>
-                <td className="px-6 py-3 text-rose-700 font-semibold">Rs {Number(payment.amount || 0).toFixed(2)}</td>
-                <td className="px-6 py-3 capitalize">{payment.method}</td>
-                <td className="px-6 py-3">{payment.refType === 'purchase' ? 'Against Purchase' : 'On Account'}</td>
-                <td className="px-6 py-3">{payment.notes || '-'}</td>
-              </tr>
-            ))}
-            {!loading && payments.length === 0 && (
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left whitespace-nowrap">
+            <thead className="bg-slate-800 text-white">
               <tr>
-                <td colSpan="6" className="px-6 py-8 text-center text-slate-500">
-                  No payments found
-                </td>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Date</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Party</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Amount</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Method</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Reference</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Notes</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {payments.map((payment) => (
+                <tr key={payment._id} className="bg-white hover:bg-slate-50 transition-colors duration-200">
+                  <td className="px-6 py-4 text-slate-600 font-medium">{new Date(payment.paymentDate).toLocaleDateString()}</td>
+                  <td className="px-6 py-4 font-semibold text-slate-800">{payment.party?.partyName || '-'}</td>
+                  <td className="px-6 py-4 text-emerald-600 font-semibold">Rs {Number(payment.amount || 0).toFixed(2)}</td>
+                  <td className="px-6 py-4">
+                    <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200 capitalize">
+                      {payment.method}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200 whitespace-nowrap">
+                      {payment.refType === 'purchase' ? 'Against Purchase' : 'On Account'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-slate-500 italic max-w-xs truncate">{payment.notes || '-'}</td>
+                </tr>
+              ))}
+              {!loading && payments.length === 0 && (
+                <tr>
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-500 italic bg-slate-50/50">
+                    No payments found
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
