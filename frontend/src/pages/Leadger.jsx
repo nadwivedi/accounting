@@ -320,11 +320,11 @@ export default function Leadger() {
 
                   {isGroupSectionActive && (
                     <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
-                      <div className="rounded-lg border border-slate-300 bg-white shadow-sm overflow-hidden md:h-full md:flex md:flex-col">
-                        <div className="px-3 py-2 text-xs font-semibold text-slate-500 border-b border-slate-200 bg-slate-50">
+                      <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
+                        <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
                           Group List
                         </div>
-                        <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto">
+                        <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
                           {filteredGroups.length === 0 ? (
                             <div className="px-3 py-2 text-sm text-slate-500">No matching groups</div>
                           ) : (
@@ -337,12 +337,12 @@ export default function Leadger() {
                                   type="button"
                                   onMouseDown={(event) => event.preventDefault()}
                                   onClick={() => selectGroup(group, true)}
-                                  className={`w-full text-left px-3 py-2 text-sm border-b border-slate-100 last:border-b-0 ${
+                                  className={`w-full text-left px-3 py-2 text-sm border-b border-slate-100 last:border-b-0 transition-colors ${
                                     isActive
-                                      ? 'bg-indigo-50 text-indigo-700'
+                                      ? 'bg-blue-100 text-blue-800 font-semibold'
                                       : isSelected
-                                        ? 'bg-emerald-50 text-emerald-700'
-                                        : 'hover:bg-slate-50 text-slate-700'
+                                        ? 'bg-emerald-100 text-emerald-800 font-medium'
+                                        : 'hover:bg-indigo-50 text-slate-700'
                                   }`}
                                 >
                                   {group.name}

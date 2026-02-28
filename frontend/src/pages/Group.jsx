@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
 export default function Group() {
   const toastOptions = { autoClose: 1200 };
+  const navigate = useNavigate();
 
   const initialFormData = {
     name: '',
@@ -99,6 +101,11 @@ export default function Group() {
     setShowForm(false);
     setEditingId(null);
     setFormData(initialFormData);
+  };
+
+  const handleOpenGroupDetail = (groupId) => {
+    if (!groupId) return;
+    navigate(`/groups/${groupId}`);
   };
 
   const totalGroups = groups.length;
@@ -248,7 +255,15 @@ export default function Group() {
             <tbody>
               {groups.map((group) => (
                 <tr key={group._id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-6 py-3 font-medium text-slate-800">{group.name}</td>
+                  <td className="px-6 py-3 font-medium text-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenGroupDetail(group._id)}
+                      className="text-blue-700 hover:text-blue-900 hover:underline"
+                    >
+                      {group.name}
+                    </button>
+                  </td>
                   <td className="px-6 py-3 text-gray-600">{group.description || '-'}</td>
                   <td className="px-6 py-3">
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
@@ -258,6 +273,9 @@ export default function Group() {
                     </span>
                   </td>
                   <td className="px-6 py-3 space-x-2">
+                    <button onClick={() => handleOpenGroupDetail(group._id)} className="text-emerald-600 hover:text-emerald-800 font-medium">
+                      View
+                    </button>
                     <button onClick={() => handleEdit(group)} className="text-blue-600 hover:text-blue-800 font-medium">
                       Edit
                     </button>
