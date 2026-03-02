@@ -11,7 +11,7 @@ export default function Settings() {
   };
 
   return (
-    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-[#f8f6f1] min-h-screen">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-slate-800">Settings</h1>
         <p className="text-slate-600 mt-1">Manage account actions</p>
@@ -37,3 +37,4 @@ export default function Settings() {
     </div>
   );
 }
+

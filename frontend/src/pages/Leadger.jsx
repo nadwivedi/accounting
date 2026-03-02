@@ -27,6 +27,7 @@ export default function Leadger() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const mobileInputRef = useRef(null);
   const groupSectionRef = useRef(null);
 
@@ -81,6 +82,7 @@ export default function Leadger() {
       ...getInitialForm(),
       group: defaultGroup?._id || ''
     });
+    setEditingId(null);
     setGroupQuery('');
     setGroupListIndex(defaultGroup ? 0 : -1);
     setIsGroupSectionActive(false);
@@ -90,6 +92,7 @@ export default function Leadger() {
 
   const handleCloseForm = () => {
     setShowForm(false);
+    setEditingId(null);
     setFormData(getInitialForm());
     setGroupQuery('');
     setGroupListIndex(-1);
@@ -234,6 +237,40 @@ export default function Leadger() {
     }
   };
 
+  const resolveGroupNameById = (groupId) => {
+    const resolvedId = typeof groupId === 'object' ? groupId?._id : groupId;
+    if (!resolvedId) return '';
+    const matching = groups.find((group) => String(group._id) === String(resolvedId));
+    return matching?.name || '';
+  };
+
+  const handleEdit = (leadger) => {
+    const normalizedGroupId = typeof leadger.group === 'object'
+      ? leadger.group?._id || ''
+      : (leadger.group || '');
+    const resolvedGroupName = leadger.group?.name || resolveGroupNameById(normalizedGroupId) || '';
+    const matchedIndex = resolvedGroupName
+      ? getMatchingGroups(resolvedGroupName).findIndex((group) => String(group._id) === String(normalizedGroupId))
+      : -1;
+
+    setEditingId(leadger._id);
+    setFormData({
+      group: normalizedGroupId,
+      name: String(leadger.name || ''),
+      mobile: String(leadger.mobile || '').replace(/\D/g, '').slice(0, 10),
+      email: String(leadger.email || ''),
+      address: String(leadger.address || ''),
+      state: String(leadger.state || ''),
+      pincode: String(leadger.pincode || '').replace(/\D/g, '').slice(0, 6),
+      notes: String(leadger.notes || '')
+    });
+    setGroupQuery(resolvedGroupName);
+    setGroupListIndex(matchedIndex >= 0 ? matchedIndex : 0);
+    setIsGroupSectionActive(false);
+    setError('');
+    setShowForm(true);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -250,7 +287,7 @@ export default function Leadger() {
 
     try {
       setLoading(true);
-      await apiClient.post('/leadgers', {
+      const payload = {
         group: selectedGroupId,
         name: String(formData.name || '').trim(),
         mobile: String(formData.mobile || '').trim(),
@@ -259,21 +296,30 @@ export default function Leadger() {
         state: String(formData.state || '').trim(),
         pincode: String(formData.pincode || '').trim(),
         notes: formData.notes
-      });
+      };
+
+      if (editingId) {
+        await apiClient.put(`/leadgers/${editingId}`, payload);
+      } else {
+        await apiClient.post('/leadgers', payload);
+      }
 
       handleCloseForm();
       fetchLeadgers();
       setError('');
-      toast.success('Leadger created successfully', TOAST_OPTIONS);
+      toast.success(
+        editingId ? 'Leadger updated successfully' : 'Leadger created successfully',
+        TOAST_OPTIONS
+      );
     } catch (err) {
-      setError(err.message || 'Error creating leadger voucher');
+      setError(err.message || (editingId ? 'Error updating leadger voucher' : 'Error creating leadger voucher'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-[#f8f6f1] min-h-screen">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
@@ -315,7 +361,7 @@ export default function Leadger() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCloseForm}>
           <div className="w-full md:w-[30%] max-h-[90vh] overflow-y-auto md:overflow-visible rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-600 bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-2xl">
-              <h2 className="text-xl font-bold text-slate-100">Leadger/Account Voucher</h2>
+              <h2 className="text-xl font-bold text-slate-100">{editingId ? 'Edit Leadger/Account Voucher' : 'Leadger/Account Voucher'}</h2>
               <button
                 type="button"
                 onClick={handleCloseForm}
@@ -492,7 +538,7 @@ export default function Leadger() {
                   disabled={loading}
                   className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
                 >
-                  {loading ? 'Saving...' : 'Save Leadger/Account Voucher'}
+                  {loading ? 'Saving...' : editingId ? 'Update Leadger/Account Voucher' : 'Save Leadger/Account Voucher'}
                 </button>
               </div>
             </form>
@@ -508,6 +554,7 @@ export default function Leadger() {
                 <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Leadger Name</th>
                 <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Group</th>
                 <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Notes</th>
+                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -516,11 +563,20 @@ export default function Leadger() {
                   <td className="px-6 py-4 text-slate-700">{item.name || '-'}</td>
                   <td className="px-6 py-4 text-slate-700 font-semibold">{item.group?.name || '-'}</td>
                   <td className="px-6 py-4 text-slate-600">{item.notes || '-'}</td>
+                  <td className="px-6 py-4 text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(item)}
+                      className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition"
+                    >
+                      Edit
+                    </button>
+                  </td>
                 </tr>
               ))}
               {!loading && leadgers.length === 0 && (
                 <tr>
-                  <td colSpan="3" className="px-6 py-8 text-center text-slate-500 italic bg-slate-50/50">
+                  <td colSpan="4" className="px-6 py-8 text-center text-slate-500 italic bg-slate-50/50">
                     No leadger vouchers found
                   </td>
                 </tr>
@@ -532,3 +588,4 @@ export default function Leadger() {
     </div>
   );
 }
+

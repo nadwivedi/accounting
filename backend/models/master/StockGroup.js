@@ -14,10 +14,6 @@ const stockGroupSchema = new mongoose.Schema({
   description: {
     type: String,
     trim: true
-  },
-  isActive: {
-    type: Boolean,
-    default: true
   }
 }, { timestamps: true });
 

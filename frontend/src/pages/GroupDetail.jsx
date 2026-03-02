@@ -58,7 +58,7 @@ export default function GroupDetail() {
   }, [id, search]);
 
   return (
-    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-[#f8f6f1] min-h-screen">
       <div className="mb-4">
         <Link to="/groups" className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
           Back to Groups
@@ -107,7 +107,7 @@ export default function GroupDetail() {
           placeholder={`Search ${groupTypeLabel.toLowerCase()} by name or notes...`}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
         />
       </div>
 
@@ -144,3 +144,4 @@ export default function GroupDetail() {
     </div>
   );
 }
+

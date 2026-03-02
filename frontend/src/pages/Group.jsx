@@ -113,7 +113,7 @@ export default function Group() {
   const inactiveGroups = totalGroups - activeGroups;
 
   return (
-    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
+    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-20 md:ml-64 md:p-8">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
@@ -136,130 +136,138 @@ export default function Group() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCancel}>
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
-              <div>
-                <h2 className="text-xl font-bold text-gray-800">
-                  {editingId ? 'Edit Group' : 'Add Group'}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">Group for Leadger/Account like Sundry Debtors</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-3 backdrop-blur-sm" onClick={handleCancel}>
+          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-[0_35px_80px_-30px_rgba(15,23,42,0.75)]" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-500 bg-slate-800 text-xs font-bold tracking-wide text-slate-100">
+                  GM
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-slate-100">{editingId ? 'Edit Group' : 'Add Group'}</h2>
+                  <p className="mt-0.5 text-xs text-slate-300">Create accounting groups for ledgers and vouchers</p>
+                </div>
               </div>
               <button
                 type="button"
                 onClick={handleCancel}
-                className="h-9 w-9 rounded-full border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition"
+                className="h-9 w-9 rounded-full border border-slate-500 text-slate-200 hover:bg-slate-600 hover:text-white hover:border-slate-300 transition"
                 aria-label="Close popup"
               >
                 &times;
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-5 px-6 py-6">
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Group Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  placeholder="Enter group name"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-gray-700 font-medium mb-2">Description</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                  placeholder="Enter description"
-                  rows="3"
-                />
-              </div>
-
-              <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
-                <label className="inline-flex items-center gap-2 text-gray-700">
+            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="bg-white p-5">
+              <div className="space-y-4">
+                <div className="rounded-lg border border-slate-200 p-4">
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Group Name</label>
                   <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={Boolean(formData.isActive)}
+                    type="text"
+                    name="name"
+                    value={formData.name}
                     onChange={handleInputChange}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-600"
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    placeholder="Enter group name"
+                    autoFocus
+                    required
                   />
-                  Active
-                </label>
-              </div>
+                </div>
 
-              <div className="flex gap-4">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
-                >
-                  {loading ? 'Saving...' : editingId ? 'Update Group' : 'Save Group'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-300 transition"
-                >
-                  Cancel
-                </button>
+                <div className="rounded-lg border border-slate-200 p-4">
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Description</label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                    placeholder="Enter description"
+                    rows="4"
+                  />
+                </div>
+
+                <div className="rounded-lg border border-slate-200 p-4">
+                  <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      name="isActive"
+                      checked={Boolean(formData.isActive)}
+                      onChange={handleInputChange}
+                      className="h-4 w-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-200"
+                    />
+                    Mark this group as active
+                  </label>
+                </div>
+
+                <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="rounded-md border border-slate-400 bg-white px-6 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="rounded-md bg-slate-800 px-6 py-2.5 font-semibold text-white transition hover:bg-slate-900 disabled:opacity-50"
+                  >
+                    {loading ? 'Saving...' : editingId ? 'Update Group' : 'Save Group'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
         </div>
       )}
 
-      <div className="mb-6 flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
-          placeholder="Search group..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-        />
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setFormData(initialFormData);
-            setShowForm(true);
-          }}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
-        >
-          + Add Group
-        </button>
+      <div className="mb-6 rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <input
+            type="text"
+            placeholder="Search group..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-slate-300 bg-slate-50 px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-300"
+          />
+          <button
+            onClick={() => {
+              setEditingId(null);
+              setFormData(initialFormData);
+              setShowForm(true);
+            }}
+            className="whitespace-nowrap rounded-lg bg-slate-800 px-6 py-2.5 text-white transition hover:bg-slate-900 shadow-sm"
+          >
+            + Add Group
+          </button>
+        </div>
       </div>
 
       {loading && !showForm ? (
         <div className="text-center py-8 text-gray-500">Loading...</div>
       ) : groups.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center text-gray-500">
+        <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-gray-500 shadow-sm">
           No group found. Add your first group.
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-100 border-b border-slate-200">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-700 bg-slate-800 text-slate-100">
               <tr>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Name</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Description</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide">Name</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide">Description</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-slate-100">
               {groups.map((group) => (
-                <tr key={group._id} className="border-b border-slate-100 hover:bg-slate-50">
+                <tr key={group._id} className="hover:bg-[#f8f6f1]">
                   <td className="px-6 py-3 font-medium text-slate-800">
                     <button
                       type="button"
                       onClick={() => handleOpenGroupDetail(group._id)}
-                      className="text-blue-700 hover:text-blue-900 hover:underline"
+                      className="text-blue-700 hover:text-blue-900 hover:underline underline-offset-2"
                     >
                       {group.name}
                     </button>
@@ -273,13 +281,13 @@ export default function Group() {
                     </span>
                   </td>
                   <td className="px-6 py-3 space-x-2">
-                    <button onClick={() => handleOpenGroupDetail(group._id)} className="text-emerald-600 hover:text-emerald-800 font-medium">
+                    <button onClick={() => handleOpenGroupDetail(group._id)} className="font-medium text-emerald-600 hover:text-emerald-800">
                       View
                     </button>
-                    <button onClick={() => handleEdit(group)} className="text-blue-600 hover:text-blue-800 font-medium">
+                    <button onClick={() => handleEdit(group)} className="font-medium text-blue-600 hover:text-blue-800">
                       Edit
                     </button>
-                    <button onClick={() => handleDelete(group._id)} className="text-red-600 hover:text-red-800 font-medium">
+                    <button onClick={() => handleDelete(group._id)} className="font-medium text-red-600 hover:text-red-800">
                       Delete
                     </button>
                   </td>

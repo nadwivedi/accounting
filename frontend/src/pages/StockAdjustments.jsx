@@ -104,7 +104,7 @@ export default function StockAdjustments() {
   };
 
   return (
-    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-[#f8f6f1] min-h-screen">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Stock Adjustment</h1>
         <p className="text-gray-600 mt-2">Add or subtract stock manually and track adjustment entries.</p>
@@ -126,7 +126,7 @@ export default function StockAdjustments() {
               name="productId"
               value={formData.productId}
               onChange={handleInputChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
               required
             >
               <option value="">Select stock item</option>
@@ -150,7 +150,7 @@ export default function StockAdjustments() {
               name="type"
               value={formData.type}
               onChange={handleInputChange}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
             >
               <option value="add">Add Stock</option>
               <option value="subtract">Subtract Stock</option>
@@ -167,7 +167,7 @@ export default function StockAdjustments() {
               min="0.000001"
               step="0.000001"
               placeholder="Enter quantity"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
               required
             />
           </div>
@@ -180,7 +180,7 @@ export default function StockAdjustments() {
               onChange={handleInputChange}
               rows="2"
               placeholder="Reason for adjustment (optional)"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
           </div>
 
@@ -243,3 +243,4 @@ export default function StockAdjustments() {
     </div>
   );
 }
+

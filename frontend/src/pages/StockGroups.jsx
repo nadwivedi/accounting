@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
@@ -8,8 +8,7 @@ export default function StockGroups() {
 
   const initialFormData = {
     name: '',
-    description: '',
-    isActive: true
+    description: ''
   };
 
   const [stockGroups, setStockGroups] = useState([]);
@@ -19,10 +18,21 @@ export default function StockGroups() {
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
   const [formData, setFormData] = useState(initialFormData);
+  const nameInputRef = useRef(null);
 
   useEffect(() => {
     fetchStockGroups();
   }, [search]);
+
+  useEffect(() => {
+    if (!showForm) return;
+
+    const timer = setTimeout(() => {
+      nameInputRef.current?.focus();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [showForm, editingId]);
 
   const fetchStockGroups = async () => {
     try {
@@ -40,10 +50,10 @@ export default function StockGroups() {
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     });
   };
 
@@ -102,46 +112,36 @@ export default function StockGroups() {
   };
 
   const totalStockGroups = stockGroups.length;
-  const activeStockGroups = stockGroups.filter((group) => group.isActive).length;
-  const inactiveStockGroups = totalStockGroups - activeStockGroups;
 
   return (
-    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-[#f8f6f1] min-h-screen">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-6">
+      <div className="grid grid-cols-1 gap-3 md:gap-4 mb-6">
         <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 shadow-sm">
           <p className="text-xs md:text-sm text-slate-500">Total Stock Group</p>
           <p className="text-xl md:text-2xl font-bold text-slate-800 mt-1">{totalStockGroups}</p>
-        </div>
-        <div className="rounded-xl border border-green-200 bg-green-50 p-3 md:p-4 shadow-sm">
-          <p className="text-xs md:text-sm text-green-700">Active</p>
-          <p className="text-xl md:text-2xl font-bold text-green-800 mt-1">{activeStockGroups}</p>
-        </div>
-        <div className="rounded-xl border border-red-200 bg-red-50 p-3 md:p-4 shadow-sm">
-          <p className="text-xs md:text-sm text-red-700">Inactive</p>
-          <p className="text-xl md:text-2xl font-bold text-red-800 mt-1">{inactiveStockGroups}</p>
         </div>
       </div>
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCancel}>
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
+            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-600 bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-2xl">
               <div>
-                <h2 className="text-xl font-bold text-gray-800">
+                <h2 className="text-xl font-bold text-slate-100">
                   {editingId ? 'Edit Stock Group' : 'Add New Stock Group'}
                 </h2>
-                <p className="text-sm text-gray-500 mt-1">Name is required. Description is optional.</p>
+                <p className="text-sm text-slate-300 mt-1">Name is required. Description is optional.</p>
               </div>
               <button
                 type="button"
                 onClick={handleCancel}
-                className="h-9 w-9 rounded-full border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition"
+                className="h-9 w-9 rounded-full border border-slate-500 text-slate-200 hover:bg-slate-600 hover:text-white hover:border-slate-300 transition"
                 aria-label="Close popup"
               >
                 &times;
@@ -156,8 +156,10 @@ export default function StockGroups() {
                   name="name"
                   value={formData.name}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  ref={nameInputRef}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
                   placeholder="Enter stock group name"
+                  autoFocus
                   required
                 />
               </div>
@@ -168,31 +170,17 @@ export default function StockGroups() {
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
                   placeholder="Enter description"
                   rows="3"
                 />
-              </div>
-
-              <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3">
-                <label className="inline-flex items-center gap-2 text-gray-700">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    id="isActive"
-                    checked={formData.isActive}
-                    onChange={handleInputChange}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-600"
-                  />
-                  Active
-                </label>
               </div>
 
               <div className="flex gap-4">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                  className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900 transition disabled:opacity-50"
                 >
                   {loading ? 'Saving...' : editingId ? 'Update Stock Group' : 'Save Stock Group'}
                 </button>
@@ -216,7 +204,7 @@ export default function StockGroups() {
           placeholder="Search stock group..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
         />
         <button
           onClick={() => {
@@ -224,7 +212,7 @@ export default function StockGroups() {
             setFormData(initialFormData);
             setShowForm(true);
           }}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
+          className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900 transition shadow-sm whitespace-nowrap"
         >
           + Add Stock Group
         </button>
@@ -244,7 +232,6 @@ export default function StockGroups() {
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Name</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Description</th>
-                <th className="px-6 py-3 text-left font-semibold text-gray-700">Status</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Actions</th>
               </tr>
             </thead>
@@ -253,15 +240,6 @@ export default function StockGroups() {
                 <tr key={group._id} className="border-b border-slate-100 hover:bg-slate-50">
                   <td className="px-6 py-3 font-medium text-slate-800">{group.name}</td>
                   <td className="px-6 py-3 text-gray-600">{group.description || '-'}</td>
-                  <td className="px-6 py-3">
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      group.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {group.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
                   <td className="px-6 py-3 space-x-2">
                     <button
                       onClick={() => handleEdit(group)}
@@ -285,3 +263,4 @@ export default function StockGroups() {
     </div>
   );
 }
+

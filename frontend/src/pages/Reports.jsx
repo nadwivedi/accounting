@@ -77,7 +77,7 @@ export default function Reports() {
   };
 
   return (
-    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-[#f8f6f1] min-h-screen">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Reports</h1>
         <p className="text-gray-600 mt-2">Party ledger, stock ledger and pending amount</p>
@@ -92,19 +92,19 @@ export default function Reports() {
       <div className="flex flex-wrap gap-2 mb-6">
         <button
           onClick={() => setActiveTab('outstanding')}
-          className={`px-4 py-2 rounded-lg ${activeTab === 'outstanding' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-700'}`}
+          className={`px-4 py-2 rounded-lg ${activeTab === 'outstanding' ? 'bg-slate-800 text-white' : 'bg-white border border-slate-300 text-slate-700'}`}
         >
           Pending
         </button>
         <button
           onClick={() => setActiveTab('partyLedger')}
-          className={`px-4 py-2 rounded-lg ${activeTab === 'partyLedger' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-700'}`}
+          className={`px-4 py-2 rounded-lg ${activeTab === 'partyLedger' ? 'bg-slate-800 text-white' : 'bg-white border border-slate-300 text-slate-700'}`}
         >
           Party Ledger
         </button>
         <button
           onClick={() => setActiveTab('stockLedger')}
-          className={`px-4 py-2 rounded-lg ${activeTab === 'stockLedger' ? 'bg-blue-600 text-white' : 'bg-white border border-slate-300 text-slate-700'}`}
+          className={`px-4 py-2 rounded-lg ${activeTab === 'stockLedger' ? 'bg-slate-800 text-white' : 'bg-white border border-slate-300 text-slate-700'}`}
         >
           Stock Ledger
         </button>
@@ -178,7 +178,7 @@ export default function Reports() {
             </select>
             <button
               onClick={() => fetchPartyLedger(partyId)}
-              className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700"
+              className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900"
             >
               Load Ledger
             </button>
@@ -233,7 +233,7 @@ export default function Reports() {
             </select>
             <button
               onClick={() => fetchStockLedger(productId)}
-              className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700"
+              className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900"
             >
               Load Stock Ledger
             </button>
@@ -275,3 +275,4 @@ export default function Reports() {
     </div>
   );
 }
+

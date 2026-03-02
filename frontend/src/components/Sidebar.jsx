@@ -295,8 +295,8 @@ export default function Sidebar() {
     const handleKeyDown = (event) => {
       const key = event.key?.toLowerCase();
       const isAltN = event.altKey && !event.ctrlKey && !event.metaKey && key === 'n';
-      const isMoveDownKey = key === 'control' && !event.altKey && !event.metaKey;
-      const isMoveUpKey = key === 'shift' && !event.altKey && !event.metaKey && !event.ctrlKey;
+      const isMoveDownKey = key === 'arrowdown' && !event.altKey && !event.metaKey;
+      const isMoveUpKey = key === 'arrowup' && !event.altKey && !event.metaKey;
 
       if (event.defaultPrevented || event.metaKey) return;
 
@@ -367,7 +367,7 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Top Header */}
-      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-slate-200 bg-white/80 px-4 backdrop-blur-xl md:hidden">
+      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-slate-300 bg-slate-100/90 px-4 backdrop-blur-xl md:hidden">
         <div className="relative flex h-full items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 shadow-sm shadow-indigo-200">
@@ -379,7 +379,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="group relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-600 ring-1 ring-inset ring-slate-200 transition-all hover:bg-slate-100 hover:text-slate-900"
+            className="group relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-200 text-slate-700 ring-1 ring-inset ring-slate-300 transition-all hover:bg-slate-300 hover:text-slate-900"
             aria-label="Open navigation menu"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5 transition-transform group-hover:scale-110">
@@ -398,10 +398,10 @@ export default function Sidebar() {
       )}
 
       {/* Sidebar Container */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[17.5rem] max-w-[85vw] flex-col border-r border-slate-200/80 bg-slate-50/50 backdrop-blur-2xl shadow-2xl transition-transform duration-400 ease-[cubic-bezier(0.25,1,0.5,1)] md:z-40 md:w-[17.5rem] md:bg-white md:shadow-none ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[17.5rem] max-w-[85vw] flex-col border-r border-slate-300 bg-slate-100/90 backdrop-blur-2xl shadow-2xl transition-transform duration-400 ease-[cubic-bezier(0.25,1,0.5,1)] md:z-40 md:w-[17.5rem] md:bg-slate-100 md:shadow-none ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
 
         {/* Inside Border Highlight */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-white to-transparent opacity-50" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-slate-200 to-transparent opacity-70" />
 
         {/* Sidebar Header / Logo */}
         <div className="relative z-10 flex h-[84px] items-center justify-between px-5 pt-2">
@@ -423,7 +423,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-500 ring-1 ring-inset ring-slate-200 transition-colors hover:bg-slate-50 hover:text-slate-900 md:hidden shadow-sm"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200 text-slate-600 ring-1 ring-inset ring-slate-300 transition-colors hover:bg-slate-300 hover:text-slate-900 md:hidden shadow-sm"
             aria-label="Close sidebar"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -455,8 +455,8 @@ export default function Sidebar() {
                       type="button"
                       onClick={() => setExclusiveMenu(item.name, !isExpanded)}
                       className={`group relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-left outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-indigo-500 ${groupActive
-                          ? 'bg-indigo-50/50 text-indigo-700 shadow-sm ring-1 ring-slate-200/50'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                          ? 'bg-indigo-50/60 text-indigo-700 shadow-sm ring-1 ring-slate-300/70'
+                          : 'text-slate-700 hover:bg-slate-200/70 hover:text-slate-900'
                         }`}
                     >
                       {groupActive && (
@@ -464,8 +464,8 @@ export default function Sidebar() {
                       )}
 
                       <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${groupActive
-                          ? 'bg-white text-indigo-600 shadow-sm'
-                          : 'bg-white text-slate-400 ring-1 ring-inset ring-slate-200 group-hover:text-indigo-500 group-hover:shadow-sm'
+                          ? 'bg-slate-100 text-indigo-700 shadow-sm'
+                          : 'bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-300 group-hover:text-indigo-600 group-hover:shadow-sm'
                         }`}>
                         <div className="transition-transform duration-300 group-hover:scale-110">
                           <Icon />
@@ -490,8 +490,8 @@ export default function Sidebar() {
                       {item.name === 'Vouchers' && (
                         <span
                           className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${groupActive
-                              ? 'border-indigo-200 bg-white text-indigo-700'
-                              : 'border-slate-300 bg-white text-slate-500 group-hover:border-indigo-200 group-hover:text-indigo-600'
+                              ? 'border-indigo-200 bg-slate-100 text-indigo-700'
+                              : 'border-slate-300 bg-slate-100 text-slate-600 group-hover:border-indigo-200 group-hover:text-indigo-600'
                             }`}
                         >
                           V
@@ -501,8 +501,8 @@ export default function Sidebar() {
                       {item.name === 'Masters' && (
                         <span
                           className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${groupActive
-                              ? 'border-indigo-200 bg-white text-indigo-700'
-                              : 'border-slate-300 bg-white text-slate-500 group-hover:border-indigo-200 group-hover:text-indigo-600'
+                              ? 'border-indigo-200 bg-slate-100 text-indigo-700'
+                              : 'border-slate-300 bg-slate-100 text-slate-600 group-hover:border-indigo-200 group-hover:text-indigo-600'
                             }`}
                         >
                           M
@@ -526,8 +526,8 @@ export default function Sidebar() {
                         if (window.innerWidth < 768) setMobileOpen(false);
                       }}
                       className={`group relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-indigo-500 ${active
-                          ? 'bg-indigo-50/50 text-indigo-700 shadow-sm ring-1 ring-slate-200/50'
-                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                          ? 'bg-indigo-50/60 text-indigo-700 shadow-sm ring-1 ring-slate-300/70'
+                          : 'text-slate-700 hover:bg-slate-200/70 hover:text-slate-900'
                         }`}
                     >
                       {active && (
@@ -535,8 +535,8 @@ export default function Sidebar() {
                       )}
 
                       <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${active
-                          ? 'bg-white text-indigo-600 shadow-sm'
-                          : 'bg-white text-slate-400 ring-1 ring-inset ring-slate-200 group-hover:text-indigo-500 group-hover:shadow-sm'
+                          ? 'bg-slate-100 text-indigo-700 shadow-sm'
+                          : 'bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-300 group-hover:text-indigo-600 group-hover:shadow-sm'
                         }`}>
                         <div className="transition-transform duration-300 group-hover:scale-110">
                           <Icon />
@@ -562,9 +562,9 @@ export default function Sidebar() {
                             onClick={() => {
                               if (window.innerWidth < 768) setMobileOpen(false);
                             }}
-                            className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-300 ${subItem.dividerBefore ? 'mt-2 border-t border-slate-200 pt-3' : ''} ${subActive
+                            className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-300 ${subItem.dividerBefore ? 'mt-2 border-t border-slate-300 pt-3' : ''} ${subActive
                                 ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm ring-1 ring-indigo-100/50'
-                                : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'
+                                : 'text-slate-600 hover:bg-slate-200/70 hover:text-slate-800'
                               }`}
                           >
                             <div className={`flex h-4 w-4 shrink-0 items-center justify-center ${subActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'}`}>

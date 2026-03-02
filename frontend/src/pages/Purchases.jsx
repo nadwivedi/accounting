@@ -325,7 +325,7 @@ export default function Purchases() {
   );
 
   return (
-    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-[#f8f6f1] min-h-screen">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
@@ -391,7 +391,7 @@ export default function Purchases() {
                     name="party"
                     value={formData.party}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
                     required
                   >
                     <option value="">Select leadger/account</option>
@@ -410,7 +410,7 @@ export default function Purchases() {
                     name="purchaseDate"
                     value={formData.purchaseDate}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
                   />
                 </div>
 
@@ -421,7 +421,7 @@ export default function Purchases() {
                     name="invoiceNo"
                     value={formData.invoiceNo || ''}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
                     placeholder="Enter supplier invoice no."
                   />
                 </div>
@@ -433,7 +433,7 @@ export default function Purchases() {
                     name="dueDate"
                     value={formData.dueDate || ''}
                     onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
                   />
                 </div>
 
@@ -468,7 +468,7 @@ export default function Purchases() {
                   <select
                     value={currentItem.product}
                     onChange={(e) => setCurrentItem({ ...currentItem, product: e.target.value })}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                   >
                     <option value="">Product</option>
                     {products.map((p) => (
@@ -482,14 +482,14 @@ export default function Purchases() {
                     placeholder="Qty"
                     value={currentItem.quantity}
                     onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                   />
                   <input
                     type="number"
                     placeholder="Price"
                     value={currentItem.unitPrice}
                     onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
                     step="0.01"
                   />
                   <button
@@ -642,7 +642,7 @@ export default function Purchases() {
                   name="notes"
                   value={formData.notes}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
                   placeholder="Additional notes"
                   rows="2"
                 />
@@ -652,7 +652,7 @@ export default function Purchases() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
+                  className="bg-slate-800 text-white px-6 py-2 rounded-lg hover:bg-slate-900 transition disabled:opacity-50"
                 >
                   {loading ? 'Saving...' : 'Save Purchase'}
                 </button>
@@ -675,12 +675,12 @@ export default function Purchases() {
           placeholder="Search purchases..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
         />
         <select
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value)}
-          className="w-full sm:w-56 bg-white px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full sm:w-56 bg-white px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
         >
           <option value="">Purchase History - All Time</option>
           <option value="7d">Purchase History - 7 Days</option>
@@ -696,7 +696,7 @@ export default function Purchases() {
             setCurrentItem(initialCurrentItem);
             setShowForm(true);
           }}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
+          className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900 transition shadow-sm whitespace-nowrap"
         >
           + New Purchase
         </button>
@@ -796,3 +796,4 @@ export default function Purchases() {
     </div>
   );
 }
+

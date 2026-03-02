@@ -88,7 +88,7 @@ export default function Dashboard() {
           <div className="space-y-2">
             <a
               href="/stock"
-              className="block px-3 md:px-4 py-2 text-sm md:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-center"
+              className="block px-3 md:px-4 py-2 text-sm md:text-base bg-slate-800 text-white rounded-lg hover:bg-slate-900 transition text-center"
             >
               Add Stock Item
             </a>
@@ -140,4 +140,5 @@ export default function Dashboard() {
     </div>
   );
 }
+
 

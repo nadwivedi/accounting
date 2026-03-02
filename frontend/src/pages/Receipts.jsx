@@ -163,7 +163,7 @@ export default function Receipts() {
   const totalReceipts = receipts.reduce((sum, r) => sum + Number(r.amount || 0), 0);
 
   return (
-    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-[#f8f6f1] min-h-screen">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
@@ -407,3 +407,4 @@ export default function Receipts() {
     </div>
   );
 }
+

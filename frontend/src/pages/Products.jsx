@@ -86,7 +86,7 @@ export default function Products() {
   const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
   const availableStockGroups = useMemo(
-    () => stockGroups.filter((group) => group.isActive !== false),
+    () => stockGroups,
     [stockGroups]
   );
 
@@ -487,7 +487,7 @@ export default function Products() {
   ).length;
 
   return (
-    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-[#f8f6f1] min-h-screen">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
@@ -756,7 +756,7 @@ export default function Products() {
                     name="isActive"
                     checked={formData.isActive}
                     onChange={handleInputChange}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-600"
+                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-slate-400"
                   />
                   Active product
                 </label>
@@ -766,7 +766,7 @@ export default function Products() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {loading ? 'Saving...' : editingId ? 'Update Stock Item' : 'Save Stock Item'}
                 </button>
@@ -789,11 +789,11 @@ export default function Products() {
           placeholder="Search stock items..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
         />
         <button
           onClick={handleOpenForm}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
+          className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900 transition shadow-sm whitespace-nowrap"
         >
           + Add Stock Item
         </button>
@@ -882,4 +882,5 @@ export default function Products() {
     </div>
   );
 }
+
 

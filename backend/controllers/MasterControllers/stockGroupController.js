@@ -10,7 +10,7 @@ const isDuplicateStockGroupNameError = (error) => (
 // Create stock group
 exports.createStockGroup = async (req, res) => {
   try {
-    const { name, description, isActive } = req.body;
+    const { name, description } = req.body;
     const userId = req.userId;
 
     if (!name) {
@@ -23,8 +23,7 @@ exports.createStockGroup = async (req, res) => {
     const stockGroup = await StockGroup.create({
       userId,
       name,
-      description,
-      isActive: isActive !== undefined ? isActive : true
+      description
     });
 
     res.status(201).json({
@@ -50,13 +49,9 @@ exports.createStockGroup = async (req, res) => {
 // Get all stock groups
 exports.getAllStockGroups = async (req, res) => {
   try {
-    const { isActive, search } = req.query;
+    const { search } = req.query;
     const userId = req.userId;
     let filter = { userId };
-
-    if (isActive !== undefined) {
-      filter.isActive = isActive === 'true';
-    }
 
     let query = StockGroup.find(filter);
 
@@ -113,11 +108,11 @@ exports.updateStockGroup = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const { name, description, isActive } = req.body;
+    const { name, description } = req.body;
 
     const stockGroup = await StockGroup.findOneAndUpdate(
       { _id: id, userId },
-      { name, description, isActive },
+      { name, description },
       { new: true, runValidators: true }
     );
 

@@ -236,8 +236,8 @@ export default function Sales() {
 
   const handleLeadgerInputKeyDown = (e) => {
     const key = e.key?.toLowerCase();
-    const isMoveDownKey = key === 'control';
-    const isMoveUpKey = key === 'shift' && !e.ctrlKey;
+    const isMoveDownKey = key === 'arrowdown';
+    const isMoveUpKey = key === 'arrowup';
 
     if (isMoveDownKey) {
       e.preventDefault();
@@ -450,12 +450,12 @@ export default function Sales() {
     (sum, sale) => sum + (Number(sale.totalAmount || 0) - Number(sale.paidAmount || 0)),
     0
   );
-  const popupFieldClass = 'w-full rounded-xl border border-slate-200 bg-slate-50/90 px-3.5 py-2 text-slate-800 shadow-sm transition focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-100';
-  const popupLabelClass = 'mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-slate-500';
-  const popupSectionClass = 'rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_12px_28px_-22px_rgba(15,23,42,0.55)]';
+  const popupFieldClass = 'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100';
+  const popupLabelClass = 'mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600';
+  const popupSectionClass = 'rounded-lg border border-slate-300 bg-white p-4 shadow-sm';
 
   return (
-    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-[#f8f6f1] min-h-screen">
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
@@ -510,13 +510,13 @@ export default function Sales() {
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-2 sm:p-3 backdrop-blur-[2px]" onClick={handleCancel}>
-          <div className="h-[95vh] w-[95vw] sm:w-[88vw] lg:w-[40%] overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-b from-white via-slate-50 to-slate-100 shadow-[0_35px_80px_-35px_rgba(2,6,23,0.65)]" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-slate-700 bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 px-5 py-4 sm:px-6">
+          <div className="h-[95vh] w-[95vw] sm:w-[88vw] lg:w-[40%] overflow-hidden rounded-xl border-2 border-slate-300 bg-[#f7f5ef] shadow-[0_30px_70px_-35px_rgba(2,6,23,0.7)]" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-slate-700 bg-gradient-to-r from-slate-800 to-slate-700 px-5 py-4 sm:px-6">
               <div>
                 <h2 className="text-lg sm:text-xl font-bold text-slate-100">
                   {editingId ? 'Edit Sale' : 'Create New Sale'}
                 </h2>
-                <p className="mt-0.5 text-xs sm:text-sm text-slate-300">Party details, item entry, and quick totals</p>
+                <p className="mt-0.5 text-xs sm:text-sm text-slate-300">Sale Voucher Entry</p>
               </div>
               <button
                 type="button"
@@ -529,17 +529,12 @@ export default function Sales() {
             </div>
 
             <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex h-[calc(95vh-82px)] flex-col">
-              <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 via-white to-cyan-50/40">
+              <div className="flex-1 overflow-y-auto bg-[#f7f5ef]">
                 <div className="space-y-4 p-4 sm:p-5">
                   <div className={popupSectionClass}>
-                    <div className="mb-4 flex items-start justify-between gap-3">
-                      <div>
-                        <span className="inline-flex rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-cyan-700">
-                          Party
-                        </span>
-                        <h3 className="mt-2 text-base font-semibold text-slate-800">Customer Information</h3>
-                        <p className="mt-0.5 text-xs text-slate-500">Select party name and fill billing details.</p>
-                      </div>
+                    <div className="mb-4 border-b border-slate-200 pb-2">
+                      <h3 className="text-sm font-bold uppercase tracking-wide text-slate-800">Voucher Details</h3>
+                      <p className="mt-1 text-xs text-slate-500">Select party and voucher dates.</p>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -573,19 +568,19 @@ export default function Sales() {
 
                           {isLeadgerSectionActive && (
                             <div className="mt-2 w-full z-30 lg:fixed lg:right-4 lg:top-20 lg:bottom-6 lg:mt-0 lg:w-80">
-                              <div className="overflow-hidden rounded-xl border border-cyan-200 bg-gradient-to-b from-cyan-50 via-sky-50 to-white shadow-xl lg:h-full lg:flex lg:flex-col">
-                                <div className="border-b border-cyan-300 bg-gradient-to-r from-cyan-700 to-sky-700 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-white">
+                              <div className="overflow-hidden rounded-lg border border-slate-300 bg-white shadow-xl lg:h-full lg:flex lg:flex-col">
+                                <div className="border-b border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-100">
                                   Party List
                                 </div>
-                                <div className="max-h-60 overflow-y-auto bg-white/90 lg:max-h-none lg:flex-1">
+                                <div className="max-h-60 overflow-y-auto bg-white lg:max-h-none lg:flex-1">
                                   <button
                                     type="button"
                                     onMouseDown={(event) => event.preventDefault()}
                                     onClick={() => selectLeadger(null)}
                                     className={`w-full border-b border-slate-100 px-3 py-2 text-left text-sm transition-colors ${
                                       !formData.party
-                                        ? 'bg-emerald-100 text-emerald-800 font-medium'
-                                        : 'text-slate-700 hover:bg-blue-50'
+                                        ? 'bg-slate-200 text-slate-800 font-semibold'
+                                        : 'text-slate-700 hover:bg-slate-50'
                                     }`}
                                   >
                                     Walk-in / No Party
@@ -604,10 +599,10 @@ export default function Sales() {
                                           onClick={() => selectLeadger(leadger)}
                                           className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
                                             isActive
-                                              ? 'bg-blue-100 text-blue-800 font-semibold'
+                                              ? 'bg-slate-200 text-slate-900 font-semibold'
                                               : isSelected
-                                                ? 'bg-emerald-100 text-emerald-800 font-medium'
-                                                : 'text-slate-700 hover:bg-blue-50'
+                                                ? 'bg-slate-100 text-slate-800 font-medium'
+                                                : 'text-slate-700 hover:bg-slate-50'
                                           }`}
                                         >
                                           {getLeadgerDisplayName(leadger)}
@@ -649,13 +644,10 @@ export default function Sales() {
                   <div className={popupSectionClass}>
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <div>
-                        <span className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700">
-                          Billing
-                        </span>
-                        <h3 className="mt-2 text-base font-semibold text-slate-800">Add Items</h3>
-                        <p className="mt-0.5 text-xs text-slate-500">Add products one by one and build the sale bill.</p>
+                        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-800">Item Entry</h3>
+                        <p className="mt-1 text-xs text-slate-500">Add stock items with quantity, rate, tax and discount.</p>
                       </div>
-                      <span className="inline-flex items-center rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 shadow-sm">
+                      <span className="inline-flex items-center rounded-md border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
                         {formData.items.length} item(s)
                       </span>
                     </div>
@@ -705,23 +697,23 @@ export default function Sales() {
                       <button
                         type="button"
                         onClick={handleAddItem}
-                        className="col-span-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 transition shadow-sm"
+                        className="col-span-2 rounded-md bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-900 transition"
                       >
                         Add Item
                       </button>
                     </div>
 
                     {formData.items.length > 0 && (
-                      <div className="overflow-hidden rounded-xl border border-slate-200">
-                        <table className="w-full text-xs sm:text-sm">
-                          <thead className="bg-slate-100 text-slate-700">
+                      <div className="overflow-hidden rounded-md border border-slate-300">
+                        <table className="w-full text-xs">
+                          <thead className="bg-slate-200 text-slate-700">
                             <tr>
                               <th className="px-2 py-2 text-left font-semibold sm:px-3">Product</th>
-                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Qty</th>
-                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Price</th>
-                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Tax</th>
-                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Discount</th>
-                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Total</th>
+                              <th className="px-2 py-2 text-right font-semibold sm:px-3">Qty</th>
+                              <th className="px-2 py-2 text-right font-semibold sm:px-3">Rate</th>
+                              <th className="px-2 py-2 text-right font-semibold sm:px-3">Tax</th>
+                              <th className="px-2 py-2 text-right font-semibold sm:px-3">Disc</th>
+                              <th className="px-2 py-2 text-right font-semibold sm:px-3">Amount</th>
                               <th className="px-2 py-2 text-left font-semibold sm:px-3">Action</th>
                             </tr>
                           </thead>
@@ -729,16 +721,16 @@ export default function Sales() {
                             {formData.items.map((item, index) => (
                               <tr key={index}>
                                 <td className="px-2 py-2 font-medium text-slate-700 sm:px-3">{item.productName}</td>
-                                <td className="px-2 py-2 text-slate-600 sm:px-3">{item.quantity}</td>
-                                <td className="px-2 py-2 text-slate-600 sm:px-3">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
-                                <td className="px-2 py-2 text-slate-600 sm:px-3">Rs {Number(item.taxAmount || 0).toFixed(2)}</td>
-                                <td className="px-2 py-2 text-slate-600 sm:px-3">Rs {Number(item.discount || 0).toFixed(2)}</td>
-                                <td className="px-2 py-2 font-semibold text-slate-800 sm:px-3">Rs {Number(item.total || 0).toFixed(2)}</td>
+                                <td className="px-2 py-2 text-right font-mono text-slate-600 sm:px-3">{item.quantity}</td>
+                                <td className="px-2 py-2 text-right font-mono text-slate-600 sm:px-3">{Number(item.unitPrice || 0).toFixed(2)}</td>
+                                <td className="px-2 py-2 text-right font-mono text-slate-600 sm:px-3">{Number(item.taxAmount || 0).toFixed(2)}</td>
+                                <td className="px-2 py-2 text-right font-mono text-slate-600 sm:px-3">{Number(item.discount || 0).toFixed(2)}</td>
+                                <td className="px-2 py-2 text-right font-mono font-semibold text-slate-800 sm:px-3">{Number(item.total || 0).toFixed(2)}</td>
                                 <td className="px-2 py-2 sm:px-3">
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveItem(index)}
-                                    className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition"
+                                    className="rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition"
                                   >
                                     Remove
                                   </button>
@@ -754,55 +746,55 @@ export default function Sales() {
                 </div>
 
                 <div className="space-y-3 p-4 pt-0 sm:p-5 sm:pt-0">
-                  <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-4 shadow-[0_12px_30px_-24px_rgba(15,23,42,0.55)]">
-                    <h4 className="mb-3 text-sm font-semibold text-slate-700">Bill Summary</h4>
-                    <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm">
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                        <p className="text-slate-500">Subtotal</p>
-                        <p className="font-semibold text-slate-800">Rs {formData.subtotal.toFixed(2)}</p>
+                  <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm">
+                    <h4 className="mb-3 border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-slate-800">Voucher Totals</h4>
+                    <div className="space-y-1.5 text-sm">
+                      <div className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                        <span className="text-slate-600">Subtotal</span>
+                        <span className="font-mono font-semibold text-slate-800">Rs {formData.subtotal.toFixed(2)}</span>
                       </div>
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                        <p className="text-slate-500">Tax</p>
-                        <p className="font-semibold text-slate-800">Rs {formData.taxAmount.toFixed(2)}</p>
+                      <div className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                        <span className="text-slate-600">Tax</span>
+                        <span className="font-mono font-semibold text-slate-800">Rs {formData.taxAmount.toFixed(2)}</span>
                       </div>
-                      <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2">
-                        <p className="text-blue-600">Total</p>
-                        <p className="font-bold text-blue-700">Rs {formData.totalAmount.toFixed(2)}</p>
+                      <div className="flex items-center justify-between rounded-md border border-slate-300 bg-slate-100 px-3 py-2">
+                        <span className="font-semibold text-slate-700">Total Amount</span>
+                        <span className="font-mono font-bold text-slate-900">Rs {formData.totalAmount.toFixed(2)}</span>
                       </div>
-                      <div className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2">
-                        <p className="text-rose-600">Due</p>
-                        <p className="font-bold text-rose-700">Rs {(formData.totalAmount - formData.paidAmount).toFixed(2)}</p>
+                      <div className="flex items-center justify-between rounded-md border border-slate-300 bg-slate-100 px-3 py-2">
+                        <span className="font-semibold text-slate-700">Balance Due</span>
+                        <span className="font-mono font-bold text-slate-900">Rs {(formData.totalAmount - formData.paidAmount).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_12px_24px_-22px_rgba(15,23,42,0.55)]">
-                    <label className="mb-1 block text-xs font-semibold text-slate-600">Notes</label>
+                  <div className="rounded-lg border border-slate-300 bg-white p-3 shadow-sm">
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Notes</label>
                     <textarea
                       name="notes"
                       value={formData.notes}
                       onChange={handleInputChange}
-                      className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-700 focus:border-sky-300 focus:outline-none focus:ring-2 focus:ring-sky-100 transition"
-                      placeholder="Notes"
-                      rows="1"
+                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
+                      placeholder="Optional notes"
+                      rows="2"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="border-t border-slate-200 bg-white/95 p-3 sm:p-4">
+              <div className="border-t border-slate-300 bg-[#f2efe6] p-3 sm:p-4">
                 <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="rounded-xl border border-slate-300 bg-slate-100 px-6 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-200"
+                    className="rounded-md border border-slate-400 bg-white px-6 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-100"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 px-6 py-2.5 font-semibold text-white transition hover:from-sky-700 hover:to-indigo-700 disabled:opacity-50"
+                    className="rounded-md bg-slate-800 px-6 py-2.5 font-semibold text-white transition hover:bg-slate-900 disabled:opacity-50"
                   >
                     {loading ? 'Saving...' : 'Save Sale'}
                   </button>
@@ -819,12 +811,12 @@ export default function Sales() {
           placeholder="Search sales..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
         />
         <select
           value={dateFilter}
           onChange={(e) => setDateFilter(e.target.value)}
-          className="w-full sm:w-56 bg-white px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+          className="w-full sm:w-56 bg-white px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
         >
           <option value="">Sale History - All Time</option>
           <option value="7d">Sale History - 7 Days</option>
@@ -835,7 +827,7 @@ export default function Sales() {
         </select>
         <button
           onClick={handleOpenForm}
-          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 transition shadow-sm whitespace-nowrap"
+          className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900 transition shadow-sm whitespace-nowrap"
         >
           + New Sale
         </button>
@@ -933,3 +925,4 @@ export default function Sales() {
     </div>
   );
 }
+

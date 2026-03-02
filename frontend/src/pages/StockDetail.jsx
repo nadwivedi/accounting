@@ -159,7 +159,7 @@ export default function StockDetail() {
   };
 
   return (
-    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-slate-50 min-h-screen">
+    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-[#f8f6f1] min-h-screen">
       <div className="mb-4">
         <Link to="/stock" className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
           Back to Stock
@@ -210,19 +210,19 @@ export default function StockDetail() {
               type="date"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
             <input
               type="date"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
             />
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={handleApplyFilter}
-                className="w-full bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition"
+                className="w-full bg-slate-800 text-white px-4 py-2.5 rounded-lg hover:bg-slate-900 transition"
               >
                 Apply
               </button>
@@ -242,7 +242,7 @@ export default function StockDetail() {
           <select
             value={adjustmentForm.type}
             onChange={(e) => setAdjustmentForm((prev) => ({ ...prev, type: e.target.value }))}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
           >
             <option value="add">Add Stock</option>
             <option value="subtract">Subtract Stock</option>
@@ -254,14 +254,14 @@ export default function StockDetail() {
             placeholder="Quantity"
             value={adjustmentForm.quantity}
             onChange={(e) => setAdjustmentForm((prev) => ({ ...prev, quantity: e.target.value }))}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
             required
           />
           <textarea
             placeholder="Notes (optional)"
             value={adjustmentForm.notes}
             onChange={(e) => setAdjustmentForm((prev) => ({ ...prev, notes: e.target.value }))}
-            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+            className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
             rows="2"
           />
           <button
@@ -322,3 +322,4 @@ export default function StockDetail() {
     </div>
   );
 }
+

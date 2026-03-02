@@ -108,3 +108,83 @@ exports.getAllLeadgers = async (req, res) => {
   }
 };
 
+exports.updateLeadger = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      group,
+      name,
+      mobile,
+      email,
+      address,
+      state,
+      pincode,
+      notes
+    } = req.body;
+    const userId = req.userId;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid leadger id is required'
+      });
+    }
+
+    if (!group || !mongoose.isValidObjectId(group)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid group is required'
+      });
+    }
+
+    const groupDoc = await Group.findOne({ _id: group, userId, isActive: true });
+    if (!groupDoc) {
+      return res.status(404).json({
+        success: false,
+        message: 'Group not found'
+      });
+    }
+
+    if (!String(name || '').trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Leadger name is required'
+      });
+    }
+
+    const leadger = await Leadger.findOneAndUpdate(
+      { _id: id, userId },
+      {
+        group,
+        name: String(name || '').trim(),
+        mobile: String(mobile || '').trim(),
+        email: String(email || '').trim(),
+        address: String(address || '').trim(),
+        state: String(state || '').trim(),
+        pincode: String(pincode || '').trim(),
+        notes: String(notes || '').trim()
+      },
+      { new: true, runValidators: true }
+    ).populate('group', 'name');
+
+    if (!leadger) {
+      return res.status(404).json({
+        success: false,
+        message: 'Leadger not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Leadger voucher updated successfully',
+      data: leadger
+    });
+  } catch (error) {
+    console.error('Update leadger error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating leadger voucher'
+    });
+  }
+};
+
