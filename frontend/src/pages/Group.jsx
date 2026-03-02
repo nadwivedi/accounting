@@ -41,26 +41,32 @@ export default function Group() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const normalizedValue = name === 'name' ? String(value || '').toUpperCase() : value;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : normalizedValue
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name) {
+    const normalizedName = String(formData.name || '').trim().toUpperCase();
+    if (!normalizedName) {
       setError('Group name is required');
       return;
     }
 
     try {
       setLoading(true);
+      const payload = {
+        ...formData,
+        name: normalizedName
+      };
       if (editingId) {
-        await apiClient.put(`/groups/${editingId}`, formData);
+        await apiClient.put(`/groups/${editingId}`, payload);
         toast.success('Group updated successfully', toastOptions);
       } else {
-        await apiClient.post('/groups', formData);
+        await apiClient.post('/groups', payload);
         toast.success('Group added successfully', toastOptions);
       }
       fetchGroups();
@@ -77,7 +83,7 @@ export default function Group() {
 
   const handleEdit = (group) => {
     setFormData({
-      name: group.name || '',
+      name: String(group.name || '').toUpperCase(),
       description: group.description || '',
       isActive: Boolean(group.isActive)
     });
@@ -136,83 +142,85 @@ export default function Group() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/55 p-3 backdrop-blur-sm" onClick={handleCancel}>
-          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-slate-300 bg-white shadow-[0_35px_80px_-30px_rgba(15,23,42,0.75)]" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-700 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 px-6 py-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-500 bg-slate-800 text-xs font-bold tracking-wide text-slate-100">
-                  GM
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold text-slate-100">{editingId ? 'Edit Group' : 'Add Group'}</h2>
-                  <p className="mt-0.5 text-xs text-slate-300">Create accounting groups for ledgers and vouchers</p>
-                </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-2 sm:p-4 backdrop-blur-[1px]" onClick={handleCancel}>
+          <div className="w-full max-w-3xl overflow-hidden border-2 border-[#17395d] bg-[#f7efd8] shadow-[0_28px_75px_-35px_rgba(15,23,42,0.85)]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between border-b-2 border-[#17395d] bg-[#1f4f82] px-4 py-2.5 text-white">
+              <div>
+                <h2 className="text-base font-bold tracking-wide">{editingId ? 'ALTER GROUP' : 'CREATE GROUP'}</h2>
+                <p className="mt-0.5 text-[11px] text-blue-100">Accounting master entry screen</p>
               </div>
               <button
                 type="button"
                 onClick={handleCancel}
-                className="h-9 w-9 rounded-full border border-slate-500 text-slate-200 hover:bg-slate-600 hover:text-white hover:border-slate-300 transition"
+                className="h-7 w-7 border border-blue-200 bg-[#245a91] text-lg leading-none text-white transition hover:bg-[#2a67a7]"
                 aria-label="Close popup"
               >
                 &times;
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="bg-white p-5">
-              <div className="space-y-4">
-                <div className="rounded-lg border border-slate-200 p-4">
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Group Name</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                    placeholder="Enter group name"
-                    autoFocus
-                    required
-                  />
-                </div>
-
-                <div className="rounded-lg border border-slate-200 p-4">
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Description</label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100"
-                    placeholder="Enter description"
-                    rows="4"
-                  />
-                </div>
-
-                <div className="rounded-lg border border-slate-200 p-4">
-                  <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-                    <input
-                      type="checkbox"
-                      name="isActive"
-                      checked={Boolean(formData.isActive)}
-                      onChange={handleInputChange}
-                      className="h-4 w-4 rounded text-blue-600 focus:ring-2 focus:ring-blue-200"
-                    />
-                    Mark this group as active
+            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)}>
+              <div className="border-b border-[#c6b98e]">
+                <div className="grid grid-cols-1 border-b border-[#c6b98e] md:grid-cols-[220px_1fr]">
+                  <label className="border-b border-[#c6b98e] bg-[#efe2bb] px-4 py-2.5 text-sm font-semibold text-[#29425b] md:border-b-0 md:border-r">
+                    Group Name *
                   </label>
+                  <div className="bg-[#fffdf6] px-3 py-2">
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      className="w-full border border-[#9db0c4] bg-white px-3 py-2 text-sm text-slate-800 outline-none transition focus:border-[#1f4f82] focus:ring-2 focus:ring-[#1f4f82]/15"
+                      placeholder="Enter group name (for example: Sundry Debtors)"
+                      autoFocus
+                      required
+                    />
+                  </div>
                 </div>
 
-                <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row sm:justify-end">
+                <div className="grid grid-cols-1 border-b border-[#c6b98e] md:grid-cols-[220px_1fr]">
+                  <label className="border-b border-[#c6b98e] bg-[#efe2bb] px-4 py-2.5 text-sm font-semibold text-[#29425b] md:border-b-0 md:border-r">
+                    Description
+                  </label>
+                  <div className="bg-[#fffdf6] px-3 py-2">
+                    <input
+                      type="text"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          e.currentTarget.form?.requestSubmit();
+                        }
+                      }}
+                      className="h-8 w-full border border-[#9db0c4] bg-white px-3 py-1 text-sm text-slate-800 outline-none transition focus:border-[#1f4f82] focus:ring-2 focus:ring-[#1f4f82]/15"
+                      placeholder="Short note for this accounting group"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 bg-[#ede0b8] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-[11px] font-medium tracking-wide text-[#364e64]">
+                  Esc: Cancel | Enter: Save
+                </p>
+                <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="rounded-md border border-slate-400 bg-white px-6 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-100"
+                    className="border border-[#8f8a75] bg-[#f7f3e4] px-5 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-white"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="rounded-md bg-slate-800 px-6 py-2.5 font-semibold text-white transition hover:bg-slate-900 disabled:opacity-50"
+                    className="border border-[#12375b] bg-[#1f4f82] px-5 py-1.5 text-sm font-semibold text-white transition hover:bg-[#275f98] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {loading ? 'Saving...' : editingId ? 'Update Group' : 'Save Group'}
+                    {loading ? 'Saving...' : editingId ? 'Update Group' : 'Create Group'}
                   </button>
                 </div>
               </div>
