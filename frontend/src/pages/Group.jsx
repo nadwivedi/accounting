@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
@@ -288,16 +289,36 @@ export default function Group() {
                       {group.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-6 py-3 space-x-2">
-                    <button onClick={() => handleOpenGroupDetail(group._id)} className="font-medium text-emerald-600 hover:text-emerald-800">
-                      View
-                    </button>
-                    <button onClick={() => handleEdit(group)} className="font-medium text-blue-600 hover:text-blue-800">
-                      Edit
-                    </button>
-                    <button onClick={() => handleDelete(group._id)} className="font-medium text-red-600 hover:text-red-800">
-                      Delete
-                    </button>
+                  <td className="px-6 py-3">
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenGroupDetail(group._id)}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded border border-slate-300 bg-white text-slate-600 transition hover:border-slate-400 hover:bg-slate-50 hover:text-slate-900"
+                        aria-label="View group"
+                        title="View"
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(group)}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded border border-blue-200 bg-blue-50 text-blue-700 transition hover:border-blue-300 hover:bg-blue-100 hover:text-blue-900"
+                        aria-label="Edit group"
+                        title="Edit"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(group._id)}
+                        className="inline-flex h-7 w-7 items-center justify-center rounded border border-red-200 bg-red-50 text-red-700 transition hover:border-red-300 hover:bg-red-100 hover:text-red-800"
+                        aria-label="Delete group"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
