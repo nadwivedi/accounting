@@ -149,11 +149,11 @@ export default function Leadger() {
     }
 
     setGroupListIndex((prev) => {
-      if (prev < 0) return -1;
+      if (prev < 0) return isGroupSectionActive ? 0 : -1;
       if (prev >= groupOptions.length) return groupOptions.length - 1;
       return prev;
     });
-  }, [groupOptions]);
+  }, [groupOptions, isGroupSectionActive]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -193,7 +193,7 @@ export default function Leadger() {
         ...prev,
         group: exactGroup._id
       }));
-      setGroupListIndex(-1);
+      setGroupListIndex(groups.length > 0 ? 0 : -1);
       return;
     }
 
@@ -203,7 +203,7 @@ export default function Leadger() {
       ...prev,
       group: defaultGroup?._id || ''
     }));
-    setGroupListIndex(-1);
+    setGroupListIndex(groups.length > 0 ? 0 : -1);
   };
 
   const handleGroupInputKeyDown = (e) => {

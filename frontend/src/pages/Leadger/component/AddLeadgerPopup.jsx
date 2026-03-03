@@ -118,7 +118,7 @@ export default function AddLeadgerPopup({
                       className="relative flex-1 min-w-0"
                       onFocusCapture={() => {
                         setIsGroupSectionActive(true);
-                        setGroupListIndex(-1);
+                        setGroupListIndex(groupOptions.length > 0 ? 0 : -1);
                       }}
                       onBlurCapture={(event) => {
                         const nextFocused = event.relatedTarget;
