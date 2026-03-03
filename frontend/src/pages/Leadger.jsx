@@ -30,6 +30,21 @@ export default function Leadger() {
   const [editingId, setEditingId] = useState(null);
   const mobileInputRef = useRef(null);
   const groupSectionRef = useRef(null);
+  const getInlineFieldClass = (tone = 'indigo') => {
+    const focusTone = tone === 'emerald'
+      ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
+      : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
+
+    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm text-gray-900 transition-all focus:outline-none focus:bg-white placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
+  };
+
+  const getInlineTextareaClass = (tone = 'emerald') => {
+    const focusTone = tone === 'emerald'
+      ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
+      : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
+
+    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm text-gray-900 transition-all resize-none focus:outline-none focus:bg-white placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
+  };
 
   useEffect(() => {
     fetchLeadgers();
@@ -358,9 +373,9 @@ export default function Leadger() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4" onClick={handleCloseForm}>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-stretch justify-start p-0" onClick={handleCloseForm}>
           <div
-            className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col"
+            className="bg-white h-full w-full md:w-[75vw] overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-r-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 md:p-3 text-white flex-shrink-0">
@@ -394,203 +409,213 @@ export default function Leadger() {
               className="flex flex-col flex-1 overflow-hidden"
             >
               <div className="flex-1 overflow-y-auto p-3 md:p-6">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6">
-                  <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
-                    <span className="bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
-                    Ledger Details
-                  </h3>
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1.2fr)] gap-3 md:gap-6 items-stretch">
+                  <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-220px)] bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-3 md:p-6">
+                    <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
+                      Ledger Details
+                    </h3>
 
-                  <div className="grid grid-cols-1 gap-3 md:gap-4">
-                    <div className="flex items-center gap-3">
-                      <label htmlFor="ledger-name-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
-                        Ledger Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        id="ledger-name-input"
-                        type="text"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-sm"
-                        placeholder="Enter ledger name"
-                        autoFocus
-                        required
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                      <label htmlFor="ledger-group-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
-                        Under Group <span className="text-red-500">*</span>
-                      </label>
-                      <div
-                        ref={groupSectionRef}
-                        className="relative flex-1 min-w-0"
-                        onFocusCapture={() => setIsGroupSectionActive(true)}
-                        onBlurCapture={(event) => {
-                          const nextFocused = event.relatedTarget;
-                          if (
-                            groupSectionRef.current
-                            && nextFocused instanceof Node
-                            && groupSectionRef.current.contains(nextFocused)
-                          ) {
-                            return;
-                          }
-                          setIsGroupSectionActive(false);
-                        }}
-                      >
+                    <div className="grid grid-cols-1 gap-3 md:gap-4">
+                      <div className="flex items-center gap-3">
+                        <label htmlFor="ledger-name-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                          Ledger Name <span className="text-red-500">*</span>
+                        </label>
                         <input
-                          id="ledger-group-input"
+                          id="ledger-name-input"
+                          type="text"
+                          name="name"
+                          value={formData.name}
+                          onChange={handleChange}
+                          className={getInlineFieldClass('indigo')}
+                          placeholder="Enter ledger name"
+                          autoFocus
+                          required
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <label htmlFor="ledger-group-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                          Under Group <span className="text-red-500">*</span>
+                        </label>
+                        <div
+                          ref={groupSectionRef}
+                          className="relative flex-1 min-w-0"
+                          onFocusCapture={() => setIsGroupSectionActive(true)}
+                          onBlurCapture={(event) => {
+                            const nextFocused = event.relatedTarget;
+                            if (
+                              groupSectionRef.current
+                              && nextFocused instanceof Node
+                              && groupSectionRef.current.contains(nextFocused)
+                            ) {
+                              return;
+                            }
+                            setIsGroupSectionActive(false);
+                          }}
+                        >
+                          <input
+                            id="ledger-group-input"
                           type="text"
                           value={groupQuery}
                           onChange={handleGroupInputChange}
                           onKeyDown={handleGroupInputKeyDown}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-sm"
+                          className={getInlineFieldClass('indigo')}
                           placeholder="Select or type group..."
                         />
 
-                        {isGroupSectionActive && (
-                          <div className="absolute left-0 top-full mt-1 w-full z-50">
-                            <div className="rounded-lg border border-indigo-200 bg-white shadow-xl overflow-hidden flex flex-col max-h-56">
-                              <div className="px-3 py-1.5 text-xs font-semibold uppercase text-indigo-700 bg-indigo-50 border-b border-indigo-100">
-                                Select Group
-                              </div>
-                              <div className="flex-1 overflow-y-auto">
-                                {filteredGroups.length === 0 ? (
-                                  <div className="px-4 py-3 text-sm text-gray-500">No matching groups found</div>
-                                ) : (
-                                  filteredGroups.map((group, index) => {
-                                    const isActive = index === groupListIndex;
-                                    const isSelected = String(formData.group || '') === String(group._id);
-                                    return (
-                                      <button
-                                        key={group._id}
-                                        type="button"
-                                        onMouseDown={(event) => event.preventDefault()}
-                                        onClick={() => selectGroup(group, true)}
-                                        className={`w-full text-left px-3 py-2 text-sm border-b border-gray-100 last:border-b-0 transition ${
-                                          isActive
-                                            ? 'bg-indigo-100 border-l-4 border-l-indigo-600 text-indigo-800'
-                                            : isSelected
-                                              ? 'bg-indigo-50 text-indigo-700'
-                                              : 'hover:bg-indigo-50 text-gray-700'
-                                        }`}
-                                      >
-                                        {group.name}
-                                      </button>
-                                    );
-                                  })
-                                )}
+                          {isGroupSectionActive && (
+                            <div className="absolute left-0 top-full mt-1 w-full z-50">
+                              <div className="rounded-lg border border-indigo-200 bg-white shadow-xl overflow-hidden flex flex-col max-h-56">
+                                <div className="px-3 py-1.5 text-xs font-semibold uppercase text-indigo-700 bg-indigo-50 border-b border-indigo-100">
+                                  Select Group
+                                </div>
+                                <div className="flex-1 overflow-y-auto">
+                                  {filteredGroups.length === 0 ? (
+                                    <div className="px-4 py-3 text-sm text-gray-500">No matching groups found</div>
+                                  ) : (
+                                    filteredGroups.map((group, index) => {
+                                      const isActive = index === groupListIndex;
+                                      const isSelected = String(formData.group || '') === String(group._id);
+                                      return (
+                                        <button
+                                          key={group._id}
+                                          type="button"
+                                          onMouseDown={(event) => event.preventDefault()}
+                                          onClick={() => selectGroup(group, true)}
+                                          className={`w-full text-left px-3 py-2 text-sm border-b border-gray-100 last:border-b-0 transition ${
+                                            isActive
+                                              ? 'bg-indigo-100 border-l-4 border-l-indigo-600 text-indigo-800'
+                                              : isSelected
+                                                ? 'bg-indigo-50 text-indigo-700'
+                                                : 'hover:bg-indigo-50 text-gray-700'
+                                          }`}
+                                        >
+                                          {group.name}
+                                        </button>
+                                      );
+                                    })
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        )}
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6">
-                  <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
-                    <span className="bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">2</span>
-                    Contact Details
-                  </h3>
+                  <div className="hidden lg:block h-full w-px bg-slate-300" aria-hidden="true"></div>
 
-                  <div className="space-y-3 md:space-y-4">
-                    <div className="flex items-center gap-3">
-                      <label htmlFor="ledger-mobile-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
-                        Mobile Number (Optional)
-                      </label>
-                      <input
-                        id="ledger-mobile-input"
-                        type="tel"
-                        name="mobile"
-                        value={formData.mobile}
-                        onChange={handleChange}
-                        ref={mobileInputRef}
-                        inputMode="numeric"
-                        pattern="[0-9]{10}"
-                        maxLength={10}
-                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm"
-                        placeholder="10-digit mobile number"
-                      />
-                    </div>
+                  <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-220px)] bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6">
+                    <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+                      <span className="bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">2</span>
+                      Contact Details
+                    </h3>
 
-                    <div className="flex items-center gap-3">
-                      <label htmlFor="ledger-email-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
-                        Email Address (Optional)
-                      </label>
-                      <input
-                        id="ledger-email-input"
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm"
-                        placeholder="email@example.com"
-                      />
-                    </div>
+                    <div className="space-y-3 md:space-y-4">
+                      <div className="flex items-center gap-3">
+                        <label htmlFor="ledger-mobile-input" className="w-40 shrink-0 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
+                          <span>Mobile Number</span>
+                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        </label>
+                        <input
+                          id="ledger-mobile-input"
+                          type="tel"
+                          name="mobile"
+                          value={formData.mobile}
+                          onChange={handleChange}
+                          ref={mobileInputRef}
+                          inputMode="numeric"
+                          pattern="[0-9]{10}"
+                          maxLength={10}
+                          className={getInlineFieldClass('emerald')}
+                          placeholder="10-digit mobile number"
+                        />
+                      </div>
 
-                    <div className="flex items-center gap-3">
-                      <label htmlFor="ledger-state-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
-                        State (Optional)
-                      </label>
-                      <input
-                        id="ledger-state-input"
-                        type="text"
-                        name="state"
-                        value={formData.state}
-                        onChange={handleChange}
-                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm"
-                        placeholder="Enter state"
-                      />
-                    </div>
+                      <div className="flex items-center gap-3">
+                        <label htmlFor="ledger-email-input" className="w-40 shrink-0 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
+                          <span>Email Address</span>
+                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        </label>
+                        <input
+                          id="ledger-email-input"
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          className={getInlineFieldClass('emerald')}
+                          placeholder="email@example.com"
+                        />
+                      </div>
 
-                    <div className="flex items-center gap-3">
-                      <label htmlFor="ledger-pincode-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
-                        Pincode (Optional)
-                      </label>
-                      <input
-                        id="ledger-pincode-input"
-                        type="text"
-                        name="pincode"
-                        value={formData.pincode}
-                        onChange={handleChange}
-                        inputMode="numeric"
-                        pattern="[0-9]{6}"
-                        maxLength={6}
-                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm"
-                        placeholder="6-digit pincode"
-                      />
-                    </div>
+                      <div className="flex items-center gap-3">
+                        <label htmlFor="ledger-state-input" className="w-40 shrink-0 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
+                          <span>State</span>
+                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        </label>
+                        <input
+                          id="ledger-state-input"
+                          type="text"
+                          name="state"
+                          value={formData.state}
+                          onChange={handleChange}
+                          className={getInlineFieldClass('emerald')}
+                          placeholder="Enter state"
+                        />
+                      </div>
 
-                    <div className="flex items-start gap-3">
-                      <label htmlFor="ledger-address-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mt-2 mb-0">
-                        Address (Optional)
-                      </label>
-                      <textarea
-                        id="ledger-address-input"
-                        name="address"
-                        value={formData.address}
-                        onChange={handleChange}
-                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm resize-none"
-                        placeholder="Enter full address"
-                        rows={2}
-                      />
-                    </div>
+                      <div className="flex items-center gap-3">
+                        <label htmlFor="ledger-pincode-input" className="w-40 shrink-0 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
+                          <span>Pincode</span>
+                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        </label>
+                        <input
+                          id="ledger-pincode-input"
+                          type="text"
+                          name="pincode"
+                          value={formData.pincode}
+                          onChange={handleChange}
+                          inputMode="numeric"
+                          pattern="[0-9]{6}"
+                          maxLength={6}
+                          className={getInlineFieldClass('emerald')}
+                          placeholder="6-digit pincode"
+                        />
+                      </div>
 
-                    <div className="flex items-center gap-3">
-                      <label htmlFor="ledger-notes-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
-                        Remarks / Notes (Optional)
-                      </label>
-                      <input
-                        id="ledger-notes-input"
-                        type="text"
-                        name="notes"
-                        value={formData.notes}
-                        onChange={handleChange}
-                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm"
-                        placeholder="Optional remarks"
-                      />
+                      <div className="flex items-start gap-3">
+                        <label htmlFor="ledger-address-input" className="w-40 shrink-0 mt-2 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
+                          <span>Address</span>
+                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        </label>
+                        <textarea
+                          id="ledger-address-input"
+                          name="address"
+                          value={formData.address}
+                          onChange={handleChange}
+                          className={getInlineTextareaClass('emerald')}
+                          placeholder="Enter full address"
+                          rows={2}
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <label htmlFor="ledger-notes-input" className="w-40 shrink-0 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
+                          <span>Remarks / Notes</span>
+                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        </label>
+                        <input
+                          id="ledger-notes-input"
+                          type="text"
+                          name="notes"
+                          value={formData.notes}
+                          onChange={handleChange}
+                          className={getInlineFieldClass('emerald')}
+                          placeholder="Optional remarks"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
