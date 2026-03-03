@@ -15,6 +15,9 @@ const getInitialForm = () => ({
   notes: ''
 });
 const TOAST_OPTIONS = { autoClose: 1200 };
+const toTitleCase = (value) => String(value || '')
+  .toLowerCase()
+  .replace(/\b[a-z]/g, (char) => char.toUpperCase());
 
 export default function Leadger() {
   const [leadgers, setLeadgers] = useState([]);
@@ -63,6 +66,10 @@ export default function Leadger() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'name') {
+      setFormData((prev) => ({ ...prev, [name]: toTitleCase(value) }));
+      return;
+    }
     if (name === 'mobile') {
       const normalized = String(value || '').replace(/\D/g, '').slice(0, 10);
       setFormData((prev) => ({ ...prev, [name]: normalized }));
