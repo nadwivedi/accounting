@@ -39,6 +39,13 @@ export default function AddLeadgerPopup({
 }) {
   if (!showForm) return null;
 
+  const handleLedgerNameKeyDown = (event) => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    if (String(formData.name || '').trim().length > 0) return;
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-[1.5px] z-50 flex items-stretch justify-start p-1.5 sm:p-2" onClick={handleCloseForm}>
       <div
@@ -94,6 +101,7 @@ export default function AddLeadgerPopup({
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
+                      onKeyDown={handleLedgerNameKeyDown}
                       className={getInlineFieldClass('indigo')}
                       placeholder="Enter ledger name"
                       autoFocus
