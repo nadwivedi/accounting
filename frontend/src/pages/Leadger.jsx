@@ -35,7 +35,7 @@ export default function Leadger() {
       ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
       : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
 
-    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm text-gray-900 transition-all focus:outline-none focus:bg-white placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
+    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm font-bold text-gray-900 transition-all focus:outline-none focus:bg-white placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
   };
 
   const getInlineTextareaClass = (tone = 'emerald') => {
@@ -43,7 +43,7 @@ export default function Leadger() {
       ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
       : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
 
-    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm text-gray-900 transition-all resize-none focus:outline-none focus:bg-white placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
+    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm font-bold text-gray-900 transition-all resize-none focus:outline-none focus:bg-white placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
   };
 
   useEffect(() => {
