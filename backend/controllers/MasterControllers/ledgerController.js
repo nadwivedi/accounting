@@ -1,5 +1,5 @@
-﻿const mongoose = require('mongoose');
-const Leadger = require('../../models/master/Part');
+const mongoose = require('mongoose');
+const Leadger = require('../../models/master/Leadger');
 const Group = require('../../models/master/Group');
 
 exports.createLeadger = async (req, res) => {

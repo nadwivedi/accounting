@@ -42,6 +42,7 @@ export default function Sales() {
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  const [selectedMonthKey, setSelectedMonthKey] = useState('');
   const [formData, setFormData] = useState(initialFormData);
   const [currentItem, setCurrentItem] = useState(initialCurrentItem);
   const [leadgerQuery, setLeadgerQuery] = useState('');
@@ -54,6 +55,12 @@ export default function Sales() {
     fetchLeadgers();
     fetchProducts();
   }, [search, dateFilter]);
+
+  useEffect(() => {
+    if (dateFilter !== 'monthwise') {
+      setSelectedMonthKey('');
+    }
+  }, [dateFilter]);
 
   const getFromDateByFilter = () => {
     const now = new Date();
@@ -78,6 +85,12 @@ export default function Sales() {
       return now.toISOString().split('T')[0];
     }
     return '';
+  };
+
+  const getMonthKey = (dateValue) => {
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return '';
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   };
 
   const fetchSales = async () => {
@@ -444,9 +457,47 @@ export default function Sales() {
     return matching ? getLeadgerDisplayName(matching) : '';
   };
 
-  const totalSales = sales.length;
-  const totalAmount = sales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
-  const totalDue = sales.reduce(
+  const monthWiseSummary = useMemo(() => {
+    const grouped = new Map();
+
+    sales.forEach((sale) => {
+      const monthKey = getMonthKey(sale.saleDate);
+      if (!monthKey) return;
+
+      if (!grouped.has(monthKey)) {
+        const monthDate = new Date(sale.saleDate);
+        grouped.set(monthKey, {
+          key: monthKey,
+          label: monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          saleCount: 0,
+          totalAmount: 0,
+          paidAmount: 0,
+          dueAmount: 0
+        });
+      }
+
+      const bucket = grouped.get(monthKey);
+      const total = Number(sale.totalAmount || 0);
+      const paid = Number(sale.paidAmount || 0);
+      const due = total - paid;
+
+      bucket.saleCount += 1;
+      bucket.totalAmount += total;
+      bucket.paidAmount += paid;
+      bucket.dueAmount += due;
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => b.key.localeCompare(a.key));
+  }, [sales]);
+
+  const visibleSales = useMemo(() => {
+    if (dateFilter !== 'monthwise' || !selectedMonthKey) return sales;
+    return sales.filter((sale) => getMonthKey(sale.saleDate) === selectedMonthKey);
+  }, [sales, dateFilter, selectedMonthKey]);
+
+  const totalSales = visibleSales.length;
+  const totalAmount = visibleSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
+  const totalDue = visibleSales.reduce(
     (sum, sale) => sum + (Number(sale.totalAmount || 0) - Number(sale.paidAmount || 0)),
     0
   );
@@ -824,6 +875,7 @@ export default function Sales() {
           <option value="3m">Sale History - 3 Months</option>
           <option value="6m">Sale History - 6 Months</option>
           <option value="1y">Sale History - 1 Year</option>
+          <option value="monthwise">Sale History - Month Wise</option>
         </select>
         <button
           onClick={handleOpenForm}
@@ -833,12 +885,89 @@ export default function Sales() {
         </button>
       </div>
 
+      {dateFilter === 'monthwise' && (
+        <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedMonthKey('')}
+              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                !selectedMonthKey
+                  ? 'border-slate-700 bg-slate-800 text-white'
+                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+              }`}
+            >
+              All Months
+            </button>
+            {monthWiseSummary.map((month) => (
+              <button
+                key={month.key}
+                type="button"
+                onClick={() => setSelectedMonthKey(month.key)}
+                className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
+                  selectedMonthKey === month.key
+                    ? 'border-blue-700 bg-blue-700 text-white'
+                    : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                }`}
+              >
+                {month.label}
+              </button>
+            ))}
+          </div>
+
+          {monthWiseSummary.length === 0 ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
+              No monthly sale history available for the current search.
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-slate-200">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-100 text-slate-700">
+                  <tr>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Month</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Invoices</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Total Sale</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Received</th>
+                    <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Due</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {monthWiseSummary.map((month) => (
+                    <tr
+                      key={month.key}
+                      onClick={() => setSelectedMonthKey(month.key)}
+                      className={`cursor-pointer transition-colors ${
+                        selectedMonthKey === month.key ? 'bg-blue-50' : 'hover:bg-slate-50'
+                      }`}
+                    >
+                      <td className="px-4 py-2.5 font-medium text-slate-800">{month.label}</td>
+                      <td className="px-4 py-2.5 text-slate-700">{month.saleCount}</td>
+                      <td className="px-4 py-2.5 font-semibold text-emerald-700">
+                        Rs {month.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-4 py-2.5 text-slate-700">
+                        Rs {month.paidAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="px-4 py-2.5 font-semibold text-rose-700">
+                        Rs {month.dueAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Sales List */}
       {loading && !showForm ? (
         <div className="text-center py-8 text-gray-500">Loading...</div>
-      ) : sales.length === 0 ? (
+      ) : visibleSales.length === 0 ? (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center text-gray-500">
-          No sales found. Create your first sale!
+          {dateFilter === 'monthwise' && selectedMonthKey
+            ? 'No sales found for selected month.'
+            : 'No sales found. Create your first sale!'}
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
@@ -858,7 +987,7 @@ export default function Sales() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {sales.map((sale) => (
+                {visibleSales.map((sale) => (
                   <tr key={sale._id} className="bg-white hover:bg-slate-50 transition-colors duration-200 group">
                     <td className="px-6 py-4 font-semibold text-slate-800">{sale.invoiceNumber}</td>
                     <td className="px-6 py-4 font-medium text-slate-700">{resolveLeadgerNameById(sale.party) || sale.customerName || 'Walk-in'}</td>

@@ -1,5 +1,5 @@
-﻿const Group = require('../../models/master/Group');
-const Leadger = require('../../models/master/Part');
+const Group = require('../../models/master/Group');
+const Leadger = require('../../models/master/Leadger');
 
 const DEFAULT_GROUPS = [
   { name: 'Capital Account', description: 'Default capital account group' },

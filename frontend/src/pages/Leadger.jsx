@@ -358,188 +358,282 @@ export default function Leadger() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCloseForm}>
-          <div className="w-full md:w-[30%] max-h-[90vh] overflow-y-auto md:overflow-visible rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-slate-600 bg-gradient-to-r from-slate-800 to-slate-700 rounded-t-2xl">
-              <h2 className="text-xl font-bold text-slate-100">{editingId ? 'Edit Leadger/Account Voucher' : 'Leadger/Account Voucher'}</h2>
-              <button
-                type="button"
-                onClick={handleCloseForm}
-                className="h-9 w-9 rounded-full border border-slate-500 text-slate-200 hover:bg-slate-600 hover:text-white hover:border-slate-300 transition"
-                aria-label="Close popup"
-              >
-                &times;
-              </button>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4" onClick={handleCloseForm}>
+          <div
+            className="bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 md:p-3 text-white flex-shrink-0">
+              <div className="flex justify-between items-center">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-md bg-white/15 flex items-center justify-center text-white">
+                    <Wallet className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg md:text-2xl font-bold">{editingId ? 'Edit Ledger Account' : 'Add New Ledger Account'}</h2>
+                    <p className="text-blue-100 text-xs md:text-sm mt-1">Create or update account details in a clean accounting format.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCloseForm}
+                  className="text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition"
+                  aria-label="Close popup"
+                >
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
             </div>
 
-            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCloseForm)} className="grid grid-cols-1 gap-4 p-6">
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Leadger Name *</label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  placeholder="Enter leadger name"
-                  autoFocus
-                  required
-                />
-              </div>
+            <form
+              id="ledger-form"
+              onSubmit={handleSubmit}
+              onKeyDown={(e) => handlePopupFormKeyDown(e, handleCloseForm)}
+              className="flex flex-col flex-1 overflow-hidden"
+            >
+              <div className="flex-1 overflow-y-auto p-3 md:p-6">
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6">
+                  <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+                    <span className="bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
+                    Ledger Details
+                  </h3>
 
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Group *</label>
-                <div
-                  ref={groupSectionRef}
-                  className="relative"
-                  onFocusCapture={() => setIsGroupSectionActive(true)}
-                  onBlurCapture={(event) => {
-                    const nextFocused = event.relatedTarget;
-                    if (
-                      groupSectionRef.current
-                      && nextFocused instanceof Node
-                      && groupSectionRef.current.contains(nextFocused)
-                    ) {
-                      return;
-                    }
-                    setIsGroupSectionActive(false);
-                  }}
-                >
-                  <input
-                    type="text"
-                    value={groupQuery}
-                    onChange={handleGroupInputChange}
-                    onKeyDown={handleGroupInputKeyDown}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                    placeholder="Type group, use Up/Down, press Enter"
-                  />
+                  <div className="grid grid-cols-1 gap-3 md:gap-4">
+                    <div className="flex items-center gap-3">
+                      <label htmlFor="ledger-name-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                        Ledger Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        id="ledger-name-input"
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-sm"
+                        placeholder="Enter ledger name"
+                        autoFocus
+                        required
+                      />
+                    </div>
 
-                  {isGroupSectionActive && (
-                    <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
-                      <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
-                        <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
-                          Group List
-                        </div>
-                        <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
-                          {filteredGroups.length === 0 ? (
-                            <div className="px-3 py-2 text-sm text-slate-500">No matching groups</div>
-                          ) : (
-                            filteredGroups.map((group, index) => {
-                              const isActive = index === groupListIndex;
-                              const isSelected = String(formData.group || '') === String(group._id);
-                              return (
-                                <button
-                                  key={group._id}
-                                  type="button"
-                                  onMouseDown={(event) => event.preventDefault()}
-                                  onClick={() => selectGroup(group, true)}
-                                  className={`w-full text-left px-3 py-2 text-sm border-b border-slate-100 last:border-b-0 transition-colors ${
-                                    isActive
-                                      ? 'bg-blue-100 text-blue-800 font-semibold'
-                                      : isSelected
-                                        ? 'bg-emerald-100 text-emerald-800 font-medium'
-                                        : 'hover:bg-indigo-50 text-slate-700'
-                                  }`}
-                                >
-                                  {group.name}
-                                </button>
-                              );
-                            })
-                          )}
-                        </div>
+                    <div className="flex items-center gap-3">
+                      <label htmlFor="ledger-group-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                        Under Group <span className="text-red-500">*</span>
+                      </label>
+                      <div
+                        ref={groupSectionRef}
+                        className="relative flex-1 min-w-0"
+                        onFocusCapture={() => setIsGroupSectionActive(true)}
+                        onBlurCapture={(event) => {
+                          const nextFocused = event.relatedTarget;
+                          if (
+                            groupSectionRef.current
+                            && nextFocused instanceof Node
+                            && groupSectionRef.current.contains(nextFocused)
+                          ) {
+                            return;
+                          }
+                          setIsGroupSectionActive(false);
+                        }}
+                      >
+                        <input
+                          id="ledger-group-input"
+                          type="text"
+                          value={groupQuery}
+                          onChange={handleGroupInputChange}
+                          onKeyDown={handleGroupInputKeyDown}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white text-sm"
+                          placeholder="Select or type group..."
+                        />
+
+                        {isGroupSectionActive && (
+                          <div className="absolute left-0 top-full mt-1 w-full z-50">
+                            <div className="rounded-lg border border-indigo-200 bg-white shadow-xl overflow-hidden flex flex-col max-h-56">
+                              <div className="px-3 py-1.5 text-xs font-semibold uppercase text-indigo-700 bg-indigo-50 border-b border-indigo-100">
+                                Select Group
+                              </div>
+                              <div className="flex-1 overflow-y-auto">
+                                {filteredGroups.length === 0 ? (
+                                  <div className="px-4 py-3 text-sm text-gray-500">No matching groups found</div>
+                                ) : (
+                                  filteredGroups.map((group, index) => {
+                                    const isActive = index === groupListIndex;
+                                    const isSelected = String(formData.group || '') === String(group._id);
+                                    return (
+                                      <button
+                                        key={group._id}
+                                        type="button"
+                                        onMouseDown={(event) => event.preventDefault()}
+                                        onClick={() => selectGroup(group, true)}
+                                        className={`w-full text-left px-3 py-2 text-sm border-b border-gray-100 last:border-b-0 transition ${
+                                          isActive
+                                            ? 'bg-indigo-100 border-l-4 border-l-indigo-600 text-indigo-800'
+                                            : isSelected
+                                              ? 'bg-indigo-50 text-indigo-700'
+                                              : 'hover:bg-indigo-50 text-gray-700'
+                                        }`}
+                                      >
+                                        {group.name}
+                                      </button>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  )}
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6">
+                  <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+                    <span className="bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">2</span>
+                    Contact Details
+                  </h3>
+
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="flex items-center gap-3">
+                      <label htmlFor="ledger-mobile-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                        Mobile Number (Optional)
+                      </label>
+                      <input
+                        id="ledger-mobile-input"
+                        type="tel"
+                        name="mobile"
+                        value={formData.mobile}
+                        onChange={handleChange}
+                        ref={mobileInputRef}
+                        inputMode="numeric"
+                        pattern="[0-9]{10}"
+                        maxLength={10}
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm"
+                        placeholder="10-digit mobile number"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label htmlFor="ledger-email-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                        Email Address (Optional)
+                      </label>
+                      <input
+                        id="ledger-email-input"
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm"
+                        placeholder="email@example.com"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label htmlFor="ledger-state-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                        State (Optional)
+                      </label>
+                      <input
+                        id="ledger-state-input"
+                        type="text"
+                        name="state"
+                        value={formData.state}
+                        onChange={handleChange}
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm"
+                        placeholder="Enter state"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label htmlFor="ledger-pincode-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                        Pincode (Optional)
+                      </label>
+                      <input
+                        id="ledger-pincode-input"
+                        type="text"
+                        name="pincode"
+                        value={formData.pincode}
+                        onChange={handleChange}
+                        inputMode="numeric"
+                        pattern="[0-9]{6}"
+                        maxLength={6}
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm"
+                        placeholder="6-digit pincode"
+                      />
+                    </div>
+
+                    <div className="flex items-start gap-3">
+                      <label htmlFor="ledger-address-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mt-2 mb-0">
+                        Address (Optional)
+                      </label>
+                      <textarea
+                        id="ledger-address-input"
+                        name="address"
+                        value={formData.address}
+                        onChange={handleChange}
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm resize-none"
+                        placeholder="Enter full address"
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <label htmlFor="ledger-notes-input" className="w-40 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                        Remarks / Notes (Optional)
+                      </label>
+                      <input
+                        id="ledger-notes-input"
+                        type="text"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleChange}
+                        className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white text-sm"
+                        placeholder="Optional remarks"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Mobile (Optional)</label>
-                <input
-                  type="tel"
-                  name="mobile"
-                  value={formData.mobile}
-                  onChange={handleChange}
-                  ref={mobileInputRef}
-                  inputMode="numeric"
-                  pattern="[0-9]{10}"
-                  maxLength={10}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  placeholder="10-digit mobile number"
-                />
-              </div>
+              <div className="border-t border-gray-200 p-3 md:p-4 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
+                <div className="text-xs md:text-sm text-gray-600">
+                  <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Esc</kbd> to close
+                </div>
 
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Email (Optional)</label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  placeholder="Enter email"
-                />
-              </div>
+                <div className="flex gap-2 md:gap-3 w-full md:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleCloseForm}
+                    className="flex-1 md:flex-none px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-semibold transition"
+                  >
+                    Cancel
+                  </button>
 
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">State (Optional)</label>
-                <input
-                  type="text"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  placeholder="Enter state"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Pincode (Optional)</label>
-                <input
-                  type="text"
-                  name="pincode"
-                  value={formData.pincode}
-                  onChange={handleChange}
-                  inputMode="numeric"
-                  pattern="[0-9]{6}"
-                  maxLength={6}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  placeholder="6-digit pincode"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Address (Optional)</label>
-                <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  placeholder="Enter address"
-                  rows={2}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Notes</label>
-                <input
-                  type="text"
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg"
-                  placeholder="Optional note"
-                />
-              </div>
-
-              <div className="flex items-end gap-3">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {loading ? 'Saving...' : editingId ? 'Update Leadger/Account Voucher' : 'Save Leadger/Account Voucher'}
-                </button>
+                  <button
+                    type="submit"
+                    form="ledger-form"
+                    disabled={loading}
+                    className="flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {editingId ? 'Update Ledger' : 'Save Ledger'}
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

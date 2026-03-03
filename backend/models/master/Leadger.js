@@ -44,7 +44,6 @@ const leadgerSchema = new mongoose.Schema({
   notes: {
     type: String,
     trim: true,
-    default: ''
   }
 }, { timestamps: true });
 
