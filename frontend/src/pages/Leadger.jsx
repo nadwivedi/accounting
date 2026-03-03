@@ -35,7 +35,7 @@ export default function Leadger() {
       ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
       : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
 
-    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm font-bold text-gray-900 transition-all focus:outline-none focus:bg-white placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
+    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm font-bold text-gray-900 transition-all focus:outline-none focus:bg-white placeholder:font-normal placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
   };
 
   const getInlineTextareaClass = (tone = 'emerald') => {
@@ -43,7 +43,7 @@ export default function Leadger() {
       ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
       : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
 
-    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm font-bold text-gray-900 transition-all resize-none focus:outline-none focus:bg-white placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
+    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm font-bold text-gray-900 transition-all resize-none focus:outline-none focus:bg-white placeholder:font-normal placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
   };
 
   useEffect(() => {
@@ -465,14 +465,14 @@ export default function Leadger() {
                         />
 
                           {isGroupSectionActive && (
-                            <div className="absolute left-0 top-full mt-1 w-full z-50">
-                              <div className="rounded-lg border border-indigo-200 bg-white shadow-xl overflow-hidden flex flex-col max-h-56">
-                                <div className="px-3 py-1.5 text-xs font-semibold uppercase text-indigo-700 bg-indigo-50 border-b border-indigo-100">
-                                  Select Group
+                            <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
+                              <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
+                                <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
+                                  Group List
                                 </div>
-                                <div className="flex-1 overflow-y-auto">
+                                <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
                                   {filteredGroups.length === 0 ? (
-                                    <div className="px-4 py-3 text-sm text-gray-500">No matching groups found</div>
+                                    <div className="px-3 py-2 text-sm text-slate-500">No matching groups found</div>
                                   ) : (
                                     filteredGroups.map((group, index) => {
                                       const isActive = index === groupListIndex;
@@ -483,12 +483,12 @@ export default function Leadger() {
                                           type="button"
                                           onMouseDown={(event) => event.preventDefault()}
                                           onClick={() => selectGroup(group, true)}
-                                          className={`w-full text-left px-3 py-2 text-sm border-b border-gray-100 last:border-b-0 transition ${
+                                          className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
                                             isActive
-                                              ? 'bg-indigo-100 border-l-4 border-l-indigo-600 text-indigo-800'
+                                              ? 'bg-blue-100 text-blue-800 font-semibold'
                                               : isSelected
-                                                ? 'bg-indigo-50 text-indigo-700'
-                                                : 'hover:bg-indigo-50 text-gray-700'
+                                                ? 'bg-emerald-100 text-emerald-800 font-medium'
+                                                : 'text-slate-700 hover:bg-blue-50'
                                           }`}
                                         >
                                           {group.name}
