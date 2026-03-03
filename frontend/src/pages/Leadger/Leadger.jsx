@@ -373,6 +373,7 @@ export default function Leadger() {
         groupListIndex={groupListIndex}
         isGroupSectionActive={isGroupSectionActive}
         groupOptions={groupOptions}
+        groups={groups}
         groupSectionRef={groupSectionRef}
         mobileInputRef={mobileInputRef}
         handleCloseForm={handleCloseForm}

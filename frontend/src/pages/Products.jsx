@@ -35,8 +35,15 @@ export default function Products() {
   const [isUnitSectionActive, setIsUnitSectionActive] = useState(false);
   const nameInputRef = useRef(null);
   const unitInputRef = useRef(null);
+  const minStockInputRef = useRef(null);
   const stockGroupSectionRef = useRef(null);
   const unitSectionRef = useRef(null);
+  const getInlineFieldClass = (tone = 'indigo') => {
+    const focusTone = tone === 'emerald'
+      ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
+      : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
+    return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm font-bold text-gray-900 transition-all focus:outline-none focus:bg-white placeholder:font-normal placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -133,41 +140,49 @@ export default function Products() {
     () => getMatchingStockGroups(stockGroupQuery),
     [availableStockGroups, stockGroupQuery]
   );
+  const stockGroupOptions = useMemo(
+    () => (isStockGroupSectionActive ? availableStockGroups : filteredStockGroups),
+    [isStockGroupSectionActive, availableStockGroups, filteredStockGroups]
+  );
 
   const filteredUnits = useMemo(
     () => getMatchingUnits(unitQuery),
     [unitOptions, unitQuery]
   );
+  const unitPanelOptions = useMemo(
+    () => (isUnitSectionActive ? unitOptions : filteredUnits),
+    [isUnitSectionActive, unitOptions, filteredUnits]
+  );
 
   useEffect(() => {
     if (!showForm) return;
 
-    if (filteredStockGroups.length === 0) {
+    if (stockGroupOptions.length === 0) {
       setStockGroupListIndex(-1);
       return;
     }
 
     setStockGroupListIndex((prev) => {
-      if (prev < 0) return 0;
-      if (prev >= filteredStockGroups.length) return filteredStockGroups.length - 1;
+      if (prev < 0) return isStockGroupSectionActive ? 0 : -1;
+      if (prev >= stockGroupOptions.length) return stockGroupOptions.length - 1;
       return prev;
     });
-  }, [showForm, filteredStockGroups]);
+  }, [showForm, stockGroupOptions, isStockGroupSectionActive]);
 
   useEffect(() => {
     if (!showForm) return;
 
-    if (filteredUnits.length === 0) {
+    if (unitPanelOptions.length === 0) {
       setUnitListIndex(-1);
       return;
     }
 
     setUnitListIndex((prev) => {
-      if (prev < 0) return 0;
-      if (prev >= filteredUnits.length) return filteredUnits.length - 1;
+      if (prev < 0) return isUnitSectionActive ? 0 : -1;
+      if (prev >= unitPanelOptions.length) return unitPanelOptions.length - 1;
       return prev;
     });
-  }, [showForm, filteredUnits]);
+  }, [showForm, unitPanelOptions, isUnitSectionActive]);
 
   useEffect(() => {
     if (!showForm || editingId) return;
@@ -225,20 +240,23 @@ export default function Products() {
 
     setStockGroupQuery(group.name);
     setFormData((prev) => ({ ...prev, stockGroup: group._id }));
-    const selectedIndex = filteredStockGroups.findIndex((item) => String(item._id) === String(group._id));
-    setStockGroupListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+    const selectedIndex = availableStockGroups.findIndex((item) => String(item._id) === String(group._id));
+    setStockGroupListIndex(selectedIndex >= 0 ? selectedIndex : -1);
 
     if (focusUnit && unitInputRef.current) {
       unitInputRef.current.focus();
     }
   };
 
-  const selectUnit = (unitName) => {
+  const selectUnit = (unitName, focusMinStock = false) => {
     if (!unitName) return;
     setUnitQuery(unitName);
     setFormData((prev) => ({ ...prev, unit: unitName }));
-    const selectedIndex = filteredUnits.findIndex((item) => normalizeText(item) === normalizeText(unitName));
-    setUnitListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+    const selectedIndex = unitOptions.findIndex((item) => normalizeText(item) === normalizeText(unitName));
+    setUnitListIndex(selectedIndex >= 0 ? selectedIndex : -1);
+    if (focusMinStock && minStockInputRef.current) {
+      minStockInputRef.current.focus();
+    }
   };
 
   const handleStockGroupInputChange = (e) => {
@@ -254,25 +272,24 @@ export default function Products() {
     const exactGroup = findExactStockGroup(value);
     if (exactGroup) {
       setFormData((prev) => ({ ...prev, stockGroup: exactGroup._id }));
-      const exactIndex = getMatchingStockGroups(value).findIndex((group) => String(group._id) === String(exactGroup._id));
-      setStockGroupListIndex(exactIndex >= 0 ? exactIndex : 0);
+      setStockGroupListIndex(availableStockGroups.length > 0 ? 0 : -1);
       return;
     }
 
     const matches = getMatchingStockGroups(value);
     const firstMatch = matches[0] || null;
     setFormData((prev) => ({ ...prev, stockGroup: firstMatch?._id || '' }));
-    setStockGroupListIndex(firstMatch ? 0 : -1);
+    setStockGroupListIndex(availableStockGroups.length > 0 ? 0 : -1);
   };
 
   const handleStockGroupInputKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       e.stopPropagation();
-      if (filteredStockGroups.length === 0) return;
+      if (stockGroupOptions.length === 0) return;
       setStockGroupListIndex((prev) => {
         if (prev < 0) return 0;
-        return Math.min(prev + 1, filteredStockGroups.length - 1);
+        return Math.min(prev + 1, stockGroupOptions.length - 1);
       });
       return;
     }
@@ -280,7 +297,7 @@ export default function Products() {
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       e.stopPropagation();
-      if (filteredStockGroups.length === 0) return;
+      if (stockGroupOptions.length === 0) return;
       setStockGroupListIndex((prev) => {
         if (prev < 0) return 0;
         return Math.max(prev - 1, 0);
@@ -292,7 +309,7 @@ export default function Products() {
       e.preventDefault();
       e.stopPropagation();
 
-      const activeGroup = stockGroupListIndex >= 0 ? filteredStockGroups[stockGroupListIndex] : null;
+      const activeGroup = stockGroupListIndex >= 0 ? stockGroupOptions[stockGroupListIndex] : null;
       const matchedGroup = activeGroup || findExactStockGroup(stockGroupQuery) || findBestStockGroupMatch(stockGroupQuery);
       if (matchedGroup) {
         selectStockGroup(matchedGroup, true);
@@ -312,25 +329,24 @@ export default function Products() {
     const exactUnit = findExactUnit(value);
     if (exactUnit) {
       setFormData((prev) => ({ ...prev, unit: exactUnit }));
-      const exactIndex = getMatchingUnits(value).findIndex((unitName) => normalizeText(unitName) === normalizeText(exactUnit));
-      setUnitListIndex(exactIndex >= 0 ? exactIndex : 0);
+      setUnitListIndex(unitOptions.length > 0 ? 0 : -1);
       return;
     }
 
     const matches = getMatchingUnits(value);
     const firstMatch = matches[0] || '';
     setFormData((prev) => ({ ...prev, unit: firstMatch }));
-    setUnitListIndex(firstMatch ? 0 : -1);
+    setUnitListIndex(unitOptions.length > 0 ? 0 : -1);
   };
 
   const handleUnitInputKeyDown = (e) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       e.stopPropagation();
-      if (filteredUnits.length === 0) return;
+      if (unitPanelOptions.length === 0) return;
       setUnitListIndex((prev) => {
         if (prev < 0) return 0;
-        return Math.min(prev + 1, filteredUnits.length - 1);
+        return Math.min(prev + 1, unitPanelOptions.length - 1);
       });
       return;
     }
@@ -338,7 +354,7 @@ export default function Products() {
     if (e.key === 'ArrowUp') {
       e.preventDefault();
       e.stopPropagation();
-      if (filteredUnits.length === 0) return;
+      if (unitPanelOptions.length === 0) return;
       setUnitListIndex((prev) => {
         if (prev < 0) return 0;
         return Math.max(prev - 1, 0);
@@ -350,10 +366,10 @@ export default function Products() {
       e.preventDefault();
       e.stopPropagation();
 
-      const activeUnit = unitListIndex >= 0 ? filteredUnits[unitListIndex] : '';
+      const activeUnit = unitListIndex >= 0 ? unitPanelOptions[unitListIndex] : '';
       const matchedUnit = activeUnit || findExactUnit(unitQuery) || findBestUnitMatch(unitQuery);
       if (matchedUnit) {
-        selectUnit(matchedUnit);
+        selectUnit(matchedUnit, true);
       }
     }
   };
@@ -534,249 +550,308 @@ export default function Products() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCancel}>
-          <div className="w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
-              <div>
-                <h2 className="text-2xl font-bold text-gray-800 tracking-tight">
-                  {editingId ? 'Edit Stock Item' : 'Add New Stock Item'}
-                </h2>
-                <p className="text-sm text-gray-500 mt-1">Fill the details and save your stock item.</p>
-              </div>
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="h-9 w-9 rounded-full border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition"
-                aria-label="Close popup"
-              >
-                &times;
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-6 px-6 py-6 bg-white">
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">Basic Info</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm text-gray-700 font-semibold mb-2">Stock Item Name *</label>
-                    <input
-                      ref={nameInputRef}
-                      type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter product name"
-                      autoFocus={!editingId}
-                      required
-                    />
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-[1.5px] z-50 flex items-stretch justify-start p-1.5 sm:p-2" onClick={handleCancel}>
+          <div
+            className="bg-white h-full w-full md:w-[75vw] overflow-hidden flex flex-col shadow-2xl ring-1 ring-slate-200/80 rounded-xl md:rounded-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-2 md:px-4 md:py-2.5 text-white flex-shrink-0 border-b border-white/15">
+              <div className="flex justify-between items-center">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-md bg-white/20 ring-1 ring-white/30 flex items-center justify-center text-white">
+                    <Package className="h-5 w-5" />
                   </div>
-
                   <div>
-                    <label className="block text-sm text-gray-700 font-semibold mb-2">Stock Group</label>
-                    <div
-                      ref={stockGroupSectionRef}
-                      className="relative"
-                      onFocusCapture={() => setIsStockGroupSectionActive(true)}
-                      onBlurCapture={(event) => {
-                        const nextFocused = event.relatedTarget;
-                        if (
-                          stockGroupSectionRef.current
-                          && nextFocused instanceof Node
-                          && stockGroupSectionRef.current.contains(nextFocused)
-                        ) {
-                          return;
-                        }
-                        setIsStockGroupSectionActive(false);
-                      }}
-                    >
-                      <input
-                        type="text"
-                        value={stockGroupQuery}
-                        onChange={handleStockGroupInputChange}
-                        onKeyDown={handleStockGroupInputKeyDown}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Type stock group, use Up/Down, press Enter"
-                      />
-
-                      {isStockGroupSectionActive && (
-                        <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
-                          <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
-                            <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
-                              Stock Group List
-                            </div>
-                            <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
-                              <button
-                                type="button"
-                                onMouseDown={(event) => event.preventDefault()}
-                                onClick={() => {
-                                  setStockGroupQuery('');
-                                  setFormData((prev) => ({ ...prev, stockGroup: '' }));
-                                  setStockGroupListIndex(-1);
-                                }}
-                                className={`w-full border-b border-slate-100 px-3 py-2 text-left text-sm transition-colors ${
-                                  !formData.stockGroup
-                                    ? 'bg-emerald-100 text-emerald-800 font-medium'
-                                    : 'text-slate-700 hover:bg-blue-50'
-                                }`}
-                              >
-                                No stock group
-                              </button>
-                              {filteredStockGroups.length === 0 ? (
-                                <div className="px-3 py-2 text-sm text-slate-500">No matching stock groups</div>
-                              ) : (
-                                filteredStockGroups.map((group, index) => {
-                                  const isActive = index === stockGroupListIndex;
-                                  const isSelected = String(formData.stockGroup || '') === String(group._id);
-                                  return (
-                                    <button
-                                      key={group._id}
-                                      type="button"
-                                      onMouseDown={(event) => event.preventDefault()}
-                                      onClick={() => selectStockGroup(group, true)}
-                                      className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
-                                        isActive
-                                          ? 'bg-blue-100 text-blue-800 font-semibold'
-                                          : isSelected
-                                            ? 'bg-emerald-100 text-emerald-800 font-medium'
-                                            : 'text-slate-700 hover:bg-blue-50'
-                                      }`}
-                                    >
-                                      {group.name}
-                                    </button>
-                                  );
-                                })
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-gray-700 font-semibold mb-2">Unit *</label>
-                    <div
-                      ref={unitSectionRef}
-                      className="relative"
-                      onFocusCapture={() => setIsUnitSectionActive(true)}
-                      onBlurCapture={(event) => {
-                        const nextFocused = event.relatedTarget;
-                        if (
-                          unitSectionRef.current
-                          && nextFocused instanceof Node
-                          && unitSectionRef.current.contains(nextFocused)
-                        ) {
-                          return;
-                        }
-                        setIsUnitSectionActive(false);
-                      }}
-                    >
-                      <input
-                        ref={unitInputRef}
-                        type="text"
-                        value={unitQuery}
-                        onChange={handleUnitInputChange}
-                        onKeyDown={handleUnitInputKeyDown}
-                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Type unit, use Up/Down, press Enter"
-                        required
-                      />
-
-                      {isUnitSectionActive && (
-                        <div className="absolute left-0 right-0 top-full z-30 mt-1">
-                          <div className="max-h-52 overflow-y-auto rounded-lg border border-blue-200 bg-white shadow-lg">
-                            {filteredUnits.length === 0 ? (
-                              <div className="px-3 py-2 text-sm text-slate-500">No matching units</div>
-                            ) : (
-                              filteredUnits.map((unitName, index) => {
-                                const isActive = index === unitListIndex;
-                                const isSelected = normalizeText(formData.unit) === normalizeText(unitName);
-                                return (
-                                  <button
-                                    key={unitName}
-                                    type="button"
-                                    onMouseDown={(event) => event.preventDefault()}
-                                    onClick={() => selectUnit(unitName)}
-                                    className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
-                                      isActive
-                                        ? 'bg-blue-100 text-blue-800 font-semibold'
-                                        : isSelected
-                                          ? 'bg-emerald-100 text-emerald-800 font-medium'
-                                          : 'text-slate-700 hover:bg-blue-50'
-                                    }`}
-                                  >
-                                    {unitName}
-                                  </button>
-                                );
-                              })
-                            )}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    <h2 className="text-lg md:text-2xl font-bold">{editingId ? 'Edit Stock Item' : 'Add New Stock Item'}</h2>
+                    <p className="text-cyan-100 text-xs md:text-sm mt-1">Create or update stock details in a clean accounting format.</p>
                   </div>
                 </div>
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-white p-5">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500 mb-4">Stock & Tax</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-sm text-gray-700 font-semibold mb-2">Min Stock Level</label>
-                    <input
-                      type="number"
-                      name="minStockLevel"
-                      value={formData.minStockLevel}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="10"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm text-gray-700 font-semibold mb-2">Tax Rate (%)</label>
-                    <input
-                      type="number"
-                      name="taxRate"
-                      value={formData.taxRate}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="0"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-                <label className="inline-flex items-center gap-2 text-gray-700 font-medium">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleInputChange}
-                    className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-slate-400"
-                  />
-                  Active product
-                </label>
-              </div>
-
-              <div className="flex flex-wrap gap-3 pt-1">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {loading ? 'Saving...' : editingId ? 'Update Stock Item' : 'Save Stock Item'}
-                </button>
                 <button
                   type="button"
                   onClick={handleCancel}
-                  className="bg-gray-200 text-gray-700 border border-gray-300 px-6 py-2.5 rounded-lg hover:bg-gray-300 transition"
+                  className="text-white hover:bg-white/25 rounded-lg p-1.5 md:p-2 transition"
+                  aria-label="Close popup"
                 >
-                  Cancel
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
                 </button>
+              </div>
+            </div>
+
+            <form
+              onSubmit={handleSubmit}
+              onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)}
+              className="flex flex-col flex-1 overflow-hidden"
+            >
+              <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1.2fr)] gap-2.5 md:gap-4 items-stretch">
+                  <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-2.5 md:p-4">
+                    <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+                      <span className="bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
+                      Basic Details
+                    </h3>
+
+                    <div className="space-y-3 md:space-y-4">
+                      <div className="flex items-center gap-3">
+                        <label className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">Item Name *</label>
+                        <input
+                          ref={nameInputRef}
+                          type="text"
+                          name="name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          className={getInlineFieldClass('indigo')}
+                          placeholder="Enter product name"
+                          autoFocus={!editingId}
+                          required
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <label className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">Stock Group</label>
+                        <div
+                          ref={stockGroupSectionRef}
+                          className="relative flex-1 min-w-0"
+                          onFocusCapture={() => {
+                            const selectedIndex = availableStockGroups.findIndex(
+                              (group) => String(group?._id || '') === String(formData.stockGroup || '')
+                            );
+                            setIsUnitSectionActive(false);
+                            setIsStockGroupSectionActive(true);
+                            setStockGroupListIndex(selectedIndex >= 0 ? selectedIndex : (availableStockGroups.length > 0 ? 0 : -1));
+                          }}
+                          onBlurCapture={(event) => {
+                            const nextFocused = event.relatedTarget;
+                            if (
+                              stockGroupSectionRef.current
+                              && nextFocused instanceof Node
+                              && stockGroupSectionRef.current.contains(nextFocused)
+                            ) {
+                              return;
+                            }
+                            setIsStockGroupSectionActive(false);
+                          }}
+                        >
+                          <input
+                            type="text"
+                            value={stockGroupQuery}
+                            onChange={handleStockGroupInputChange}
+                            onKeyDown={handleStockGroupInputKeyDown}
+                            className={getInlineFieldClass('indigo')}
+                            placeholder="Select or type stock group..."
+                          />
+
+                          {isStockGroupSectionActive && (
+                            <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
+                              <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
+                                <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
+                                  Stock Group List
+                                </div>
+                                <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
+                                  {stockGroupOptions.length === 0 ? (
+                                    <div className="px-3 py-2 text-sm text-slate-500">No stock groups found</div>
+                                  ) : (
+                                    stockGroupOptions.map((group, index) => {
+                                      const isActive = index === stockGroupListIndex;
+                                      return (
+                                        <button
+                                          key={group._id}
+                                          type="button"
+                                          onMouseDown={(event) => event.preventDefault()}
+                                          onMouseEnter={() => setStockGroupListIndex(index)}
+                                          onClick={() => selectStockGroup(group, true)}
+                                          className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
+                                            isActive
+                                              ? 'bg-yellow-300 text-black font-semibold'
+                                              : 'bg-transparent text-slate-700 hover:bg-slate-50'
+                                          }`}
+                                        >
+                                          {group.name}
+                                        </button>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <label className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">Unit *</label>
+                        <div
+                          ref={unitSectionRef}
+                          className="relative flex-1 min-w-0"
+                          onFocusCapture={() => {
+                            const selectedIndex = unitOptions.findIndex(
+                              (unitName) => normalizeText(unitName) === normalizeText(formData.unit)
+                            );
+                            setIsStockGroupSectionActive(false);
+                            setIsUnitSectionActive(true);
+                            setUnitListIndex(selectedIndex >= 0 ? selectedIndex : (unitOptions.length > 0 ? 0 : -1));
+                          }}
+                          onBlurCapture={(event) => {
+                            const nextFocused = event.relatedTarget;
+                            if (
+                              unitSectionRef.current
+                              && nextFocused instanceof Node
+                              && unitSectionRef.current.contains(nextFocused)
+                            ) {
+                              return;
+                            }
+                            setIsUnitSectionActive(false);
+                          }}
+                        >
+                          <input
+                            ref={unitInputRef}
+                            type="text"
+                            value={unitQuery}
+                            onChange={handleUnitInputChange}
+                            onKeyDown={handleUnitInputKeyDown}
+                            className={getInlineFieldClass('indigo')}
+                            placeholder="Type unit, use Up/Down, press Enter"
+                            required
+                          />
+
+                          {isUnitSectionActive && (
+                            <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
+                              <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
+                                <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
+                                  Unit List
+                                </div>
+                                <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
+                                  {unitPanelOptions.length === 0 ? (
+                                    <div className="px-3 py-2 text-sm text-slate-500">No units found</div>
+                                ) : (
+                                  unitPanelOptions.map((unitName, index) => {
+                                    const isActive = index === unitListIndex;
+                                    return (
+                                      <button
+                                        key={unitName}
+                                        type="button"
+                                        onMouseDown={(event) => event.preventDefault()}
+                                        onMouseEnter={() => setUnitListIndex(index)}
+                                        onClick={() => selectUnit(unitName, true)}
+                                        className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
+                                          isActive
+                                            ? 'bg-yellow-300 text-black font-semibold'
+                                            : 'bg-transparent text-slate-700 hover:bg-slate-50'
+                                        }`}
+                                      >
+                                        {unitName}
+                                      </button>
+                                    );
+                                  })
+                                )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="hidden lg:block h-full w-px bg-slate-300" aria-hidden="true"></div>
+
+                  <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-2.5 md:p-4">
+                    <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
+                      <span className="bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">2</span>
+                      Stock & Tax
+                    </h3>
+
+                    <div className="space-y-3 md:space-y-4">
+                      <div className="flex items-center gap-3">
+                        <label className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">Min Stock Level</span>
+                          <span className="ml-2">:</span>
+                        </label>
+                        <input
+                          ref={minStockInputRef}
+                          type="number"
+                          name="minStockLevel"
+                          value={formData.minStockLevel}
+                          onChange={handleInputChange}
+                          className={getInlineFieldClass('emerald')}
+                          placeholder="10"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <label className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">Tax Rate (%)</span>
+                          <span className="ml-2">:</span>
+                        </label>
+                        <input
+                          type="number"
+                          name="taxRate"
+                          value={formData.taxRate}
+                          onChange={handleInputChange}
+                          className={getInlineFieldClass('emerald')}
+                          placeholder="0"
+                          step="0.01"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <label className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">Active Product</span>
+                          <span className="ml-2">:</span>
+                        </label>
+                        <label className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white/80 px-3 py-2 text-sm font-semibold text-gray-700">
+                          <input
+                            type="checkbox"
+                            name="isActive"
+                            checked={formData.isActive}
+                            onChange={handleInputChange}
+                            className="h-4 w-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-400"
+                          />
+                          Active
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
+                <div className="text-xs md:text-sm text-gray-600">
+                  <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Esc</kbd> to close
+                </div>
+
+                <div className="flex gap-2 md:gap-3 w-full md:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="flex-1 md:flex-none px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-semibold transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {editingId ? 'Update Stock Item' : 'Save Stock Item'}
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

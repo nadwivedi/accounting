@@ -26,6 +26,7 @@ export default function AddLeadgerPopup({
   groupListIndex,
   isGroupSectionActive,
   groupOptions,
+  groups,
   groupSectionRef,
   mobileInputRef,
   handleCloseForm,
@@ -117,8 +118,11 @@ export default function AddLeadgerPopup({
                       ref={groupSectionRef}
                       className="relative flex-1 min-w-0"
                       onFocusCapture={() => {
+                        const selectedIndex = groups.findIndex(
+                          (group) => String(group?._id || '') === String(formData.group || '')
+                        );
                         setIsGroupSectionActive(true);
-                        setGroupListIndex(groupOptions.length > 0 ? 0 : -1);
+                        setGroupListIndex(selectedIndex >= 0 ? selectedIndex : (groups.length > 0 ? 0 : -1));
                       }}
                       onBlurCapture={(event) => {
                         const nextFocused = event.relatedTarget;
