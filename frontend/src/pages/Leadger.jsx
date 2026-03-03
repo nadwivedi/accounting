@@ -515,9 +515,12 @@ export default function Leadger() {
 
                     <div className="space-y-3 md:space-y-4">
                       <div className="flex items-center gap-3">
-                        <label htmlFor="ledger-mobile-input" className="w-40 shrink-0 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
-                          <span>Mobile Number</span>
-                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        <label htmlFor="ledger-mobile-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
+                            <span>Mobile Number</span>
+                            <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
+                          </span>
+                          <span className="ml-2">:</span>
                         </label>
                         <input
                           id="ledger-mobile-input"
@@ -535,9 +538,12 @@ export default function Leadger() {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <label htmlFor="ledger-email-input" className="w-40 shrink-0 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
-                          <span>Email Address</span>
-                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        <label htmlFor="ledger-email-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
+                            <span>Email Address</span>
+                            <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
+                          </span>
+                          <span className="ml-2">:</span>
                         </label>
                         <input
                           id="ledger-email-input"
@@ -551,9 +557,12 @@ export default function Leadger() {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <label htmlFor="ledger-state-input" className="w-40 shrink-0 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
-                          <span>State</span>
-                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        <label htmlFor="ledger-state-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
+                            <span>State</span>
+                            <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
+                          </span>
+                          <span className="ml-2">:</span>
                         </label>
                         <input
                           id="ledger-state-input"
@@ -567,9 +576,12 @@ export default function Leadger() {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <label htmlFor="ledger-pincode-input" className="w-40 shrink-0 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
-                          <span>Pincode</span>
-                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        <label htmlFor="ledger-pincode-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
+                            <span>Pincode</span>
+                            <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
+                          </span>
+                          <span className="ml-2">:</span>
                         </label>
                         <input
                           id="ledger-pincode-input"
@@ -586,9 +598,12 @@ export default function Leadger() {
                       </div>
 
                       <div className="flex items-start gap-3">
-                        <label htmlFor="ledger-address-input" className="w-40 shrink-0 mt-2 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
-                          <span>Address</span>
-                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        <label htmlFor="ledger-address-input" className="w-52 shrink-0 mt-2 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
+                            <span>Address</span>
+                            <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
+                          </span>
+                          <span className="ml-2">:</span>
                         </label>
                         <textarea
                           id="ledger-address-input"
@@ -602,9 +617,12 @@ export default function Leadger() {
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <label htmlFor="ledger-notes-input" className="w-40 shrink-0 mb-0 inline-flex items-baseline gap-1 text-xs md:text-sm font-semibold text-gray-700 whitespace-nowrap">
-                          <span>Remarks / Notes</span>
-                          <span className="text-[10px] md:text-xs font-medium text-gray-500">(Optional)</span>
+                        <label htmlFor="ledger-notes-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
+                            <span>Remarks / Notes</span>
+                            <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
+                          </span>
+                          <span className="ml-2">:</span>
                         </label>
                         <input
                           id="ledger-notes-input"
