@@ -373,26 +373,26 @@ export default function Leadger() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-stretch justify-start p-0" onClick={handleCloseForm}>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-[1.5px] z-50 flex items-stretch justify-start p-1.5 sm:p-2" onClick={handleCloseForm}>
           <div
-            className="bg-white h-full w-full md:w-[75vw] overflow-hidden flex flex-col shadow-2xl rounded-none md:rounded-r-2xl"
+            className="bg-white h-full w-full md:w-[75vw] overflow-hidden flex flex-col shadow-2xl ring-1 ring-slate-200/80 rounded-xl md:rounded-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 md:p-3 text-white flex-shrink-0">
+            <div className="bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-2 md:px-4 md:py-2.5 text-white flex-shrink-0 border-b border-white/15">
               <div className="flex justify-between items-center">
                 <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 rounded-md bg-white/15 flex items-center justify-center text-white">
+                  <div className="h-8 w-8 rounded-md bg-white/20 ring-1 ring-white/30 flex items-center justify-center text-white">
                     <Wallet className="h-5 w-5" />
                   </div>
                   <div>
                     <h2 className="text-lg md:text-2xl font-bold">{editingId ? 'Edit Ledger Account' : 'Add New Ledger Account'}</h2>
-                    <p className="text-blue-100 text-xs md:text-sm mt-1">Create or update account details in a clean accounting format.</p>
+                    <p className="text-cyan-100 text-xs md:text-sm mt-1">Create or update account details in a clean accounting format.</p>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={handleCloseForm}
-                  className="text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition"
+                  className="text-white hover:bg-white/25 rounded-lg p-1.5 md:p-2 transition"
                   aria-label="Close popup"
                 >
                   <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -408,9 +408,9 @@ export default function Leadger() {
               onKeyDown={(e) => handlePopupFormKeyDown(e, handleCloseForm)}
               className="flex flex-col flex-1 overflow-hidden"
             >
-              <div className="flex-1 overflow-y-auto p-3 md:p-6">
-                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1.2fr)] gap-3 md:gap-6 items-stretch">
-                  <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-220px)] bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-3 md:p-6">
+              <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
+                <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1.2fr)] gap-2.5 md:gap-4 items-stretch">
+                  <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-2.5 md:p-4">
                     <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
                       <span className="bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
                       Ledger Details
@@ -507,7 +507,7 @@ export default function Leadger() {
 
                   <div className="hidden lg:block h-full w-px bg-slate-300" aria-hidden="true"></div>
 
-                  <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-220px)] bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6">
+                  <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-2.5 md:p-4">
                     <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
                       <span className="bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">2</span>
                       Contact Details
@@ -639,7 +639,7 @@ export default function Leadger() {
                 </div>
               </div>
 
-              <div className="border-t border-gray-200 p-3 md:p-4 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
+              <div className="border-t border-gray-200 px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
                 <div className="text-xs md:text-sm text-gray-600">
                   <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Esc</kbd> to close
                 </div>
