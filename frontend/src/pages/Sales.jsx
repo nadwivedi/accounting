@@ -28,9 +28,7 @@ export default function Sales() {
     product: '',
     productName: '',
     quantity: '',
-    unitPrice: '',
-    taxRate: 0,
-    discount: 0
+    unitPrice: ''
   };
 
   const [sales, setSales] = useState([]);
@@ -247,6 +245,38 @@ export default function Sales() {
     setLeadgerListIndex(firstMatch ? 0 : -1);
   };
 
+  const focusNextPopupField = (element) => {
+    if (!(element instanceof HTMLElement)) return;
+    const form = element.closest('form');
+    if (!form) return;
+
+    const fields = Array.from(form.querySelectorAll(
+      'input:not([type="hidden"]):not([disabled]):not([readonly]), select:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly])'
+    )).filter((field) => {
+      if (!(field instanceof HTMLElement)) return false;
+      if (field.tabIndex === -1) return false;
+      const style = window.getComputedStyle(field);
+      return style.display !== 'none' && style.visibility !== 'hidden';
+    });
+
+    const currentIndex = fields.indexOf(element);
+    if (currentIndex === -1) return;
+
+    const nextField = fields[currentIndex + 1];
+    if (!(nextField instanceof HTMLElement)) return;
+    nextField.focus();
+    if (nextField instanceof HTMLInputElement && typeof nextField.select === 'function') {
+      nextField.select();
+    }
+  };
+
+  const handleSelectEnterMoveNext = (e) => {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    e.preventDefault();
+    e.stopPropagation();
+    focusNextPopupField(e.currentTarget);
+  };
+
   const handleLeadgerInputKeyDown = (e) => {
     const key = e.key?.toLowerCase();
     const isMoveDownKey = key === 'arrowdown';
@@ -283,6 +313,8 @@ export default function Sales() {
       if (matchedLeadger) {
         selectLeadger(matchedLeadger);
       }
+      setIsLeadgerSectionActive(false);
+      focusNextPopupField(e.currentTarget);
     }
   };
 
@@ -298,9 +330,8 @@ export default function Sales() {
       return;
     }
 
-    const taxAmount = (currentItem.unitPrice * currentItem.quantity * currentItem.taxRate) / 100;
-    const discountAmount = currentItem.discount || 0;
-    const total = (currentItem.unitPrice * currentItem.quantity) + taxAmount - discountAmount;
+    const taxAmount = 0;
+    const total = currentItem.unitPrice * currentItem.quantity;
 
     const newItem = {
       ...currentItem,
@@ -308,6 +339,7 @@ export default function Sales() {
       quantity: parseFloat(currentItem.quantity),
       unitPrice: parseFloat(currentItem.unitPrice),
       taxAmount,
+      discount: 0,
       total
     };
 
@@ -501,9 +533,9 @@ export default function Sales() {
     (sum, sale) => sum + (Number(sale.totalAmount || 0) - Number(sale.paidAmount || 0)),
     0
   );
-  const popupFieldClass = 'w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 transition focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100';
+  const popupFieldClass = 'w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200';
   const popupLabelClass = 'mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600';
-  const popupSectionClass = 'rounded-lg border border-slate-300 bg-white p-4 shadow-sm';
+  const popupSectionClass = 'rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3 md:p-4';
 
   return (
     <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-[#f8f6f1] min-h-screen">
@@ -560,31 +592,43 @@ export default function Sales() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-2 sm:p-3 backdrop-blur-[2px]" onClick={handleCancel}>
-          <div className="h-[95vh] w-[95vw] sm:w-[88vw] lg:w-[40%] overflow-hidden rounded-xl border-2 border-slate-300 bg-[#f7f5ef] shadow-[0_30px_70px_-35px_rgba(2,6,23,0.7)]" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 z-20 flex items-center justify-between gap-4 border-b border-slate-700 bg-gradient-to-r from-slate-800 to-slate-700 px-5 py-4 sm:px-6">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-slate-100">
-                  {editingId ? 'Edit Sale' : 'Create New Sale'}
-                </h2>
-                <p className="mt-0.5 text-xs sm:text-sm text-slate-300">Sale Voucher Entry</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-[1.5px] z-50 flex items-stretch justify-start p-1.5 sm:p-2" onClick={handleCancel}>
+          <div className="bg-white h-full w-full md:w-[75vw] overflow-hidden flex flex-col shadow-2xl ring-1 ring-slate-200/80 rounded-xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-2 md:px-4 md:py-2.5 text-white flex-shrink-0 border-b border-white/15">
+              <div className="flex justify-between items-center">
+                <div className="flex items-start gap-3">
+                  <div className="h-8 w-8 rounded-md bg-white/20 ring-1 ring-white/30 flex items-center justify-center text-white">
+                    <ShoppingCart className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg md:text-2xl font-bold">
+                      {editingId ? 'Edit Sale Voucher' : 'Add New Sale Voucher'}
+                    </h2>
+                    <p className="text-cyan-100 text-xs md:text-sm mt-1">Create or update sale entries in a clean accounting format.</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="text-white hover:bg-white/25 rounded-lg p-1.5 md:p-2 transition"
+                  aria-label="Close popup"
+                >
+                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="h-9 w-9 rounded-full border border-slate-500 text-slate-200 hover:bg-slate-600 hover:text-white hover:border-slate-300 transition"
-                aria-label="Close popup"
-              >
-                &times;
-              </button>
             </div>
 
-            <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex h-[calc(95vh-82px)] flex-col">
-              <div className="flex-1 overflow-y-auto bg-[#f7f5ef]">
-                <div className="space-y-4 p-4 sm:p-5">
+            <form id="sales-form" onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex flex-col flex-1 overflow-hidden">
+              <div className="flex-1 overflow-y-auto p-2.5 md:p-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1.15fr)] gap-2.5 md:gap-4 items-stretch">
+                <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-2.5 md:p-4 space-y-4">
                   <div className={popupSectionClass}>
-                    <div className="mb-4 border-b border-slate-200 pb-2">
-                      <h3 className="text-sm font-bold uppercase tracking-wide text-slate-800">Voucher Details</h3>
+                    <div className="mb-4 border-b border-indigo-200 pb-2">
+                      <h3 className="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <span className="bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
+                        Voucher Details
+                      </h3>
                       <p className="mt-1 text-xs text-slate-500">Select party and voucher dates.</p>
                     </div>
 
@@ -618,20 +662,20 @@ export default function Sales() {
                           />
 
                           {isLeadgerSectionActive && (
-                            <div className="mt-2 w-full z-30 lg:fixed lg:right-4 lg:top-20 lg:bottom-6 lg:mt-0 lg:w-80">
-                              <div className="overflow-hidden rounded-lg border border-slate-300 bg-white shadow-xl lg:h-full lg:flex lg:flex-col">
-                                <div className="border-b border-slate-700 bg-slate-800 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-100">
+                            <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
+                              <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
+                                <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
                                   Party List
                                 </div>
-                                <div className="max-h-60 overflow-y-auto bg-white lg:max-h-none lg:flex-1">
+                                <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
                                   <button
                                     type="button"
                                     onMouseDown={(event) => event.preventDefault()}
                                     onClick={() => selectLeadger(null)}
                                     className={`w-full border-b border-slate-100 px-3 py-2 text-left text-sm transition-colors ${
                                       !formData.party
-                                        ? 'bg-slate-200 text-slate-800 font-semibold'
-                                        : 'text-slate-700 hover:bg-slate-50'
+                                        ? 'bg-yellow-300 text-black font-semibold'
+                                        : 'bg-transparent text-slate-700 hover:bg-slate-50'
                                     }`}
                                   >
                                     Walk-in / No Party
@@ -647,13 +691,12 @@ export default function Sales() {
                                           key={leadger._id}
                                           type="button"
                                           onMouseDown={(event) => event.preventDefault()}
+                                          onMouseEnter={() => setLeadgerListIndex(index)}
                                           onClick={() => selectLeadger(leadger)}
                                           className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
-                                            isActive
-                                              ? 'bg-slate-200 text-slate-900 font-semibold'
-                                              : isSelected
-                                                ? 'bg-slate-100 text-slate-800 font-medium'
-                                                : 'text-slate-700 hover:bg-slate-50'
+                                            isActive || isSelected
+                                              ? 'bg-yellow-300 text-black font-semibold'
+                                              : 'bg-transparent text-slate-700 hover:bg-slate-50'
                                           }`}
                                         >
                                           {getLeadgerDisplayName(leadger)}
@@ -692,22 +735,23 @@ export default function Sales() {
                     </div>
                   </div>
 
-                  <div className={popupSectionClass}>
+                  <div className="rounded-xl border border-indigo-200 bg-white/75 p-3 md:p-4">
                     <div className="mb-4 flex items-center justify-between gap-3">
                       <div>
-                        <h3 className="text-sm font-bold uppercase tracking-wide text-slate-800">Item Entry</h3>
-                        <p className="mt-1 text-xs text-slate-500">Add stock items with quantity, rate, tax and discount.</p>
+                        <h3 className="text-sm md:text-base font-bold text-slate-800">Item Entry</h3>
+                        <p className="mt-1 text-xs text-slate-500">Add stock items with product, quantity and rate.</p>
                       </div>
-                      <span className="inline-flex items-center rounded-md border border-slate-300 bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                      <span className="inline-flex items-center rounded-md border border-indigo-200 bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
                         {formData.items.length} item(s)
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] gap-3 mb-4 items-end">
                       <select
                         value={currentItem.product}
                         onChange={(e) => setCurrentItem({ ...currentItem, product: e.target.value })}
-                        className={`col-span-2 ${popupFieldClass}`}
+                        onKeyDown={handleSelectEnterMoveNext}
+                        className={popupFieldClass}
                       >
                         <option value="">Select product</option>
                         {products.map((p) => (
@@ -731,39 +775,23 @@ export default function Sales() {
                         className={popupFieldClass}
                         step="0.01"
                       />
-                      <input
-                        type="number"
-                        placeholder="Tax %"
-                        value={currentItem.taxRate}
-                        onChange={(e) => setCurrentItem({ ...currentItem, taxRate: e.target.value })}
-                        className={popupFieldClass}
-                      />
-                      <input
-                        type="number"
-                        placeholder="Discount"
-                        value={currentItem.discount}
-                        onChange={(e) => setCurrentItem({ ...currentItem, discount: e.target.value })}
-                        className={popupFieldClass}
-                      />
                       <button
                         type="button"
                         onClick={handleAddItem}
-                        className="col-span-2 rounded-md bg-slate-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-900 transition"
+                        className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:shadow-md transition whitespace-nowrap"
                       >
                         Add Item
                       </button>
                     </div>
 
                     {formData.items.length > 0 && (
-                      <div className="overflow-hidden rounded-md border border-slate-300">
+                      <div className="overflow-hidden rounded-lg border border-indigo-200">
                         <table className="w-full text-xs">
-                          <thead className="bg-slate-200 text-slate-700">
+                          <thead className="bg-indigo-100 text-slate-700">
                             <tr>
                               <th className="px-2 py-2 text-left font-semibold sm:px-3">Product</th>
                               <th className="px-2 py-2 text-right font-semibold sm:px-3">Qty</th>
                               <th className="px-2 py-2 text-right font-semibold sm:px-3">Rate</th>
-                              <th className="px-2 py-2 text-right font-semibold sm:px-3">Tax</th>
-                              <th className="px-2 py-2 text-right font-semibold sm:px-3">Disc</th>
                               <th className="px-2 py-2 text-right font-semibold sm:px-3">Amount</th>
                               <th className="px-2 py-2 text-left font-semibold sm:px-3">Action</th>
                             </tr>
@@ -774,8 +802,6 @@ export default function Sales() {
                                 <td className="px-2 py-2 font-medium text-slate-700 sm:px-3">{item.productName}</td>
                                 <td className="px-2 py-2 text-right font-mono text-slate-600 sm:px-3">{item.quantity}</td>
                                 <td className="px-2 py-2 text-right font-mono text-slate-600 sm:px-3">{Number(item.unitPrice || 0).toFixed(2)}</td>
-                                <td className="px-2 py-2 text-right font-mono text-slate-600 sm:px-3">{Number(item.taxAmount || 0).toFixed(2)}</td>
-                                <td className="px-2 py-2 text-right font-mono text-slate-600 sm:px-3">{Number(item.discount || 0).toFixed(2)}</td>
                                 <td className="px-2 py-2 text-right font-mono font-semibold text-slate-800 sm:px-3">{Number(item.total || 0).toFixed(2)}</td>
                                 <td className="px-2 py-2 sm:px-3">
                                   <button
@@ -796,36 +822,71 @@ export default function Sales() {
 
                 </div>
 
-                <div className="space-y-3 p-4 pt-0 sm:p-5 sm:pt-0">
-                  <div className="rounded-lg border border-slate-300 bg-white p-4 shadow-sm">
-                    <h4 className="mb-3 border-b border-slate-200 pb-2 text-sm font-bold uppercase tracking-wide text-slate-800">Voucher Totals</h4>
+                <div className="hidden lg:block h-full w-px bg-slate-300" aria-hidden="true"></div>
+
+                <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-2.5 md:p-4 space-y-3">
+                  <h3 className="text-base md:text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                    <span className="bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">2</span>
+                    Payment & Summary
+                  </h3>
+
+                  <div className="rounded-xl border border-emerald-200 bg-white/75 p-3 md:p-4 space-y-3">
+                    <div>
+                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Paid Amount</label>
+                      <input
+                        type="number"
+                        name="paidAmount"
+                        value={formData.paidAmount}
+                        onChange={handleInputChange}
+                        step="0.01"
+                        min="0"
+                        className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                        placeholder="Enter paid amount"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Payment Mode</label>
+                      <select
+                        name="paymentMode"
+                        value={formData.paymentMode}
+                        onChange={handleInputChange}
+                        onKeyDown={handleSelectEnterMoveNext}
+                        className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                      >
+                        <option value="cash">Cash</option>
+                        <option value="upi">UPI</option>
+                        <option value="card">Card</option>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="cheque">Cheque</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-emerald-200 bg-white p-4 shadow-sm">
+                    <h4 className="mb-3 border-b border-emerald-100 pb-2 text-sm font-bold uppercase tracking-wide text-slate-800">Voucher Totals</h4>
                     <div className="space-y-1.5 text-sm">
-                      <div className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                      <div className="flex items-center justify-between rounded-md bg-emerald-50 px-3 py-2">
                         <span className="text-slate-600">Subtotal</span>
                         <span className="font-mono font-semibold text-slate-800">Rs {formData.subtotal.toFixed(2)}</span>
                       </div>
-                      <div className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
-                        <span className="text-slate-600">Tax</span>
-                        <span className="font-mono font-semibold text-slate-800">Rs {formData.taxAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-md border border-slate-300 bg-slate-100 px-3 py-2">
+                      <div className="flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-100 px-3 py-2">
                         <span className="font-semibold text-slate-700">Total Amount</span>
                         <span className="font-mono font-bold text-slate-900">Rs {formData.totalAmount.toFixed(2)}</span>
                       </div>
-                      <div className="flex items-center justify-between rounded-md border border-slate-300 bg-slate-100 px-3 py-2">
+                      <div className="flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-100 px-3 py-2">
                         <span className="font-semibold text-slate-700">Balance Due</span>
                         <span className="font-mono font-bold text-slate-900">Rs {(formData.totalAmount - formData.paidAmount).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="rounded-lg border border-slate-300 bg-white p-3 shadow-sm">
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600">Notes</label>
+                  <div className="rounded-xl border border-emerald-200 bg-white p-3 shadow-sm">
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Notes</label>
                     <textarea
                       name="notes"
                       value={formData.notes}
                       onChange={handleInputChange}
-                      className="w-full rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
+                      className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 transition"
                       placeholder="Optional notes"
                       rows="2"
                     />
@@ -833,21 +894,41 @@ export default function Sales() {
                 </div>
               </div>
 
-              <div className="border-t border-slate-300 bg-[#f2efe6] p-3 sm:p-4">
-                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <div className="border-t border-gray-200 px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
+                <div className="text-xs md:text-sm text-gray-600">
+                  <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Esc</kbd> to close
+                </div>
+
+                <div className="flex gap-2 md:gap-3 w-full md:w-auto">
                   <button
                     type="button"
                     onClick={handleCancel}
-                    className="rounded-md border border-slate-400 bg-white px-6 py-2.5 font-semibold text-slate-700 transition hover:bg-slate-100"
+                    className="flex-1 md:flex-none px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-semibold transition"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
+                    form="sales-form"
                     disabled={loading}
-                    className="rounded-md bg-slate-800 px-6 py-2.5 font-semibold text-white transition hover:bg-slate-900 disabled:opacity-50"
+                    className="flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? 'Saving...' : 'Save Sale'}
+                    {loading ? (
+                      <>
+                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        {editingId ? 'Update Sale' : 'Save Sale'}
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

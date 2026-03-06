@@ -22,6 +22,13 @@ const productSchema = new mongoose.Schema({
     trim: true,
     default: 'pcs'
   },
+  typeOfSupply: {
+    type: String,
+    enum: ['goods', 'services'],
+    default: 'goods',
+    trim: true,
+    lowercase: true
+  },
   currentStock: {
     type: Number,
     default: 0,
@@ -29,7 +36,7 @@ const productSchema = new mongoose.Schema({
   },
   minStockLevel: {
     type: Number,
-    default: 10
+    default: 0
   },
   purchasePrice: {
     type: Number,
@@ -46,10 +53,6 @@ const productSchema = new mongoose.Schema({
     default: 0,
     min: 0,
     max: 100
-  },
-  isActive: {
-    type: Boolean,
-    default: true
   }
 }, { timestamps: true });
 

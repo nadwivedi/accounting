@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Package, PackageCheck, PackageX } from 'lucide-react';
+import { Package, PackageX } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
@@ -13,9 +13,9 @@ export default function Products() {
     name: '',
     stockGroup: '',
     unit: 'pcs',
-    minStockLevel: 10,
-    taxRate: 0,
-    isActive: true
+    typeOfSupply: 'goods',
+    minStockLevel: '',
+    taxRate: 0
   };
 
   const [products, setProducts] = useState([]);
@@ -33,9 +33,11 @@ export default function Products() {
   const [unitQuery, setUnitQuery] = useState(initialFormData.unit);
   const [unitListIndex, setUnitListIndex] = useState(-1);
   const [isUnitSectionActive, setIsUnitSectionActive] = useState(false);
+  const [isTypeOfSupplyOpen, setIsTypeOfSupplyOpen] = useState(false);
   const nameInputRef = useRef(null);
   const unitInputRef = useRef(null);
   const minStockInputRef = useRef(null);
+  const typeOfSupplyRef = useRef(null);
   const stockGroupSectionRef = useRef(null);
   const unitSectionRef = useRef(null);
   const getInlineFieldClass = (tone = 'indigo') => {
@@ -200,6 +202,33 @@ export default function Products() {
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleTypeOfSupplyKeyDown = (e) => {
+    if (e.key === 'Escape') {
+      setIsTypeOfSupplyOpen(false);
+      return;
+    }
+    if (e.key !== 'Enter') return;
+    const selected = String(e.target.value || 'goods').trim().toLowerCase() === 'services' ? 'services' : 'goods';
+    setFormData((prev) => ({ ...prev, typeOfSupply: selected }));
+    setIsTypeOfSupplyOpen(false);
+    e.preventDefault();
+    e.stopPropagation();
+    const form = e.currentTarget.form;
+    if (form && typeof form.requestSubmit === 'function') {
+      form.requestSubmit();
+    }
+  };
+
+  const handleTaxRateKeyDown = (e) => {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsTypeOfSupplyOpen(true);
+    if (typeOfSupplyRef.current) {
+      typeOfSupplyRef.current.focus();
+    }
   };
 
   const findExactStockGroup = (value) => {
@@ -397,6 +426,7 @@ export default function Products() {
         ...formData,
         stockGroup: selectedStockGroupId || null,
         unit: matchedUnit,
+        typeOfSupply: String(formData.typeOfSupply || 'goods').trim().toLowerCase() === 'services' ? 'services' : 'goods',
         minStockLevel: parseInt(formData.minStockLevel || 0),
         taxRate: parseFloat(formData.taxRate || 0)
       };
@@ -421,6 +451,7 @@ export default function Products() {
       setUnitQuery(initialFormData.unit);
       setUnitListIndex(0);
       setIsUnitSectionActive(false);
+      setIsTypeOfSupplyOpen(false);
       setError('');
     } catch (err) {
       setError(err.message || 'Error saving product');
@@ -437,12 +468,19 @@ export default function Products() {
       ? (product.stockGroup?.name || '')
       : (availableStockGroups.find((group) => String(group._id) === String(normalizedStockGroupId))?.name || '');
     const resolvedUnit = String(product.unit || initialFormData.unit || '').trim();
+    const normalizedTypeOfSupply = String(product.typeOfSupply || '').trim().toLowerCase();
+    const resolvedTypeOfSupply = normalizedTypeOfSupply === 'services'
+      ? 'services'
+      : normalizedTypeOfSupply === 'goods'
+        ? 'goods'
+        : 'goods';
 
     setFormData({
       ...initialFormData,
       ...product,
       stockGroup: normalizedStockGroupId,
-      unit: resolvedUnit || initialFormData.unit
+      unit: resolvedUnit || initialFormData.unit,
+      typeOfSupply: resolvedTypeOfSupply
     });
     setStockGroupQuery(resolvedStockGroupName);
     setStockGroupListIndex(resolvedStockGroupName ? 0 : -1);
@@ -450,6 +488,7 @@ export default function Products() {
     setUnitQuery(resolvedUnit || initialFormData.unit);
     setUnitListIndex(0);
     setIsUnitSectionActive(false);
+    setIsTypeOfSupplyOpen(false);
     setEditingId(product._id);
     setShowForm(true);
   };
@@ -464,6 +503,7 @@ export default function Products() {
     setUnitQuery(nextFormData.unit || '');
     setUnitListIndex(0);
     setIsUnitSectionActive(false);
+    setIsTypeOfSupplyOpen(false);
     setError('');
     setShowForm(true);
   };
@@ -490,6 +530,7 @@ export default function Products() {
     setUnitQuery(initialFormData.unit);
     setUnitListIndex(0);
     setIsUnitSectionActive(false);
+    setIsTypeOfSupplyOpen(false);
   };
 
   const handleOpenLedger = (productId) => {
@@ -497,7 +538,6 @@ export default function Products() {
   };
 
   const totalProducts = products.length;
-  const activeProducts = products.filter((product) => product.isActive).length;
   const lowStockProducts = products.filter(
     (product) => Number(product.currentStock || 0) <= Number(product.minStockLevel || 0)
   ).length;
@@ -510,7 +550,7 @@ export default function Products() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-6">
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -522,18 +562,6 @@ export default function Products() {
             </div>
           </div>
           <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-80"></div>
-        </div>
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Active</p>
-              <p className="mt-1 sm:mt-2 text-base sm:text-2xl font-bold text-slate-800 leading-tight">{activeProducts}</p>
-            </div>
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
-              <PackageCheck className="h-6 w-6" />
-            </div>
-          </div>
-          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80"></div>
         </div>
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
@@ -789,6 +817,7 @@ export default function Products() {
                           name="taxRate"
                           value={formData.taxRate}
                           onChange={handleInputChange}
+                          onKeyDown={handleTaxRateKeyDown}
                           className={getInlineFieldClass('emerald')}
                           placeholder="0"
                           step="0.01"
@@ -797,20 +826,25 @@ export default function Products() {
 
                       <div className="flex items-center gap-3">
                         <label className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">Active Product</span>
+                          <span className="inline-flex items-baseline gap-1 whitespace-nowrap">Type Of Supply</span>
                           <span className="ml-2">:</span>
                         </label>
-                        <label className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-white/80 px-3 py-2 text-sm font-semibold text-gray-700">
-                          <input
-                            type="checkbox"
-                            name="isActive"
-                            checked={formData.isActive}
-                            onChange={handleInputChange}
-                            className="h-4 w-4 text-emerald-600 rounded focus:ring-2 focus:ring-emerald-400"
-                          />
-                          Active
-                        </label>
+                        <select
+                          ref={typeOfSupplyRef}
+                          name="typeOfSupply"
+                          value={formData.typeOfSupply || 'goods'}
+                          onChange={handleInputChange}
+                          onKeyDown={handleTypeOfSupplyKeyDown}
+                          onFocus={() => setIsTypeOfSupplyOpen(true)}
+                          onBlur={() => setIsTypeOfSupplyOpen(false)}
+                          size={isTypeOfSupplyOpen ? 2 : 1}
+                          className="flex-1 min-w-0 px-3 py-2 border border-emerald-200 rounded-lg bg-white text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                        >
+                          <option value="goods">Goods</option>
+                          <option value="services">Services</option>
+                        </select>
                       </div>
+
                     </div>
                   </div>
                 </div>
@@ -890,7 +924,6 @@ export default function Products() {
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Stock Group</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Unit</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Stock</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Status</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider text-right pr-8">Actions</th>
                 </tr>
               </thead>
@@ -916,15 +949,6 @@ export default function Products() {
                           : 'bg-orange-100 text-orange-800'
                       }`}>
                         {product.currentStock}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${
-                        product.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {product.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right pr-6 space-x-2" onClick={(e) => e.stopPropagation()}>

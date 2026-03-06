@@ -8,11 +8,11 @@ exports.createProduct = async (req, res) => {
       name,
       stockGroup,
       unit,
+      typeOfSupply,
       minStockLevel,
       purchasePrice,
       salePrice,
-      taxRate,
-      isActive
+      taxRate
     } = req.body;
     const userId = req.userId;
 
@@ -44,18 +44,31 @@ exports.createProduct = async (req, res) => {
       });
     }
 
+    const normalizedTypeOfSupply = String(typeOfSupply || 'goods').trim().toLowerCase();
+    if (!['goods', 'services'].includes(normalizedTypeOfSupply)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Type of supply must be goods or services'
+      });
+    }
+
     const normalizedStockGroup = stockGroup ? stockGroup : null;
+    const normalizedMinStockLevel = (
+      minStockLevel !== undefined
+      && minStockLevel !== null
+      && String(minStockLevel).trim() !== ''
+    ) ? Number(minStockLevel) : 0;
 
     const product = await Product.create({
       userId,
       name,
       stockGroup: normalizedStockGroup,
       unit: normalizedUnit,
-      minStockLevel: minStockLevel || 10,
+      typeOfSupply: normalizedTypeOfSupply,
+      minStockLevel: normalizedMinStockLevel,
       purchasePrice: Number(purchasePrice || 0),
       salePrice: Number(salePrice || 0),
-      taxRate: taxRate || 0,
-      isActive: isActive !== undefined ? isActive : true
+      taxRate: taxRate || 0
     });
 
     res.status(201).json({
@@ -75,12 +88,11 @@ exports.createProduct = async (req, res) => {
 // Get all products
 exports.getAllProducts = async (req, res) => {
   try {
-    const { stockGroup, isActive, search } = req.query;
+    const { stockGroup, search } = req.query;
     const userId = req.userId;
     let filter = { userId };
 
     if (stockGroup) filter.stockGroup = stockGroup;
-    if (isActive !== undefined) filter.isActive = isActive === 'true';
 
     let query = Product.find(filter).populate('stockGroup', 'name');
 
@@ -165,6 +177,16 @@ exports.updateProduct = async (req, res) => {
       }
 
       updateData.unit = normalizedUnit;
+    }
+    if (Object.prototype.hasOwnProperty.call(updateData, 'typeOfSupply')) {
+      const normalizedTypeOfSupply = String(updateData.typeOfSupply || '').trim().toLowerCase();
+      if (!normalizedTypeOfSupply || !['goods', 'services'].includes(normalizedTypeOfSupply)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Type of supply must be goods or services'
+        });
+      }
+      updateData.typeOfSupply = normalizedTypeOfSupply;
     }
     if (Object.prototype.hasOwnProperty.call(updateData, 'purchasePrice')) {
       updateData.purchasePrice = Number(updateData.purchasePrice || 0);
