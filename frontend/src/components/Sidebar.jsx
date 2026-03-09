@@ -335,7 +335,7 @@ export default function Sidebar() {
                         onClick={() => {
                           if (window.innerWidth < 768) setMobileOpen(false);
                         }}
-                        className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-4 text-[12px] transition-colors duration-200 last:border-b-0 ${
+                        className={`group relative flex items-center gap-3 border-b border-white/8 px-5 ${item.name === 'Masters' || item.name === 'Vouchers' ? 'py-2.5' : 'py-4'} text-[12px] transition-colors duration-200 last:border-b-0 ${
                           subActive
                             ? 'bg-[linear-gradient(90deg,rgba(69,194,219,0.26),rgba(140,106,222,0.28))] text-white'
                             : 'text-slate-100 hover:bg-white/5'
@@ -375,7 +375,7 @@ export default function Sidebar() {
                   onClick={() => {
                     if (window.innerWidth < 768) setMobileOpen(false);
                   }}
-                  className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-4 text-[12px] transition-colors duration-200 ${
+                  className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-2.5 text-[12px] transition-colors duration-200 ${
                     active
                       ? 'bg-[linear-gradient(90deg,rgba(69,194,219,0.26),rgba(140,106,222,0.28))] text-white'
                       : 'text-slate-100 hover:bg-white/5'
