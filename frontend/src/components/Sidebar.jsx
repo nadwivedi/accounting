@@ -1,89 +1,44 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
+function AssetIcon({ src, alt = '' }) {
+  return <img src={src} alt={alt} className="h-6 w-6 object-contain" />;
+}
+
 function ProductIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M12 3 4.5 6.8v10.4L12 21l7.5-3.8V6.8L12 3Z" />
-      <path d="M4.5 6.8 12 10.7l7.5-3.9M12 10.7V21" />
-    </svg>
-  );
+  return <AssetIcon src="/stock item_converted.avif" />;
 }
 
 function StockGroupIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H10l2 2h5.5A2.5 2.5 0 0 1 20 9.5v7A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z" />
-    </svg>
-  );
+  return <AssetIcon src="/stock group_converted.avif" />;
 }
 
 function StockAdjustmentIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M12 3v18M3 12h18" />
-      <path d="M7 7h10v10H7z" />
-    </svg>
-  );
+  return <AssetIcon src="/sales_converted (1).avif" />;
 }
 
 function UnitIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M4 7.5 12 3l8 4.5-8 4.5-8-4.5Z" />
-      <path d="M4 7.5V16.5L12 21l8-4.5V7.5" />
-      <path d="M12 12v9" />
-    </svg>
-  );
+  return <AssetIcon src="/units_converted.avif" />;
 }
 
 function PartyIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <circle cx="8" cy="9" r="3" />
-      <circle cx="16" cy="10" r="2.5" />
-      <path d="M3.5 19c.6-2.6 2.7-4 4.5-4s3.9 1.4 4.5 4M12.5 19c.4-1.9 1.8-3.1 3.5-3.1 1.6 0 2.9 1.2 3.5 3.1" />
-    </svg>
-  );
+  return <AssetIcon src="/party_converted.avif" />;
 }
 
 function PurchaseIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M3.5 5h2l2.3 10.2A2 2 0 0 0 9.8 17h7.9a2 2 0 0 0 2-1.6L21 8H7.1" />
-      <circle cx="10" cy="20" r="1.4" />
-      <circle cx="18" cy="20" r="1.4" />
-      <path d="M13 5h6M16 2v6" />
-    </svg>
-  );
+  return <AssetIcon src="/purchase_converted.avif" />;
 }
 
 function SaleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <rect x="3.5" y="4" width="17" height="16.5" rx="2" />
-      <path d="M7.5 9h9M7.5 13h9M7.5 17h5" />
-      <path d="M16 2.5v3M8 2.5v3" />
-    </svg>
-  );
+  return <AssetIcon src="/sales_converted.avif" />;
 }
 
 function PaymentIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <rect x="2.5" y="5.5" width="19" height="13" rx="2" />
-      <path d="M7 12h11M13 8l5 4-5 4" />
-    </svg>
-  );
+  return <AssetIcon src="/payment_converted.avif" />;
 }
 
 function ReceiptIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M6 3.5h12v17l-2.2-1.6L13.6 21l-2.1-2.1L9.4 21 7.2 18.9 5 20.5v-17Z" />
-      <path d="M8.5 8.5h7M8.5 12h7M8.5 15.5H13" />
-    </svg>
-  );
+  return <AssetIcon src="/reciept_converted.avif" />;
 }
 
 function ReportIcon() {
@@ -124,43 +79,15 @@ function VoucherIcon() {
 }
 
 function LeadgerIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M6 3.5h12v17l-2.2-1.6L13.6 21l-2.1-2.1L9.4 21 7.2 18.9 5 20.5v-17Z" />
-      <path d="M8.5 8h7M8.5 12h7M8.5 16h5" />
-    </svg>
-  );
-}
-
-function ContraIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M6 7h12M6 17h12" />
-      <path d="m9 4-3 3 3 3M15 14l3 3-3 3" />
-    </svg>
-  );
+  return <AssetIcon src="/party_converted.avif" />;
 }
 
 function SaleReturnIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M20 8H7" />
-      <path d="m11 4-4 4 4 4" />
-      <path d="M4 16h13" />
-      <path d="m13 12 4 4-4 4" />
-    </svg>
-  );
+  return <AssetIcon src="/sales return_converted.avif" />;
 }
 
 function PurchaseReturnIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <path d="M4 8h13" />
-      <path d="m11 4 4 4-4 4" />
-      <path d="M20 16H7" />
-      <path d="m13 12-4 4 4 4" />
-    </svg>
-  );
+  return <AssetIcon src="/purchase return_converted.avif" />;
 }
 
 const menuItems = [
@@ -184,8 +111,7 @@ const menuItems = [
       { name: 'Purchase Return', path: '/purchase-return', Icon: PurchaseReturnIcon },
       { name: 'Stock Adjustment', path: '/stock-adjustment', Icon: StockAdjustmentIcon },
       { name: 'Payment', path: '/payments', Icon: PaymentIcon },
-      { name: 'Receipt', path: '/receipts', Icon: ReceiptIcon },
-      { name: 'Contra', path: '/contra', Icon: ContraIcon }
+      { name: 'Receipt', path: '/receipts', Icon: ReceiptIcon }
     ]
   },
   { name: 'Reports', path: '/reports', Icon: ReportIcon },
@@ -194,10 +120,6 @@ const menuItems = [
 
 export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState({
-    Masters: true,
-    Vouchers: false
-  });
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -214,31 +136,6 @@ export default function Sidebar() {
     }
     return false;
   };
-
-  const setExclusiveMenu = (menuName, shouldOpen = true) => {
-    setExpandedMenus((prev) => {
-      const next = {};
-      Object.keys(prev).forEach((key) => {
-        next[key] = false;
-      });
-      next[menuName] = shouldOpen;
-      return next;
-    });
-  };
-
-  useEffect(() => {
-    const mastersItem = menuItems.find((item) => item.name === 'Masters');
-    const vouchersItem = menuItems.find((item) => item.name === 'Vouchers');
-
-    const mastersActive = Boolean(mastersItem && isItemOrSubItemActive(mastersItem));
-    const vouchersActive = Boolean(vouchersItem && isItemOrSubItemActive(vouchersItem));
-
-    if (mastersActive) {
-      setExpandedMenus({ Masters: true, Vouchers: false });
-    } else if (vouchersActive) {
-      setExpandedMenus({ Masters: false, Vouchers: true });
-    }
-  }, [location.pathname]);
 
   useEffect(() => {
     const isTypingTarget = (target) => {
@@ -320,11 +217,9 @@ export default function Sidebar() {
 
           const move = isMoveDownKey ? 1 : -1;
           if (currentMasterIndex !== -1) {
-            setExpandedMenus({ Masters: true, Vouchers: false });
             const nextIndex = (currentMasterIndex + move + masterSubItems.length) % masterSubItems.length;
             navigate(masterSubItems[nextIndex].path);
           } else {
-            setExpandedMenus({ Masters: false, Vouchers: true });
             const nextIndex = (currentVoucherIndex + move + voucherSubItems.length) % voucherSubItems.length;
             navigate(voucherSubItems[nextIndex].path);
           }
@@ -336,12 +231,10 @@ export default function Sidebar() {
 
       if (key === 'v') {
         event.preventDefault();
-        setExpandedMenus({ Masters: false, Vouchers: true });
         if (window.innerWidth < 768) setMobileOpen(true);
         navigate('/sales');
       } else if (key === 'm') {
         event.preventDefault();
-        setExpandedMenus({ Masters: true, Vouchers: false });
         if (window.innerWidth < 768) setMobileOpen(true);
         navigate('/leadger');
       }
@@ -354,22 +247,23 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Top Header */}
-      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-slate-300 bg-slate-100/90 px-4 backdrop-blur-xl md:hidden">
+      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-white/10 bg-[#24356d] px-4 shadow-[0_10px_30px_rgba(10,16,40,0.35)] md:hidden">
         <div className="relative flex h-full items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-indigo-500 to-cyan-400 shadow-sm shadow-indigo-200">
-              <span className="text-sm font-bold tracking-wider text-white">BH</span>
+            <span className="text-[28px] leading-none text-cyan-300">+</span>
+            <div>
+              <p className="text-sm font-bold tracking-[0.18em] text-white">BILLHUB</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-100/75">Business Console</p>
             </div>
-            <p className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-lg font-bold tracking-tight text-transparent">BillHub</p>
           </div>
 
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="group relative inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-200 text-slate-700 ring-1 ring-inset ring-slate-300 transition-all hover:bg-slate-300 hover:text-slate-900"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/15 bg-white/10 text-white"
             aria-label="Open navigation menu"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5 transition-transform group-hover:scale-110">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
               <path strokeLinecap="round" d="M4 7h16M4 12h16M4 17h16" />
             </svg>
           </button>
@@ -379,29 +273,27 @@ export default function Sidebar() {
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 md:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[2px] md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Sidebar Container */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[17.5rem] max-w-[85vw] flex-col border-r border-slate-300 bg-slate-100/90 backdrop-blur-2xl shadow-2xl transition-transform duration-400 ease-[cubic-bezier(0.25,1,0.5,1)] md:z-40 md:w-[17.5rem] md:bg-slate-100 md:shadow-none ${mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[16rem] max-w-[88vw] flex-col overflow-hidden border-r border-[#42528f] bg-[linear-gradient(180deg,#1a2d57_0%,#203064_48%,#29356a_100%)] shadow-[0_18px_40px_rgba(10,16,40,0.42)] transition-transform duration-300 md:z-40 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
 
         {/* Inside Border Highlight */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-[1px] bg-gradient-to-b from-transparent via-slate-200 to-transparent opacity-70" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(91,201,255,0.14),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(162,123,255,0.16),transparent_30%)]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-white/10" />
 
         {/* Sidebar Header / Logo */}
-        <div className="relative z-10 flex h-[84px] items-center justify-between px-5 pt-2">
+        <div className="relative z-10 flex items-center justify-between px-5 py-4">
           <Link to="/stock" className="group flex items-center gap-3.5" onClick={() => setMobileOpen(false)}>
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 shadow-md shadow-indigo-200 transition-transform duration-300 group-hover:scale-[1.05]">
-              <span className="text-[15px] font-bold tracking-widest text-white drop-shadow-sm">BH</span>
-              <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20"></div>
-            </div>
+            <span className="text-[34px] leading-none text-cyan-300">+</span>
             <div className="flex flex-col">
-              <p className="bg-gradient-to-br from-slate-900 to-slate-600 bg-clip-text text-[17px] font-bold tracking-tight text-transparent">
-                BillHub
+              <p className="text-[15px] font-bold tracking-[0.18em] text-white">
+                BILLHUB
               </p>
-              <p className="text-[11px] font-bold tracking-[0.05em] text-indigo-500/80 uppercase">
+              <p className="text-[10px] font-bold tracking-[0.18em] text-cyan-100/75 uppercase">
                 Business Console
               </p>
             </div>
@@ -410,7 +302,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-slate-200 text-slate-600 ring-1 ring-inset ring-slate-300 transition-colors hover:bg-slate-300 hover:text-slate-900 md:hidden shadow-sm"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/15 bg-white/10 text-white md:hidden"
             aria-label="Close sidebar"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -420,152 +312,87 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation Items */}
-        <div className="relative z-10 mt-4 flex-1 overflow-y-auto px-4 pb-8 scrollbar-hide">
-          <div className="mb-4 ml-2">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
-              Overview Menu
-            </p>
-          </div>
+        <div className="relative z-10 flex-1 overflow-y-auto pb-8 scrollbar-hide">
+          <nav className="flex flex-col">
+            {menuItems.filter((item) => item.subItems?.length).map((item, index) => (
+              <div key={item.name} className="flex flex-col">
+                <div className={`flex items-center gap-3 border-y border-white/10 bg-white/5 px-5 py-3 text-slate-100 ${index > 0 ? 'mt-3' : ''}`}>
+                  <span className={`inline-flex ${index === 0 ? 'text-[28px] leading-none text-cyan-300' : 'h-2.5 w-2.5 rounded-full bg-cyan-300/80'}`}>
+                    {index === 0 ? '+' : ''}
+                  </span>
+                  <span className="text-[12px] font-bold tracking-[0.16em]">
+                    {item.name === 'Masters' ? 'MASTER' : 'VOUCHERS'}
+                  </span>
+                </div>
 
-          <nav className="flex flex-col gap-1.5">
-            {menuItems.map((item) => {
-              const hasSubItems = Boolean(item.subItems?.length);
-              const active = item.path ? isActive(item.path) : false;
-              const groupActive = hasSubItems ? isItemOrSubItemActive(item) : active;
-              const isExpanded = hasSubItems ? Boolean(expandedMenus[item.name]) : false;
+                <div className="border-b border-white/8">
+                  {item.subItems.map((subItem) => {
+                    const subActive = isActive(subItem.path);
+                    const SubIcon = subItem.Icon;
+
+                    return (
+                      <Link
+                        key={subItem.path}
+                        to={subItem.path}
+                        onClick={() => {
+                          if (window.innerWidth < 768) setMobileOpen(false);
+                        }}
+                        className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-4 text-[13px] transition-colors duration-200 last:border-b-0 ${
+                          subActive
+                            ? 'bg-[linear-gradient(90deg,rgba(69,194,219,0.26),rgba(140,106,222,0.28))] text-white'
+                            : 'text-slate-100 hover:bg-white/5'
+                        }`}
+                      >
+                        {subActive && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-300" />}
+
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center">
+                          <SubIcon />
+                        </div>
+
+                        <span className={`${subActive ? 'font-semibold text-white' : 'font-medium text-slate-100/90 group-hover:text-white'}`}>
+                          {item.name === 'Vouchers' && subItem.name === 'Sale' ? 'Sales Voucher' :
+                            item.name === 'Vouchers' && subItem.name === 'Purchase' ? 'Purchase Voucher' :
+                              subItem.name}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+
+            <div className="mt-3 flex items-center gap-3 border-y border-white/10 bg-white/5 px-5 py-3 text-slate-100">
+              <span className="h-2.5 w-2.5 rounded-full bg-cyan-300/80" />
+              <span className="text-[12px] font-bold tracking-[0.16em]">MORE</span>
+            </div>
+
+            {menuItems.filter((item) => !item.subItems?.length).map((item) => {
+              const active = isActive(item.path);
               const Icon = item.Icon;
 
               return (
-                <div key={item.name} className="flex flex-col">
-                  {hasSubItems ? (
-                    <button
-                      type="button"
-                      onClick={() => setExclusiveMenu(item.name, !isExpanded)}
-                      className={`group relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 text-left outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-indigo-500 ${groupActive
-                          ? 'bg-indigo-50/60 text-indigo-700 shadow-sm ring-1 ring-slate-300/70'
-                          : 'text-slate-700 hover:bg-slate-200/70 hover:text-slate-900'
-                        }`}
-                    >
-                      {groupActive && (
-                        <div className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-cyan-400 to-indigo-500" />
-                      )}
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => {
+                    if (window.innerWidth < 768) setMobileOpen(false);
+                  }}
+                  className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-4 text-[13px] transition-colors duration-200 ${
+                    active
+                      ? 'bg-[linear-gradient(90deg,rgba(69,194,219,0.26),rgba(140,106,222,0.28))] text-white'
+                      : 'text-slate-100 hover:bg-white/5'
+                  }`}
+                >
+                  {active && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-300" />}
 
-                      <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${groupActive
-                          ? 'bg-slate-100 text-indigo-700 shadow-sm'
-                          : 'bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-300 group-hover:text-indigo-600 group-hover:shadow-sm'
-                        }`}>
-                        <div className="transition-transform duration-300 group-hover:scale-110">
-                          <Icon />
-                        </div>
-                      </div>
+                  <div className="flex h-7 w-7 shrink-0 items-center justify-center text-slate-200">
+                    <Icon />
+                  </div>
 
-                      <span className={`text-[14px] font-medium tracking-wide transition-colors duration-300 ${groupActive ? 'font-semibold text-slate-900' : 'group-hover:text-slate-900'
-                        }`}>
-                        {item.name === 'Vouchers' ? (
-                          <>
-                            <span className={`font-bold ${groupActive ? 'text-indigo-700' : 'text-blue-600'}`}>V</span>
-                            ouchers
-                          </>
-                        ) : item.name === 'Masters' ? (
-                          <>
-                            <span className={`font-bold ${groupActive ? 'text-indigo-700' : 'text-blue-600'}`}>M</span>
-                            asters
-                          </>
-                        ) : item.name}
-                      </span>
-
-                      {item.name === 'Vouchers' && (
-                        <span
-                          className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${groupActive
-                              ? 'border-indigo-200 bg-slate-100 text-indigo-700'
-                              : 'border-slate-300 bg-slate-100 text-slate-600 group-hover:border-indigo-200 group-hover:text-indigo-600'
-                            }`}
-                        >
-                          V
-                        </span>
-                      )}
-
-                      {item.name === 'Masters' && (
-                        <span
-                          className={`rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-none ${groupActive
-                              ? 'border-indigo-200 bg-slate-100 text-indigo-700'
-                              : 'border-slate-300 bg-slate-100 text-slate-600 group-hover:border-indigo-200 group-hover:text-indigo-600'
-                            }`}
-                        >
-                          M
-                        </span>
-                      )}
-
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        className={`ml-auto h-4 w-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
-                      </svg>
-                    </button>
-                  ) : (
-                    <Link
-                      to={item.path}
-                      onClick={() => {
-                        if (window.innerWidth < 768) setMobileOpen(false);
-                      }}
-                      className={`group relative flex items-center gap-3.5 rounded-xl px-3 py-2.5 outline-none transition-all duration-300 ease-out focus-visible:ring-2 focus-visible:ring-indigo-500 ${active
-                          ? 'bg-indigo-50/60 text-indigo-700 shadow-sm ring-1 ring-slate-300/70'
-                          : 'text-slate-700 hover:bg-slate-200/70 hover:text-slate-900'
-                        }`}
-                    >
-                      {active && (
-                        <div className="absolute left-0 top-1/2 h-7 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-cyan-400 to-indigo-500" />
-                      )}
-
-                      <div className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-all duration-300 ${active
-                          ? 'bg-slate-100 text-indigo-700 shadow-sm'
-                          : 'bg-slate-100 text-slate-500 ring-1 ring-inset ring-slate-300 group-hover:text-indigo-600 group-hover:shadow-sm'
-                        }`}>
-                        <div className="transition-transform duration-300 group-hover:scale-110">
-                          <Icon />
-                        </div>
-                      </div>
-
-                      <span className={`text-[14px] font-medium tracking-wide transition-colors duration-300 ${active ? 'font-semibold text-slate-900' : 'group-hover:text-slate-900'
-                        }`}>
-                        {item.name}
-                      </span>
-                    </Link>
-                  )}
-
-                  {hasSubItems && isExpanded && (
-                    <div className="mt-1 flex flex-col gap-1 overflow-hidden pb-1 pl-[3.25rem]">
-                      {item.subItems.map((subItem) => {
-                        const subActive = isActive(subItem.path);
-                        const SubIcon = subItem.Icon;
-                        return (
-                          <Link
-                            key={subItem.path}
-                            to={subItem.path}
-                            onClick={() => {
-                              if (window.innerWidth < 768) setMobileOpen(false);
-                            }}
-                            className={`group flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-300 ${subItem.dividerBefore ? 'mt-2 border-t border-slate-300 pt-3' : ''} ${subActive
-                                ? 'bg-indigo-50/80 text-indigo-700 font-semibold shadow-sm ring-1 ring-indigo-100/50'
-                                : 'text-slate-600 hover:bg-slate-200/70 hover:text-slate-800'
-                              }`}
-                          >
-                            <div className={`flex h-4 w-4 shrink-0 items-center justify-center ${subActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-indigo-500'}`}>
-                              <div className="scale-75">
-                                <SubIcon />
-                              </div>
-                            </div>
-                            <span className="text-[13px] tracking-wide">{subItem.name}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
+                  <span className={`${active ? 'font-semibold text-white' : 'font-medium text-slate-100/90 group-hover:text-white'}`}>
+                    {item.name}
+                  </span>
+                </Link>
               );
             })}
           </nav>
