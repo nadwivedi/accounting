@@ -278,7 +278,7 @@ export default function Sidebar() {
       )}
 
       {/* Sidebar Container */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[16rem] max-w-[88vw] flex-col overflow-hidden border-r border-[#8692a1] bg-[linear-gradient(180deg,#4a5563_0%,#5a6573_38%,#748090_100%)] shadow-[0_18px_40px_rgba(33,39,47,0.2)] transition-transform duration-300 md:z-40 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[13.25rem] max-w-[82vw] flex-col overflow-hidden border-r border-[#8692a1] bg-[linear-gradient(180deg,#4a5563_0%,#5a6573_38%,#748090_100%)] shadow-[0_18px_40px_rgba(33,39,47,0.2)] transition-transform duration-300 md:z-40 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
 
         {/* Inside Border Highlight */}
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.2),transparent_34%)]" />
