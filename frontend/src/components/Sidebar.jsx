@@ -247,19 +247,19 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Top Header */}
-      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-white/10 bg-[#24356d] px-4 shadow-[0_10px_30px_rgba(10,16,40,0.35)] md:hidden">
+      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-white/16 bg-[#4a5563] px-4 shadow-[0_10px_30px_rgba(41,48,58,0.22)] md:hidden">
         <div className="relative flex h-full items-center justify-between">
           <div className="flex items-center gap-3">
             <div>
               <p className="text-sm font-bold tracking-[0.18em] text-white">BILLHUB</p>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-100/75">Business Console</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-100/75">Business Console</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/15 bg-white/10 text-white"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/25 bg-white/14 text-white"
             aria-label="Open navigation menu"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
@@ -272,17 +272,17 @@ export default function Sidebar() {
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[2px] md:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-[2px] md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Sidebar Container */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[16rem] max-w-[88vw] flex-col overflow-hidden border-r border-[#42528f] bg-[linear-gradient(180deg,#1a2d57_0%,#203064_48%,#29356a_100%)] shadow-[0_18px_40px_rgba(10,16,40,0.42)] transition-transform duration-300 md:z-40 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[16rem] max-w-[88vw] flex-col overflow-hidden border-r border-[#8692a1] bg-[linear-gradient(180deg,#4a5563_0%,#5a6573_38%,#748090_100%)] shadow-[0_18px_40px_rgba(33,39,47,0.2)] transition-transform duration-300 md:z-40 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
 
         {/* Inside Border Highlight */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(91,201,255,0.14),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(162,123,255,0.16),transparent_30%)]" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-white/10" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.2),transparent_34%)]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-white/18" />
 
         {/* Sidebar Header / Logo */}
         <div className="relative z-10 flex items-center justify-between px-5 py-4">
@@ -291,7 +291,7 @@ export default function Sidebar() {
               <p className="text-[15px] font-bold tracking-[0.18em] text-white">
                 BILLHUB
               </p>
-              <p className="text-[10px] font-bold tracking-[0.18em] text-cyan-100/75 uppercase">
+              <p className="text-[10px] font-bold tracking-[0.18em] text-slate-100/75 uppercase">
                 Business Console
               </p>
             </div>
@@ -300,7 +300,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/15 bg-white/10 text-white md:hidden"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/22 bg-white/12 text-white md:hidden"
             aria-label="Close sidebar"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -314,8 +314,20 @@ export default function Sidebar() {
           <nav className="flex flex-col">
             {menuItems.filter((item) => item.subItems?.length).map((item, index) => (
               <div key={item.name} className="flex flex-col">
-                <div className={`flex items-center gap-3 border-y border-white/10 bg-white/5 px-5 py-3 text-slate-100 ${index > 0 ? 'mt-3' : ''}`}>
-                  <span className={`inline-flex ${index === 0 ? 'text-[28px] leading-none text-cyan-300' : 'h-2.5 w-2.5 rounded-full bg-cyan-300/80'}`}>
+                <div className={`flex items-center gap-3 border-y px-5 py-3 text-slate-50 ${
+                  item.name === 'Masters'
+                    ? 'border-emerald-100/20 bg-emerald-50/10'
+                    : 'border-rose-100/20 bg-rose-50/10'
+                } ${index > 0 ? 'mt-3' : ''}`}>
+                  <span className={`inline-flex ${
+                    index === 0
+                      ? item.name === 'Masters'
+                        ? 'text-[28px] leading-none text-emerald-100'
+                        : 'text-[28px] leading-none text-rose-100'
+                      : item.name === 'Masters'
+                        ? 'h-2.5 w-2.5 rounded-full bg-emerald-100/90'
+                        : 'h-2.5 w-2.5 rounded-full bg-rose-100/90'
+                  }`}>
                     {index === 0 ? '+' : ''}
                   </span>
                   <span className="text-[12px] font-bold tracking-[0.16em]">
@@ -337,19 +349,25 @@ export default function Sidebar() {
                         }}
                         className={`group relative flex items-center gap-3 border-b border-white/8 px-5 ${item.name === 'Masters' || item.name === 'Vouchers' ? 'py-2.5' : 'py-4'} text-[12px] transition-colors duration-200 last:border-b-0 ${
                           subActive
-                            ? 'bg-[linear-gradient(90deg,rgba(69,194,219,0.26),rgba(140,106,222,0.28))] text-white'
-                            : 'text-slate-100 hover:bg-white/5'
+                            ? item.name === 'Masters'
+                              ? 'bg-[linear-gradient(90deg,rgba(209,250,229,0.26),rgba(240,253,250,0.16))] text-white'
+                              : 'bg-[linear-gradient(90deg,rgba(255,228,230,0.26),rgba(255,241,242,0.16))] text-white'
+                            : item.name === 'Masters'
+                              ? 'text-slate-50/95 hover:bg-emerald-50/10'
+                              : 'text-slate-50/95 hover:bg-rose-50/10'
                         }`}
                       >
-                        {subActive && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-300" />}
+                        {subActive && (
+                          <div className={`absolute inset-y-0 left-0 w-1 ${item.name === 'Masters' ? 'bg-emerald-100' : 'bg-rose-100'}`} />
+                        )}
 
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center">
                           <SubIcon />
                         </div>
 
-                        <span className={`${subActive ? 'font-semibold text-white' : 'font-medium text-slate-100/90 group-hover:text-white'}`}>
-                          {item.name === 'Vouchers' && subItem.name === 'Sale' ? 'Sales Voucher' :
-                            item.name === 'Vouchers' && subItem.name === 'Purchase' ? 'Purchase Voucher' :
+                        <span className={`${subActive ? 'font-semibold text-white' : 'font-medium text-slate-50/90 group-hover:text-white'}`}>
+                          {item.name === 'Vouchers' && subItem.name === 'Sale' ? 'Sales' :
+                            item.name === 'Vouchers' && subItem.name === 'Purchase' ? 'Purchase' :
                               subItem.name}
                         </span>
                       </Link>
@@ -359,8 +377,8 @@ export default function Sidebar() {
               </div>
             ))}
 
-            <div className="mt-3 flex items-center gap-3 border-y border-white/10 bg-white/5 px-5 py-3 text-slate-100">
-              <span className="h-2.5 w-2.5 rounded-full bg-cyan-300/80" />
+            <div className="mt-3 flex items-center gap-3 border-y border-white/16 bg-white/10 px-5 py-3 text-slate-50">
+              <span className="h-2.5 w-2.5 rounded-full bg-slate-100/90" />
               <span className="text-[12px] font-bold tracking-[0.16em]">MORE</span>
             </div>
 
@@ -377,17 +395,17 @@ export default function Sidebar() {
                   }}
                   className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-2.5 text-[12px] transition-colors duration-200 ${
                     active
-                      ? 'bg-[linear-gradient(90deg,rgba(69,194,219,0.26),rgba(140,106,222,0.28))] text-white'
-                      : 'text-slate-100 hover:bg-white/5'
+                      ? 'bg-[linear-gradient(90deg,rgba(255,255,255,0.18),rgba(226,232,240,0.16))] text-white'
+                      : 'text-slate-50/95 hover:bg-white/10'
                   }`}
                 >
-                  {active && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-300" />}
+                  {active && <div className="absolute inset-y-0 left-0 w-1 bg-slate-100" />}
 
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-200">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-50">
                     <Icon />
                   </div>
 
-                  <span className={`${active ? 'font-semibold text-white' : 'font-medium text-slate-100/90 group-hover:text-white'}`}>
+                  <span className={`${active ? 'font-semibold text-white' : 'font-medium text-slate-50/90 group-hover:text-white'}`}>
                     {item.name}
                   </span>
                 </Link>
