@@ -41,6 +41,25 @@ function ReceiptIcon() {
   return <AssetIcon src="/reciept_converted.avif" />;
 }
 
+function ExpenseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M6 4h9l3 3v13H6z" />
+      <path d="M15 4v4h4" />
+      <path d="M9 12h6M9 16h4" />
+    </svg>
+  );
+}
+
+function ExpenseGroupIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z" />
+      <path d="M8 9h8M8 13h8M8 17h5" />
+    </svg>
+  );
+}
+
 function ReportIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
@@ -114,9 +133,47 @@ const menuItems = [
       { name: 'Receipt', path: '/receipts', Icon: ReceiptIcon }
     ]
   },
+  {
+    name: 'Expense',
+    Icon: VoucherIcon,
+    subItems: [
+      { name: 'Expense', path: '/expenses', Icon: ExpenseIcon },
+      { name: 'Expense Group', path: '/expense-groups', Icon: ExpenseGroupIcon }
+    ]
+  },
   { name: 'Reports', path: '/reports', Icon: ReportIcon },
   { name: 'Settings', path: '/settings', Icon: SettingsIcon }
 ];
+
+const sectionStyles = {
+  Masters: {
+    headerClass: 'border-cyan-200/15 bg-cyan-300/8',
+    accentTextClass: 'text-[28px] leading-none text-cyan-100',
+    accentDotClass: 'h-2.5 w-2.5 rounded-full bg-cyan-100/90',
+    label: 'MASTER',
+    activeClass: 'bg-[linear-gradient(90deg,rgba(34,211,238,0.18),rgba(45,212,191,0.14))] text-white',
+    hoverClass: 'text-slate-50/95 hover:bg-cyan-300/8',
+    barClass: 'bg-cyan-100'
+  },
+  Vouchers: {
+    headerClass: 'border-amber-200/15 bg-amber-300/8',
+    accentTextClass: 'text-[28px] leading-none text-amber-100',
+    accentDotClass: 'h-2.5 w-2.5 rounded-full bg-amber-100/90',
+    label: 'VOUCHERS',
+    activeClass: 'bg-[linear-gradient(90deg,rgba(251,191,36,0.22),rgba(245,158,11,0.14))] text-white',
+    hoverClass: 'text-slate-50/95 hover:bg-amber-300/8',
+    barClass: 'bg-amber-100'
+  },
+  Expense: {
+    headerClass: 'border-emerald-200/15 bg-emerald-300/8',
+    accentTextClass: 'text-[28px] leading-none text-emerald-100',
+    accentDotClass: 'h-2.5 w-2.5 rounded-full bg-emerald-100/90',
+    label: 'EXPENSE',
+    activeClass: 'bg-[linear-gradient(90deg,rgba(52,211,153,0.2),rgba(16,185,129,0.14))] text-white',
+    hoverClass: 'text-slate-50/95 hover:bg-emerald-300/8',
+    barClass: 'bg-emerald-100'
+  }
+};
 
 export default function Sidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -202,27 +259,21 @@ export default function Sidebar() {
       if (isTypingTarget(event.target)) return;
       if (isPopupOpen()) return;
 
-      const mastersMenu = menuItems.find((item) => item.name === 'Masters');
-      const masterSubItems = (mastersMenu?.subItems || []).filter((subItem) => Boolean(subItem.path));
-      const vouchersMenu = menuItems.find((item) => item.name === 'Vouchers');
-      const voucherSubItems = (vouchersMenu?.subItems || []).filter((subItem) => Boolean(subItem.path));
+      const sectionSubItems = menuItems
+        .filter((item) => item.subItems?.length)
+        .map((item) => (item.subItems || []).filter((subItem) => Boolean(subItem.path)));
 
-      if ((isMoveDownKey || isMoveUpKey) && (masterSubItems.length > 0 || voucherSubItems.length > 0)) {
-        const currentMasterIndex = masterSubItems.findIndex((subItem) => isActive(subItem.path));
-        const currentVoucherIndex = voucherSubItems.findIndex((subItem) => isActive(subItem.path));
+      if ((isMoveDownKey || isMoveUpKey) && sectionSubItems.some((items) => items.length > 0)) {
+        const activeSectionItems = sectionSubItems.find((items) => items.some((subItem) => isActive(subItem.path)));
 
-        if (currentMasterIndex !== -1 || currentVoucherIndex !== -1) {
+        if (activeSectionItems?.length) {
           event.preventDefault();
           if (window.innerWidth < 768) setMobileOpen(true);
 
           const move = isMoveDownKey ? 1 : -1;
-          if (currentMasterIndex !== -1) {
-            const nextIndex = (currentMasterIndex + move + masterSubItems.length) % masterSubItems.length;
-            navigate(masterSubItems[nextIndex].path);
-          } else {
-            const nextIndex = (currentVoucherIndex + move + voucherSubItems.length) % voucherSubItems.length;
-            navigate(voucherSubItems[nextIndex].path);
-          }
+          const currentIndex = activeSectionItems.findIndex((subItem) => isActive(subItem.path));
+          const nextIndex = (currentIndex + move + activeSectionItems.length) % activeSectionItems.length;
+          navigate(activeSectionItems[nextIndex].path);
           return;
         }
       }
@@ -233,6 +284,10 @@ export default function Sidebar() {
         event.preventDefault();
         if (window.innerWidth < 768) setMobileOpen(true);
         navigate('/sales');
+      } else if (key === 'e') {
+        event.preventDefault();
+        if (window.innerWidth < 768) setMobileOpen(true);
+        navigate('/expenses');
       } else if (key === 'm') {
         event.preventDefault();
         if (window.innerWidth < 768) setMobileOpen(true);
@@ -312,70 +367,56 @@ export default function Sidebar() {
         {/* Navigation Items */}
         <div className="sidebar-scrollbar relative z-10 flex-1 overflow-y-auto pb-8">
           <nav className="flex flex-col">
-            {menuItems.filter((item) => item.subItems?.length).map((item, index) => (
-              <div key={item.name} className="flex flex-col">
-                <div className={`flex items-center gap-3 border-y px-5 py-3 text-slate-50 ${
-                  item.name === 'Masters'
-                    ? 'border-cyan-200/15 bg-cyan-300/8'
-                    : 'border-amber-200/15 bg-amber-300/8'
-                } ${index > 0 ? 'mt-3' : ''}`}>
-                  <span className={`inline-flex ${
-                    index === 0
-                      ? item.name === 'Masters'
-                        ? 'text-[28px] leading-none text-cyan-100'
-                        : 'text-[28px] leading-none text-amber-100'
-                      : item.name === 'Masters'
-                        ? 'h-2.5 w-2.5 rounded-full bg-cyan-100/90'
-                        : 'h-2.5 w-2.5 rounded-full bg-amber-100/90'
-                  }`}>
-                    {index === 0 ? '+' : ''}
-                  </span>
-                  <span className="text-[12px] font-bold tracking-[0.16em]">
-                    {item.name === 'Masters' ? 'MASTER' : 'VOUCHERS'}
-                  </span>
+            {menuItems.filter((item) => item.subItems?.length).map((item, index) => {
+              const sectionStyle = sectionStyles[item.name] || sectionStyles.Masters;
+
+              return (
+                <div key={item.name} className="flex flex-col">
+                  <div className={`flex items-center gap-3 border-y px-5 py-3 text-slate-50 ${sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''}`}>
+                    <span className={`inline-flex ${index === 0 ? sectionStyle.accentTextClass : sectionStyle.accentDotClass}`}>
+                      {index === 0 ? '+' : ''}
+                    </span>
+                    <span className="text-[12px] font-bold tracking-[0.16em]">
+                      {sectionStyle.label}
+                    </span>
+                  </div>
+
+                  <div className="border-b border-white/8">
+                    {item.subItems.map((subItem) => {
+                      const subActive = isActive(subItem.path);
+                      const SubIcon = subItem.Icon;
+
+                      return (
+                        <Link
+                          key={subItem.path}
+                          to={subItem.path}
+                          onClick={() => {
+                            if (window.innerWidth < 768) setMobileOpen(false);
+                          }}
+                          className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-2.5 text-[12px] transition-colors duration-200 last:border-b-0 ${
+                            subActive ? sectionStyle.activeClass : sectionStyle.hoverClass
+                          }`}
+                        >
+                          {subActive && (
+                            <div className={`absolute inset-y-0 left-0 w-1 ${sectionStyle.barClass}`} />
+                          )}
+
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+                            <SubIcon />
+                          </div>
+
+                          <span className={`${subActive ? 'font-semibold text-white' : 'font-medium text-slate-50/90 group-hover:text-white'}`}>
+                            {item.name === 'Vouchers' && subItem.name === 'Sale' ? 'Sales' :
+                              item.name === 'Vouchers' && subItem.name === 'Purchase' ? 'Purchase' :
+                                subItem.name}
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </div>
-
-                <div className="border-b border-white/8">
-                  {item.subItems.map((subItem) => {
-                    const subActive = isActive(subItem.path);
-                    const SubIcon = subItem.Icon;
-
-                    return (
-                      <Link
-                        key={subItem.path}
-                        to={subItem.path}
-                        onClick={() => {
-                          if (window.innerWidth < 768) setMobileOpen(false);
-                        }}
-                        className={`group relative flex items-center gap-3 border-b border-white/8 px-5 ${item.name === 'Masters' || item.name === 'Vouchers' ? 'py-2.5' : 'py-4'} text-[12px] transition-colors duration-200 last:border-b-0 ${
-                          subActive
-                            ? item.name === 'Masters'
-                              ? 'bg-[linear-gradient(90deg,rgba(34,211,238,0.18),rgba(45,212,191,0.14))] text-white'
-                              : 'bg-[linear-gradient(90deg,rgba(251,191,36,0.22),rgba(245,158,11,0.14))] text-white'
-                            : item.name === 'Masters'
-                              ? 'text-slate-50/95 hover:bg-cyan-300/8'
-                              : 'text-slate-50/95 hover:bg-amber-300/8'
-                        }`}
-                      >
-                        {subActive && (
-                          <div className={`absolute inset-y-0 left-0 w-1 ${item.name === 'Masters' ? 'bg-cyan-100' : 'bg-amber-100'}`} />
-                        )}
-
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center">
-                          <SubIcon />
-                        </div>
-
-                        <span className={`${subActive ? 'font-semibold text-white' : 'font-medium text-slate-50/90 group-hover:text-white'}`}>
-                          {item.name === 'Vouchers' && subItem.name === 'Sale' ? 'Sales' :
-                            item.name === 'Vouchers' && subItem.name === 'Purchase' ? 'Purchase' :
-                              subItem.name}
-                        </span>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
+              );
+            })}
 
             <div className="mt-3 flex items-center gap-3 border-y border-white/12 bg-white/6 px-5 py-3 text-slate-50">
               <span className="h-2.5 w-2.5 rounded-full bg-cyan-100/90" />

@@ -1,0 +1,14 @@
+const express = require('express');
+const router = express.Router();
+const {
+  createExpense,
+  getAllExpenses
+} = require('../../controllers/VoucherControllers/expenseController');
+const auth = require('../../middleware/auth');
+
+router.use(auth);
+
+router.post('/', createExpense);
+router.get('/', getAllExpenses);
+
+module.exports = router;

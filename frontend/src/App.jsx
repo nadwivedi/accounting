@@ -13,6 +13,8 @@ import Purchases from './pages/Purchases';
 import Payments from './pages/Payments';
 import Receipts from './pages/Receipts';
 import Leadger from './pages/Leadger';
+import Expenses from './pages/Expenses';
+import ExpenseGroups from './pages/ExpenseGroups';
 import Contra from './pages/Contra';
 import StockAdjustment from './pages/StockAdjustment';
 import SaleReturn from './pages/SaleReturn';
@@ -131,6 +133,24 @@ function App() {
           element={
             <ProtectedRoute>
               <Receipts />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/expenses"
+          element={
+            <ProtectedRoute>
+              <Expenses />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/expense-groups"
+          element={
+            <ProtectedRoute>
+              <ExpenseGroups />
             </ProtectedRoute>
           }
         />
