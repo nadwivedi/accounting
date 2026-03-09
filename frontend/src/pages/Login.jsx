@@ -28,7 +28,7 @@ export default function Login() {
 
     const result = await login(emailOrPhone, password);
     if (result.success) {
-      navigate('/dashboard');
+      navigate('/stock');
     } else {
       setError(result.message);
     }
@@ -66,7 +66,7 @@ export default function Login() {
     );
 
     if (result.success) {
-      navigate('/dashboard');
+      navigate('/stock');
     } else {
       setError(result.message);
     }

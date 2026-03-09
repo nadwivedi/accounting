@@ -1,17 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-function DashboardIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
-      <rect x="3.5" y="3.5" width="7" height="7" rx="1.2" />
-      <rect x="13.5" y="3.5" width="7" height="4" rx="1.2" />
-      <rect x="13.5" y="10.5" width="7" height="10" rx="1.2" />
-      <rect x="3.5" y="13.5" width="7" height="7" rx="1.2" />
-    </svg>
-  );
-}
-
 function ProductIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
@@ -175,7 +164,6 @@ function PurchaseReturnIcon() {
 }
 
 const menuItems = [
-  { name: 'Dashboard', path: '/dashboard', Icon: DashboardIcon },
   {
     name: 'Masters',
     Icon: MasterIcon,
@@ -404,7 +392,7 @@ export default function Sidebar() {
 
         {/* Sidebar Header / Logo */}
         <div className="relative z-10 flex h-[84px] items-center justify-between px-5 pt-2">
-          <Link to="/dashboard" className="group flex items-center gap-3.5" onClick={() => setMobileOpen(false)}>
+          <Link to="/stock" className="group flex items-center gap-3.5" onClick={() => setMobileOpen(false)}>
             <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-cyan-400 shadow-md shadow-indigo-200 transition-transform duration-300 group-hover:scale-[1.05]">
               <span className="text-[15px] font-bold tracking-widest text-white drop-shadow-sm">BH</span>
               <div className="absolute inset-0 rounded-xl ring-1 ring-inset ring-white/20"></div>
