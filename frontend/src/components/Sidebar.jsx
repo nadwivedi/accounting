@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 function AssetIcon({ src, alt = '' }) {
-  return <img src={src} alt={alt} className="h-6 w-6 object-contain" />;
+  return <img src={src} alt={alt} className="h-9 w-9 object-contain" />;
 }
 
 function ProductIcon() {
@@ -250,7 +250,6 @@ export default function Sidebar() {
       <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-white/10 bg-[#24356d] px-4 shadow-[0_10px_30px_rgba(10,16,40,0.35)] md:hidden">
         <div className="relative flex h-full items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-[28px] leading-none text-cyan-300">+</span>
             <div>
               <p className="text-sm font-bold tracking-[0.18em] text-white">BILLHUB</p>
               <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-100/75">Business Console</p>
@@ -288,7 +287,6 @@ export default function Sidebar() {
         {/* Sidebar Header / Logo */}
         <div className="relative z-10 flex items-center justify-between px-5 py-4">
           <Link to="/stock" className="group flex items-center gap-3.5" onClick={() => setMobileOpen(false)}>
-            <span className="text-[34px] leading-none text-cyan-300">+</span>
             <div className="flex flex-col">
               <p className="text-[15px] font-bold tracking-[0.18em] text-white">
                 BILLHUB
@@ -312,7 +310,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation Items */}
-        <div className="relative z-10 flex-1 overflow-y-auto pb-8 scrollbar-hide">
+        <div className="sidebar-scrollbar relative z-10 flex-1 overflow-y-auto pb-8">
           <nav className="flex flex-col">
             {menuItems.filter((item) => item.subItems?.length).map((item, index) => (
               <div key={item.name} className="flex flex-col">
@@ -337,7 +335,7 @@ export default function Sidebar() {
                         onClick={() => {
                           if (window.innerWidth < 768) setMobileOpen(false);
                         }}
-                        className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-4 text-[13px] transition-colors duration-200 last:border-b-0 ${
+                        className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-4 text-[12px] transition-colors duration-200 last:border-b-0 ${
                           subActive
                             ? 'bg-[linear-gradient(90deg,rgba(69,194,219,0.26),rgba(140,106,222,0.28))] text-white'
                             : 'text-slate-100 hover:bg-white/5'
@@ -345,7 +343,7 @@ export default function Sidebar() {
                       >
                         {subActive && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-300" />}
 
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center">
                           <SubIcon />
                         </div>
 
@@ -377,7 +375,7 @@ export default function Sidebar() {
                   onClick={() => {
                     if (window.innerWidth < 768) setMobileOpen(false);
                   }}
-                  className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-4 text-[13px] transition-colors duration-200 ${
+                  className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-4 text-[12px] transition-colors duration-200 ${
                     active
                       ? 'bg-[linear-gradient(90deg,rgba(69,194,219,0.26),rgba(140,106,222,0.28))] text-white'
                       : 'text-slate-100 hover:bg-white/5'
@@ -385,7 +383,7 @@ export default function Sidebar() {
                 >
                   {active && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-300" />}
 
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center text-slate-200">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-200">
                     <Icon />
                   </div>
 
