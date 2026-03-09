@@ -1,5 +1,25 @@
-import { Wallet } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, Wallet } from 'lucide-react';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
+
+const TYPE_OPTIONS = [
+  {
+    value: 'supplier',
+    label: 'Supplier',
+    description: 'Use for purchase parties and payable accounts.'
+  },
+  {
+    value: 'customer',
+    label: 'Customer',
+    description: 'Use for sales parties and receivable accounts.'
+  }
+];
+
+const FIELD_SELECTOR = [
+  'input:not([type="hidden"]):not([disabled]):not([readonly])',
+  'select:not([disabled]):not([readonly])',
+  'textarea:not([disabled]):not([readonly])'
+].join(', ');
 
 const getInlineFieldClass = (tone = 'indigo') => {
   const focusTone = tone === 'emerald'
@@ -17,34 +37,200 @@ const getInlineTextareaClass = (tone = 'emerald') => {
   return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm font-bold text-gray-900 transition-all resize-none focus:outline-none focus:bg-white placeholder:font-normal placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
 };
 
+const isVisibleField = (element) => {
+  if (!element) return false;
+  if (element.tabIndex === -1) return false;
+
+  const style = window.getComputedStyle(element);
+  return style.display !== 'none' && style.visibility !== 'hidden';
+};
+
+const getFormFields = (form) => (
+  Array.from(form.querySelectorAll(FIELD_SELECTOR)).filter(isVisibleField)
+);
+
+const focusNextField = (currentElement) => {
+  if (!(currentElement instanceof HTMLElement)) return;
+
+  const form = currentElement.closest('form');
+  if (!form) return;
+
+  const fields = getFormFields(form);
+  const currentIndex = fields.indexOf(currentElement);
+  if (currentIndex === -1) return;
+
+  const nextField = fields[currentIndex + 1];
+  if (!(nextField instanceof HTMLElement)) return;
+
+  nextField.focus();
+  if (nextField instanceof HTMLInputElement && typeof nextField.select === 'function') {
+    nextField.select();
+  }
+};
+
+const getTypeLabel = (typeValue) => (
+  TYPE_OPTIONS.find((option) => option.value === typeValue)?.label || ''
+);
+
 export default function AddLeadgerPopup({
   showForm,
   editingId,
   loading,
   formData,
-  groupQuery,
-  groupListIndex,
-  isGroupSectionActive,
-  groupOptions,
-  groups,
-  groupSectionRef,
-  mobileInputRef,
   handleCloseForm,
   handleSubmit,
-  handleChange,
-  handleGroupInputChange,
-  handleGroupInputKeyDown,
-  setIsGroupSectionActive,
-  setGroupListIndex,
-  selectGroup
+  handleChange
 }) {
+  const [typeQuery, setTypeQuery] = useState('');
+  const [typeListIndex, setTypeListIndex] = useState(0);
+  const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const typeSectionRef = useRef(null);
+  const typeInputRef = useRef(null);
+
+  const filteredTypeOptions = useMemo(() => {
+    const normalized = String(typeQuery || '').trim().toLowerCase();
+    if (!normalized) return TYPE_OPTIONS;
+
+    const startsWith = TYPE_OPTIONS.filter((option) => option.label.toLowerCase().startsWith(normalized));
+    const includes = TYPE_OPTIONS.filter((option) => (
+      !option.label.toLowerCase().startsWith(normalized)
+      && option.label.toLowerCase().includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  }, [typeQuery]);
+
+  useEffect(() => {
+    if (!showForm) {
+      setTypeQuery('');
+      setTypeListIndex(0);
+      setIsTypeDropdownOpen(false);
+      return;
+    }
+
+    const nextLabel = getTypeLabel(formData.type);
+    setTypeQuery(nextLabel);
+    setTypeListIndex(Math.max(
+      TYPE_OPTIONS.findIndex((option) => option.value === formData.type),
+      0
+    ));
+  }, [showForm, formData.type]);
+
+  useEffect(() => {
+    if (filteredTypeOptions.length === 0) {
+      setTypeListIndex(-1);
+      return;
+    }
+
+    setTypeListIndex((prev) => {
+      if (prev < 0) return 0;
+      if (prev >= filteredTypeOptions.length) return filteredTypeOptions.length - 1;
+      return prev;
+    });
+  }, [filteredTypeOptions]);
+
   if (!showForm) return null;
 
-  const handleLedgerNameKeyDown = (event) => {
-    if (event.key !== 'Enter' || event.shiftKey) return;
-    if (String(formData.name || '').trim().length > 0) return;
-    event.preventDefault();
-    event.stopPropagation();
+  const setTypeValue = (value) => {
+    handleChange({
+      target: {
+        name: 'type',
+        value
+      }
+    });
+  };
+
+  const selectType = (option, moveNext = false) => {
+    if (!option) return;
+
+    setTypeValue(option.value);
+    setTypeQuery(option.label);
+    setTypeListIndex(Math.max(
+      TYPE_OPTIONS.findIndex((item) => item.value === option.value),
+      0
+    ));
+    setIsTypeDropdownOpen(false);
+
+    if (moveNext) {
+      focusNextField(typeInputRef.current);
+    }
+  };
+
+  const handleTypeFocus = () => {
+    setIsTypeDropdownOpen(true);
+    setTypeQuery(getTypeLabel(formData.type));
+    setTypeListIndex(Math.max(
+      TYPE_OPTIONS.findIndex((option) => option.value === formData.type),
+      0
+    ));
+  };
+
+  const handleTypeInputChange = (event) => {
+    const nextValue = event.target.value;
+    setTypeQuery(nextValue);
+    setIsTypeDropdownOpen(true);
+
+    const exactMatch = TYPE_OPTIONS.find(
+      (option) => option.label.toLowerCase() === nextValue.trim().toLowerCase()
+    );
+
+    if (exactMatch) {
+      setTypeValue(exactMatch.value);
+    }
+  };
+
+  const handleTypeInputKeyDown = (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsTypeDropdownOpen(true);
+      if (filteredTypeOptions.length === 0) return;
+      setTypeListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredTypeOptions.length - 1);
+      });
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsTypeDropdownOpen(true);
+      if (filteredTypeOptions.length === 0) return;
+      setTypeListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!isTypeDropdownOpen) {
+        setIsTypeDropdownOpen(true);
+        return;
+      }
+
+      const activeOption = typeListIndex >= 0 ? filteredTypeOptions[typeListIndex] : null;
+      const exactMatch = TYPE_OPTIONS.find(
+        (option) => option.label.toLowerCase() === typeQuery.trim().toLowerCase()
+      );
+      const matchedOption = activeOption || exactMatch || filteredTypeOptions[0] || null;
+
+      if (matchedOption) {
+        selectType(matchedOption, true);
+      }
+      return;
+    }
+
+    if (event.key === 'Escape' && isTypeDropdownOpen) {
+      event.preventDefault();
+      event.stopPropagation();
+      setTypeQuery(getTypeLabel(formData.type));
+      setIsTypeDropdownOpen(false);
+    }
   };
 
   return (
@@ -60,8 +246,8 @@ export default function AddLeadgerPopup({
                 <Wallet className="h-5 w-5" />
               </div>
               <div>
-                <h2 className="text-lg md:text-2xl font-bold">{editingId ? 'Edit Ledger Account' : 'Add New Ledger Account'}</h2>
-                <p className="text-cyan-100 text-xs md:text-sm mt-1">Create or update account details in a clean accounting format.</p>
+                <h2 className="text-lg md:text-2xl font-bold">{editingId ? 'Edit Party' : 'Add New Party'}</h2>
+                <p className="text-cyan-100 text-xs md:text-sm mt-1">Create or update party details in a simple format.</p>
               </div>
             </div>
             <button
@@ -88,99 +274,120 @@ export default function AddLeadgerPopup({
               <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-2.5 md:p-4">
                 <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
                   <span className="bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
-                  Ledger Details
+                  Party Details
                 </h3>
 
                 <div className="grid grid-cols-1 gap-3 md:gap-4">
                   <div className="flex items-center gap-3">
-                    <label htmlFor="ledger-name-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
-                      Ledger Name <span className="text-red-500">*</span>
+                    <label htmlFor="party-name-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                      Party Name <span className="text-red-500">*</span>
                     </label>
                     <input
-                      id="ledger-name-input"
+                      id="party-name-input"
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
-                      onKeyDown={handleLedgerNameKeyDown}
                       className={getInlineFieldClass('indigo')}
-                      placeholder="Enter ledger name"
+                      placeholder="Enter party name"
                       autoFocus
                       required
                     />
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <label htmlFor="ledger-group-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
-                      Under Group <span className="text-red-500">*</span>
+                  <div className="flex items-start gap-3">
+                    <label htmlFor="party-type-input" className="w-28 shrink-0 pt-2 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                      Type <span className="text-red-500">*</span>
                     </label>
                     <div
-                      ref={groupSectionRef}
+                      ref={typeSectionRef}
                       className="relative flex-1 min-w-0"
-                      onFocusCapture={() => {
-                        const selectedIndex = groups.findIndex(
-                          (group) => String(group?._id || '') === String(formData.group || '')
-                        );
-                        setIsGroupSectionActive(true);
-                        setGroupListIndex(selectedIndex >= 0 ? selectedIndex : (groups.length > 0 ? 0 : -1));
-                      }}
                       onBlurCapture={(event) => {
                         const nextFocused = event.relatedTarget;
                         if (
-                          groupSectionRef.current
+                          typeSectionRef.current
                           && nextFocused instanceof Node
-                          && groupSectionRef.current.contains(nextFocused)
+                          && typeSectionRef.current.contains(nextFocused)
                         ) {
                           return;
                         }
-                        setIsGroupSectionActive(false);
+
+                        setTypeQuery(getTypeLabel(formData.type));
+                        setIsTypeDropdownOpen(false);
                       }}
                     >
-                      <input
-                        id="ledger-group-input"
-                        type="text"
-                        value={groupQuery}
-                        onChange={handleGroupInputChange}
-                        onKeyDown={handleGroupInputKeyDown}
-                        className={getInlineFieldClass('indigo')}
-                        placeholder="Select or type group..."
-                      />
+                      <div className="relative">
+                        <input
+                          id="party-type-input"
+                          ref={typeInputRef}
+                          type="text"
+                          value={typeQuery}
+                          onChange={handleTypeInputChange}
+                          onFocus={handleTypeFocus}
+                          onKeyDown={handleTypeInputKeyDown}
+                          className={`${getInlineFieldClass('indigo')} pr-10`}
+                          placeholder="Choose party type"
+                          autoComplete="off"
+                          required
+                        />
+                        <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-indigo-500 transition-transform ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
+                      </div>
 
-                      {isGroupSectionActive && (
-                        <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
-                          <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
-                            <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
-                              Group List
-                            </div>
-                            <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
-                              {groupOptions.length === 0 ? (
-                                <div className="px-3 py-2 text-sm text-slate-500">No groups found</div>
-                              ) : (
-                                groupOptions.map((group, index) => {
-                                  const isActive = index === groupListIndex;
-                                  return (
-                                    <button
-                                      key={group._id}
-                                      type="button"
-                                      onMouseDown={(event) => event.preventDefault()}
-                                      onMouseEnter={() => setGroupListIndex(index)}
-                                      onClick={() => selectGroup(group, true)}
-                                      className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
-                                        isActive
-                                          ? 'bg-yellow-300 text-black font-semibold'
-                                          : 'bg-transparent text-slate-700 hover:bg-slate-50'
-                                      }`}
-                                    >
-                                      {group.name}
-                                    </button>
-                                  );
-                                })
-                              )}
-                            </div>
+                      {isTypeDropdownOpen && (
+                        <div className="mt-2 overflow-hidden rounded-2xl border border-indigo-200 bg-white shadow-xl md:absolute md:left-0 md:right-0 md:top-[calc(100%+12px)] md:z-30 md:h-[42vh]">
+                          <div className="border-b border-indigo-100 bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white">
+                            Party Type List
+                          </div>
+                          <div className="grid h-[18rem] grid-rows-2 gap-3 p-3 md:h-[calc(42vh-53px)]">
+                            {(filteredTypeOptions.length > 0 ? filteredTypeOptions : TYPE_OPTIONS).map((option, index) => {
+                              const isActive = index === typeListIndex;
+
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onMouseDown={(event) => event.preventDefault()}
+                                  onMouseEnter={() => setTypeListIndex(index)}
+                                  onClick={() => selectType(option, true)}
+                                  className={`flex h-full flex-col items-start justify-between rounded-2xl border px-4 py-4 text-left transition ${
+                                    isActive
+                                      ? 'border-indigo-600 bg-indigo-600 text-white shadow-lg'
+                                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
+                                  }`}
+                                >
+                                  <div>
+                                    <p className="text-lg font-bold tracking-wide">{option.label}</p>
+                                    <p className={`mt-2 text-sm leading-6 ${isActive ? 'text-indigo-100' : 'text-slate-500'}`}>
+                                      {option.description}
+                                    </p>
+                                  </div>
+                                  <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
+                                    isActive ? 'bg-white/15 text-white' : 'bg-white text-indigo-600'
+                                  }`}>
+                                    Press Enter
+                                  </span>
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
                       )}
                     </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <label htmlFor="party-notes-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                      Notes
+                    </label>
+                    <input
+                      id="party-notes-input"
+                      type="text"
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleChange}
+                      className={getInlineFieldClass('indigo')}
+                      placeholder="Optional remarks"
+                    />
                   </div>
                 </div>
               </div>
@@ -195,20 +402,16 @@ export default function AddLeadgerPopup({
 
                 <div className="space-y-3 md:space-y-4">
                   <div className="flex items-center gap-3">
-                    <label htmlFor="ledger-mobile-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-                        <span>Mobile Number</span>
-                        <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
-                      </span>
+                    <label htmlFor="party-mobile-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                      <span>Mobile Number</span>
                       <span className="ml-2">:</span>
                     </label>
                     <input
-                      id="ledger-mobile-input"
+                      id="party-mobile-input"
                       type="tel"
                       name="mobile"
                       value={formData.mobile}
                       onChange={handleChange}
-                      ref={mobileInputRef}
                       inputMode="numeric"
                       pattern="[0-9]{10}"
                       maxLength={10}
@@ -218,15 +421,12 @@ export default function AddLeadgerPopup({
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <label htmlFor="ledger-email-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-                        <span>Email Address</span>
-                        <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
-                      </span>
+                    <label htmlFor="party-email-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                      <span>Email Address</span>
                       <span className="ml-2">:</span>
                     </label>
                     <input
-                      id="ledger-email-input"
+                      id="party-email-input"
                       type="email"
                       name="email"
                       value={formData.email}
@@ -237,15 +437,12 @@ export default function AddLeadgerPopup({
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <label htmlFor="ledger-state-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-                        <span>State</span>
-                        <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
-                      </span>
+                    <label htmlFor="party-state-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                      <span>State</span>
                       <span className="ml-2">:</span>
                     </label>
                     <input
-                      id="ledger-state-input"
+                      id="party-state-input"
                       type="text"
                       name="state"
                       value={formData.state}
@@ -256,15 +453,12 @@ export default function AddLeadgerPopup({
                   </div>
 
                   <div className="flex items-center gap-3">
-                    <label htmlFor="ledger-pincode-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-                        <span>Pincode</span>
-                        <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
-                      </span>
+                    <label htmlFor="party-pincode-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                      <span>Pincode</span>
                       <span className="ml-2">:</span>
                     </label>
                     <input
-                      id="ledger-pincode-input"
+                      id="party-pincode-input"
                       type="text"
                       name="pincode"
                       value={formData.pincode}
@@ -278,40 +472,18 @@ export default function AddLeadgerPopup({
                   </div>
 
                   <div className="flex items-start gap-3">
-                    <label htmlFor="ledger-address-input" className="w-52 shrink-0 mt-2 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-                        <span>Address</span>
-                        <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
-                      </span>
+                    <label htmlFor="party-address-input" className="w-52 shrink-0 mt-2 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
+                      <span>Address</span>
                       <span className="ml-2">:</span>
                     </label>
                     <textarea
-                      id="ledger-address-input"
+                      id="party-address-input"
                       name="address"
                       value={formData.address}
                       onChange={handleChange}
                       className={getInlineTextareaClass('emerald')}
                       placeholder="Enter full address"
                       rows={2}
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <label htmlFor="ledger-notes-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span className="inline-flex items-baseline gap-1 whitespace-nowrap">
-                        <span>Remarks / Notes</span>
-                        <span className="text-[9px] md:text-[10px] font-medium text-gray-500">(Optional)</span>
-                      </span>
-                      <span className="ml-2">:</span>
-                    </label>
-                    <input
-                      id="ledger-notes-input"
-                      type="text"
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleChange}
-                      className={getInlineFieldClass('emerald')}
-                      placeholder="Optional remarks"
                     />
                   </div>
                 </div>
@@ -337,24 +509,9 @@ export default function AddLeadgerPopup({
                 type="submit"
                 form="ledger-form"
                 disabled={loading}
-                className="flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    {editingId ? 'Update Ledger' : 'Save Ledger'}
-                  </>
-                )}
+                {loading ? 'Saving...' : editingId ? 'Update Party' : 'Save Party'}
               </button>
             </div>
           </div>

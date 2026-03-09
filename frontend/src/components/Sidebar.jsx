@@ -180,8 +180,7 @@ const menuItems = [
     name: 'Masters',
     Icon: MasterIcon,
     subItems: [
-      { name: 'Group', path: '/groups', Icon: MasterIcon },
-      { name: 'Leadger/Account', path: '/leadger', Icon: LeadgerIcon },
+      { name: 'Manage Party', path: '/leadger', Icon: LeadgerIcon },
       { name: 'Stock Item', path: '/stock', Icon: ProductIcon, dividerBefore: true },
       { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
       { name: 'Unit', path: '/units', Icon: UnitIcon }
@@ -356,7 +355,7 @@ export default function Sidebar() {
         event.preventDefault();
         setExpandedMenus({ Masters: true, Vouchers: false });
         if (window.innerWidth < 768) setMobileOpen(true);
-        navigate('/groups');
+        navigate('/leadger');
       }
     };
 

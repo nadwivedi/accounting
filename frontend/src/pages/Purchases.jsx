@@ -95,7 +95,7 @@ export default function Purchases() {
 
   const fetchLeadgers = async () => {
     try {
-      const response = await apiClient.get('/leadgers');
+      const response = await apiClient.get('/parties');
       setLeadgers(response.data || []);
     } catch (err) {
       console.error('Error fetching leadgers:', err);
@@ -106,7 +106,7 @@ export default function Purchases() {
     const name = String(leadger?.name || '').trim();
 
     if (name) return name;
-    return 'Leadger/Account';
+    return 'Manage Party';
   };
 
   const resolveLeadgerNameById = (leadgerId) => {
@@ -187,7 +187,7 @@ export default function Purchases() {
     e.preventDefault();
 
     if (!formData.party || formData.items.length === 0) {
-      setError('Leadger/Account and at least one item are required');
+      setError('Manage Party and at least one item are required');
       return;
     }
 
@@ -386,7 +386,7 @@ export default function Purchases() {
             <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-6 px-6 py-6">
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">Leadger/Account *</label>
+                  <label className="block text-gray-700 font-medium mb-2">Manage Party *</label>
                   <select
                     name="party"
                     value={formData.party}
@@ -715,7 +715,7 @@ export default function Purchases() {
               <thead className="bg-slate-800 text-white">
                 <tr>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice No</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Leadger/Account</th>
+                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Manage Party</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Products</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Date</th>
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice File</th>

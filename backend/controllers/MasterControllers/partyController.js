@@ -1,11 +1,16 @@
 const mongoose = require('mongoose');
-const Leadger = require('../../models/master/Leadger');
-const Group = require('../../models/master/Group');
+const Party = require('../../models/master/Party');
 
-exports.createLeadger = async (req, res) => {
+const normalizeType = (value) => String(value || '').trim().toLowerCase();
+
+const isValidPartyType = (value) => (
+  value === 'supplier' || value === 'customer'
+);
+
+exports.createParty = async (req, res) => {
   try {
     const {
-      group,
+      type,
       name,
       mobile,
       email,
@@ -16,31 +21,24 @@ exports.createLeadger = async (req, res) => {
     } = req.body;
     const userId = req.userId;
 
-    if (!group || !mongoose.isValidObjectId(group)) {
+    const normalizedType = normalizeType(type);
+    if (!isValidPartyType(normalizedType)) {
       return res.status(400).json({
         success: false,
-        message: 'Valid group is required'
-      });
-    }
-
-    const groupDoc = await Group.findOne({ _id: group, userId, isActive: true });
-    if (!groupDoc) {
-      return res.status(404).json({
-        success: false,
-        message: 'Group not found'
+        message: 'Valid party type is required (supplier or customer)'
       });
     }
 
     if (!String(name || '').trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Leadger name is required'
+        message: 'Party name is required'
       });
     }
 
-    const leadger = await Leadger.create({
+    const party = await Party.create({
       userId,
-      group,
+      type: normalizedType,
       name: String(name || '').trim(),
       mobile: String(mobile || '').trim(),
       email: String(email || '').trim(),
@@ -50,31 +48,35 @@ exports.createLeadger = async (req, res) => {
       notes: String(notes || '').trim()
     });
 
-    const populatedLeadger = await Leadger.findById(leadger._id)
-      .populate('group', 'name');
-
     return res.status(201).json({
       success: true,
-      message: 'Leadger voucher created successfully',
-      data: populatedLeadger
+      message: 'Party created successfully',
+      data: party
     });
   } catch (error) {
-    console.error('Create leadger error:', error);
+    console.error('Create party error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Error creating leadger voucher'
+      message: error.message || 'Error creating party'
     });
   }
 };
 
-exports.getAllLeadgers = async (req, res) => {
+exports.getAllParties = async (req, res) => {
   try {
-    const { group, search } = req.query;
+    const { type, search } = req.query;
     const userId = req.userId;
     const filter = { userId };
 
-    if (group && mongoose.isValidObjectId(group)) {
-      filter.group = group;
+    const normalizedType = normalizeType(type);
+    if (normalizedType) {
+      if (!isValidPartyType(normalizedType)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid party type filter'
+        });
+      }
+      filter.type = normalizedType;
     }
 
     if (search) {
@@ -90,29 +92,27 @@ exports.getAllLeadgers = async (req, res) => {
       ];
     }
 
-    const leadgers = await Leadger.find(filter)
-      .populate('group', 'name')
-      .sort({ createdAt: -1 });
+    const parties = await Party.find(filter).sort({ createdAt: -1 });
 
     return res.status(200).json({
       success: true,
-      count: leadgers.length,
-      data: leadgers
+      count: parties.length,
+      data: parties
     });
   } catch (error) {
-    console.error('Get leadgers error:', error);
+    console.error('Get parties error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Error fetching leadger vouchers'
+      message: error.message || 'Error fetching parties'
     });
   }
 };
 
-exports.updateLeadger = async (req, res) => {
+exports.updateParty = async (req, res) => {
   try {
     const { id } = req.params;
     const {
-      group,
+      type,
       name,
       mobile,
       email,
@@ -126,36 +126,29 @@ exports.updateLeadger = async (req, res) => {
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
-        message: 'Valid leadger id is required'
+        message: 'Valid party id is required'
       });
     }
 
-    if (!group || !mongoose.isValidObjectId(group)) {
+    const normalizedType = normalizeType(type);
+    if (!isValidPartyType(normalizedType)) {
       return res.status(400).json({
         success: false,
-        message: 'Valid group is required'
-      });
-    }
-
-    const groupDoc = await Group.findOne({ _id: group, userId, isActive: true });
-    if (!groupDoc) {
-      return res.status(404).json({
-        success: false,
-        message: 'Group not found'
+        message: 'Valid party type is required (supplier or customer)'
       });
     }
 
     if (!String(name || '').trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Leadger name is required'
+        message: 'Party name is required'
       });
     }
 
-    const leadger = await Leadger.findOneAndUpdate(
+    const party = await Party.findOneAndUpdate(
       { _id: id, userId },
       {
-        group,
+        type: normalizedType,
         name: String(name || '').trim(),
         mobile: String(mobile || '').trim(),
         email: String(email || '').trim(),
@@ -165,26 +158,25 @@ exports.updateLeadger = async (req, res) => {
         notes: String(notes || '').trim()
       },
       { new: true, runValidators: true }
-    ).populate('group', 'name');
+    );
 
-    if (!leadger) {
+    if (!party) {
       return res.status(404).json({
         success: false,
-        message: 'Leadger not found'
+        message: 'Party not found'
       });
     }
 
     return res.status(200).json({
       success: true,
-      message: 'Leadger voucher updated successfully',
-      data: leadger
+      message: 'Party updated successfully',
+      data: party
     });
   } catch (error) {
-    console.error('Update leadger error:', error);
+    console.error('Update party error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Error updating leadger voucher'
+      message: error.message || 'Error updating party'
     });
   }
 };
-

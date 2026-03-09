@@ -112,7 +112,7 @@ export default function Sales() {
 
   const fetchLeadgers = async () => {
     try {
-      const response = await apiClient.get('/leadgers');
+      const response = await apiClient.get('/parties');
       setLeadgers(response.data || []);
       return response.data || [];
     } catch (err) {

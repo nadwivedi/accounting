@@ -1,14 +1,14 @@
 const mongoose = require('mongoose');
 
-const leadgerSchema = new mongoose.Schema({
+const partySchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  group: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Group',
+  type: {
+    type: String,
+    enum: ['supplier', 'customer'],
     required: true
   },
   name: {
@@ -47,4 +47,4 @@ const leadgerSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Leadger', leadgerSchema);
+module.exports = mongoose.model('Party', partySchema);

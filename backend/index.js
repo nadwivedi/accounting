@@ -8,14 +8,13 @@ const connectDB = require('./utils/mongodb');
 // Routes
 const userRoutes = require('./routes/userRoutes');
 const stockGroupRoutes = require('./routes/MasterRoutes/stockGroupRoutes');
-const groupRoutes = require('./routes/MasterRoutes/groupRoutes');
 const unitRoutes = require('./routes/MasterRoutes/unitRoutes');
 const productRoutes = require('./routes/MasterRoutes/productRoutes');
 const purchaseRoutes = require('./routes/VoucherRoutes/purchaseRoutes');
 const saleRoutes = require('./routes/VoucherRoutes/saleRoutes');
 const paymentRoutes = require('./routes/VoucherRoutes/paymentRoutes');
 const receiptRoutes = require('./routes/VoucherRoutes/receiptRoutes');
-const ledgerRoutes = require('./routes/MasterRoutes/ledgerRoutes');
+const partyRoutes = require('./routes/MasterRoutes/partyRoutes');
 const contraRoutes = require('./routes/VoucherRoutes/contraRoutes');
 const stockAdjustmentRoutes = require('./routes/VoucherRoutes/stockAdjustmentRoutes');
 const saleReturnRoutes = require('./routes/VoucherRoutes/saleReturnRoutes');
@@ -41,14 +40,13 @@ app.get('/', (req, res) => {
 // API Routes
 app.use('/api/users', userRoutes);
 app.use('/api/stock-groups', stockGroupRoutes);
-app.use('/api/groups', groupRoutes);
 app.use('/api/units', unitRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/purchases', purchaseRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/receipts', receiptRoutes);
-app.use('/api/leadgers', ledgerRoutes);
+app.use('/api/parties', partyRoutes);
 app.use('/api/contras', contraRoutes);
 app.use('/api/stock-adjustments', stockAdjustmentRoutes);
 app.use('/api/sale-returns', saleReturnRoutes);
