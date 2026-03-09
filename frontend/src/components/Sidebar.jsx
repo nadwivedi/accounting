@@ -247,19 +247,19 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Top Header */}
-      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-white/16 bg-[#4a5563] px-4 shadow-[0_10px_30px_rgba(41,48,58,0.22)] md:hidden">
+      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-white/10 bg-[linear-gradient(135deg,#0b1f33_0%,#14304d_55%,#1d4b64_100%)] px-4 shadow-[0_14px_34px_rgba(8,20,35,0.38)] md:hidden">
         <div className="relative flex h-full items-center justify-between">
           <div className="flex items-center gap-3">
             <div>
               <p className="text-sm font-bold tracking-[0.18em] text-white">BILLHUB</p>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-100/75">Business Console</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-100/75">Business Console</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/25 bg-white/14 text-white"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white transition hover:bg-white/16"
             aria-label="Open navigation menu"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
@@ -272,26 +272,26 @@ export default function Sidebar() {
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-[2px] md:hidden"
+          className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[3px] md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Sidebar Container */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[13.25rem] max-w-[82vw] flex-col overflow-hidden border-r border-[#8692a1] bg-[linear-gradient(180deg,#4a5563_0%,#5a6573_38%,#748090_100%)] shadow-[0_18px_40px_rgba(33,39,47,0.2)] transition-transform duration-300 md:z-40 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[13.25rem] max-w-[82vw] flex-col overflow-hidden border-r border-cyan-100/10 bg-[linear-gradient(180deg,#071a2c_0%,#0d2740_34%,#123654_72%,#173f5f_100%)] shadow-[0_28px_60px_rgba(4,12,24,0.42)] transition-transform duration-300 md:z-40 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
 
         {/* Inside Border Highlight */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.2),transparent_34%)]" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-white/18" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.16),transparent_32%),radial-gradient(circle_at_78%_18%,rgba(251,191,36,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_30%)]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-cyan-100/30 to-transparent" />
 
         {/* Sidebar Header / Logo */}
-        <div className="relative z-10 flex items-center justify-between px-5 py-4">
+        <div className="relative z-10 flex items-center justify-between border-b border-white/8 px-5 py-4">
           <Link to="/stock" className="group flex items-center gap-3.5" onClick={() => setMobileOpen(false)}>
             <div className="flex flex-col">
               <p className="text-[15px] font-bold tracking-[0.18em] text-white">
                 BILLHUB
               </p>
-              <p className="text-[10px] font-bold tracking-[0.18em] text-slate-100/75 uppercase">
+              <p className="text-[10px] font-bold tracking-[0.18em] text-cyan-100/75 uppercase">
                 Business Console
               </p>
             </div>
@@ -300,7 +300,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/22 bg-white/12 text-white md:hidden"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white transition hover:bg-white/16 md:hidden"
             aria-label="Close sidebar"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -316,17 +316,17 @@ export default function Sidebar() {
               <div key={item.name} className="flex flex-col">
                 <div className={`flex items-center gap-3 border-y px-5 py-3 text-slate-50 ${
                   item.name === 'Masters'
-                    ? 'border-emerald-100/20 bg-emerald-50/10'
-                    : 'border-rose-100/20 bg-rose-50/10'
+                    ? 'border-cyan-200/15 bg-cyan-300/8'
+                    : 'border-amber-200/15 bg-amber-300/8'
                 } ${index > 0 ? 'mt-3' : ''}`}>
                   <span className={`inline-flex ${
                     index === 0
                       ? item.name === 'Masters'
-                        ? 'text-[28px] leading-none text-emerald-100'
-                        : 'text-[28px] leading-none text-rose-100'
+                        ? 'text-[28px] leading-none text-cyan-100'
+                        : 'text-[28px] leading-none text-amber-100'
                       : item.name === 'Masters'
-                        ? 'h-2.5 w-2.5 rounded-full bg-emerald-100/90'
-                        : 'h-2.5 w-2.5 rounded-full bg-rose-100/90'
+                        ? 'h-2.5 w-2.5 rounded-full bg-cyan-100/90'
+                        : 'h-2.5 w-2.5 rounded-full bg-amber-100/90'
                   }`}>
                     {index === 0 ? '+' : ''}
                   </span>
@@ -350,15 +350,15 @@ export default function Sidebar() {
                         className={`group relative flex items-center gap-3 border-b border-white/8 px-5 ${item.name === 'Masters' || item.name === 'Vouchers' ? 'py-2.5' : 'py-4'} text-[12px] transition-colors duration-200 last:border-b-0 ${
                           subActive
                             ? item.name === 'Masters'
-                              ? 'bg-[linear-gradient(90deg,rgba(209,250,229,0.26),rgba(240,253,250,0.16))] text-white'
-                              : 'bg-[linear-gradient(90deg,rgba(255,228,230,0.26),rgba(255,241,242,0.16))] text-white'
+                              ? 'bg-[linear-gradient(90deg,rgba(34,211,238,0.18),rgba(45,212,191,0.14))] text-white'
+                              : 'bg-[linear-gradient(90deg,rgba(251,191,36,0.22),rgba(245,158,11,0.14))] text-white'
                             : item.name === 'Masters'
-                              ? 'text-slate-50/95 hover:bg-emerald-50/10'
-                              : 'text-slate-50/95 hover:bg-rose-50/10'
+                              ? 'text-slate-50/95 hover:bg-cyan-300/8'
+                              : 'text-slate-50/95 hover:bg-amber-300/8'
                         }`}
                       >
                         {subActive && (
-                          <div className={`absolute inset-y-0 left-0 w-1 ${item.name === 'Masters' ? 'bg-emerald-100' : 'bg-rose-100'}`} />
+                          <div className={`absolute inset-y-0 left-0 w-1 ${item.name === 'Masters' ? 'bg-cyan-100' : 'bg-amber-100'}`} />
                         )}
 
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center">
@@ -377,8 +377,8 @@ export default function Sidebar() {
               </div>
             ))}
 
-            <div className="mt-3 flex items-center gap-3 border-y border-white/16 bg-white/10 px-5 py-3 text-slate-50">
-              <span className="h-2.5 w-2.5 rounded-full bg-slate-100/90" />
+            <div className="mt-3 flex items-center gap-3 border-y border-white/12 bg-white/6 px-5 py-3 text-slate-50">
+              <span className="h-2.5 w-2.5 rounded-full bg-cyan-100/90" />
               <span className="text-[12px] font-bold tracking-[0.16em]">MORE</span>
             </div>
 
@@ -395,11 +395,11 @@ export default function Sidebar() {
                   }}
                   className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-2.5 text-[12px] transition-colors duration-200 ${
                     active
-                      ? 'bg-[linear-gradient(90deg,rgba(255,255,255,0.18),rgba(226,232,240,0.16))] text-white'
-                      : 'text-slate-50/95 hover:bg-white/10'
+                      ? 'bg-[linear-gradient(90deg,rgba(125,211,252,0.18),rgba(255,255,255,0.1))] text-white'
+                      : 'text-slate-50/95 hover:bg-cyan-300/8'
                   }`}
                 >
-                  {active && <div className="absolute inset-y-0 left-0 w-1 bg-slate-100" />}
+                  {active && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-100" />}
 
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-50">
                     <Icon />
