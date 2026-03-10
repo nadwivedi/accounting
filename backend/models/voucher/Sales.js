@@ -86,25 +86,10 @@ const salesSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
-  paidAmount: {
-    type: Number,
-    default: 0
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['unpaid', 'partial', 'paid'],
-    default: 'unpaid'
-  },
-  balanceAmount: {
-    type: Number,
-    required: true
-  },
   notes: {
     type: String,
     trim: true
   }
 }, { timestamps: true });
-
-salesSchema.index({ userId: 1, invoiceNumber: 1 }, { unique: true });
 
 module.exports = mongoose.model('Sale', salesSchema);

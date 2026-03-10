@@ -4,6 +4,19 @@ import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
+const buildSaleReceiptMap = (receipts) => {
+  const map = new Map();
+
+  (receipts || [])
+    .filter((receipt) => receipt.refType === 'sale' && receipt.refId)
+    .forEach((receipt) => {
+      const key = String(receipt.refId);
+      map.set(key, (map.get(key) || 0) + Number(receipt.amount || 0));
+    });
+
+  return map;
+};
+
 const getInitialForm = () => ({
   party: '',
   amount: '',
@@ -17,6 +30,7 @@ const TOAST_OPTIONS = { autoClose: 1200 };
 
 export default function Receipts() {
   const [receipts, setReceipts] = useState([]);
+  const [allReceipts, setAllReceipts] = useState([]);
   const [parties, setParties] = useState([]);
   const [sales, setSales] = useState([]);
   const [formData, setFormData] = useState(getInitialForm());
@@ -32,6 +46,7 @@ export default function Receipts() {
 
   useEffect(() => {
     fetchParties();
+    fetchAllReceipts();
     fetchSales();
   }, []);
 
@@ -79,6 +94,15 @@ export default function Receipts() {
     }
   };
 
+  const fetchAllReceipts = async () => {
+    try {
+      const response = await apiClient.get('/receipts');
+      setAllReceipts(response.data || []);
+    } catch (err) {
+      console.error('Error fetching all receipts:', err);
+    }
+  };
+
   const fetchParties = async () => {
     try {
       const response = await apiClient.get('/parties');
@@ -91,22 +115,23 @@ export default function Receipts() {
   const fetchSales = async () => {
     try {
       const response = await apiClient.get('/sales');
-      const pending = (response.data || []).filter(
-        (s) => (Number(s.totalAmount || 0) - Number(s.paidAmount || 0)) > 0
-      );
-      setSales(pending);
+      setSales(response.data || []);
     } catch (err) {
       console.error('Error fetching sales:', err);
     }
   };
+
+  const saleReceiptMap = useMemo(() => buildSaleReceiptMap(allReceipts), [allReceipts]);
 
   const saleOptions = useMemo(() => {
     if (formData.refType !== 'sale') return [];
     return sales.filter((s) => {
       if (!formData.party) return true;
       return String(s.party?._id || s.party) === String(formData.party);
-    });
-  }, [sales, formData.refType, formData.party]);
+    }).filter((sale) => (
+      Math.max(0, Number(sale.totalAmount || 0) - Number(saleReceiptMap.get(String(sale._id)) || 0)) > 0
+    ));
+  }, [sales, saleReceiptMap, formData.refType, formData.party]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -151,6 +176,7 @@ export default function Receipts() {
       handleCloseForm();
       setError('');
       fetchReceipts();
+      fetchAllReceipts();
       fetchSales();
       toast.success('Receipt created successfully', TOAST_OPTIONS);
     } catch (err) {
@@ -325,7 +351,10 @@ export default function Receipts() {
                 >
                   <option value="">Select sale bill</option>
                   {saleOptions.map((sale) => {
-                    const pending = Number(sale.totalAmount || 0) - Number(sale.paidAmount || 0);
+                    const pending = Math.max(
+                      0,
+                      Number(sale.totalAmount || 0) - Number(saleReceiptMap.get(String(sale._id)) || 0)
+                    );
                     return (
                       <option key={sale._id} value={sale._id}>
                         {sale.invoiceNumber} - {sale.party?.partyName || sale.customerName || '-'} - Pending Rs {pending.toFixed(2)}

@@ -15,6 +15,19 @@ const getInitialForm = () => ({
 });
 const TOAST_OPTIONS = { autoClose: 1200 };
 
+const buildPurchasePaymentMap = (payments) => {
+  const map = new Map();
+
+  payments
+    .filter((payment) => payment.refType === 'purchase' && payment.refId)
+    .forEach((payment) => {
+      const key = String(payment.refId);
+      map.set(key, (map.get(key) || 0) + Number(payment.amount || 0));
+    });
+
+  return map;
+};
+
 export default function Payments() {
   const [payments, setPayments] = useState([]);
   const [parties, setParties] = useState([]);
@@ -34,6 +47,8 @@ export default function Payments() {
     fetchParties();
     fetchPurchases();
   }, []);
+
+  const purchasePaymentMap = useMemo(() => buildPurchasePaymentMap(payments), [payments]);
 
   const getFromDateByFilter = () => {
     const now = new Date();
@@ -99,17 +114,15 @@ export default function Payments() {
 
   const purchaseOptions = useMemo(() => {
     if (formData.refType !== 'purchase') return [];
+
     return purchases.filter((p) => {
       if (!formData.party) return true;
       return String(p.party?._id || p.party) === String(formData.party);
     }).filter((p) => {
-      const pending = Math.max(
-        0,
-        Number(p.balanceAmount ?? (Number(p.totalAmount || 0) - Number(p.paidAmount || 0)))
-      );
+      const pending = Math.max(0, Number(p.totalAmount || 0) - Number(purchasePaymentMap.get(String(p._id)) || 0));
       return pending > 0;
     });
-  }, [purchases, formData.refType, formData.party]);
+  }, [purchases, purchasePaymentMap, formData.refType, formData.party]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -178,7 +191,7 @@ export default function Payments() {
       .map((purchase) => {
         const pendingAmount = Math.max(
           0,
-          Number(purchase.balanceAmount ?? (Number(purchase.totalAmount || 0) - Number(purchase.paidAmount || 0)))
+          Number(purchase.totalAmount || 0) - Number(purchasePaymentMap.get(String(purchase._id)) || 0)
         );
         return {
           ...purchase,
@@ -186,7 +199,7 @@ export default function Payments() {
         };
       })
       .filter((purchase) => purchase.pendingAmount > 0 && billWiseRefSet.has(String(purchase._id)));
-  }, [purchases, payments]);
+  }, [purchases, payments, purchasePaymentMap]);
 
   const billWisePendingTotal = billWisePendingPurchases.reduce((sum, p) => sum + Number(p.pendingAmount || 0), 0);
 
@@ -421,7 +434,7 @@ export default function Payments() {
                   {purchaseOptions.map((purchase) => {
                     const pendingAmount = Math.max(
                       0,
-                      Number(purchase.balanceAmount ?? (Number(purchase.totalAmount || 0) - Number(purchase.paidAmount || 0)))
+                      Number(purchase.totalAmount || 0) - Number(purchasePaymentMap.get(String(purchase._id)) || 0)
                     );
                     return (
                       <option key={purchase._id} value={purchase._id}>

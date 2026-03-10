@@ -7,6 +7,26 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const getLinkedSaleReceiptTotal = async ({ saleId, userId }) => {
+  const result = await Receipt.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+        refType: 'sale',
+        refId: new mongoose.Types.ObjectId(saleId)
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: '$amount' }
+      }
+    }
+  ]);
+
+  return toNumber(result[0]?.total);
+};
+
 const applySaleReceipt = async ({ refId, userId, amount }) => {
   const sale = await Sale.findOne({ _id: refId, userId });
   if (!sale) {
@@ -14,21 +34,12 @@ const applySaleReceipt = async ({ refId, userId, amount }) => {
   }
 
   const totalAmount = toNumber(sale.totalAmount);
-  const paidAmount = toNumber(sale.paidAmount);
+  const paidAmount = await getLinkedSaleReceiptTotal({ saleId: sale._id, userId });
   const balanceAmount = Math.max(0, totalAmount - paidAmount);
 
   if (amount > balanceAmount) {
     return { error: 'Amount exceeds sale pending amount' };
   }
-
-  const newPaidAmount = paidAmount + amount;
-  const newBalanceAmount = Math.max(0, totalAmount - newPaidAmount);
-  const paymentStatus = newBalanceAmount === 0 ? 'paid' : 'partial';
-
-  sale.paidAmount = newPaidAmount;
-  sale.balanceAmount = newBalanceAmount;
-  sale.paymentStatus = paymentStatus;
-  await sale.save();
 
   return { sale };
 };

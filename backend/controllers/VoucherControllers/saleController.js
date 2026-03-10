@@ -1,6 +1,7 @@
 ﻿const Sale = require('../../models/voucher/Sales');
 const Product = require('../../models/master/Stock');
 const Receipt = require('../../models/voucher/Receipt');
+const mongoose = require('mongoose');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -21,6 +22,26 @@ const isDuplicateSaleInvoiceError = (error) => (
   )
 );
 
+const getLinkedSaleReceiptTotal = async ({ saleId, userId }) => {
+  const result = await Receipt.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+        refType: 'sale',
+        refId: new mongoose.Types.ObjectId(saleId)
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: '$amount' }
+      }
+    }
+  ]);
+
+  return toNumber(result[0]?.total);
+};
+
 const calculateTotals = (payload = {}) => {
   const items = Array.isArray(payload.items) ? payload.items : [];
   const subtotal = toNumber(payload.subtotal, items.reduce((sum, item) => {
@@ -38,9 +59,7 @@ const calculateTotals = (payload = {}) => {
   const computedTotal = subtotal + taxAmount - discountAmount + roundOff;
   const totalAmount = toNumber(payload.totalAmount, computedTotal);
   const paidAmount = Math.max(0, toNumber(payload.paidAmount));
-  const normalizedPaid = Math.min(paidAmount, totalAmount);
-  const balanceAmount = Math.max(0, totalAmount - normalizedPaid);
-  const paymentStatus = balanceAmount === 0 ? 'paid' : (normalizedPaid > 0 ? 'partial' : 'unpaid');
+  const initialReceiptAmount = Math.min(paidAmount, totalAmount);
 
   return {
     subtotal,
@@ -48,9 +67,7 @@ const calculateTotals = (payload = {}) => {
     discountAmount,
     roundOff,
     totalAmount,
-    paidAmount: normalizedPaid,
-    balanceAmount,
-    paymentStatus
+    initialReceiptAmount
   };
 };
 
@@ -120,9 +137,6 @@ exports.createSale = async (req, res) => {
       taxAmount: totals.taxAmount,
       roundOff: totals.roundOff,
       totalAmount: totals.totalAmount,
-      paidAmount: totals.paidAmount,
-      balanceAmount: totals.balanceAmount,
-      paymentStatus: totals.paymentStatus,
       paymentMode: paymentMode || 'credit',
       notes
     });
@@ -134,13 +148,13 @@ exports.createSale = async (req, res) => {
       );
     }
 
-    if (totals.paidAmount > 0) {
+    if (totals.initialReceiptAmount > 0) {
       await Receipt.create({
         userId,
         party: sale.party || null,
         refType: 'sale',
         refId: sale._id,
-        amount: totals.paidAmount,
+        amount: totals.initialReceiptAmount,
         method: paymentMode || 'cash',
         receiptDate: saleDate || new Date(),
         notes: notes || 'Auto receipt from sale'
@@ -347,19 +361,18 @@ exports.updatePaymentStatus = async (req, res) => {
       });
     }
 
-    if (amount > sale.balanceAmount) {
+    const linkedReceiptTotal = await getLinkedSaleReceiptTotal({
+      saleId: sale._id,
+      userId
+    });
+    const balanceAmount = Math.max(0, toNumber(sale.totalAmount) - linkedReceiptTotal);
+
+    if (amount > balanceAmount) {
       return res.status(400).json({
         success: false,
         message: 'Amount exceeds sale pending amount'
       });
     }
-
-    const newPaidAmount = sale.paidAmount + amount;
-    const newBalanceAmount = Math.max(0, sale.totalAmount - newPaidAmount);
-    sale.paidAmount = newPaidAmount;
-    sale.balanceAmount = newBalanceAmount;
-    sale.paymentStatus = newBalanceAmount === 0 ? 'paid' : 'partial';
-    await sale.save();
 
     await Receipt.create({
       userId,
@@ -377,7 +390,7 @@ exports.updatePaymentStatus = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Payment status updated successfully',
+      message: 'Receipt created successfully',
       data: updatedSale
     });
   } catch (error) {

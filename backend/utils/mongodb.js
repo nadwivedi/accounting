@@ -23,13 +23,17 @@ const normalizeInvoiceValue = (value) => {
 
 const backfillPurchaseInvoices = async (purchaseCollection) => {
   const filter = {
-    $or: [
-      { invoiceNo: { $exists: false } },
-      { invoiceNo: null },
-      { invoiceNo: '' },
-      { invoiceNumber: { $exists: false } },
-      { invoiceNumber: null },
-      { invoiceNumber: '' }
+    $and: [
+      {
+        $or: [
+          { invoiceNo: { $exists: false } },
+          { invoiceNo: null },
+          { invoiceNo: '' }
+        ]
+      },
+      {
+        invoiceNumber: { $exists: true, $type: 'string', $ne: '' }
+      }
     ]
   };
 
@@ -43,15 +47,18 @@ const backfillPurchaseInvoices = async (purchaseCollection) => {
   for await (const doc of cursor) {
     const invoiceNo = normalizeInvoiceValue(doc.invoiceNo);
     const invoiceNumber = normalizeInvoiceValue(doc.invoiceNumber);
-    const resolvedInvoice = invoiceNo || invoiceNumber || `PUR-LEGACY-${String(doc._id).slice(-8).toUpperCase()}`;
+    const resolvedInvoice = invoiceNo || invoiceNumber;
+
+    if (!resolvedInvoice) {
+      continue;
+    }
 
     ops.push({
       updateOne: {
         filter: { _id: doc._id },
         update: {
           $set: {
-            invoiceNo: resolvedInvoice,
-            invoiceNumber: resolvedInvoice
+            invoiceNo: resolvedInvoice
           }
         }
       }
@@ -87,18 +94,14 @@ const runMigrations = async () => {
   await ensureCollectionIndexes(db, 'purchases', async (collection) => {
     await backfillPurchaseInvoices(collection);
     await dropIndexIfExists(collection, 'invoiceNumber_1');
-    await collection.createIndex(
-      { userId: 1, invoiceNumber: 1 },
-      { unique: true, name: 'userId_1_invoiceNumber_1' }
-    );
+    await dropIndexIfExists(collection, 'userId_1_invoiceNumber_1');
+    await dropIndexIfExists(collection, 'invoiceNo_1');
+    await dropIndexIfExists(collection, 'userId_1_invoiceNo_1');
   });
 
   await ensureCollectionIndexes(db, 'sales', async (collection) => {
     await dropIndexIfExists(collection, 'invoiceNumber_1');
-    await collection.createIndex(
-      { userId: 1, invoiceNumber: 1 },
-      { unique: true, name: 'userId_1_invoiceNumber_1' }
-    );
+    await dropIndexIfExists(collection, 'userId_1_invoiceNumber_1');
   });
 
   await ensureCollectionIndexes(db, 'stockgroups', async (collection) => {

@@ -4,6 +4,28 @@ import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
 
+const buildSaleReceiptMap = (receipts) => {
+  const map = new Map();
+
+  (receipts || [])
+    .filter((receipt) => receipt.refType === 'sale' && receipt.refId)
+    .forEach((receipt) => {
+      const key = String(receipt.refId);
+      map.set(key, (map.get(key) || 0) + Number(receipt.amount || 0));
+    });
+
+  return map;
+};
+
+const getSalePaymentStats = (sale, receiptMap) => {
+  const total = Number(sale?.totalAmount || 0);
+  const paid = Number(receiptMap.get(String(sale?._id || '')) || 0);
+  const due = Math.max(0, total - paid);
+  const status = due === 0 ? 'paid' : (paid > 0 ? 'partial' : 'unpaid');
+
+  return { paid, due, status };
+};
+
 export default function Sales() {
   const toastOptions = { autoClose: 1200 };
 
@@ -32,6 +54,7 @@ export default function Sales() {
   };
 
   const [sales, setSales] = useState([]);
+  const [allReceipts, setAllReceipts] = useState([]);
   const [leadgers, setLeadgers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -53,6 +76,10 @@ export default function Sales() {
     fetchLeadgers();
     fetchProducts();
   }, [search, dateFilter]);
+
+  useEffect(() => {
+    fetchReceipts();
+  }, []);
 
   useEffect(() => {
     if (dateFilter !== 'monthwise') {
@@ -107,6 +134,15 @@ export default function Sales() {
       setError(err.message || 'Error fetching sales');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchReceipts = async () => {
+    try {
+      const response = await apiClient.get('/receipts');
+      setAllReceipts(response.data || []);
+    } catch (err) {
+      console.error('Error fetching receipts:', err);
     }
   };
 
@@ -414,6 +450,7 @@ export default function Sales() {
         toastOptions
       );
       fetchSales();
+      fetchReceipts();
       setFormData(initialFormData);
       setCurrentItem(initialCurrentItem);
       setEditingId(null);
@@ -456,6 +493,7 @@ export default function Sales() {
         await apiClient.delete(`/sales/${id}`);
         toast.success('Sale deleted successfully', toastOptions);
         fetchSales();
+        fetchReceipts();
       } catch (err) {
         setError(err.message || 'Error deleting sale');
       }
@@ -489,6 +527,8 @@ export default function Sales() {
     return matching ? getLeadgerDisplayName(matching) : '';
   };
 
+  const saleReceiptMap = useMemo(() => buildSaleReceiptMap(allReceipts), [allReceipts]);
+
   const monthWiseSummary = useMemo(() => {
     const grouped = new Map();
 
@@ -510,8 +550,7 @@ export default function Sales() {
 
       const bucket = grouped.get(monthKey);
       const total = Number(sale.totalAmount || 0);
-      const paid = Number(sale.paidAmount || 0);
-      const due = total - paid;
+      const { paid, due } = getSalePaymentStats(sale, saleReceiptMap);
 
       bucket.saleCount += 1;
       bucket.totalAmount += total;
@@ -520,7 +559,7 @@ export default function Sales() {
     });
 
     return Array.from(grouped.values()).sort((a, b) => b.key.localeCompare(a.key));
-  }, [sales]);
+  }, [sales, saleReceiptMap]);
 
   const visibleSales = useMemo(() => {
     if (dateFilter !== 'monthwise' || !selectedMonthKey) return sales;
@@ -530,7 +569,7 @@ export default function Sales() {
   const totalSales = visibleSales.length;
   const totalAmount = visibleSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
   const totalDue = visibleSales.reduce(
-    (sum, sale) => sum + (Number(sale.totalAmount || 0) - Number(sale.paidAmount || 0)),
+    (sum, sale) => sum + getSalePaymentStats(sale, saleReceiptMap).due,
     0
   );
   const popupFieldClass = 'w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200';
@@ -1068,7 +1107,10 @@ export default function Sales() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {visibleSales.map((sale) => (
+                {visibleSales.map((sale) => {
+                  const { paid, due, status } = getSalePaymentStats(sale, saleReceiptMap);
+
+                  return (
                   <tr key={sale._id} className="bg-white hover:bg-slate-50 transition-colors duration-200 group">
                     <td className="px-6 py-4 font-semibold text-slate-800">{sale.invoiceNumber}</td>
                     <td className="px-6 py-4 font-medium text-slate-700">{resolveLeadgerNameById(sale.party) || sale.customerName || 'Walk-in'}</td>
@@ -1095,20 +1137,20 @@ export default function Sales() {
                       Rs {Number(sale.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 text-slate-600">
-                      Rs {Number(sale.paidAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      Rs {paid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4 font-semibold text-rose-600">
-                      Rs {Number((sale.totalAmount || 0) - (sale.paidAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      Rs {due.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                     </td>
                     <td className="px-6 py-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        sale.paymentStatus === 'paid'
+                        status === 'paid'
                           ? 'bg-green-100 text-green-800'
-                          : sale.paymentStatus === 'partial'
+                          : status === 'partial'
                           ? 'bg-yellow-100 text-yellow-800'
                           : 'bg-red-100 text-red-800'
                       }`}>
-                        {sale.paymentStatus}
+                        {status}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right pr-6 space-x-2">
@@ -1126,7 +1168,8 @@ export default function Sales() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

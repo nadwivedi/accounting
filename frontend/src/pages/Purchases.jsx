@@ -212,7 +212,7 @@ export default function Purchases() {
         paymentMethod: formData.paymentMethod || 'cash',
         paymentDate: formData.paymentDate ? new Date(formData.paymentDate) : new Date(),
         paymentNotes: formData.paymentNotes || '',
-        isBillWisePayment: isEditMode ? false : Boolean(formData.isBillWisePayment)
+        isBillWisePayment: false
       };
 
       if (editingId) {
@@ -319,11 +319,6 @@ export default function Purchases() {
 
   const totalPurchases = purchases.length;
   const totalAmount = purchases.reduce((sum, purchase) => sum + Number(purchase.totalAmount || 0), 0);
-  const entryPaymentPreviewBalance = Math.max(
-    0,
-    Number(formData.totalAmount || 0) - (formData.isBillWisePayment ? Number(formData.paymentAmount || 0) : 0)
-  );
-
   return (
     <div className="min-h-screen bg-[#f8f6f1] p-4 pt-16 md:ml-[13.25rem] md:px-8 md:pb-8 md:pt-5">
       {error && (
@@ -415,14 +410,14 @@ export default function Purchases() {
                 </div>
 
                 <div>
-                  <label className="block text-gray-700 font-medium mb-2">Invoice No.</label>
+                  <label className="block text-gray-700 font-medium mb-2">Purchase Invoice No. <span className="text-gray-400 text-sm">(Optional)</span></label>
                   <input
                     type="text"
                     name="invoiceNo"
                     value={formData.invoiceNo || ''}
                     onChange={handleInputChange}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
-                    placeholder="Enter supplier invoice no."
+                    placeholder="Enter purchase invoice no. if available"
                   />
                 </div>
 
@@ -556,7 +551,7 @@ export default function Purchases() {
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-sm text-slate-600 mb-1">Amount Paid Now</label>
                     <input
@@ -601,17 +596,6 @@ export default function Purchases() {
                     />
                   </div>
 
-                  <label className="flex items-center gap-2 text-sm text-slate-700 pt-7">
-                    <input
-                      type="checkbox"
-                      name="isBillWisePayment"
-                      checked={Boolean(formData.isBillWisePayment)}
-                      onChange={handleInputChange}
-                      disabled={Boolean(editingId) || Number(formData.paymentAmount || 0) <= 0}
-                      className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 disabled:opacity-60"
-                    />
-                    Save as bill-wise payment
-                  </label>
                 </div>
 
                 <div>
@@ -627,13 +611,6 @@ export default function Purchases() {
                   />
                 </div>
 
-                {!editingId && Number(formData.paymentAmount || 0) > 0 && (
-                  <p className="text-xs text-slate-600">
-                    {formData.isBillWisePayment
-                      ? `Bill-wise selected: this payment will be linked with this purchase bill. Pending balance will be Rs ${entryPaymentPreviewBalance.toFixed(2)}.`
-                      : 'Bill-wise is not selected: payment will be saved as normal on-account party payment (no bill reference).'}
-                  </p>
-                )}
               </div>
 
               <div>

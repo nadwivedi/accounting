@@ -31,6 +31,32 @@ const getPartyLabel = (partyId, fallback = 'Account') => {
   return `${fallback} ${suffix}`;
 };
 
+const buildPurchasePaymentMap = (payments) => {
+  const map = new Map();
+
+  payments
+    .filter((payment) => payment.refType === 'purchase' && payment.refId)
+    .forEach((payment) => {
+      const key = String(payment.refId);
+      map.set(key, (map.get(key) || 0) + toNumber(payment.amount));
+    });
+
+  return map;
+};
+
+const buildSaleReceiptMap = (receipts) => {
+  const map = new Map();
+
+  receipts
+    .filter((receipt) => receipt.refType === 'sale' && receipt.refId)
+    .forEach((receipt) => {
+      const key = String(receipt.refId);
+      map.set(key, (map.get(key) || 0) + toNumber(receipt.amount));
+    });
+
+  return map;
+};
+
 exports.getOutstandingReport = async (req, res) => {
   try {
     const userId = req.userId;
@@ -41,11 +67,14 @@ exports.getOutstandingReport = async (req, res) => {
       Payment.find({ userId }),
       Receipt.find({ userId })
     ]);
+    const saleReceiptMap = buildSaleReceiptMap(receipts);
+    const purchasePaymentMap = buildPurchasePaymentMap(payments);
 
     const salePending = sales
       .map((sale) => {
         const partyId = getRawPartyId(sale.party);
-        const pending = Math.max(0, toNumber(sale.totalAmount) - toNumber(sale.paidAmount));
+        const paidAmount = toNumber(saleReceiptMap.get(String(sale._id)));
+        const pending = Math.max(0, toNumber(sale.totalAmount) - paidAmount);
         return {
           id: sale._id,
           invoiceNumber: sale.invoiceNumber,
@@ -53,7 +82,7 @@ exports.getOutstandingReport = async (req, res) => {
           partyId: partyId || null,
           partyName: sale.customerName || getPartyLabel(partyId, 'Account') || 'Walk-in',
           totalAmount: toNumber(sale.totalAmount),
-          paidAmount: toNumber(sale.paidAmount),
+          paidAmount,
           pendingAmount: pending,
           type: 'sale'
         };
@@ -64,13 +93,8 @@ exports.getOutstandingReport = async (req, res) => {
     const purchasePending = purchases
       .map((purchase) => {
         const partyId = getRawPartyId(purchase.party);
-        const pending = Math.max(
-          0,
-          toNumber(
-            purchase.balanceAmount,
-            toNumber(purchase.totalAmount) - toNumber(purchase.paidAmount)
-          )
-        );
+        const paidAmount = toNumber(purchasePaymentMap.get(String(purchase._id)));
+        const pending = Math.max(0, toNumber(purchase.totalAmount) - paidAmount);
         return {
           id: purchase._id,
           invoiceNo: purchase.invoiceNo || purchase.invoiceNumber || '-',
@@ -78,7 +102,7 @@ exports.getOutstandingReport = async (req, res) => {
           partyId: partyId || null,
           partyName: getPartyLabel(partyId, 'Account'),
           totalAmount: toNumber(purchase.totalAmount),
-          paidAmount: toNumber(purchase.paidAmount),
+          paidAmount,
           pendingAmount: pending,
           type: 'purchase'
         };

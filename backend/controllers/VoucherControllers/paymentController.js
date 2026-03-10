@@ -7,6 +7,26 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const getPurchaseLinkedPaymentTotal = async ({ purchaseId, userId }) => {
+  const result = await Payment.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+        refType: 'purchase',
+        refId: new mongoose.Types.ObjectId(purchaseId)
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: '$amount' }
+      }
+    }
+  ]);
+
+  return toNumber(result[0]?.total);
+};
+
 const applyPurchasePayment = async ({ refId, userId, amount }) => {
   const purchase = await Purchase.findOne({ _id: refId, userId });
   if (!purchase) {
@@ -14,21 +34,12 @@ const applyPurchasePayment = async ({ refId, userId, amount }) => {
   }
 
   const totalAmount = toNumber(purchase.totalAmount);
-  const paidAmount = toNumber(purchase.paidAmount);
-  const balanceAmount = Math.max(0, toNumber(purchase.balanceAmount, totalAmount - paidAmount));
+  const paidAmount = await getPurchaseLinkedPaymentTotal({ purchaseId: purchase._id, userId });
+  const balanceAmount = Math.max(0, totalAmount - paidAmount);
 
   if (amount > balanceAmount) {
     return { error: 'Amount exceeds purchase pending amount' };
   }
-
-  const newPaidAmount = paidAmount + amount;
-  const newBalanceAmount = Math.max(0, totalAmount - newPaidAmount);
-  const paymentStatus = newBalanceAmount === 0 ? 'paid' : 'partial';
-
-  purchase.paidAmount = newPaidAmount;
-  purchase.balanceAmount = newBalanceAmount;
-  purchase.paymentStatus = paymentStatus;
-  await purchase.save();
 
   return { purchase };
 };

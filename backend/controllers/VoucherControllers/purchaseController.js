@@ -1,17 +1,11 @@
 ﻿const Purchase = require('../../models/voucher/Purchase');
 const Product = require('../../models/master/Stock');
 const Payment = require('../../models/voucher/Payment');
+const mongoose = require('mongoose');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
-};
-
-const generateInvoiceNo = () => {
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const stamp = Date.now().toString().slice(-6);
-  const rand = Math.floor(Math.random() * 90 + 10);
-  return `PUR-${date}-${stamp}${rand}`;
 };
 
 const isDuplicatePurchaseInvoiceError = (error) => (
@@ -59,6 +53,26 @@ const calculateTotalAmount = (items, requestedTotal) => {
 
 const toBoolean = (value) => value === true || value === 'true' || value === 1 || value === '1';
 
+const getLinkedPurchasePaymentTotal = async ({ purchaseId, userId }) => {
+  const result = await Payment.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+        refType: 'purchase',
+        refId: new mongoose.Types.ObjectId(purchaseId)
+      }
+    },
+    {
+      $group: {
+        _id: null,
+        total: { $sum: '$amount' }
+      }
+    }
+  ]);
+
+  return toNumber(result[0]?.total);
+};
+
 // Create purchase
 exports.createPurchase = async (req, res) => {
   try {
@@ -87,7 +101,6 @@ exports.createPurchase = async (req, res) => {
     }
 
     const normalizedInvoiceNo = String(invoiceNo || invoiceNumber || '').trim();
-    const resolvedInvoiceNumber = normalizedInvoiceNo || generateInvoiceNo();
     const resolvedTotalAmount = calculateTotalAmount(normalizedItems, totalAmount);
     const resolvedPaymentAmount = Math.max(0, toNumber(paymentAmount, 0));
     const resolvedBillWiseFlag = toBoolean(isBillWisePayment);
@@ -99,27 +112,20 @@ exports.createPurchase = async (req, res) => {
       });
     }
 
-    const linkedBillPaidAmount = resolvedBillWiseFlag ? resolvedPaymentAmount : 0;
-    const balanceAmount = Math.max(0, resolvedTotalAmount - linkedBillPaidAmount);
-    const paymentStatus = balanceAmount === 0 ? 'paid' : (linkedBillPaidAmount > 0 ? 'partial' : 'unpaid');
-
     const basePayload = {
       userId,
-      invoiceNo: resolvedInvoiceNumber,
-      invoiceNumber: resolvedInvoiceNumber,
+      invoiceNo: normalizedInvoiceNo || undefined,
       party: party || null,
       items: normalizedItems,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : new Date(),
       dueDate: dueDate ? new Date(dueDate) : null,
       totalAmount: resolvedTotalAmount,
-      paidAmount: linkedBillPaidAmount,
-      balanceAmount,
-      paymentStatus,
       invoiceLink: invoiceLink || '',
       notes
     };
 
     const purchase = await Purchase.create(basePayload);
+    const purchaseRefLabel = normalizedInvoiceNo ? `purchase ${normalizedInvoiceNo}` : 'purchase entry';
 
     for (const item of normalizedItems) {
       await Product.findByIdAndUpdate(
@@ -138,8 +144,8 @@ exports.createPurchase = async (req, res) => {
         method: paymentMethod || 'cash',
         paymentDate: paymentDate ? new Date(paymentDate) : (purchaseDate ? new Date(purchaseDate) : new Date()),
         notes: paymentNotes || (resolvedBillWiseFlag
-          ? `Payment against purchase ${resolvedInvoiceNumber}`
-          : `On-account payment posted during purchase ${resolvedInvoiceNumber}`)
+          ? `Payment against ${purchaseRefLabel}`
+          : `On-account payment posted during ${purchaseRefLabel}`)
       });
     }
 
@@ -304,21 +310,8 @@ exports.updatePurchase = async (req, res) => {
     }
 
     const normalizedInvoiceNo = String(invoiceNo || invoiceNumber || '').trim();
-    if (normalizedInvoiceNo) {
-      purchase.invoiceNo = normalizedInvoiceNo;
-      purchase.invoiceNumber = normalizedInvoiceNo;
-    } else {
-      if (!purchase.invoiceNo && purchase.invoiceNumber) {
-        purchase.invoiceNo = purchase.invoiceNumber;
-      }
-      if (!purchase.invoiceNumber && purchase.invoiceNo) {
-        purchase.invoiceNumber = purchase.invoiceNo;
-      }
-      if (!purchase.invoiceNo && !purchase.invoiceNumber) {
-        const generatedInvoiceNo = generateInvoiceNo();
-        purchase.invoiceNo = generatedInvoiceNo;
-        purchase.invoiceNumber = generatedInvoiceNo;
-      }
+    if (invoiceNo !== undefined || invoiceNumber !== undefined) {
+      purchase.invoiceNo = normalizedInvoiceNo || undefined;
     }
 
     if (invoiceLink !== undefined) {
@@ -331,18 +324,19 @@ exports.updatePurchase = async (req, res) => {
 
     if (hasNewItems || totalAmount !== undefined) {
       const recalculatedTotal = calculateTotalAmount(normalizedItems, totalAmount);
-      const currentPaidAmount = toNumber(purchase.paidAmount);
+      const linkedPaymentTotal = await getLinkedPurchasePaymentTotal({
+        purchaseId: purchase._id,
+        userId
+      });
 
-      if (currentPaidAmount > recalculatedTotal) {
+      if (linkedPaymentTotal > recalculatedTotal) {
         return res.status(400).json({
           success: false,
-          message: 'Total cannot be less than already paid bill-wise amount'
+          message: 'Total cannot be less than already linked purchase payments'
         });
       }
 
       purchase.totalAmount = recalculatedTotal;
-      purchase.balanceAmount = Math.max(0, recalculatedTotal - currentPaidAmount);
-      purchase.paymentStatus = purchase.balanceAmount === 0 ? 'paid' : (currentPaidAmount > 0 ? 'partial' : 'unpaid');
     }
 
     await purchase.save();
