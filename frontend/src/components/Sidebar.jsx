@@ -147,31 +147,31 @@ const menuItems = [
 
 const sectionStyles = {
   Masters: {
-    headerClass: 'border-cyan-200/15 bg-cyan-300/8',
-    accentTextClass: 'text-[28px] leading-none text-cyan-100',
-    accentDotClass: 'h-2.5 w-2.5 rounded-full bg-cyan-100/90',
+    headerClass: 'border-cyan-200/70 bg-cyan-50/95',
+    accentTextClass: 'text-[28px] leading-none text-cyan-700',
+    accentDotClass: 'h-2.5 w-2.5 rounded-full bg-cyan-500',
     label: 'MASTER',
-    activeClass: 'bg-[linear-gradient(90deg,rgba(34,211,238,0.18),rgba(45,212,191,0.14))] text-white',
-    hoverClass: 'text-slate-50/95 hover:bg-cyan-300/8',
-    barClass: 'bg-cyan-100'
+    activeClass: 'bg-[linear-gradient(90deg,rgba(207,250,254,0.96),rgba(236,254,255,0.94))] text-slate-800',
+    hoverClass: 'text-slate-700 hover:bg-cyan-50/90',
+    barClass: 'bg-cyan-500'
   },
   Vouchers: {
-    headerClass: 'border-amber-200/15 bg-amber-300/8',
-    accentTextClass: 'text-[28px] leading-none text-amber-100',
-    accentDotClass: 'h-2.5 w-2.5 rounded-full bg-amber-100/90',
+    headerClass: 'border-amber-200/70 bg-amber-50/95',
+    accentTextClass: 'text-[28px] leading-none text-amber-700',
+    accentDotClass: 'h-2.5 w-2.5 rounded-full bg-amber-500',
     label: 'VOUCHERS',
-    activeClass: 'bg-[linear-gradient(90deg,rgba(251,191,36,0.22),rgba(245,158,11,0.14))] text-white',
-    hoverClass: 'text-slate-50/95 hover:bg-amber-300/8',
-    barClass: 'bg-amber-100'
+    activeClass: 'bg-[linear-gradient(90deg,rgba(254,243,199,0.96),rgba(255,251,235,0.94))] text-slate-800',
+    hoverClass: 'text-slate-700 hover:bg-amber-50/90',
+    barClass: 'bg-amber-500'
   },
   Expense: {
-    headerClass: 'border-emerald-200/15 bg-emerald-300/8',
-    accentTextClass: 'text-[28px] leading-none text-emerald-100',
-    accentDotClass: 'h-2.5 w-2.5 rounded-full bg-emerald-100/90',
+    headerClass: 'border-emerald-200/70 bg-emerald-50/95',
+    accentTextClass: 'text-[28px] leading-none text-emerald-700',
+    accentDotClass: 'h-2.5 w-2.5 rounded-full bg-emerald-500',
     label: 'EXPENSE',
-    activeClass: 'bg-[linear-gradient(90deg,rgba(52,211,153,0.2),rgba(16,185,129,0.14))] text-white',
-    hoverClass: 'text-slate-50/95 hover:bg-emerald-300/8',
-    barClass: 'bg-emerald-100'
+    activeClass: 'bg-[linear-gradient(90deg,rgba(209,250,229,0.96),rgba(236,253,245,0.94))] text-slate-800',
+    hoverClass: 'text-slate-700 hover:bg-emerald-50/90',
+    barClass: 'bg-emerald-500'
   }
 };
 
@@ -302,19 +302,19 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Top Header */}
-      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-white/10 bg-[linear-gradient(135deg,#0b1f33_0%,#14304d_55%,#1d4b64_100%)] px-4 shadow-[0_14px_34px_rgba(8,20,35,0.38)] md:hidden">
+      <header className="fixed inset-x-0 top-0 z-40 h-[60px] border-b border-slate-200 bg-[linear-gradient(135deg,#f8fafc_0%,#f9fafb_55%,#e0f2fe_100%)] px-4 shadow-[0_14px_34px_rgba(148,163,184,0.18)] md:hidden">
         <div className="relative flex h-full items-center justify-between">
           <div className="flex items-center gap-3">
             <div>
-              <p className="text-sm font-bold tracking-[0.18em] text-white">BILLHUB</p>
-              <p className="text-[10px] uppercase tracking-[0.2em] text-cyan-100/75">Business Console</p>
+              <p className="text-sm font-bold tracking-[0.18em] text-slate-800">BILLHUB</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Business Console</p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white transition hover:bg-white/16"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-300 bg-white/80 text-slate-700 transition hover:bg-white"
             aria-label="Open navigation menu"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-5 w-5">
@@ -327,26 +327,26 @@ export default function Sidebar() {
       {/* Mobile Backdrop */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-slate-950/45 backdrop-blur-[3px] md:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-[3px] md:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Sidebar Container */}
-      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[13.25rem] max-w-[82vw] flex-col overflow-hidden border-r border-cyan-100/10 bg-[linear-gradient(180deg,#071a2c_0%,#0d2740_34%,#123654_72%,#173f5f_100%)] shadow-[0_28px_60px_rgba(4,12,24,0.42)] transition-transform duration-300 md:z-40 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 flex w-[13.25rem] max-w-[82vw] flex-col overflow-hidden border-r border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#f9fafb_34%,#eff6ff_72%,#e0f2fe_100%)] shadow-[0_28px_60px_rgba(148,163,184,0.22)] transition-transform duration-300 md:z-40 md:translate-x-0 ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}>
 
         {/* Inside Border Highlight */}
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.16),transparent_32%),radial-gradient(circle_at_78%_18%,rgba(251,191,36,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.08),transparent_30%)]" />
-        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-cyan-100/30 to-transparent" />
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.16),transparent_32%),radial-gradient(circle_at_78%_18%,rgba(251,191,36,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.35),transparent_30%)]" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-slate-300/80 to-transparent" />
 
         {/* Sidebar Header / Logo */}
-        <div className="relative z-10 flex items-center justify-between border-b border-white/8 px-5 py-4">
+        <div className="relative z-10 flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <Link to="/stock" className="group flex items-center gap-3.5" onClick={() => setMobileOpen(false)}>
             <div className="flex flex-col">
-              <p className="text-[15px] font-bold tracking-[0.18em] text-white">
+              <p className="text-[15px] font-bold tracking-[0.18em] text-slate-800">
                 BILLHUB
               </p>
-              <p className="text-[10px] font-bold tracking-[0.18em] text-cyan-100/75 uppercase">
+              <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-slate-500">
                 Business Console
               </p>
             </div>
@@ -355,7 +355,7 @@ export default function Sidebar() {
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white transition hover:bg-white/16 md:hidden"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 bg-white/80 text-slate-700 transition hover:bg-white md:hidden"
             aria-label="Close sidebar"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
@@ -372,7 +372,7 @@ export default function Sidebar() {
 
               return (
                 <div key={item.name} className="flex flex-col">
-                  <div className={`flex items-center gap-3 border-y px-5 py-3 text-slate-50 ${sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''}`}>
+                  <div className={`flex items-center gap-3 border-y px-5 py-3 text-slate-700 ${sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''}`}>
                     <span className={`inline-flex ${index === 0 ? sectionStyle.accentTextClass : sectionStyle.accentDotClass}`}>
                       {index === 0 ? '+' : ''}
                     </span>
@@ -381,7 +381,7 @@ export default function Sidebar() {
                     </span>
                   </div>
 
-                  <div className="border-b border-white/8">
+                  <div className="border-b border-slate-200/90">
                     {item.subItems.map((subItem) => {
                       const subActive = isActive(subItem.path);
                       const SubIcon = subItem.Icon;
@@ -393,7 +393,7 @@ export default function Sidebar() {
                           onClick={() => {
                             if (window.innerWidth < 768) setMobileOpen(false);
                           }}
-                          className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-2.5 text-[12px] transition-colors duration-200 last:border-b-0 ${
+                          className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 last:border-b-0 ${
                             subActive ? sectionStyle.activeClass : sectionStyle.hoverClass
                           }`}
                         >
@@ -405,7 +405,7 @@ export default function Sidebar() {
                             <SubIcon />
                           </div>
 
-                          <span className={`${subActive ? 'font-semibold text-white' : 'font-medium text-slate-50/90 group-hover:text-white'}`}>
+                          <span className={`${subActive ? 'font-semibold text-slate-800' : 'font-medium text-slate-700 group-hover:text-slate-900'}`}>
                             {item.name === 'Vouchers' && subItem.name === 'Sale' ? 'Sales' :
                               item.name === 'Vouchers' && subItem.name === 'Purchase' ? 'Purchase' :
                                 subItem.name}
@@ -418,8 +418,8 @@ export default function Sidebar() {
               );
             })}
 
-            <div className="mt-3 flex items-center gap-3 border-y border-white/12 bg-white/6 px-5 py-3 text-slate-50">
-              <span className="h-2.5 w-2.5 rounded-full bg-cyan-100/90" />
+            <div className="mt-3 flex items-center gap-3 border-y border-slate-200 bg-slate-50/90 px-5 py-3 text-slate-700">
+              <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" />
               <span className="text-[12px] font-bold tracking-[0.16em]">MORE</span>
             </div>
 
@@ -434,19 +434,19 @@ export default function Sidebar() {
                   onClick={() => {
                     if (window.innerWidth < 768) setMobileOpen(false);
                   }}
-                  className={`group relative flex items-center gap-3 border-b border-white/8 px-5 py-2.5 text-[12px] transition-colors duration-200 ${
+                  className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 ${
                     active
-                      ? 'bg-[linear-gradient(90deg,rgba(125,211,252,0.18),rgba(255,255,255,0.1))] text-white'
-                      : 'text-slate-50/95 hover:bg-cyan-300/8'
+                      ? 'bg-[linear-gradient(90deg,rgba(224,242,254,0.98),rgba(248,250,252,0.94))] text-slate-800'
+                      : 'text-slate-700 hover:bg-cyan-50/90'
                   }`}
                 >
-                  {active && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-100" />}
+                  {active && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-500" />}
 
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-50">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-700">
                     <Icon />
                   </div>
 
-                  <span className={`${active ? 'font-semibold text-white' : 'font-medium text-slate-50/90 group-hover:text-white'}`}>
+                  <span className={`${active ? 'font-semibold text-slate-800' : 'font-medium text-slate-700 group-hover:text-slate-900'}`}>
                     {item.name}
                   </span>
                 </Link>
