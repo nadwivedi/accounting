@@ -235,9 +235,9 @@ export default function Unit() {
           No unit found. Add your first unit.
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-slate-100 border-b border-slate-200">
+        <div className="darkish-table-shell rounded-2xl overflow-hidden">
+          <table className="darkish-table w-full">
+            <thead>
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Name</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Description</th>
@@ -247,7 +247,7 @@ export default function Unit() {
             </thead>
             <tbody>
               {units.map((unit) => (
-                <tr key={unit._id} className="border-b border-slate-100 hover:bg-slate-50">
+                <tr key={unit._id} className="border-b border-slate-100 transition-colors hover:bg-slate-700/[0.06]">
                   <td className="px-6 py-3 font-medium text-slate-800">{unit.name}</td>
                   <td className="px-6 py-3 text-gray-600">{unit.description || '-'}</td>
                   <td className="px-6 py-3">

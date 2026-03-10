@@ -929,9 +929,9 @@ export default function Products() {
             No stock items found. Create your first stock item!
           </div>
         ) : (
-          <div className="overflow-x-auto p-3 sm:p-5">
-            <table className="w-full min-w-[760px] text-left text-sm whitespace-nowrap">
-              <thead className="bg-[#e7ebf0] text-slate-700">
+          <div className="darkish-table-shell overflow-x-auto rounded-[18px] p-3 sm:p-5">
+            <table className="darkish-table w-full min-w-[760px] text-left text-sm whitespace-nowrap">
+              <thead>
                 <tr>
                   <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Name</th>
                   <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Stock Group</th>
@@ -940,11 +940,11 @@ export default function Products() {
                   <th className="border border-slate-200 px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white text-slate-600">
+              <tbody className="text-slate-600">
                 {products.map((product) => (
                   <tr
                     key={product._id}
-                    className="cursor-pointer transition-colors duration-150 hover:bg-slate-50"
+                    className="cursor-pointer transition-colors duration-150 hover:bg-slate-700/[0.06]"
                     onClick={() => handleOpenLedger(product._id)}
                   >
                     <td className="border border-slate-200 px-4 py-3">
@@ -971,7 +971,7 @@ export default function Products() {
                             e.stopPropagation();
                             handleEdit(product);
                           }}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300/70 bg-white/70 text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-700"
                           aria-label={`Edit ${product.name}`}
                         >
                           <Pencil className="h-4 w-4" />
@@ -981,7 +981,7 @@ export default function Products() {
                             e.stopPropagation();
                             handleDelete(product._id);
                           }}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300/70 bg-white/70 text-slate-500 transition hover:bg-red-50/90 hover:text-red-600"
                           aria-label={`Delete ${product.name}`}
                         >
                           <Trash2 className="h-4 w-4" />

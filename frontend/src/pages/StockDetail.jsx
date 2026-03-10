@@ -274,9 +274,9 @@ export default function StockDetail() {
         </form>
       </div>
 
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-slate-100 border-b border-slate-200">
+      <div className="darkish-table-shell rounded-2xl overflow-x-auto">
+        <table className="darkish-table w-full">
+          <thead>
             <tr>
               <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
               <th className="px-6 py-3 text-left font-semibold text-gray-700">Source</th>
@@ -300,7 +300,7 @@ export default function StockDetail() {
               sortedLedgerRows.map((row, idx) => {
                 const typeMeta = getTypeMeta(row);
                 return (
-                  <tr key={`${row.refId}-${idx}`} className="border-b border-slate-100 hover:bg-slate-50">
+                  <tr key={`${row.refId}-${idx}`} className="border-b border-slate-100 transition-colors hover:bg-slate-700/[0.06]">
                     <td className="px-6 py-3">{formatDate(row.date)}</td>
                     <td className="px-6 py-3">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${typeMeta.className}`}>

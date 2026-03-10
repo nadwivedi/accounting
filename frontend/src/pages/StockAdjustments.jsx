@@ -193,13 +193,13 @@ export default function StockAdjustments() {
           </button>
         </form>
 
-        <div className="xl:col-span-2 rounded-2xl border border-slate-200 bg-white shadow-sm overflow-x-auto">
+        <div className="darkish-table-shell xl:col-span-2 rounded-2xl overflow-x-auto">
           <div className="px-5 py-4 border-b border-slate-200">
             <h2 className="text-lg font-semibold text-slate-800">Recent Adjustments</h2>
           </div>
 
-          <table className="w-full">
-            <thead className="bg-slate-100 border-b border-slate-200">
+          <table className="darkish-table w-full">
+            <thead>
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Date</th>
                 <th className="px-6 py-3 text-left font-semibold text-gray-700">Stock Item</th>
@@ -220,7 +220,7 @@ export default function StockAdjustments() {
                 </tr>
               ) : (
                 ledgerRows.slice(0, 100).map((row, index) => (
-                  <tr key={`${row.refId}-${index}`} className="border-b border-slate-100 hover:bg-slate-50">
+                  <tr key={`${row.refId}-${index}`} className="border-b border-slate-100 transition-colors hover:bg-slate-700/[0.06]">
                     <td className="px-6 py-3">{formatDate(row.date)}</td>
                     <td className="px-6 py-3">{row.productName || '-'}</td>
                     <td className="px-6 py-3">

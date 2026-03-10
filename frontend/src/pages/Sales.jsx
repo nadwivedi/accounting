@@ -1001,9 +1001,9 @@ export default function Sales() {
               No monthly sale history available for the current search.
             </div>
           ) : (
-            <div className="overflow-x-auto rounded-lg border border-slate-200">
-              <table className="w-full text-sm">
-                <thead className="bg-slate-100 text-slate-700">
+            <div className="darkish-table-shell overflow-x-auto rounded-lg">
+              <table className="darkish-table w-full text-sm">
+                <thead>
                   <tr>
                     <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Month</th>
                     <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Invoices</th>
@@ -1012,13 +1012,13 @@ export default function Sales() {
                     <th className="px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide">Due</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
+                <tbody className="divide-y divide-slate-200/70">
                   {monthWiseSummary.map((month) => (
                     <tr
                       key={month.key}
                       onClick={() => setSelectedMonthKey(month.key)}
                       className={`cursor-pointer transition-colors ${
-                        selectedMonthKey === month.key ? 'bg-blue-50' : 'hover:bg-slate-50'
+                        selectedMonthKey === month.key ? 'bg-blue-100/80' : 'hover:bg-slate-700/[0.06]'
                       }`}
                     >
                       <td className="px-4 py-2.5 font-medium text-slate-800">{month.label}</td>

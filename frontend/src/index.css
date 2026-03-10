@@ -1,1 +1,45 @@
 @import "tailwindcss";
+
+:root {
+  --darkish-table-border: rgba(100, 116, 139, 0.24);
+}
+
+.darkish-table-shell {
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  background:
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(226, 232, 240, 0.9) 100%);
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.1);
+}
+
+.darkish-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  background: transparent;
+}
+
+.darkish-table thead {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 45%, #334155 100%);
+  color: #e2e8f0;
+}
+
+.darkish-table thead th {
+  color: inherit;
+  box-shadow: inset 0 -1px 0 rgba(148, 163, 184, 0.24);
+}
+
+.darkish-table tbody {
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.96) 0%, rgba(226, 232, 240, 0.92) 100%);
+}
+
+.darkish-table tbody tr {
+  transition: background-color 0.18s ease;
+}
+
+.darkish-table tbody tr:hover {
+  background: rgba(51, 65, 85, 0.08);
+}
+
+.darkish-table tbody td {
+  border-color: var(--darkish-table-border);
+}

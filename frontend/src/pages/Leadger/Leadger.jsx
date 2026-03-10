@@ -207,9 +207,9 @@ export default function Leadger() {
         {loading ? (
           <div className="px-6 py-10 text-center text-slate-500">Loading...</div>
         ) : (
-          <div className="overflow-x-auto p-3 sm:p-5">
-            <table className="w-full min-w-[720px] text-left text-sm whitespace-nowrap">
-              <thead className="bg-[#e7ebf0] text-slate-700">
+          <div className="darkish-table-shell overflow-x-auto rounded-[18px] p-3 sm:p-5">
+            <table className="darkish-table w-full min-w-[720px] text-left text-sm whitespace-nowrap">
+              <thead>
                 <tr>
                   <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Party Name</th>
                   <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Type</th>
@@ -217,9 +217,9 @@ export default function Leadger() {
                   <th className="border border-slate-200 px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody className="bg-white text-slate-600">
+              <tbody className="text-slate-600">
                 {parties.map((item) => (
-                  <tr key={item._id} className="transition-colors duration-150 hover:bg-slate-50">
+                  <tr key={item._id} className="transition-colors duration-150 hover:bg-slate-700/[0.06]">
                     <td className="border border-slate-200 px-4 py-3 font-semibold text-slate-800">{item.name || '-'}</td>
                     <td className="border border-slate-200 px-4 py-3">
                       <span className="inline-flex rounded-md bg-sky-50 px-2.5 py-1 text-xs font-semibold capitalize text-sky-700">
@@ -234,7 +234,7 @@ export default function Leadger() {
                         <button
                           type="button"
                           onClick={() => handleEdit(item)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300/70 bg-white/70 text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-700"
                           aria-label={`Edit ${item.name}`}
                         >
                           <Pencil className="h-4 w-4" />

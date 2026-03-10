@@ -135,10 +135,10 @@ export default function Reports() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+          <div className="darkish-table-shell rounded-2xl overflow-x-auto">
             <h3 className="px-6 py-4 font-semibold text-slate-800 border-b border-slate-200">Party Outstanding</h3>
-            <table className="w-full">
-              <thead className="bg-slate-100">
+            <table className="darkish-table w-full">
+              <thead>
                 <tr>
                   <th className="px-6 py-3 text-left">Party</th>
                   <th className="px-6 py-3 text-left">Receivable</th>
@@ -148,7 +148,7 @@ export default function Reports() {
               </thead>
               <tbody>
                 {(outstanding.partyOutstanding || []).map((row) => (
-                  <tr key={row.partyId} className="border-b border-slate-100">
+                  <tr key={row.partyId} className="border-b border-slate-100 transition-colors hover:bg-slate-700/[0.05]">
                     <td className="px-6 py-3">{row.partyName}</td>
                     <td className="px-6 py-3 text-emerald-700">Rs {Number(row.receivable || 0).toFixed(2)}</td>
                     <td className="px-6 py-3 text-rose-700">Rs {Number(row.payable || 0).toFixed(2)}</td>
@@ -184,9 +184,9 @@ export default function Reports() {
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-100">
+          <div className="darkish-table-shell rounded-2xl overflow-x-auto">
+            <table className="darkish-table w-full">
+              <thead>
                 <tr>
                   <th className="px-6 py-3 text-left">Date</th>
                   <th className="px-6 py-3 text-left">Type</th>
@@ -197,7 +197,7 @@ export default function Reports() {
               </thead>
               <tbody>
                 {partyLedger.map((row, idx) => (
-                  <tr key={`${row.refId}-${idx}`} className="border-b border-slate-100">
+                  <tr key={`${row.refId}-${idx}`} className="border-b border-slate-100 transition-colors hover:bg-slate-700/[0.05]">
                     <td className="px-6 py-3">{new Date(row.date).toLocaleDateString()}</td>
                     <td className="px-6 py-3 capitalize">{row.type}</td>
                     <td className="px-6 py-3">{row.partyName}</td>
@@ -239,9 +239,9 @@ export default function Reports() {
             </button>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-slate-100">
+          <div className="darkish-table-shell rounded-2xl overflow-x-auto">
+            <table className="darkish-table w-full">
+              <thead>
                 <tr>
                   <th className="px-6 py-3 text-left">Date</th>
                   <th className="px-6 py-3 text-left">Product</th>
@@ -253,7 +253,7 @@ export default function Reports() {
               </thead>
               <tbody>
                 {(stockLedger.ledger || []).map((row, idx) => (
-                  <tr key={`${row.refId}-${idx}`} className="border-b border-slate-100">
+                  <tr key={`${row.refId}-${idx}`} className="border-b border-slate-100 transition-colors hover:bg-slate-700/[0.05]">
                     <td className="px-6 py-3">{new Date(row.date).toLocaleDateString()}</td>
                     <td className="px-6 py-3">{row.productName}</td>
                     <td className="px-6 py-3 capitalize">{row.type}</td>
