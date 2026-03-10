@@ -149,8 +149,8 @@ export default function Party() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-2 sm:gap-4 mb-6">
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
+      <div className="mb-6 grid grid-cols-1 gap-2 sm:gap-4 lg:flex lg:justify-start">
+        <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5 lg:min-w-[220px] lg:w-fit">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Party Count</p>
@@ -179,7 +179,6 @@ export default function Party() {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
             <div className="shrink-0">
               <h2 className="text-lg font-bold text-slate-800">Party Master</h2>
-              <p className="text-sm text-slate-500">Maintain customers and suppliers from one clean master list.</p>
             </div>
 
             <div className="flex flex-col gap-3 sm:flex-row lg:min-w-0 lg:flex-1 lg:justify-end">
@@ -190,7 +189,7 @@ export default function Party() {
                   placeholder="Search parties..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  className="w-full rounded-md border border-slate-500 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-600 focus:ring-2 focus:ring-slate-200"
                 />
               </div>
 
