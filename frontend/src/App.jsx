@@ -12,7 +12,7 @@ import Sales from './pages/Sales';
 import Purchases from './pages/Purchases';
 import Payments from './pages/Payments';
 import Receipts from './pages/Receipts';
-import Leadger from './pages/Leadger';
+import Party from './pages/Party';
 import Expenses from './pages/Expenses';
 import ExpenseGroups from './pages/ExpenseGroups';
 import Contra from './pages/Contra';
@@ -156,10 +156,19 @@ function App() {
         />
 
         <Route
+          path="/party"
+          element={
+            <ProtectedRoute>
+              <Party />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/leadger"
           element={
             <ProtectedRoute>
-              <Leadger />
+              <Navigate to="/party" replace />
             </ProtectedRoute>
           }
         />

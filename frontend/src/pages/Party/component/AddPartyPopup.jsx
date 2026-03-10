@@ -72,7 +72,7 @@ const getTypeLabel = (typeValue) => (
   TYPE_OPTIONS.find((option) => option.value === typeValue)?.label || ''
 );
 
-export default function AddLeadgerPopup({
+export default function AddPartyPopup({
   showForm,
   editingId,
   loading,
@@ -264,7 +264,7 @@ export default function AddLeadgerPopup({
         </div>
 
         <form
-          id="ledger-form"
+          id="party-form"
           onSubmit={handleSubmit}
           onKeyDown={(e) => handlePopupFormKeyDown(e, handleCloseForm)}
           className="flex flex-col flex-1 overflow-hidden"
@@ -507,7 +507,7 @@ export default function AddLeadgerPopup({
 
               <button
                 type="submit"
-                form="ledger-form"
+                form="party-form"
                 disabled={loading}
                 className="flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
               >

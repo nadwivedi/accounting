@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pencil, Search, Wallet } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
-import AddLeadgerPopup from './component/AddLeadgerPopup';
+import AddPartyPopup from './component/AddPartyPopup';
 
 const getInitialForm = () => ({
   type: 'supplier',
@@ -21,7 +21,7 @@ const toTitleCase = (value) => String(value || '')
   .toLowerCase()
   .replace(/\b[a-z]/g, (char) => char.toUpperCase());
 
-export default function Leadger() {
+export default function Party() {
   const [parties, setParties] = useState([]);
   const [formData, setFormData] = useState(getInitialForm());
   const [loading, setLoading] = useState(false);
@@ -164,7 +164,7 @@ export default function Leadger() {
         </div>
       </div>
 
-      <AddLeadgerPopup
+      <AddPartyPopup
         showForm={showForm}
         editingId={editingId}
         loading={loading}

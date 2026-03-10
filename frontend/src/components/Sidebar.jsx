@@ -97,10 +97,6 @@ function VoucherIcon() {
   );
 }
 
-function LeadgerIcon() {
-  return <AssetIcon src="/party_converted.avif" />;
-}
-
 function SaleReturnIcon() {
   return <AssetIcon src="/sales return_converted.avif" />;
 }
@@ -114,7 +110,7 @@ const menuItems = [
     name: 'Masters',
     Icon: MasterIcon,
     subItems: [
-      { name: 'Manage Party', path: '/leadger', Icon: LeadgerIcon },
+      { name: 'Manage Party', path: '/party', Icon: PartyIcon },
       { name: 'Stock Item', path: '/stock', Icon: ProductIcon, dividerBefore: true },
       { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
       { name: 'Unit', path: '/units', Icon: UnitIcon }
@@ -291,7 +287,7 @@ export default function Sidebar() {
       } else if (key === 'm') {
         event.preventDefault();
         if (window.innerWidth < 768) setMobileOpen(true);
-        navigate('/leadger');
+        navigate('/party');
       }
     };
 
