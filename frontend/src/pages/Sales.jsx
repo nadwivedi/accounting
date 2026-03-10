@@ -538,7 +538,7 @@ export default function Sales() {
   const popupSectionClass = 'rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3 md:p-4';
 
   return (
-    <div className="p-4 pt-16 md:ml-64 md:px-8 md:pb-8 md:pt-5 bg-[#f8f6f1] min-h-screen">
+    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-16 md:ml-[13.25rem] md:px-8 md:pb-8 md:pt-5">
 
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">

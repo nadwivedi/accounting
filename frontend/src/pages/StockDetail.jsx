@@ -159,7 +159,7 @@ export default function StockDetail() {
   };
 
   return (
-    <div className="p-4 pt-20 md:ml-64 md:p-8 bg-[#f8f6f1] min-h-screen">
+    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-20 md:ml-[13.25rem] md:p-8">
       <div className="mb-4">
         <Link to="/stock" className="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-800">
           Back to Stock
