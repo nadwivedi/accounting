@@ -238,6 +238,20 @@ export default function Sidebar({ variant = 'rail' }) {
   }, [expandedSection, variant]);
 
   useEffect(() => {
+    if (variant !== 'home' || location.pathname !== '/') return;
+
+    const requestedSection = location.state?.homeSection;
+    const requestedPath = location.state?.homePath;
+    if (!requestedSection || !requestedPath) return;
+
+    const sectionItems = getSectionItems(requestedSection).filter((item) => Boolean(item.path));
+    if (!sectionItems.some((item) => item.path === requestedPath)) return;
+
+    setExpandedSection(requestedSection);
+    setActiveHomePath(requestedPath);
+  }, [location.pathname, location.state, variant]);
+
+  useEffect(() => {
     const isTypingTarget = (target) => {
       const tagName = target?.tagName?.toLowerCase();
       return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target?.isContentEditable;
