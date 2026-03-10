@@ -178,6 +178,14 @@ const homeSectionHotkeys = {
   r: 'Reports'
 };
 
+const getSectionItems = (sectionName) => {
+  if (sectionName === 'Reports') {
+    return menuItems.filter((item) => !item.subItems?.length);
+  }
+
+  return menuItems.find((item) => item.name === sectionName)?.subItems || [];
+};
+
 const renderSectionLabel = (label) => {
   const firstChar = String(label || '').charAt(0);
   const remainder = String(label || '').slice(1);
@@ -195,6 +203,7 @@ const renderSectionLabel = (label) => {
 export default function Sidebar({ variant = 'rail' }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [expandedSection, setExpandedSection] = useState('Masters');
+  const [activeHomePath, setActiveHomePath] = useState('/party');
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -211,6 +220,22 @@ export default function Sidebar({ variant = 'rail' }) {
     }
     return false;
   };
+
+  useEffect(() => {
+    if (variant !== 'home') return;
+
+    const sectionItems = getSectionItems(expandedSection);
+    if (sectionItems.length === 0) {
+      setActiveHomePath('');
+      return;
+    }
+
+    setActiveHomePath((currentPath) => (
+      sectionItems.some((item) => item.path === currentPath)
+        ? currentPath
+        : sectionItems[0].path
+    ));
+  }, [expandedSection, variant]);
 
   useEffect(() => {
     const isTypingTarget = (target) => {
@@ -262,6 +287,30 @@ export default function Sidebar({ variant = 'rail' }) {
       if (variant === 'home' && homeSectionHotkeys[key]) {
         event.preventDefault();
         setExpandedSection(homeSectionHotkeys[key]);
+        return;
+      }
+
+      if (variant === 'home' && (isMoveDownKey || isMoveUpKey || key === 'enter')) {
+        if (isTypingTarget(event.target)) return;
+
+        const sectionItems = getSectionItems(expandedSection).filter((item) => Boolean(item.path));
+        if (sectionItems.length === 0) return;
+
+        if (key === 'enter') {
+          event.preventDefault();
+          const targetPath = activeHomePath || sectionItems[0].path;
+          if (targetPath) navigate(targetPath);
+          return;
+        }
+
+        event.preventDefault();
+        const currentIndex = Math.max(
+          sectionItems.findIndex((item) => item.path === activeHomePath),
+          0
+        );
+        const move = isMoveDownKey ? 1 : -1;
+        const nextIndex = (currentIndex + move + sectionItems.length) % sectionItems.length;
+        setActiveHomePath(sectionItems[nextIndex].path);
         return;
       }
 
@@ -321,7 +370,7 @@ export default function Sidebar({ variant = 'rail' }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate, location.pathname, variant]);
+  }, [activeHomePath, expandedSection, navigate, location.pathname, variant]);
 
   const handleNavLinkClick = () => {
     if (window.innerWidth < 768) setMobileOpen(false);
@@ -339,7 +388,10 @@ export default function Sidebar({ variant = 'rail' }) {
               <button
                 type="button"
                 onClick={() => {
-                  if (options.accordion) setExpandedSection(item.name);
+                  if (options.accordion) {
+                    setExpandedSection(item.name);
+                    setActiveHomePath(getSectionItems(item.name)[0]?.path || '');
+                  }
                 }}
                 className={`flex w-full items-center gap-3 border-y px-5 py-3 text-left text-slate-700 ${sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''}`}
               >
@@ -359,14 +411,20 @@ export default function Sidebar({ variant = 'rail' }) {
               {isExpanded && (
                 <div className="border-b border-slate-200/90">
                   {item.subItems.map((subItem) => {
-                    const subActive = isActive(subItem.path);
+                    const subActive = options.accordion ? activeHomePath === subItem.path : isActive(subItem.path);
                     const SubIcon = subItem.Icon;
 
                     return (
                       <Link
                         key={subItem.path}
                         to={subItem.path}
-                        onClick={onNavigate}
+                        onMouseEnter={() => {
+                          if (options.accordion) setActiveHomePath(subItem.path);
+                        }}
+                        onClick={() => {
+                          if (options.accordion) setActiveHomePath(subItem.path);
+                          onNavigate();
+                        }}
                         className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 last:border-b-0 ${
                           subActive ? sectionStyle.activeClass : sectionStyle.hoverClass
                         }`}
@@ -401,7 +459,10 @@ export default function Sidebar({ variant = 'rail' }) {
               <button
                 type="button"
                 onClick={() => {
-                  if (options.accordion) setExpandedSection('Reports');
+                  if (options.accordion) {
+                    setExpandedSection('Reports');
+                    setActiveHomePath(getSectionItems('Reports')[0]?.path || '');
+                  }
                 }}
                 className="mt-3 flex w-full items-center gap-3 border-y border-slate-200 bg-slate-50/90 px-5 py-3 text-left text-slate-700"
               >
@@ -415,14 +476,20 @@ export default function Sidebar({ variant = 'rail' }) {
               </button>
 
               {isExpanded && menuItems.filter((item) => !item.subItems?.length).map((item) => {
-                const active = isActive(item.path);
+                const active = options.accordion ? activeHomePath === item.path : isActive(item.path);
                 const Icon = item.Icon;
 
                 return (
                   <Link
                     key={item.path}
                     to={item.path}
-                    onClick={onNavigate}
+                    onMouseEnter={() => {
+                      if (options.accordion) setActiveHomePath(item.path);
+                    }}
+                    onClick={() => {
+                      if (options.accordion) setActiveHomePath(item.path);
+                      onNavigate();
+                    }}
                     className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 ${
                       active
                         ? 'bg-[linear-gradient(90deg,rgba(224,242,254,0.98),rgba(248,250,252,0.94))] text-slate-800'
