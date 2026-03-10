@@ -104,7 +104,7 @@ export default function StockAdjustments() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-20 md:ml-[13.25rem] md:p-8">
+    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-20 md:p-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-800">Stock Adjustment</h1>
         <p className="text-gray-600 mt-2">Add or subtract stock manually and track adjustment entries.</p>

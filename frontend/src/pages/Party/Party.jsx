@@ -142,7 +142,7 @@ export default function Party() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-16 md:ml-[13.25rem] md:px-8 md:pb-8 md:pt-5">
+    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-16 md:px-8 md:pb-8 md:pt-5">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}

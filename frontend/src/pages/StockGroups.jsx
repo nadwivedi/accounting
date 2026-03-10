@@ -114,7 +114,7 @@ export default function StockGroups() {
   const totalStockGroups = stockGroups.length;
 
   return (
-    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-20 md:ml-[13.25rem] md:p-8">
+    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-20 md:p-8">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}

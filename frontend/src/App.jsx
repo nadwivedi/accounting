@@ -3,6 +3,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import Home from './pages/Home';
 import Products from './pages/Products';
 import StockDetail from './pages/StockDetail';
 import StockAdjustments from './pages/StockAdjustments';
@@ -32,7 +33,7 @@ function App() {
         {/* Public Routes */}
         <Route
           path="/login"
-          element={isAuthenticated ? <Navigate to="/stock" /> : <Login />}
+          element={isAuthenticated ? <Navigate to="/" /> : <Login />}
         />
 
         {/* Legacy dashboard route */}
@@ -40,7 +41,16 @@ function App() {
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Navigate to="/stock" replace />
+              <Navigate to="/" replace />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <Home />
             </ProtectedRoute>
           }
         />
@@ -219,10 +229,7 @@ function App() {
         />
 
         {/* Redirect to stock */}
-        <Route path="/" element={<Navigate to="/stock" />} />
-
-        {/* Catch all - redirect to stock */}
-        <Route path="*" element={<Navigate to="/stock" />} />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 
       <ToastContainer position="top-right" newestOnTop closeOnClick pauseOnHover />

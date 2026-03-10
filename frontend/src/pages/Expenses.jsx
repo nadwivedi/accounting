@@ -166,7 +166,7 @@ export default function Expenses() {
   }, 0);
 
   return (
-    <div className="min-h-screen bg-[#f3f6fb] p-4 pt-16 md:ml-[13.25rem] md:px-8 md:pb-8 md:pt-5">
+    <div className="min-h-screen bg-[#f3f6fb] p-4 pt-16 md:px-8 md:pb-8 md:pt-5">
       {error && (
         <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
           {error}

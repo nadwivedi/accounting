@@ -146,7 +146,7 @@ const sectionStyles = {
     headerClass: 'border-cyan-200/70 bg-cyan-50/95',
     accentTextClass: 'text-[28px] leading-none text-cyan-700',
     accentDotClass: 'h-2.5 w-2.5 rounded-full bg-cyan-500',
-    label: 'MASTER',
+    label: 'MASTERS',
     activeClass: 'bg-[linear-gradient(90deg,rgba(207,250,254,0.96),rgba(236,254,255,0.94))] text-slate-800',
     hoverClass: 'text-slate-700 hover:bg-cyan-50/90',
     barClass: 'bg-cyan-500'
@@ -171,8 +171,30 @@ const sectionStyles = {
   }
 };
 
-export default function Sidebar() {
+const homeSectionHotkeys = {
+  m: 'Masters',
+  v: 'Vouchers',
+  e: 'Expense',
+  r: 'Reports'
+};
+
+const renderSectionLabel = (label) => {
+  const firstChar = String(label || '').charAt(0);
+  const remainder = String(label || '').slice(1);
+
+  return (
+    <>
+      <span className="text-[14px] font-extrabold text-slate-900">
+        {firstChar}
+      </span>
+      <span>{remainder}</span>
+    </>
+  );
+};
+
+export default function Sidebar({ variant = 'rail' }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [expandedSection, setExpandedSection] = useState('Masters');
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -237,6 +259,12 @@ export default function Sidebar() {
 
       if (event.defaultPrevented || event.metaKey) return;
 
+      if (variant === 'home' && homeSectionHotkeys[key]) {
+        event.preventDefault();
+        setExpandedSection(homeSectionHotkeys[key]);
+        return;
+      }
+
       if (key === 'escape' && isPopupOpen()) {
         event.preventDefault();
         closeActivePopup();
@@ -293,7 +321,152 @@ export default function Sidebar() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate, location.pathname]);
+  }, [navigate, location.pathname, variant]);
+
+  const handleNavLinkClick = () => {
+    if (window.innerWidth < 768) setMobileOpen(false);
+  };
+
+  const renderMenuContent = (onNavigate, options = {}) => (
+    <div className="sidebar-scrollbar relative z-10 flex-1 overflow-y-auto pb-8">
+      <nav className="flex flex-col">
+        {menuItems.filter((item) => item.subItems?.length).map((item, index) => {
+          const sectionStyle = sectionStyles[item.name] || sectionStyles.Masters;
+          const isExpanded = !options.accordion || expandedSection === item.name;
+
+          return (
+            <div key={item.name} className="flex flex-col">
+              <button
+                type="button"
+                onClick={() => {
+                  if (options.accordion) setExpandedSection(item.name);
+                }}
+                className={`flex w-full items-center gap-3 border-y px-5 py-3 text-left text-slate-700 ${sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''}`}
+              >
+                <span className={`inline-flex ${index === 0 ? sectionStyle.accentTextClass : sectionStyle.accentDotClass}`}>
+                  {index === 0 ? '+' : ''}
+                </span>
+                <span className="text-[12px] font-bold tracking-[0.16em]">
+                  {options.accordion ? renderSectionLabel(item.name.toUpperCase()) : sectionStyle.label}
+                </span>
+                {options.accordion && (
+                  <span className={`ml-auto text-lg text-slate-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                    ›
+                  </span>
+                )}
+              </button>
+
+              {isExpanded && (
+                <div className="border-b border-slate-200/90">
+                  {item.subItems.map((subItem) => {
+                    const subActive = isActive(subItem.path);
+                    const SubIcon = subItem.Icon;
+
+                    return (
+                      <Link
+                        key={subItem.path}
+                        to={subItem.path}
+                        onClick={onNavigate}
+                        className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 last:border-b-0 ${
+                          subActive ? sectionStyle.activeClass : sectionStyle.hoverClass
+                        }`}
+                      >
+                        {subActive && (
+                          <div className={`absolute inset-y-0 left-0 w-1 ${sectionStyle.barClass}`} />
+                        )}
+
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+                          <SubIcon />
+                        </div>
+
+                        <span className={`${subActive ? 'font-semibold text-slate-800' : 'font-medium text-slate-700 group-hover:text-slate-900'}`}>
+                          {item.name === 'Vouchers' && subItem.name === 'Sale' ? 'Sales'
+                            : item.name === 'Vouchers' && subItem.name === 'Purchase' ? 'Purchase'
+                              : subItem.name}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {(() => {
+          const isExpanded = !options.accordion || expandedSection === 'Reports';
+
+          return (
+            <div className="flex flex-col">
+              <button
+                type="button"
+                onClick={() => {
+                  if (options.accordion) setExpandedSection('Reports');
+                }}
+                className="mt-3 flex w-full items-center gap-3 border-y border-slate-200 bg-slate-50/90 px-5 py-3 text-left text-slate-700"
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" />
+                <span className="text-[12px] font-bold tracking-[0.16em]">{options.accordion ? renderSectionLabel('REPORTS') : 'REPORTS'}</span>
+                {options.accordion && (
+                  <span className={`ml-auto text-lg text-slate-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+                    ›
+                  </span>
+                )}
+              </button>
+
+              {isExpanded && menuItems.filter((item) => !item.subItems?.length).map((item) => {
+                const active = isActive(item.path);
+                const Icon = item.Icon;
+
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={onNavigate}
+                    className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 ${
+                      active
+                        ? 'bg-[linear-gradient(90deg,rgba(224,242,254,0.98),rgba(248,250,252,0.94))] text-slate-800'
+                        : 'text-slate-700 hover:bg-cyan-50/90'
+                    }`}
+                  >
+                    {active && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-500" />}
+
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-700">
+                      <Icon />
+                    </div>
+
+                    <span className={`${active ? 'font-semibold text-slate-800' : 'font-medium text-slate-700 group-hover:text-slate-900'}`}>
+                      {item.name}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </nav>
+    </div>
+  );
+
+  if (variant === 'home') {
+    return (
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.16),transparent_26%),radial-gradient(circle_at_bottom_left,rgba(251,191,36,0.14),transparent_24%),linear-gradient(180deg,#f8fafc_0%,#eef6ff_100%)] px-4 py-6">
+        <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
+          <div className="relative flex w-full max-w-[23rem] flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#f9fafb_34%,#eff6ff_72%,#e0f2fe_100%)] shadow-[0_32px_80px_rgba(148,163,184,0.24)]">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.16),transparent_32%),radial-gradient(circle_at_78%_18%,rgba(251,191,36,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.35),transparent_30%)]" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-slate-300/80 to-transparent" />
+
+            <div className="relative z-10 border-b border-slate-200 px-5 py-5">
+              <p className="text-[15px] font-bold tracking-[0.18em] text-slate-800">BILLHUB</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Business Console</p>
+            </div>
+
+            {renderMenuContent(() => {}, { accordion: true })}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -361,95 +534,7 @@ export default function Sidebar() {
         </div>
 
         {/* Navigation Items */}
-        <div className="sidebar-scrollbar relative z-10 flex-1 overflow-y-auto pb-8">
-          <nav className="flex flex-col">
-            {menuItems.filter((item) => item.subItems?.length).map((item, index) => {
-              const sectionStyle = sectionStyles[item.name] || sectionStyles.Masters;
-
-              return (
-                <div key={item.name} className="flex flex-col">
-                  <div className={`flex items-center gap-3 border-y px-5 py-3 text-slate-700 ${sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''}`}>
-                    <span className={`inline-flex ${index === 0 ? sectionStyle.accentTextClass : sectionStyle.accentDotClass}`}>
-                      {index === 0 ? '+' : ''}
-                    </span>
-                    <span className="text-[12px] font-bold tracking-[0.16em]">
-                      {sectionStyle.label}
-                    </span>
-                  </div>
-
-                  <div className="border-b border-slate-200/90">
-                    {item.subItems.map((subItem) => {
-                      const subActive = isActive(subItem.path);
-                      const SubIcon = subItem.Icon;
-
-                      return (
-                        <Link
-                          key={subItem.path}
-                          to={subItem.path}
-                          onClick={() => {
-                            if (window.innerWidth < 768) setMobileOpen(false);
-                          }}
-                          className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 last:border-b-0 ${
-                            subActive ? sectionStyle.activeClass : sectionStyle.hoverClass
-                          }`}
-                        >
-                          {subActive && (
-                            <div className={`absolute inset-y-0 left-0 w-1 ${sectionStyle.barClass}`} />
-                          )}
-
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center">
-                            <SubIcon />
-                          </div>
-
-                          <span className={`${subActive ? 'font-semibold text-slate-800' : 'font-medium text-slate-700 group-hover:text-slate-900'}`}>
-                            {item.name === 'Vouchers' && subItem.name === 'Sale' ? 'Sales' :
-                              item.name === 'Vouchers' && subItem.name === 'Purchase' ? 'Purchase' :
-                                subItem.name}
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              );
-            })}
-
-            <div className="mt-3 flex items-center gap-3 border-y border-slate-200 bg-slate-50/90 px-5 py-3 text-slate-700">
-              <span className="h-2.5 w-2.5 rounded-full bg-cyan-500" />
-              <span className="text-[12px] font-bold tracking-[0.16em]">MORE</span>
-            </div>
-
-            {menuItems.filter((item) => !item.subItems?.length).map((item) => {
-              const active = isActive(item.path);
-              const Icon = item.Icon;
-
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => {
-                    if (window.innerWidth < 768) setMobileOpen(false);
-                  }}
-                  className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 ${
-                    active
-                      ? 'bg-[linear-gradient(90deg,rgba(224,242,254,0.98),rgba(248,250,252,0.94))] text-slate-800'
-                      : 'text-slate-700 hover:bg-cyan-50/90'
-                  }`}
-                >
-                  {active && <div className="absolute inset-y-0 left-0 w-1 bg-cyan-500" />}
-
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-700">
-                    <Icon />
-                  </div>
-
-                  <span className={`${active ? 'font-semibold text-slate-800' : 'font-medium text-slate-700 group-hover:text-slate-900'}`}>
-                    {item.name}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+        {renderMenuContent(handleNavLinkClick)}
       </aside>
     </>
   );
