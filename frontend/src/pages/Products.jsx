@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Package, PackageX } from 'lucide-react';
+import { Package, PackageX, Pencil, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
@@ -892,92 +892,109 @@ export default function Products() {
         </div>
       )}
 
-      <div className="mb-6 flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
-          placeholder="Search stock items..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
-        />
-        <button
-          onClick={handleOpenForm}
-          className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900 transition shadow-sm whitespace-nowrap"
-        >
-          + Add Stock Item
-        </button>
-      </div>
+      <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_16px_40px_rgba(148,163,184,0.14)]">
+        <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-4 sm:px-6">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
+            <div className="shrink-0">
+              <h2 className="text-lg font-bold text-slate-800">Stock Items</h2>
+              <p className="text-sm text-slate-500">Manage inventory and open item ledger directly from each row.</p>
+            </div>
 
-      {loading && !showForm ? (
-        <div className="text-center py-8 text-gray-500">Loading...</div>
-      ) : products.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center text-gray-500">
-          No stock items found. Create your first stock item!
+            <div className="flex flex-col gap-3 sm:flex-row lg:min-w-0 lg:flex-1 lg:justify-end">
+              <div className="relative w-full sm:max-w-md lg:max-w-sm xl:max-w-md">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search stock items..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-md border border-slate-300 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                />
+              </div>
+
+              <button
+                onClick={handleOpenForm}
+                className="inline-flex items-center justify-center rounded-md bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 whitespace-nowrap"
+              >
+                + Add Stock Item
+              </button>
+            </div>
+          </div>
         </div>
-      ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left whitespace-nowrap">
-              <thead className="bg-slate-800 text-white">
+
+        {loading && !showForm ? (
+          <div className="px-6 py-10 text-center text-gray-500">Loading...</div>
+        ) : products.length === 0 ? (
+          <div className="px-6 py-10 text-center text-gray-500">
+            No stock items found. Create your first stock item!
+          </div>
+        ) : (
+          <div className="overflow-x-auto p-3 sm:p-5">
+            <table className="w-full min-w-[760px] text-left text-sm whitespace-nowrap">
+              <thead className="bg-[#e7ebf0] text-slate-700">
                 <tr>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Name</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Stock Group</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Unit</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Stock</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider text-right pr-8">Actions</th>
+                  <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Name</th>
+                  <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Stock Group</th>
+                  <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Unit</th>
+                  <th className="border border-slate-200 px-4 py-3.5 text-center text-sm font-semibold">Stock</th>
+                  <th className="border border-slate-200 px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="bg-white text-slate-600">
                 {products.map((product) => (
                   <tr
                     key={product._id}
-                    className="bg-white hover:bg-slate-50 transition-colors duration-200 cursor-pointer group"
+                    className="cursor-pointer transition-colors duration-150 hover:bg-slate-50"
                     onClick={() => handleOpenLedger(product._id)}
                   >
-                    <td className="px-6 py-4-slate-800 font-semibold text">
+                    <td className="border border-slate-200 px-4 py-3">
                       <div className="flex flex-col">
-                        <span>{product.name}</span>
-                        <span className="text-xs font-normal text-blue-600">View ledger</span>
+                        <span className="font-semibold text-slate-800">{product.name}</span>
+                        <span className="text-xs font-medium text-slate-400">Open ledger</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-slate-600">{product.stockGroup?.name || '-'}</td>
-                    <td className="px-6 py-4 text-slate-600">{product.unit || '-'}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1.5 rounded-full text-xs font-medium ${
+                    <td className="border border-slate-200 px-4 py-3">{product.stockGroup?.name || '-'}</td>
+                    <td className="border border-slate-200 px-4 py-3">{product.unit || '-'}</td>
+                    <td className="border border-slate-200 px-4 py-3 text-center">
+                      <span className={`inline-flex min-w-14 items-center justify-center rounded-md px-2.5 py-1 text-xs font-semibold ${
                         Number(product.currentStock || 0) > Number(product.minStockLevel || 0)
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-orange-100 text-orange-800'
+                          ? 'bg-emerald-50 text-emerald-700'
+                          : 'bg-amber-50 text-amber-700'
                       }`}>
                         {product.currentStock}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right pr-6 space-x-2" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleEdit(product);
-                        }}
-                        className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(product._id);
-                        }}
-                        className="inline-flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
-                      >
-                        Delete
-                      </button>
+                    <td className="border border-slate-200 px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(product);
+                          }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-slate-500 transition hover:bg-slate-200 hover:text-slate-700"
+                          aria-label={`Edit ${product.name}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(product._id);
+                          }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-slate-500 transition hover:bg-red-50 hover:text-red-600"
+                          aria-label={`Delete ${product.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
