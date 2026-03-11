@@ -531,9 +531,9 @@ export default function Sidebar({ variant = 'rail' }) {
 
   if (variant === 'home') {
     return (
-      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.16),transparent_26%),radial-gradient(circle_at_bottom_left,rgba(251,191,36,0.14),transparent_24%),linear-gradient(180deg,#f8fafc_0%,#eef6ff_100%)] px-4 py-6">
+      <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.18),transparent_24%),radial-gradient(circle_at_bottom_left,rgba(100,116,139,0.18),transparent_24%),linear-gradient(180deg,#334155_0%,#1e293b_52%,#0f172a_100%)] px-4 py-6">
         <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
-          <div className="relative flex w-full max-w-[23rem] flex-col overflow-hidden rounded-[30px] border border-slate-200 bg-[linear-gradient(180deg,#f8fafc_0%,#f9fafb_34%,#eff6ff_72%,#e0f2fe_100%)] shadow-[0_32px_80px_rgba(148,163,184,0.24)]">
+          <div className="relative flex w-full max-w-[23rem] flex-col overflow-hidden rounded-[30px] border border-slate-500/60 bg-[linear-gradient(180deg,#f8fafc_0%,#f1f5f9_34%,#e2e8f0_72%,#cbd5e1_100%)] shadow-[0_32px_80px_rgba(2,6,23,0.42)]">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.16),transparent_32%),radial-gradient(circle_at_78%_18%,rgba(251,191,36,0.12),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,255,255,0.35),transparent_30%)]" />
             <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-slate-300/80 to-transparent" />
 
