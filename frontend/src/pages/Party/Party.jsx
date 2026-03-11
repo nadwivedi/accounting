@@ -21,6 +21,12 @@ const toTitleCase = (value) => String(value || '')
   .toLowerCase()
   .replace(/\b[a-z]/g, (char) => char.toUpperCase());
 
+const getTypeBadgeClass = (type) => (
+  type === 'customer'
+    ? 'border border-amber-200 bg-amber-50 text-amber-700'
+    : 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+);
+
 export default function Party() {
   const [parties, setParties] = useState([]);
   const [formData, setFormData] = useState(getInitialForm());
@@ -206,22 +212,22 @@ export default function Party() {
         {loading ? (
           <div className="px-6 py-10 text-center text-slate-500">Loading...</div>
         ) : (
-          <div className="darkish-table-shell overflow-x-auto rounded-[18px] p-3 sm:p-5">
-            <table className="darkish-table w-full min-w-[720px] text-left text-sm whitespace-nowrap">
-              <thead>
+          <div className="overflow-x-auto rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
+            <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap overflow-hidden">
+              <thead className="bg-[linear-gradient(135deg,#1f2937_0%,#334155_58%,#475569_100%)] text-slate-100">
                 <tr>
-                  <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Party Name</th>
-                  <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Type</th>
-                  <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Notes</th>
-                  <th className="border border-slate-200 px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
+                  <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party Name</th>
+                  <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Type</th>
+                  <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
+                  <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="text-slate-600">
+              <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
                 {parties.map((item) => (
-                  <tr key={item._id} className="transition-colors duration-150 hover:bg-slate-700/[0.06]">
+                  <tr key={item._id} className="transition-colors duration-150 hover:bg-slate-200/45">
                     <td className="border border-slate-200 px-4 py-3 font-semibold text-slate-800">{item.name || '-'}</td>
                     <td className="border border-slate-200 px-4 py-3">
-                      <span className="inline-flex rounded-md bg-sky-50 px-2.5 py-1 text-xs font-semibold capitalize text-sky-700">
+                      <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getTypeBadgeClass(item.type)}`}>
                         {item.type || '-'}
                       </span>
                     </td>
@@ -233,7 +239,7 @@ export default function Party() {
                         <button
                           type="button"
                           onClick={() => handleEdit(item)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300/70 bg-white/70 text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-700"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 shadow-sm transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-700"
                           aria-label={`Edit ${item.name}`}
                         >
                           <Pencil className="h-4 w-4" />

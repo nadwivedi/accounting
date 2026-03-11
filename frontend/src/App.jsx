@@ -6,7 +6,6 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import StockDetail from './pages/StockDetail';
-import StockAdjustments from './pages/StockAdjustments';
 import StockGroups from './pages/StockGroups';
 import Unit from './pages/Unit';
 import Sales from './pages/Sales';
@@ -82,14 +81,7 @@ function App() {
           }
         />
 
-        <Route
-          path="/stock-adjustments"
-          element={
-            <ProtectedRoute>
-              <StockAdjustments />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/stock-adjustments" element={<Navigate to="/stock-adjustment" replace />} />
 
         <Route
           path="/stock/:id"
