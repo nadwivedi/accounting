@@ -162,14 +162,15 @@ export default function Party() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-16 md:px-8 md:pb-8 md:pt-5">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+      <div className="w-full px-3 md:px-4 lg:px-6 pt-4 lg:pt-4 pb-8">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-1 gap-2 sm:gap-4 lg:flex lg:justify-start">
+      <div className="mb-5 mt-1 grid grid-cols-1 gap-2 sm:gap-4 lg:flex lg:justify-start">
         <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5 lg:min-w-[220px] lg:w-fit">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -194,32 +195,26 @@ export default function Party() {
         handleChange={handleChange}
       />
 
-      <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_16px_40px_rgba(148,163,184,0.14)]">
-        <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-4 sm:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
-            <div className="shrink-0">
-              <h2 className="text-lg font-bold text-slate-800">Party Master</h2>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row lg:min-w-0 lg:flex-1 lg:justify-end">
-              <div className="relative w-full sm:max-w-md lg:max-w-sm xl:max-w-md">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+        <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 px-6 py-5">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+            <div className="relative w-full lg:w-[22%] lg:min-w-[260px]">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Search parties..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-md border border-slate-500 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-600 focus:ring-2 focus:ring-slate-200"
+                  className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />
-              </div>
-
-              <button
-                onClick={handleOpenForm}
-                className="inline-flex items-center justify-center rounded-md bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 whitespace-nowrap"
-              >
-                + Add Party
-              </button>
             </div>
+
+            <button
+              onClick={handleOpenForm}
+              className="inline-flex items-center justify-center rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 whitespace-nowrap"
+            >
+              + Add Party
+            </button>
           </div>
         </div>
 
@@ -278,7 +273,7 @@ export default function Party() {
 
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap overflow-hidden">
-                <thead className="bg-[linear-gradient(135deg,#16a34a_0%,#059669_58%,#0f766e_100%)] text-white">
+                <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                   <tr>
                     <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party Name</th>
                     <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Type</th>
@@ -326,6 +321,7 @@ export default function Party() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );
