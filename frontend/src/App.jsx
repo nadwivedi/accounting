@@ -4,6 +4,9 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Home from './pages/Home';
+import Masters from './pages/Masters';
+import Vouchers from './pages/Vouchers';
+import ExpenseHub from './pages/ExpenseHub';
 import Products from './pages/Products';
 import StockDetail from './pages/StockDetail';
 import StockGroups from './pages/StockGroups';
@@ -19,7 +22,7 @@ import Contra from './pages/Contra';
 import StockAdjustment from './pages/StockAdjustment';
 import SaleReturn from './pages/SaleReturn/SaleReturn';
 import PurchaseReturn from './pages/PurchaseReturn/PurchaseReturn';
-import Reports from './pages/Reports';
+import ReportsDashboard from './pages/ReportsDashboard';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 
@@ -50,6 +53,33 @@ function App() {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/masters"
+          element={
+            <ProtectedRoute>
+              <Masters />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/vouchers"
+          element={
+            <ProtectedRoute>
+              <Vouchers />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/expense-hub"
+          element={
+            <ProtectedRoute>
+              <ExpenseHub />
             </ProtectedRoute>
           }
         />
@@ -116,7 +146,7 @@ function App() {
           path="/reports"
           element={
             <ProtectedRoute>
-              <Reports />
+              <ReportsDashboard />
             </ProtectedRoute>
           }
         />

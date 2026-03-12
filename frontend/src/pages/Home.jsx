@@ -253,6 +253,18 @@ export default function Home() {
       if (isMoveDownKey || isMoveUpKey || key === 'enter') {
         if (isTypingTarget(event.target) || isPopupOpen()) return;
 
+        if ((expandedSection === 'Masters' || expandedSection === 'Vouchers' || expandedSection === 'Expense') && key === 'enter') {
+          event.preventDefault();
+          navigate(
+            expandedSection === 'Masters'
+              ? '/masters'
+              : expandedSection === 'Vouchers'
+                ? '/vouchers'
+                : '/expense-hub'
+          );
+          return;
+        }
+
         const sectionItems = getSectionItems(expandedSection).filter((item) => Boolean(item.path));
         if (sectionItems.length === 0) return;
 
@@ -304,13 +316,24 @@ export default function Home() {
             <nav className="flex flex-col">
               {menuItems.filter((item) => item.subItems?.length).map((item, index) => {
                 const sectionStyle = sectionStyles[item.name] || sectionStyles.Masters;
-                const isExpanded = expandedSection === item.name;
+                const isExpanded = !['Masters', 'Vouchers', 'Expense'].includes(item.name) && expandedSection === item.name;
 
                 return (
                   <div key={item.name} className="flex flex-col">
                     <button
                       type="button"
                       onClick={() => {
+                        if (item.name === 'Masters' || item.name === 'Vouchers' || item.name === 'Expense') {
+                          navigate(
+                            item.name === 'Masters'
+                              ? '/masters'
+                              : item.name === 'Vouchers'
+                                ? '/vouchers'
+                                : '/expense-hub'
+                          );
+                          return;
+                        }
+
                         setExpandedSection(item.name);
                         setActiveHomePath(getSectionItems(item.name)[0]?.path || '');
                       }}
