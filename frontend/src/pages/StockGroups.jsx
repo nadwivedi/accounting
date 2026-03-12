@@ -160,9 +160,9 @@ export default function StockGroups() {
         </div>
 
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-stretch justify-start bg-black/60 p-1.5 backdrop-blur-[1.5px] sm:p-2" onClick={handleCancel}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-3 backdrop-blur-[1.5px] sm:p-4" onClick={handleCancel}>
             <div
-              className="flex h-full w-full flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:w-[68vw] md:rounded-2xl"
+              className="flex w-full max-w-3xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex shrink-0 items-center justify-between border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-2 text-white md:px-4 md:py-2.5">
@@ -191,9 +191,9 @@ export default function StockGroups() {
                 id="stock-group-form"
                 onSubmit={handleSubmit}
                 onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)}
-                className="flex flex-1 flex-col overflow-hidden"
+                className="flex flex-col"
               >
-                <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
+                <div className="p-2.5 md:p-4">
                   <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
                     <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs text-white md:h-8 md:w-8 md:text-sm">1</span>
