@@ -40,6 +40,20 @@ export default function Party() {
     fetchParties();
   }, [search]);
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const key = event.key?.toLowerCase();
+      if (event.defaultPrevented || !event.altKey || event.ctrlKey || event.metaKey) return;
+      if (key !== 'n') return;
+
+      event.preventDefault();
+      handleOpenForm();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const fetchParties = async () => {
     try {
       setLoading(true);
@@ -212,51 +226,104 @@ export default function Party() {
         {loading ? (
           <div className="px-6 py-10 text-center text-slate-500">Loading...</div>
         ) : (
-          <div className="overflow-x-auto rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
-            <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap overflow-hidden">
-              <thead className="bg-[linear-gradient(135deg,#1f2937_0%,#334155_58%,#475569_100%)] text-slate-100">
-                <tr>
-                  <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party Name</th>
-                  <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Type</th>
-                  <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
-                  <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
-                {parties.map((item) => (
-                  <tr key={item._id} className="transition-colors duration-150 hover:bg-slate-200/45">
-                    <td className="border border-slate-200 px-4 py-3 font-semibold text-slate-800">{item.name || '-'}</td>
-                    <td className="border border-slate-200 px-4 py-3">
+          <div className="rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
+            <div className="space-y-3 md:hidden">
+              {parties.map((item) => (
+                <article
+                  key={item._id}
+                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white/95 shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
+                >
+                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-[linear-gradient(135deg,rgba(14,165,233,0.10),rgba(59,130,246,0.04))] px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-slate-800">{item.name || '-'}</p>
+                      <p className="mt-1 text-xs text-slate-500">Party details</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(item)}
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-500 shadow-sm transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                      aria-label={`Edit ${item.name}`}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-3 px-4 py-4 text-sm">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Type</span>
                       <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getTypeBadgeClass(item.type)}`}>
                         {item.type || '-'}
                       </span>
-                    </td>
-                    <td className="border border-slate-200 px-4 py-3">
-                      <div className="max-w-[20rem] truncate">{item.notes || '-'}</div>
-                    </td>
-                    <td className="border border-slate-200 px-4 py-3">
-                      <div className="flex items-center justify-center">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(item)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 shadow-sm transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                          aria-label={`Edit ${item.name}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {!loading && parties.length === 0 && (
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Mobile</span>
+                      <span className="text-right font-semibold text-slate-700">{item.mobile || '-'}</span>
+                    </div>
+
+                    <div className="rounded-xl bg-slate-50 px-3 py-2.5">
+                      <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Notes</p>
+                      <p className="mt-1 text-sm text-slate-600 break-words">{item.notes || '-'}</p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+
+              {parties.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-10 text-center text-slate-500">
+                  No parties found
+                </div>
+              )}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap overflow-hidden">
+                <thead className="bg-[linear-gradient(135deg,#1f2937_0%,#334155_58%,#475569_100%)] text-slate-100">
                   <tr>
-                    <td colSpan="4" className="border border-slate-200 px-6 py-10 text-center text-slate-500">
-                      No parties found
-                    </td>
+                    <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party Name</th>
+                    <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Type</th>
+                    <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Mobile Number</th>
+                    <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
+                    <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Actions</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
+                  {parties.map((item) => (
+                    <tr key={item._id} className="transition-colors duration-150 hover:bg-slate-200/45">
+                      <td className="border border-slate-200 px-4 py-3 font-semibold text-slate-800">{item.name || '-'}</td>
+                      <td className="border border-slate-200 px-4 py-3">
+                        <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getTypeBadgeClass(item.type)}`}>
+                          {item.type || '-'}
+                        </span>
+                      </td>
+                      <td className="border border-slate-200 px-4 py-3">{item.mobile || '-'}</td>
+                      <td className="border border-slate-200 px-4 py-3">
+                        <div className="max-w-[20rem] truncate">{item.notes || '-'}</div>
+                      </td>
+                      <td className="border border-slate-200 px-4 py-3">
+                        <div className="flex items-center justify-center">
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(item)}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 shadow-sm transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                            aria-label={`Edit ${item.name}`}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {parties.length === 0 && (
+                    <tr>
+                      <td colSpan="5" className="border border-slate-200 px-6 py-10 text-center text-slate-500">
+                        No parties found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
