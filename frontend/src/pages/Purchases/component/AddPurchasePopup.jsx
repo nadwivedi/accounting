@@ -1,4 +1,5 @@
-import { Building2, CalendarDays, Package, PackagePlus, ShoppingCart, Upload } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Building2, CalendarDays, Package, Upload } from 'lucide-react';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
 
 export default function AddPurchasePopup({
@@ -44,10 +45,36 @@ export default function AddPurchasePopup({
 }) {
   if (!showForm) return null;
 
+  const productInputRef = useRef(null);
+  const paidAmountInputRef = useRef(null);
+  const [isItemEntryClosed, setIsItemEntryClosed] = useState(false);
   const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] text-gray-800 focus:border-transparent focus:outline-none focus:ring-2';
-  const paidAmount = Number(formData.paymentAmount || 0);
-  const totalAmount = Number(formData.totalAmount || 0);
-  const balanceAmount = Math.max(totalAmount - paidAmount, 0);
+  const currentItemTotal = Math.max(0, Number(currentItem.quantity || 0) * Number(currentItem.unitPrice || 0));
+
+  useEffect(() => {
+    if (showForm) {
+      setIsItemEntryClosed(false);
+    }
+  }, [showForm, editingId]);
+
+  const closeItemEntryRow = () => {
+    selectProduct(null);
+    setCurrentItem((prev) => ({
+      ...prev,
+      quantity: '',
+      unitPrice: ''
+    }));
+    setIsProductSectionActive(false);
+    setIsItemEntryClosed(true);
+  };
+
+  const closeItemEntryAndFocusPaidAmount = () => {
+    closeItemEntryRow();
+    requestAnimationFrame(() => {
+      paidAmountInputRef.current?.focus();
+      paidAmountInputRef.current?.select?.();
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-start bg-black/60 p-2 md:p-4" onClick={handleCancel}>
@@ -74,8 +101,7 @@ export default function AddPurchasePopup({
 
         <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
-            <div className="grid h-full grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.76fr)_minmax(220px,0.58fr)] xl:items-stretch">
-              <div className="flex h-full flex-col gap-3 md:gap-4">
+            <div className="flex h-full flex-col gap-3 md:gap-4">
                 <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
                   <h3 className="mb-2.5 flex items-center gap-2 text-sm font-bold text-gray-800 md:mb-3 md:text-base">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">1</span>
@@ -236,284 +262,192 @@ export default function AddPurchasePopup({
                     Purchase Items
                   </h3>
 
-                  <div className="mb-3 grid grid-cols-12 gap-2.5 rounded-xl border border-dashed border-emerald-300 bg-white p-2.5">
-                    <div className="col-span-12 md:col-span-6">
-                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Product</label>
-                      <div
-                        ref={productSectionRef}
-                        className="relative"
-                        onFocusCapture={handleProductFocus}
-                        onBlurCapture={(event) => {
-                          const nextFocused = event.relatedTarget;
-                          if (productSectionRef.current && nextFocused instanceof Node && productSectionRef.current.contains(nextFocused)) return;
-                          setIsProductSectionActive(false);
-                        }}
-                      >
-                        <div className="relative">
-                          <Package className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-500" />
-                          <input
-                            type="text"
-                            value={productQuery}
-                            onChange={handleProductInputChange}
-                            onKeyDown={handleProductInputKeyDown}
-                            className={`${inputClass} pl-9 focus:ring-emerald-500`}
-                            placeholder="Type to search product..."
-                            autoComplete="off"
-                          />
-                        </div>
-
-                        {isProductSectionActive && (
-                          <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
-                            <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
-                              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Product List</span>
-                              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
-                                {filteredProducts.length}
-                              </span>
-                            </div>
-                            <div className="max-h-64 overflow-y-auto py-1">
-                              {filteredProducts.length === 0 ? (
-                                <div className="px-3 py-3 text-center text-sm text-slate-500">
-                                  No matching products found.
-                                </div>
-                              ) : (
-                                filteredProducts.map((product, index) => {
-                                  const isActive = index === productListIndex;
-                                  const isSelected = String(currentItem.product || '') === String(product._id);
-
-                                  return (
-                                    <button
-                                      key={product._id}
-                                      type="button"
-                                      onMouseDown={(event) => event.preventDefault()}
-                                      onMouseEnter={() => setProductListIndex(index)}
-                                      onClick={() => selectProduct(product)}
-                                      className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
-                                        isActive
-                                          ? 'bg-yellow-200 text-amber-950'
-                                          : isSelected
-                                          ? 'bg-yellow-50 text-amber-800'
-                                          : 'text-slate-700 hover:bg-amber-50'
-                                      }`}
-                                    >
-                                      <span className="truncate font-medium">{getProductDisplayName(product)}</span>
-                                      {isSelected && (
-                                        <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                          Selected
-                                        </span>
-                                      )}
-                                    </button>
-                                  );
-                                })
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                  <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
+                    <div className="border-b border-emerald-100 bg-emerald-50 px-3 py-2">
+                      <p className="text-xs font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
                     </div>
-
-                    <div className="col-span-6 md:col-span-2">
-                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Quantity</label>
-                      <input
-                        type="number"
-                        placeholder="0"
-                        value={currentItem.quantity}
-                        onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
-                        onKeyDown={handleSelectEnterMoveNext}
-                        className={`${inputClass} focus:ring-emerald-500`}
-                      />
-                    </div>
-
-                    <div className="col-span-6 md:col-span-2">
-                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Price</label>
-                      <input
-                        type="number"
-                        placeholder="0.00"
-                        value={currentItem.unitPrice}
-                        onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleAddItem();
-                          }
-                        }}
-                        className={`${inputClass} focus:ring-emerald-500`}
-                        step="0.01"
-                      />
-                    </div>
-
-                    <div className="col-span-12 flex items-end md:col-span-2">
-                      <button
-                        type="button"
-                        onClick={handleAddItem}
-                        className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-[13px] font-semibold text-white transition hover:bg-emerald-700"
-                      >
-                        <PackagePlus className="h-3.5 w-3.5" />
-                        Add Item
-                      </button>
-                    </div>
-                  </div>
-
-                  {formData.items.length > 0 ? (
-                    <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
-                      <div className="border-b border-emerald-100 bg-emerald-50 px-3 py-2">
-                        <p className="text-xs font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
-                      </div>
-                      <div className="flex-1 overflow-auto">
-                        <table className="w-full min-w-[620px] text-[13px]">
-                          <thead className="bg-white text-gray-600">
-                            <tr>
-                              <th className="border-b border-emerald-100 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider">Product</th>
-                              <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Qty</th>
-                              <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Price</th>
-                              <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Total</th>
-                              <th className="border-b border-emerald-100 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider">Action</th>
+                    <div className="flex-1 overflow-auto">
+                      <table className="w-full min-w-[620px] text-[13px]">
+                        <thead className="bg-white text-gray-600">
+                          <tr>
+                            <th className="border-b border-emerald-100 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider">Product</th>
+                            <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Qty</th>
+                            <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Price</th>
+                            <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-emerald-50">
+                          {formData.items.map((item, index) => (
+                            <tr key={index} className="hover:bg-emerald-50/40">
+                              <td className="px-3 py-2.5 font-medium text-gray-800">{item.productName}</td>
+                              <td className="px-3 py-2.5 text-right text-gray-600">{item.quantity}</td>
+                              <td className="px-3 py-2.5 text-right text-gray-600">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
+                              <td className="px-3 py-2.5 text-right font-semibold text-gray-800">Rs {Number(item.total || 0).toFixed(2)}</td>
                             </tr>
-                          </thead>
-                          <tbody className="divide-y divide-emerald-50">
-                            {formData.items.map((item, index) => (
-                              <tr key={index} className="hover:bg-emerald-50/40">
-                                <td className="px-3 py-2.5 font-medium text-gray-800">{item.productName}</td>
-                                <td className="px-3 py-2.5 text-right text-gray-600">{item.quantity}</td>
-                                <td className="px-3 py-2.5 text-right text-gray-600">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
-                                <td className="px-3 py-2.5 text-right font-semibold text-gray-800">Rs {Number(item.total || 0).toFixed(2)}</td>
-                                <td className="px-3 py-2.5 text-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveItem(index)}
-                                    className="rounded-lg border border-red-200 bg-red-50 px-2.5 py-1 text-[11px] font-semibold text-red-700 transition hover:bg-red-100"
-                                  >
-                                    Remove
-                                  </button>
+                          ))}
+                          {isItemEntryClosed ? (
+                            <>
+                              <tr className="bg-emerald-50/40">
+                                <td colSpan={3} className="border-t border-emerald-200 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-emerald-800">
+                                  Total Amount
+                                </td>
+                                <td className="border-t border-emerald-200 px-3 py-3 text-right text-sm font-bold text-emerald-900">
+                                  Rs {Number(formData.totalAmount || 0).toFixed(2)}
                                 </td>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                              <tr className="bg-white">
+                                <td colSpan={3} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
+                                  Paid Amount
+                                </td>
+                                <td className="border-t border-emerald-100 px-3 py-2">
+                                  <input
+                                    ref={paidAmountInputRef}
+                                    type="number"
+                                    name="paymentAmount"
+                                    value={formData.paymentAmount}
+                                    onChange={handleInputChange}
+                                    step="0.01"
+                                    min="0"
+                                    disabled={Boolean(editingId)}
+                                    className={`${inputClass} text-right ${Boolean(editingId) ? 'bg-gray-100 text-gray-500' : 'bg-white'} focus:ring-emerald-500`}
+                                    placeholder="0.00"
+                                  />
+                                </td>
+                              </tr>
+                            </>
+                          ) : (
+                            <tr className="bg-emerald-50/50 align-top">
+                              <td className="px-3 py-2.5">
+                                <div
+                                  ref={productSectionRef}
+                                  className="relative"
+                                  onFocusCapture={handleProductFocus}
+                                  onBlurCapture={(event) => {
+                                    const nextFocused = event.relatedTarget;
+                                    if (productSectionRef.current && nextFocused instanceof Node && productSectionRef.current.contains(nextFocused)) return;
+                                    setIsProductSectionActive(false);
+                                  }}
+                                >
+                                  <div className="relative">
+                                    <Package className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-500" />
+                                    <input
+                                      ref={productInputRef}
+                                      type="text"
+                                      value={productQuery}
+                                      onChange={handleProductInputChange}
+                                      onKeyDown={(e) => handleProductInputKeyDown(e, closeItemEntryAndFocusPaidAmount)}
+                                      className={`${inputClass} pl-9 focus:ring-emerald-500`}
+                                      placeholder="Type to search product..."
+                                      autoComplete="off"
+                                    />
+                                  </div>
+
+                                  {isProductSectionActive && (
+                                    <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
+                                      <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Product List</span>
+                                        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                          {filteredProducts.length}
+                                        </span>
+                                      </div>
+                                      <div className="max-h-64 overflow-y-auto py-1">
+                                        {filteredProducts.length === 0 ? (
+                                          <div className="px-3 py-3 text-center text-sm text-slate-500">
+                                            No matching products found.
+                                          </div>
+                                        ) : (
+                                          filteredProducts.map((product, index) => {
+                                            const isActive = index === productListIndex;
+                                            const isSelected = String(currentItem.product || '') === String(product._id);
+
+                                            return (
+                                              <button
+                                                key={product._id}
+                                                type="button"
+                                                onMouseDown={(event) => event.preventDefault()}
+                                                onMouseEnter={() => setProductListIndex(index)}
+                                                onClick={() => selectProduct(product)}
+                                                className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
+                                                  isActive
+                                                    ? 'bg-yellow-200 text-amber-950'
+                                                    : isSelected
+                                                    ? 'bg-yellow-50 text-amber-800'
+                                                    : 'text-slate-700 hover:bg-amber-50'
+                                                }`}
+                                              >
+                                                <span className="truncate font-medium">{getProductDisplayName(product)}</span>
+                                                {isSelected && (
+                                                  <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                                    Selected
+                                                  </span>
+                                                )}
+                                              </button>
+                                            );
+                                          })
+                                        )}
+                                        <button
+                                          type="button"
+                                          onMouseDown={(event) => event.preventDefault()}
+                                          onMouseEnter={() => setProductListIndex(filteredProducts.length)}
+                                          onClick={closeItemEntryAndFocusPaidAmount}
+                                          className={`flex w-full items-center justify-between gap-3 border-t border-amber-100 px-3 py-2 text-left text-sm font-semibold transition ${
+                                            productListIndex === filteredProducts.length
+                                              ? 'bg-yellow-200 text-amber-950'
+                                              : 'text-amber-800 hover:bg-amber-50'
+                                          }`}
+                                        >
+                                          <span>End Item List</span>
+                                          <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                            End
+                                          </span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <input
+                                  type="number"
+                                  placeholder="0"
+                                  value={currentItem.quantity}
+                                  onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
+                                  onKeyDown={handleSelectEnterMoveNext}
+                                  className={`${inputClass} text-right focus:ring-emerald-500`}
+                                />
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <input
+                                  type="number"
+                                  placeholder="0.00"
+                                  value={currentItem.unitPrice}
+                                  onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleAddItem();
+                                      requestAnimationFrame(() => {
+                                        productInputRef.current?.focus();
+                                      });
+                                    }
+                                  }}
+                                  className={`${inputClass} text-right focus:ring-emerald-500`}
+                                  step="0.01"
+                                />
+                              </td>
+                              <td className="px-3 py-2.5 text-right">
+                                <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-semibold text-gray-800">
+                                  Rs {currentItemTotal.toFixed(2)}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
                     </div>
-                  ) : (
-                    <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-emerald-200 bg-white px-5 py-6 text-center">
-                      <p className="text-sm font-semibold text-emerald-700">No items added yet.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="h-full xl:sticky xl:top-0">
-                <div className="flex h-full flex-col rounded-xl border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 p-2.5 md:p-4">
-              <h3 className="mb-2.5 flex items-center gap-2 text-sm font-bold text-gray-800 md:mb-3 md:text-base">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">3</span>
-                Payment And Summary
-              </h3>
-
-              <div className="mb-3 space-y-2.5">
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">
-                    Total Amount (Rs) <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="number"
-                    name="totalAmount"
-                    value={formData.totalAmount}
-                    onChange={handleInputChange}
-                    className={`${inputClass} bg-purple-50 font-semibold text-gray-700 focus:ring-purple-500`}
-                    readOnly
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Amount Paid Now (Rs)</label>
-                  <input
-                    type="number"
-                    name="paymentAmount"
-                    value={formData.paymentAmount}
-                    onChange={handleInputChange}
-                    step="0.01"
-                    min="0"
-                    disabled={Boolean(editingId)}
-                    className={`${inputClass} ${Boolean(editingId) ? 'bg-gray-100 text-gray-500' : 'bg-white'} focus:ring-purple-500`}
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">
-                    Balance (Rs) <span className="text-xs text-gray-500">(Auto)</span>
-                  </label>
-                  <input
-                    type="number"
-                    value={balanceAmount}
-                    readOnly
-                    className="w-full rounded-lg border border-gray-300 bg-purple-50 px-2.5 py-1.5 text-[13px] font-semibold text-gray-700"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 gap-2.5 md:grid-cols-2 md:gap-3">
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Payment Method</label>
-                  <select
-                    name="paymentMethod"
-                    value={formData.paymentMethod}
-                    onChange={handleInputChange}
-                    onKeyDown={handleSelectEnterMoveNext}
-                    disabled={Boolean(editingId) || paidAmount <= 0}
-                    className={`${inputClass} ${Boolean(editingId) || paidAmount <= 0 ? 'bg-gray-100 text-gray-500' : 'bg-white'} focus:ring-purple-500`}
-                  >
-                    <option value="cash">Cash</option>
-                    <option value="bank">Bank</option>
-                    <option value="upi">UPI</option>
-                    <option value="card">Card</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Item Count</label>
-                  <div className="flex min-h-[36px] items-center rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] font-semibold text-gray-700">
-                    <ShoppingCart className="mr-1.5 h-3.5 w-3.5 text-purple-500" />
-                    {formData.items.length} item(s)
                   </div>
                 </div>
-              </div>
-
-              <div className="mt-3 grid grid-cols-1 gap-2.5">
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Payment Note</label>
-                  <input
-                    type="text"
-                    name="paymentNotes"
-                    value={formData.paymentNotes}
-                    onChange={handleInputChange}
-                    disabled={Boolean(editingId) || paidAmount <= 0}
-                    className={`${inputClass} ${Boolean(editingId) || paidAmount <= 0 ? 'bg-gray-100 text-gray-500' : 'bg-white'} focus:ring-purple-500`}
-                    placeholder="Optional payment note"
-                  />
-                </div>
-
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Notes</label>
-                  <textarea
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                    className={`${inputClass} min-h-[64px] resize-none focus:ring-purple-500`}
-                    placeholder="Additional notes"
-                    rows="3"
-                  />
-                </div>
-              </div>
-
-              {editingId && (
-                <div className="mt-4 rounded border-l-4 border-blue-500 bg-blue-50 p-3">
-                  <p className="text-sm font-semibold text-blue-700">
-                    Use Payments page to add payment for existing purchase
-                  </p>
-                </div>
-              )}
-                </div>
-              </div>
             </div>
           </div>
 
