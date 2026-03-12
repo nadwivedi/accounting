@@ -589,16 +589,16 @@ export default function Sales() {
     setProductListIndex(firstMatch ? 0 : -1);
   };
 
-  const handleProductInputKeyDown = (e) => {
+  const handleProductInputKeyDown = (e, endItemList) => {
     const key = e.key?.toLowerCase();
+    const lastOptionIndex = filteredProducts.length;
 
     if (key === 'arrowdown') {
       e.preventDefault();
       e.stopPropagation();
-      if (filteredProducts.length === 0) return;
       setProductListIndex((prev) => {
         if (prev < 0) return 0;
-        return Math.min(prev + 1, filteredProducts.length - 1);
+        return Math.min(prev + 1, lastOptionIndex);
       });
       return;
     }
@@ -617,6 +617,12 @@ export default function Sales() {
     if (e.key === 'Enter') {
       e.preventDefault();
       e.stopPropagation();
+
+      if (productListIndex === lastOptionIndex) {
+        setIsProductSectionActive(false);
+        endItemList?.();
+        return;
+      }
 
       const activeProduct = productListIndex >= 0 ? filteredProducts[productListIndex] : null;
       const matchedProduct = activeProduct || findExactProduct(productQuery) || findBestProductMatch(productQuery);

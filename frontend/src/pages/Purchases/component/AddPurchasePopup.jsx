@@ -413,7 +413,7 @@ export default function AddPurchasePopup({
                                   value={currentItem.quantity}
                                   onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
                                   onKeyDown={handleSelectEnterMoveNext}
-                                  className={`${inputClass} text-right focus:ring-emerald-500`}
+                                  className={`${inputClass} ml-auto w-[30%] min-w-[56px] text-right focus:ring-emerald-500`}
                                 />
                               </td>
                               <td className="px-3 py-2.5">
