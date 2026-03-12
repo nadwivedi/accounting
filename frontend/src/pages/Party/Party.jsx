@@ -280,9 +280,9 @@ export default function Party() {
               <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap overflow-hidden">
                 <thead className="bg-[linear-gradient(135deg,#1f2937_0%,#334155_58%,#475569_100%)] text-slate-100">
                   <tr>
-                    <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party Name</th>
-                    <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Type</th>
-                    <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Mobile Number</th>
+                    <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party Name</th>
+                    <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Type</th>
+                    <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Mobile Number</th>
                     <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
                     <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Actions</th>
                   </tr>
@@ -290,13 +290,13 @@ export default function Party() {
                 <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
                   {parties.map((item) => (
                     <tr key={item._id} className="transition-colors duration-150 hover:bg-slate-200/45">
-                      <td className="border border-slate-200 px-4 py-3 font-semibold text-slate-800">{item.name || '-'}</td>
-                      <td className="border border-slate-200 px-4 py-3">
+                      <td className="border border-slate-200 px-4 py-3 text-center font-semibold text-slate-800">{item.name || '-'}</td>
+                      <td className="border border-slate-200 px-4 py-3 text-center">
                         <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getTypeBadgeClass(item.type)}`}>
                           {item.type || '-'}
                         </span>
                       </td>
-                      <td className="border border-slate-200 px-4 py-3">{item.mobile || '-'}</td>
+                      <td className="border border-slate-200 px-4 py-3 text-center">{item.mobile || '-'}</td>
                       <td className="border border-slate-200 px-4 py-3">
                         <div className="max-w-[20rem] truncate">{item.notes || '-'}</div>
                       </td>
