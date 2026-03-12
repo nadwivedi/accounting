@@ -71,6 +71,7 @@ export default function AddPurchasePopup({
                           onChange={handleInputChange}
                           className={`${inputClass} pl-10 focus:ring-indigo-500`}
                           placeholder="DD-MM-YYYY"
+                          autoFocus
                         />
                       </div>
                     </div>
