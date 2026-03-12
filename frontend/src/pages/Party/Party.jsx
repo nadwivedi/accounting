@@ -278,29 +278,29 @@ export default function Party() {
 
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap overflow-hidden">
-                <thead className="bg-[linear-gradient(135deg,#1f2937_0%,#334155_58%,#475569_100%)] text-slate-100">
+                <thead className="bg-[linear-gradient(135deg,#16a34a_0%,#059669_58%,#0f766e_100%)] text-white">
                   <tr>
-                    <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party Name</th>
-                    <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Type</th>
-                    <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Mobile Number</th>
-                    <th className="border border-slate-400/30 px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
-                    <th className="border border-slate-400/30 px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Actions</th>
+                    <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party Name</th>
+                    <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Type</th>
+                    <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Mobile Number</th>
+                    <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
+                    <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
                   {parties.map((item) => (
                     <tr key={item._id} className="transition-colors duration-150 hover:bg-slate-200/45">
-                      <td className="border border-slate-200 px-4 py-3 text-center font-semibold text-slate-800">{item.name || '-'}</td>
-                      <td className="border border-slate-200 px-4 py-3 text-center">
+                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{item.name || '-'}</td>
+                      <td className="border border-slate-400 px-4 py-3 text-center">
                         <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getTypeBadgeClass(item.type)}`}>
                           {item.type || '-'}
                         </span>
                       </td>
-                      <td className="border border-slate-200 px-4 py-3 text-center">{item.mobile || '-'}</td>
-                      <td className="border border-slate-200 px-4 py-3">
+                      <td className="border border-slate-400 px-4 py-3 text-center">{item.mobile || '-'}</td>
+                      <td className="border border-slate-400 px-4 py-3">
                         <div className="max-w-[20rem] truncate">{item.notes || '-'}</div>
                       </td>
-                      <td className="border border-slate-200 px-4 py-3">
+                      <td className="border border-slate-400 px-4 py-3">
                         <div className="flex items-center justify-center">
                           <button
                             type="button"
@@ -316,7 +316,7 @@ export default function Party() {
                   ))}
                   {parties.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="border border-slate-200 px-6 py-10 text-center text-slate-500">
+                      <td colSpan="5" className="border border-slate-400 px-6 py-10 text-center text-slate-500">
                         No parties found
                       </td>
                     </tr>
