@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, IndianRupee, AlertCircle, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
@@ -77,8 +78,10 @@ const getInitialFormData = () => ({
   notes: ''
 });
 
-export default function Sales() {
+export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const toastOptions = { autoClose: 1200 };
+  const location = useLocation();
+  const navigate = useNavigate();
   const initialFormData = getInitialFormData();
   const initialCurrentItem = {
     product: '',
@@ -126,10 +129,27 @@ export default function Sales() {
   }, [dateFilter]);
 
   useEffect(() => {
+    if (location.state?.openShortcut !== 'sale' || showForm) return;
+
+    handleOpenForm();
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.pathname, location.state, navigate, showForm]);
+
+  useEffect(() => {
+    if (!modalOnly || showForm) return;
+    handleOpenForm();
+  }, [modalOnly, showForm]);
+
+  useEffect(() => {
     const handleKeyDown = (event) => {
+      const tagName = event.target?.tagName?.toLowerCase();
+      const isTypingTarget = tagName === 'input' || tagName === 'textarea' || tagName === 'select' || event.target?.isContentEditable;
       const key = event.key?.toLowerCase();
-      if (event.defaultPrevented || !event.altKey || event.ctrlKey || event.metaKey) return;
-      if (key !== 'n') return;
+      const isSaleShortcut = event.altKey && key === 's';
+      const isF1Shortcut = key === 'f1';
+      if (event.defaultPrevented || event.ctrlKey || event.metaKey) return;
+      if (isTypingTarget || showForm) return;
+      if (!isSaleShortcut && !isF1Shortcut) return;
 
       event.preventDefault();
       handleOpenForm();
@@ -137,7 +157,7 @@ export default function Sales() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [showForm]);
 
   const getFromDateByFilter = () => {
     const now = new Date();
@@ -758,6 +778,9 @@ export default function Sales() {
       setIsProductSectionActive(false);
       setShowForm(false);
       setError('');
+      if (modalOnly && typeof onModalFinish === 'function') {
+        onModalFinish();
+      }
     } catch (err) {
       setError(err.message || 'Error saving sale');
     } finally {
@@ -804,6 +827,11 @@ export default function Sales() {
   };
 
   const handleCancel = () => {
+    if (modalOnly && typeof onModalFinish === 'function') {
+      onModalFinish();
+      return;
+    }
+
     setShowForm(false);
     setEditingId(null);
     setFormData(getInitialFormData());
@@ -877,6 +905,59 @@ export default function Sales() {
   const popupFieldClass = 'w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200';
   const popupLabelClass = 'mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600';
   const popupSectionClass = 'rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3 md:p-4';
+
+  if (modalOnly) {
+    return (
+      <>
+        {error && (
+          <div className="fixed left-4 right-4 top-4 z-[60] rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-lg md:left-auto md:right-4 md:w-[26rem]">
+            {error}
+          </div>
+        )}
+        <AddSalePopup
+          showForm={showForm}
+          editingId={editingId}
+          loading={loading}
+          formData={formData}
+          currentItem={currentItem}
+          products={products}
+          popupFieldClass={popupFieldClass}
+          popupLabelClass={popupLabelClass}
+          leadgerSectionRef={leadgerSectionRef}
+          productSectionRef={productSectionRef}
+          leadgerQuery={leadgerQuery}
+          productQuery={productQuery}
+          leadgerListIndex={leadgerListIndex}
+          productListIndex={productListIndex}
+          filteredLeadgers={filteredLeadgers}
+          filteredProducts={filteredProducts}
+          isLeadgerSectionActive={isLeadgerSectionActive}
+          isProductSectionActive={isProductSectionActive}
+          setCurrentItem={setCurrentItem}
+          setIsLeadgerSectionActive={setIsLeadgerSectionActive}
+          setIsProductSectionActive={setIsProductSectionActive}
+          setLeadgerListIndex={setLeadgerListIndex}
+          setProductListIndex={setProductListIndex}
+          getLeadgerDisplayName={getLeadgerDisplayName}
+          getProductDisplayName={getProductDisplayName}
+          handleCancel={handleCancel}
+          handleSubmit={handleSubmit}
+          handleInputChange={handleInputChange}
+          handleLeadgerFocus={handleLeadgerFocus}
+          handleLeadgerInputChange={handleLeadgerInputChange}
+          handleLeadgerInputKeyDown={handleLeadgerInputKeyDown}
+          handleProductFocus={handleProductFocus}
+          handleProductInputChange={handleProductInputChange}
+          handleProductInputKeyDown={handleProductInputKeyDown}
+          handleSelectEnterMoveNext={handleSelectEnterMoveNext}
+          handleAddItem={handleAddItem}
+          handleRemoveItem={handleRemoveItem}
+          selectLeadger={selectLeadger}
+          selectProduct={selectProduct}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">

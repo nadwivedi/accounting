@@ -26,6 +26,13 @@ const homeNavigationAliases = {
   '/stock-adjustments': { section: 'Vouchers', path: '/stock-adjustment' }
 };
 
+const voucherShortcutRoutes = {
+  '1': { path: '/sales', openShortcut: 'sale' },
+  '2': { path: '/purchases', openShortcut: 'purchase' },
+  '3': { path: '/payments', openShortcut: 'payment' },
+  '4': { path: '/receipts', openShortcut: 'receipt' }
+};
+
 const getHomeNavigationState = (pathname) => {
   if (!pathname) return null;
 
@@ -43,9 +50,13 @@ export default function ProtectedRoute({ children }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (loading || !isAuthenticated || location.pathname === '/') return;
+    if (loading || !isAuthenticated) return;
 
     const isPopupOpen = () => Boolean(document.querySelector('.fixed.inset-0.z-50'));
+    const isTypingTarget = (target) => {
+      const tagName = target?.tagName?.toLowerCase();
+      return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target?.isContentEditable;
+    };
 
     const closeActivePopup = () => {
       const closeButton = document.querySelector('.fixed.inset-0.z-50 button[aria-label="Close popup"]');
@@ -58,6 +69,25 @@ export default function ProtectedRoute({ children }) {
 
     const handleKeyDown = (event) => {
       const key = event.key?.toLowerCase();
+      const shortcutTarget = voucherShortcutRoutes[key];
+
+      if (shortcutTarget && event.altKey && !event.ctrlKey && !event.metaKey) {
+        if (event.defaultPrevented || isTypingTarget(event.target) || isPopupOpen()) return;
+
+        event.preventDefault();
+        navigate(shortcutTarget.path, {
+          state: location.pathname === '/'
+            ? {
+                backgroundLocation: location,
+                homeQuickSale: key === '1',
+                homeQuickPayment: key === '3',
+                homeQuickReceipt: key === '4'
+              }
+            : { openShortcut: shortcutTarget.openShortcut }
+        });
+        return;
+      }
+
       if (key !== 'escape' || event.defaultPrevented || event.metaKey || event.ctrlKey || event.altKey) {
         return;
       }
@@ -65,6 +95,10 @@ export default function ProtectedRoute({ children }) {
       if (isPopupOpen()) {
         event.preventDefault();
         closeActivePopup();
+        return;
+      }
+
+      if (location.pathname === '/') {
         return;
       }
 

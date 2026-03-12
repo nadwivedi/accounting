@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from './context/AuthContext';
@@ -28,10 +28,13 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   const { isAuthenticated } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const backgroundLocation = location.state?.backgroundLocation;
 
   return (
     <>
-      <Routes>
+      <Routes location={backgroundLocation || location}>
         {/* Public Routes */}
         <Route
           path="/login"
@@ -253,6 +256,45 @@ function App() {
         {/* Redirect to stock */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
+
+      {backgroundLocation && location.state?.homeQuickSale && location.pathname === '/sales' && (
+        <Routes>
+          <Route
+            path="/sales"
+            element={(
+              <ProtectedRoute>
+                <Sales modalOnly onModalFinish={() => navigate(-1)} />
+              </ProtectedRoute>
+            )}
+          />
+        </Routes>
+      )}
+
+      {backgroundLocation && location.state?.homeQuickPayment && location.pathname === '/payments' && (
+        <Routes>
+          <Route
+            path="/payments"
+            element={(
+              <ProtectedRoute>
+                <Payments modalOnly onModalFinish={() => navigate(-1)} />
+              </ProtectedRoute>
+            )}
+          />
+        </Routes>
+      )}
+
+      {backgroundLocation && location.state?.homeQuickReceipt && location.pathname === '/receipts' && (
+        <Routes>
+          <Route
+            path="/receipts"
+            element={(
+              <ProtectedRoute>
+                <Receipts modalOnly onModalFinish={() => navigate(-1)} />
+              </ProtectedRoute>
+            )}
+          />
+        </Routes>
+      )}
 
       <ToastContainer position="top-right" newestOnTop closeOnClick pauseOnHover />
     </>

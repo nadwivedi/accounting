@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Receipt, IndianRupee } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
@@ -28,7 +29,9 @@ const getInitialForm = () => ({
 });
 const TOAST_OPTIONS = { autoClose: 1200 };
 
-export default function Receipts() {
+export default function Receipts({ modalOnly = false, onModalFinish = null }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [receipts, setReceipts] = useState([]);
   const [allReceipts, setAllReceipts] = useState([]);
   const [parties, setParties] = useState([]);
@@ -49,6 +52,36 @@ export default function Receipts() {
     fetchAllReceipts();
     fetchSales();
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const tagName = event.target?.tagName?.toLowerCase();
+      const isTypingTarget = tagName === 'input' || tagName === 'textarea' || tagName === 'select' || event.target?.isContentEditable;
+      const key = event.key?.toLowerCase();
+
+      if (event.defaultPrevented || !event.altKey || event.ctrlKey || event.metaKey) return;
+      if (isTypingTarget || showForm) return;
+      if (key !== 'r') return;
+
+      event.preventDefault();
+      handleOpenForm();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showForm]);
+
+  useEffect(() => {
+    if (location.state?.openShortcut !== 'receipt' || showForm) return;
+
+    handleOpenForm();
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.pathname, location.state, navigate, showForm]);
+
+  useEffect(() => {
+    if (!modalOnly || showForm) return;
+    handleOpenForm();
+  }, [modalOnly, showForm]);
 
   const getFromDateByFilter = () => {
     const now = new Date();
@@ -145,6 +178,11 @@ export default function Receipts() {
   };
 
   const handleCloseForm = () => {
+    if (modalOnly && typeof onModalFinish === 'function') {
+      onModalFinish();
+      return;
+    }
+
     setShowForm(false);
     setFormData(getInitialForm());
   };
@@ -179,6 +217,9 @@ export default function Receipts() {
       fetchAllReceipts();
       fetchSales();
       toast.success('Receipt created successfully', TOAST_OPTIONS);
+      if (modalOnly && typeof onModalFinish === 'function') {
+        onModalFinish();
+      }
     } catch (err) {
       setError(err.message || 'Error creating receipt');
     } finally {
@@ -187,6 +228,30 @@ export default function Receipts() {
   };
 
   const totalReceipts = receipts.reduce((sum, r) => sum + Number(r.amount || 0), 0);
+
+  if (modalOnly) {
+    return (
+      <>
+        {error && (
+          <div className="fixed left-4 right-4 top-4 z-[60] rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-lg md:left-auto md:right-4 md:w-[26rem]">
+            {error}
+          </div>
+        )}
+        <AddReceiptPopup
+          showForm={showForm}
+          loading={loading}
+          formData={formData}
+          parties={parties}
+          saleOptions={saleOptions}
+          saleReceiptMap={saleReceiptMap}
+          setFormData={setFormData}
+          handleCloseForm={handleCloseForm}
+          handleSubmit={handleSubmit}
+          handleChange={handleChange}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f6f1] p-4 pt-16 md:px-8 md:pb-8 md:pt-5">

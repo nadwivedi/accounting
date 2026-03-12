@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Wallet, IndianRupee } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
@@ -28,7 +29,9 @@ const buildPurchasePaymentMap = (payments) => {
   return map;
 };
 
-export default function Payments() {
+export default function Payments({ modalOnly = false, onModalFinish = null }) {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [payments, setPayments] = useState([]);
   const [parties, setParties] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -47,6 +50,36 @@ export default function Payments() {
     fetchParties();
     fetchPurchases();
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const tagName = event.target?.tagName?.toLowerCase();
+      const isTypingTarget = tagName === 'input' || tagName === 'textarea' || tagName === 'select' || event.target?.isContentEditable;
+      const key = event.key?.toLowerCase();
+
+      if (event.defaultPrevented || !event.altKey || event.ctrlKey || event.metaKey) return;
+      if (isTypingTarget || showForm) return;
+      if (key !== 'm') return;
+
+      event.preventDefault();
+      handleOpenForm();
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showForm]);
+
+  useEffect(() => {
+    if (location.state?.openShortcut !== 'payment' || showForm) return;
+
+    handleOpenForm();
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.pathname, location.state, navigate, showForm]);
+
+  useEffect(() => {
+    if (!modalOnly || showForm) return;
+    handleOpenForm();
+  }, [modalOnly, showForm]);
 
   const purchasePaymentMap = useMemo(() => buildPurchasePaymentMap(payments), [payments]);
 
@@ -136,6 +169,11 @@ export default function Payments() {
   };
 
   const handleCloseForm = () => {
+    if (modalOnly && typeof onModalFinish === 'function') {
+      onModalFinish();
+      return;
+    }
+
     setShowForm(false);
     setFormData(getInitialForm());
   };
@@ -169,6 +207,9 @@ export default function Payments() {
       fetchPayments();
       fetchPurchases();
       toast.success('Payment created successfully', TOAST_OPTIONS);
+      if (modalOnly && typeof onModalFinish === 'function') {
+        onModalFinish();
+      }
     } catch (err) {
       setError(err.message || 'Error creating payment');
     } finally {
@@ -179,6 +220,30 @@ export default function Payments() {
   const totalPayments = payments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
   const totalPurchaseAmount = purchases.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
   const totalPayable = Math.max(0, totalPurchaseAmount - totalPayments);
+
+  if (modalOnly) {
+    return (
+      <>
+        {error && (
+          <div className="fixed left-4 right-4 top-4 z-[60] rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-lg md:left-auto md:right-4 md:w-[26rem]">
+            {error}
+          </div>
+        )}
+        <AddPaymentPopup
+          showForm={showForm}
+          loading={loading}
+          formData={formData}
+          parties={parties}
+          purchaseOptions={purchaseOptions}
+          purchasePaymentMap={purchasePaymentMap}
+          setFormData={setFormData}
+          handleCloseForm={handleCloseForm}
+          handleSubmit={handleSubmit}
+          handleChange={handleChange}
+        />
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f8f6f1] p-4 pt-16 md:px-8 md:pb-8 md:pt-5">

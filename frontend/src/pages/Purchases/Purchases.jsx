@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, IndianRupee, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
@@ -6,6 +7,8 @@ import AddPurchasePopup from './component/AddPurchasePopup';
 
 export default function Purchases() {
   const toastOptions = { autoClose: 1200 };
+  const location = useLocation();
+  const navigate = useNavigate();
   const formatDateInput = (dateValue = new Date()) => {
     const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
     if (Number.isNaN(date.getTime())) return '';
@@ -119,9 +122,12 @@ export default function Purchases() {
 
   useEffect(() => {
     const handleKeyDown = (event) => {
+      const tagName = event.target?.tagName?.toLowerCase();
+      const isTypingTarget = tagName === 'input' || tagName === 'textarea' || tagName === 'select' || event.target?.isContentEditable;
       const key = event.key?.toLowerCase();
       if (event.defaultPrevented || !event.altKey || event.ctrlKey || event.metaKey) return;
-      if (key !== 'n') return;
+      if (isTypingTarget || showForm) return;
+      if (key !== 'p') return;
 
       event.preventDefault();
       handleOpenForm();
@@ -129,7 +135,14 @@ export default function Purchases() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [showForm]);
+
+  useEffect(() => {
+    if (location.state?.openShortcut !== 'purchase' || showForm) return;
+
+    handleOpenForm();
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.pathname, location.state, navigate, showForm]);
 
   const getFromDateByFilter = () => {
     const now = new Date();
