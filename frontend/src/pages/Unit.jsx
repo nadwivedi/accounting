@@ -409,7 +409,6 @@ export default function Unit() {
                     <tr>
                       <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Unit Name</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Description</th>
-                      <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Status</th>
                       <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Actions</th>
                     </tr>
                   </thead>
@@ -419,11 +418,6 @@ export default function Unit() {
                         <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{unit.name || '-'}</td>
                         <td className="border border-slate-400 px-4 py-3">
                           <div className="max-w-[24rem] truncate">{unit.description || '-'}</div>
-                        </td>
-                        <td className="border border-slate-400 px-4 py-3 text-center">
-                          <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold ${unit.isActive ? 'border border-emerald-200 bg-emerald-50 text-emerald-700' : 'border border-rose-200 bg-rose-50 text-rose-700'}`}>
-                            {unit.isActive ? 'Active' : 'Inactive'}
-                          </span>
                         </td>
                         <td className="border border-slate-400 px-4 py-3">
                           <div className="flex items-center justify-center gap-2">
@@ -449,7 +443,7 @@ export default function Unit() {
                     ))}
                     {units.length === 0 && (
                       <tr>
-                        <td colSpan="4" className="border border-slate-400 px-6 py-10 text-center text-slate-500">
+                        <td colSpan="3" className="border border-slate-400 px-6 py-10 text-center text-slate-500">
                           No units found
                         </td>
                       </tr>

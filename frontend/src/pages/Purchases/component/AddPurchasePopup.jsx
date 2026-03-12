@@ -1,4 +1,4 @@
-import { Upload } from 'lucide-react';
+import { CalendarDays, PackagePlus, ShoppingCart, Upload } from 'lucide-react';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
 
 export default function AddPurchasePopup({
@@ -21,284 +21,389 @@ export default function AddPurchasePopup({
 }) {
   if (!showForm) return null;
 
+  const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800 focus:border-transparent focus:outline-none focus:ring-2';
+  const paidAmount = Number(formData.paymentAmount || 0);
+  const totalAmount = Number(formData.totalAmount || 0);
+  const balanceAmount = Math.max(totalAmount - paidAmount, 0);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCancel}>
-      <div className="w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
-        <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
-          <h2 className="text-xl font-bold text-gray-800">
-            {editingId ? 'Edit Purchase' : 'Create New Purchase'}
-          </h2>
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="h-9 w-9 rounded-full border border-gray-300 text-gray-500 hover:text-gray-700 hover:border-gray-400 transition"
-            aria-label="Close popup"
-          >
-            &times;
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="space-y-6 px-6 py-6">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-start bg-black/60 p-2 md:p-4" onClick={handleCancel}>
+      <div className="flex max-h-[95vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2.5 text-white md:px-4 md:py-3">
+          <div className="flex items-center justify-between">
             <div>
-              <label className="block text-gray-700 font-medium mb-2">Manage Party *</label>
-              <select
-                name="party"
-                value={formData.party}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
-                required
-              >
-                <option value="">Select leadger/account</option>
-                {leadgers.map((leadger) => (
-                  <option key={leadger._id} value={leadger._id}>
-                    {getLeadgerDisplayName(leadger)}
-                  </option>
-                ))}
-              </select>
+              <h2 className="text-base font-bold md:text-xl">
+                {editingId ? 'Edit Purchase Entry' : 'Add New Purchase'}
+              </h2>
             </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Purchase Date</label>
-              <input
-                type="date"
-                name="purchaseDate"
-                value={formData.purchaseDate}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Purchase Invoice No. <span className="text-gray-400 text-sm">(Optional)</span></label>
-              <input
-                type="text"
-                name="invoiceNo"
-                value={formData.invoiceNo || ''}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
-                placeholder="Enter purchase invoice no. if available"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Due Date</label>
-              <input
-                type="date"
-                name="dueDate"
-                value={formData.dueDate || ''}
-                onChange={handleInputChange}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700 font-medium mb-2">Invoice File (JPG/JPEG/PNG/PDF)</label>
-              <input
-                id="purchase-invoice-upload"
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
-                onChange={handleInvoiceUpload}
-                disabled={uploadingInvoice}
-                className="hidden"
-              />
-              <label
-                htmlFor="purchase-invoice-upload"
-                className={`flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border border-dashed px-4 py-6 text-center transition ${
-                  uploadingInvoice
-                    ? 'border-blue-200 bg-blue-50 text-blue-600 opacity-75'
-                    : 'border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                }`}
-              >
-                <Upload className="h-5 w-5" />
-                <span className="text-sm font-medium">
-                  {uploadingInvoice ? 'Uploading Invoice...' : 'Upload Invoice'}
-                </span>
-              </label>
-            </div>
-          </div>
-
-          <div className="border-t pt-4">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">Add Items</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-4">
-              <select
-                value={currentItem.product}
-                onChange={(e) => setCurrentItem({ ...currentItem, product: e.target.value })}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-              >
-                <option value="">Product</option>
-                {products.map((p) => (
-                  <option key={p._id} value={p._id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                placeholder="Qty"
-                value={currentItem.quantity}
-                onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-              />
-              <input
-                type="number"
-                placeholder="Price"
-                value={currentItem.unitPrice}
-                onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
-                className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
-                step="0.01"
-              />
-              <button
-                type="button"
-                onClick={handleAddItem}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm"
-              >
-                Add
-              </button>
-            </div>
-
-            {formData.items.length > 0 && (
-              <div className="overflow-hidden mb-4 rounded-xl border border-slate-200 shadow-sm">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-800 text-white">
-                    <tr>
-                      <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Product</th>
-                      <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Qty</th>
-                      <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Price</th>
-                      <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Total</th>
-                      <th className="px-4 py-3 font-medium text-xs uppercase tracking-wider">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {formData.items.map((item, index) => (
-                      <tr key={index} className="bg-white hover:bg-slate-50 transition-colors duration-150">
-                        <td className="px-4 py-3 text-slate-800 font-medium">{item.productName}</td>
-                        <td className="px-4 py-3 text-slate-600">{item.quantity}</td>
-                        <td className="px-4 py-3 text-slate-600">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
-                        <td className="px-4 py-3 text-slate-800 font-semibold">Rs {Number(item.total || 0).toFixed(2)}</td>
-                        <td className="px-4 py-3">
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveItem(index)}
-                            className="text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
-                          >
-                            Remove
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          <div className="bg-gray-50 p-4 rounded-lg grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-gray-600 text-sm">Items</p>
-              <p className="text-xl font-bold">{formData.items.length}</p>
-            </div>
-            <div>
-              <p className="text-gray-600 text-sm">Total Purchase</p>
-              <p className="text-2xl font-bold text-blue-600">Rs {Number(formData.totalAmount || 0).toFixed(2)}</p>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-base font-semibold text-slate-800">Payment At Entry (Optional)</h3>
-              {editingId && (
-                <span className="text-xs text-slate-500">Use Payments page to add payment for existing purchase</span>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Amount Paid Now</label>
-                <input
-                  type="number"
-                  name="paymentAmount"
-                  value={formData.paymentAmount}
-                  onChange={handleInputChange}
-                  step="0.01"
-                  min="0"
-                  disabled={Boolean(editingId)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg disabled:bg-slate-100"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Payment Method</label>
-                <select
-                  name="paymentMethod"
-                  value={formData.paymentMethod}
-                  onChange={handleInputChange}
-                  disabled={Boolean(editingId) || Number(formData.paymentAmount || 0) <= 0}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg disabled:bg-slate-100"
-                >
-                  <option value="cash">Cash</option>
-                  <option value="bank">Bank</option>
-                  <option value="upi">UPI</option>
-                  <option value="card">Card</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-slate-600 mb-1">Payment Date</label>
-                <input
-                  type="date"
-                  name="paymentDate"
-                  value={formData.paymentDate}
-                  onChange={handleInputChange}
-                  disabled={Boolean(editingId) || Number(formData.paymentAmount || 0) <= 0}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg disabled:bg-slate-100"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm text-slate-600 mb-1">Payment Note</label>
-              <input
-                type="text"
-                name="paymentNotes"
-                value={formData.paymentNotes}
-                onChange={handleInputChange}
-                disabled={Boolean(editingId) || Number(formData.paymentAmount || 0) <= 0}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg disabled:bg-slate-100"
-                placeholder="Optional payment note"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-gray-700 font-medium mb-2">Notes</label>
-            <textarea
-              name="notes"
-              value={formData.notes}
-              onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
-              placeholder="Additional notes"
-              rows="2"
-            />
-          </div>
-
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={loading}
-              className="bg-slate-800 text-white px-6 py-2 rounded-lg hover:bg-slate-900 transition disabled:opacity-50"
-            >
-              {loading ? 'Saving...' : 'Save Purchase'}
-            </button>
             <button
               type="button"
               onClick={handleCancel}
-              className="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
+              className="rounded-lg p-1.5 text-white transition hover:bg-white/20"
+              aria-label="Close popup"
             >
-              Cancel
+              <svg className="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
             </button>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-3 md:p-5">
+            <div className="mb-4 rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3 md:mb-6 md:p-6">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs text-white md:h-8 md:w-8 md:text-sm">1</span>
+                Purchase Details
+              </h3>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4 xl:grid-cols-5">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Purchase Date</label>
+                  <div className="relative">
+                    <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-indigo-400" />
+                    <input
+                      type="text"
+                      name="purchaseDate"
+                      value={formData.purchaseDate}
+                      onChange={handleInputChange}
+                      className={`${inputClass} pl-10 focus:ring-indigo-500`}
+                      placeholder="DD-MM-YYYY"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">
+                    Manage Party <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    name="party"
+                    value={formData.party}
+                    onChange={handleInputChange}
+                    className={`${inputClass} focus:ring-indigo-500`}
+                    required
+                  >
+                    <option value="">Select leadger/account</option>
+                    {leadgers.map((leadger) => (
+                      <option key={leadger._id} value={leadger._id}>
+                        {getLeadgerDisplayName(leadger)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">
+                    Invoice No. <span className="text-xs text-gray-500">(Optional)</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="invoiceNo"
+                    value={formData.invoiceNo || ''}
+                    onChange={handleInputChange}
+                    className={`${inputClass} focus:ring-indigo-500`}
+                    placeholder="Enter invoice no."
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Due Date</label>
+                  <input
+                    type="date"
+                    name="dueDate"
+                    value={formData.dueDate || ''}
+                    onChange={handleInputChange}
+                    className={`${inputClass} focus:ring-indigo-500`}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Invoice File</label>
+                  <input
+                    id="purchase-invoice-upload"
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                    onChange={handleInvoiceUpload}
+                    disabled={uploadingInvoice}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="purchase-invoice-upload"
+                    className={`flex min-h-[42px] cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed px-3 py-2 text-center text-sm font-semibold transition ${
+                      uploadingInvoice
+                        ? 'border-indigo-200 bg-indigo-50 text-indigo-500 opacity-75'
+                        : 'border-indigo-300 bg-white text-indigo-700 hover:bg-indigo-50'
+                    }`}
+                  >
+                    <Upload className="h-4 w-4" />
+                    <span>{uploadingInvoice ? 'Uploading...' : formData.invoiceLink ? 'Invoice Uploaded' : 'Upload Invoice'}</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-4 rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-green-50 to-emerald-50 p-3 md:mb-6 md:p-6">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs text-white md:h-8 md:w-8 md:text-sm">2</span>
+                Purchase Items
+              </h3>
+
+              <div className="mb-4 grid grid-cols-1 gap-3 rounded-xl border border-dashed border-emerald-300 bg-white p-3 md:grid-cols-4">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Product</label>
+                  <select
+                    value={currentItem.product}
+                    onChange={(e) => setCurrentItem({ ...currentItem, product: e.target.value })}
+                    className={`${inputClass} focus:ring-emerald-500`}
+                  >
+                    <option value="">Select product</option>
+                    {products.map((product) => (
+                      <option key={product._id} value={product._id}>
+                        {product.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Quantity</label>
+                  <input
+                    type="number"
+                    placeholder="0"
+                    value={currentItem.quantity}
+                    onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
+                    className={`${inputClass} focus:ring-emerald-500`}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Price</label>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={currentItem.unitPrice}
+                    onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
+                    className={`${inputClass} focus:ring-emerald-500`}
+                    step="0.01"
+                  />
+                </div>
+
+                <div className="flex items-end">
+                  <button
+                    type="button"
+                    onClick={handleAddItem}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 font-semibold text-white transition hover:bg-emerald-700"
+                  >
+                    <PackagePlus className="h-4 w-4" />
+                    Add Item
+                  </button>
+                </div>
+              </div>
+
+              {formData.items.length > 0 ? (
+                <div className="overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
+                  <div className="border-b border-emerald-100 bg-emerald-50 px-4 py-3">
+                    <p className="text-sm font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[620px] text-sm">
+                      <thead className="bg-white text-gray-600">
+                        <tr>
+                          <th className="border-b border-emerald-100 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider">Product</th>
+                          <th className="border-b border-emerald-100 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Qty</th>
+                          <th className="border-b border-emerald-100 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Price</th>
+                          <th className="border-b border-emerald-100 px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider">Total</th>
+                          <th className="border-b border-emerald-100 px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-emerald-50">
+                        {formData.items.map((item, index) => (
+                          <tr key={index} className="hover:bg-emerald-50/40">
+                            <td className="px-4 py-3 font-medium text-gray-800">{item.productName}</td>
+                            <td className="px-4 py-3 text-right text-gray-600">{item.quantity}</td>
+                            <td className="px-4 py-3 text-right text-gray-600">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-right font-semibold text-gray-800">Rs {Number(item.total || 0).toFixed(2)}</td>
+                            <td className="px-4 py-3 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveItem(index)}
+                                className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                              >
+                                Remove
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-emerald-200 bg-white px-6 py-8 text-center text-sm text-gray-500">
+                  No items added yet. Use the form above to add purchase items.
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-xl border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-pink-50 p-3 md:p-6">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-purple-600 text-xs text-white md:h-8 md:w-8 md:text-sm">3</span>
+                Payment And Summary
+              </h3>
+
+              <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">
+                    Total Purchase (Rs) <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="totalAmount"
+                    value={formData.totalAmount}
+                    onChange={handleInputChange}
+                    className={`${inputClass} bg-purple-50 font-semibold text-gray-700 focus:ring-purple-500`}
+                    readOnly
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Amount Paid Now (Rs)</label>
+                  <input
+                    type="number"
+                    name="paymentAmount"
+                    value={formData.paymentAmount}
+                    onChange={handleInputChange}
+                    step="0.01"
+                    min="0"
+                    disabled={Boolean(editingId)}
+                    className={`${inputClass} ${Boolean(editingId) ? 'bg-gray-100 text-gray-500' : 'bg-white'} focus:ring-purple-500`}
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">
+                    Balance (Rs) <span className="text-xs text-gray-500">(Auto)</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={balanceAmount}
+                    readOnly
+                    className="w-full rounded-lg border border-gray-300 bg-purple-50 px-3 py-2 text-sm font-semibold text-gray-700"
+                  />
+                </div>
+              </div>
+
+              {(paidAmount > 0 || totalAmount > 0) && (
+                <div className={`mb-4 rounded border-l-4 p-3 ${
+                  balanceAmount > 0
+                    ? 'border-amber-500 bg-amber-50 text-amber-700'
+                    : 'border-green-500 bg-green-50 text-green-700'
+                }`}>
+                  <p className="text-sm font-semibold">
+                    {balanceAmount > 0 ? `Partial Payment - Balance: Rs ${balanceAmount.toFixed(2)}` : 'Fully Paid'}
+                  </p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-3 md:gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Payment Method</label>
+                  <select
+                    name="paymentMethod"
+                    value={formData.paymentMethod}
+                    onChange={handleInputChange}
+                    disabled={Boolean(editingId) || paidAmount <= 0}
+                    className={`${inputClass} ${Boolean(editingId) || paidAmount <= 0 ? 'bg-gray-100 text-gray-500' : 'bg-white'} focus:ring-purple-500`}
+                  >
+                    <option value="cash">Cash</option>
+                    <option value="bank">Bank</option>
+                    <option value="upi">UPI</option>
+                    <option value="card">Card</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Payment Date</label>
+                  <input
+                    type="date"
+                    name="paymentDate"
+                    value={formData.paymentDate}
+                    onChange={handleInputChange}
+                    disabled={Boolean(editingId) || paidAmount <= 0}
+                    className={`${inputClass} ${Boolean(editingId) || paidAmount <= 0 ? 'bg-gray-100 text-gray-500' : 'bg-white'} focus:ring-purple-500`}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Item Count</label>
+                  <div className="flex min-h-[42px] items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700">
+                    <ShoppingCart className="mr-2 h-4 w-4 text-purple-500" />
+                    {formData.items.length} item(s)
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Payment Note</label>
+                  <input
+                    type="text"
+                    name="paymentNotes"
+                    value={formData.paymentNotes}
+                    onChange={handleInputChange}
+                    disabled={Boolean(editingId) || paidAmount <= 0}
+                    className={`${inputClass} ${Boolean(editingId) || paidAmount <= 0 ? 'bg-gray-100 text-gray-500' : 'bg-white'} focus:ring-purple-500`}
+                    placeholder="Optional payment note"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Notes</label>
+                  <textarea
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleInputChange}
+                    className={`${inputClass} min-h-[42px] resize-none focus:ring-purple-500`}
+                    placeholder="Additional notes"
+                    rows="2"
+                  />
+                </div>
+              </div>
+
+              {editingId && (
+                <div className="mt-4 rounded border-l-4 border-blue-500 bg-blue-50 p-3">
+                  <p className="text-sm font-semibold text-blue-700">
+                    Use Payments page to add payment for existing purchase
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2.5 md:flex-row md:px-4 md:py-3">
+            <div className="text-[11px] text-gray-600 md:text-xs">
+              <kbd className="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-[10px]">Esc</kbd> to close
+            </div>
+
+            <div className="flex w-full gap-2 md:w-auto">
+              <button
+                type="button"
+                onClick={handleCancel}
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
+              >
+                {loading ? 'Saving...' : editingId ? 'Update Purchase' : 'Save Purchase'}
+              </button>
+            </div>
           </div>
         </form>
       </div>

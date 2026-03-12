@@ -6,12 +6,46 @@ import AddPurchasePopup from './component/AddPurchasePopup';
 
 export default function Purchases() {
   const toastOptions = { autoClose: 1200 };
+  const formatDateInput = (dateValue = new Date()) => {
+    const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+
+  const parseDateInput = (value) => {
+    const normalizedValue = String(value || '').trim();
+    if (!normalizedValue) return null;
+
+    const match = normalizedValue.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+    if (!match) return null;
+
+    const [, dayText, monthText, yearText] = match;
+    const day = Number(dayText);
+    const month = Number(monthText);
+    const year = Number(yearText);
+    const parsedDate = new Date(year, month - 1, day);
+
+    if (
+      Number.isNaN(parsedDate.getTime())
+      || parsedDate.getDate() !== day
+      || parsedDate.getMonth() !== month - 1
+      || parsedDate.getFullYear() !== year
+    ) {
+      return null;
+    }
+
+    return parsedDate;
+  };
 
   const initialFormData = {
     party: '',
     invoiceNo: '',
     items: [],
-    purchaseDate: new Date().toISOString().split('T')[0],
+    purchaseDate: formatDateInput(),
     dueDate: '',
     totalAmount: 0,
     invoiceLink: '',
@@ -214,6 +248,12 @@ export default function Purchases() {
       return;
     }
 
+    const parsedPurchaseDate = parseDateInput(formData.purchaseDate);
+    if (!parsedPurchaseDate) {
+      setError('Purchase date must be in DD-MM-YYYY format');
+      return;
+    }
+
     try {
       setLoading(true);
       const isEditMode = Boolean(editingId);
@@ -221,7 +261,7 @@ export default function Purchases() {
       const submitData = {
         ...formData,
         invoiceNo: String(formData.invoiceNo || '').trim(),
-        purchaseDate: formData.purchaseDate ? new Date(formData.purchaseDate) : new Date(),
+        purchaseDate: parsedPurchaseDate,
         dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
         totalAmount: Number(formData.totalAmount || 0),
         invoiceLink: formData.invoiceLink || '',
@@ -270,7 +310,7 @@ export default function Purchases() {
       party: purchase.party?._id || purchase.party || '',
       invoiceNo: purchase.invoiceNo || purchase.invoiceNumber || '',
       items: normalizedItems,
-      purchaseDate: purchase.purchaseDate ? new Date(purchase.purchaseDate).toISOString().split('T')[0] : '',
+      purchaseDate: purchase.purchaseDate ? formatDateInput(purchase.purchaseDate) : '',
       dueDate: purchase.dueDate ? new Date(purchase.dueDate).toISOString().split('T')[0] : '',
       totalAmount: Number(purchase.totalAmount || 0),
       invoiceLink: purchase.invoiceLink || '',
