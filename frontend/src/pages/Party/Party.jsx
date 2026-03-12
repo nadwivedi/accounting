@@ -236,7 +236,7 @@ export default function Party() {
                     <button
                       type="button"
                       onClick={() => handleEdit(item)}
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/15 text-white shadow-sm backdrop-blur-sm transition hover:bg-white/25"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
                       aria-label={`Edit ${item.name}`}
                     >
                       <Pencil className="h-4 w-4" />
@@ -300,7 +300,7 @@ export default function Party() {
                           <button
                             type="button"
                             onClick={() => handleEdit(item)}
-                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-500 shadow-sm transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
                             aria-label={`Edit ${item.name}`}
                           >
                             <Pencil className="h-4 w-4" />

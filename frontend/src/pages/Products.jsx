@@ -543,14 +543,15 @@ export default function Products() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-16 md:px-8 md:pb-8 md:pt-5">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+      <div className="w-full px-3 md:px-4 lg:px-6 pt-4 lg:pt-4 pb-8">
       {error && (
         <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-6">
+      <div className="mb-5 mt-1 grid grid-cols-2 gap-2 sm:gap-4">
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -892,35 +893,28 @@ export default function Products() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-white shadow-[0_16px_40px_rgba(148,163,184,0.14)]">
-        <div className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] px-4 py-4 sm:px-6">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between lg:gap-6">
-            <div className="shrink-0">
-              <h2 className="text-lg font-bold text-slate-800">Stock Items</h2>
-              <p className="text-sm text-slate-500">Manage inventory and open item ledger directly from each row.</p>
-            </div>
-
-            <div className="flex flex-col gap-3 sm:flex-row lg:min-w-0 lg:flex-1 lg:justify-end">
-              <div className="relative w-full sm:max-w-md lg:max-w-sm xl:max-w-md">
+      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+        <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 px-6 py-5">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+              <div className="relative w-full lg:w-[22%] lg:min-w-[260px]">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
                   placeholder="Search stock items..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full rounded-md border border-slate-300 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-400 focus:ring-2 focus:ring-slate-200"
+                  className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 />
               </div>
 
               <button
                 onClick={handleOpenForm}
-                className="inline-flex items-center justify-center rounded-md bg-sky-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-700 whitespace-nowrap"
+                className="inline-flex items-center justify-center rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 whitespace-nowrap"
               >
                 + Add Stock Item
               </button>
             </div>
           </div>
-        </div>
 
         {loading && !showForm ? (
           <div className="px-6 py-10 text-center text-gray-500">Loading...</div>
@@ -929,13 +923,14 @@ export default function Products() {
             No stock items found. Create your first stock item!
           </div>
         ) : (
-          <div className="darkish-table-shell overflow-x-auto rounded-[18px] p-3 sm:p-5">
-            <table className="darkish-table w-full min-w-[760px] text-left text-sm whitespace-nowrap">
-              <thead>
+          <div className="rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap overflow-hidden">
+              <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                 <tr>
-                  <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Name</th>
-                  <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Stock Group</th>
-                  <th className="border border-slate-200 px-4 py-3.5 text-sm font-semibold">Unit</th>
+                  <th className="border border-slate-200 px-4 py-3.5 text-center text-sm font-semibold">Name</th>
+                  <th className="border border-slate-200 px-4 py-3.5 text-center text-sm font-semibold">Stock Group</th>
+                  <th className="border border-slate-200 px-4 py-3.5 text-center text-sm font-semibold">Unit</th>
                   <th className="border border-slate-200 px-4 py-3.5 text-center text-sm font-semibold">Stock</th>
                   <th className="border border-slate-200 px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
                 </tr>
@@ -947,14 +942,14 @@ export default function Products() {
                     className="cursor-pointer transition-colors duration-150 hover:bg-slate-700/[0.06]"
                     onClick={() => handleOpenLedger(product._id)}
                   >
-                    <td className="border border-slate-200 px-4 py-3">
-                      <div className="flex flex-col">
+                    <td className="border border-slate-200 px-4 py-3 text-center">
+                      <div className="flex flex-col items-center">
                         <span className="font-semibold text-slate-800">{product.name}</span>
-                        <span className="text-xs font-medium text-slate-400">Open ledger</span>
+                        <span className="text-[10px] font-medium text-sky-600 underline underline-offset-2">Open ledger</span>
                       </div>
                     </td>
-                    <td className="border border-slate-200 px-4 py-3">{product.stockGroup?.name || '-'}</td>
-                    <td className="border border-slate-200 px-4 py-3">{product.unit || '-'}</td>
+                    <td className="border border-slate-200 px-4 py-3 text-center">{product.stockGroup?.name || '-'}</td>
+                    <td className="border border-slate-200 px-4 py-3 text-center">{product.unit || '-'}</td>
                     <td className="border border-slate-200 px-4 py-3 text-center">
                       <span className={`inline-flex min-w-14 items-center justify-center rounded-md px-2.5 py-1 text-xs font-semibold ${
                         Number(product.currentStock || 0) > Number(product.minStockLevel || 0)
@@ -971,7 +966,7 @@ export default function Products() {
                             e.stopPropagation();
                             handleEdit(product);
                           }}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-slate-300/70 bg-white/70 text-slate-500 transition hover:bg-slate-200/80 hover:text-slate-700"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
                           aria-label={`Edit ${product.name}`}
                         >
                           <Pencil className="h-4 w-4" />
@@ -992,8 +987,10 @@ export default function Products() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

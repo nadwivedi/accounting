@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Upload, ShoppingCart, IndianRupee } from 'lucide-react';
+import { Upload, ShoppingCart, IndianRupee, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import AddPurchasePopup from './component/AddPurchasePopup';
@@ -48,6 +48,23 @@ export default function Purchases() {
     fetchLeadgers();
     fetchProducts();
   }, [search, dateFilter]);
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const key = event.key?.toLowerCase();
+      if (event.defaultPrevented || !event.altKey || event.ctrlKey || event.metaKey) return;
+      if (key !== 'n') return;
+
+      event.preventDefault();
+      setEditingId(null);
+      setFormData(initialFormData);
+      setCurrentItem(initialCurrentItem);
+      setShowForm(true);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const getFromDateByFilter = () => {
     const now = new Date();
@@ -320,16 +337,16 @@ export default function Purchases() {
   const totalPurchases = purchases.length;
   const totalAmount = purchases.reduce((sum, purchase) => sum + Number(purchase.totalAmount || 0), 0);
   return (
-    <div className="min-h-screen bg-[#f8f6f1] p-4 pt-16 md:px-8 md:pb-8 md:pt-5">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+      <div className="w-full px-3 pb-8 pt-4 md:px-4 lg:px-6 lg:pt-4">
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
           {error}
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-6">
-        {/* Total Purchases Card */}
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
+      <div className="mb-5 mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
+        <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Purchases</p>
@@ -342,8 +359,7 @@ export default function Purchases() {
           <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-80"></div>
         </div>
 
-        {/* Total Amount Card */}
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
+        <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Amount</p>
@@ -380,67 +396,73 @@ export default function Purchases() {
         handleRemoveItem={handleRemoveItem}
       />
 
-      <div className="mb-6 flex flex-col sm:flex-row gap-3">
-        <input
-          type="text"
-          placeholder="Search purchases..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full bg-white px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
-        />
-        <select
-          value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
-          className="w-full sm:w-56 bg-white px-4 py-2.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-400"
-        >
-          <option value="">Purchase History - All Time</option>
-          <option value="7d">Purchase History - 7 Days</option>
-          <option value="30d">Purchase History - 30 Days</option>
-          <option value="3m">Purchase History - 3 Months</option>
-          <option value="6m">Purchase History - 6 Months</option>
-          <option value="1y">Purchase History - 1 Year</option>
-        </select>
-        <button
-          onClick={() => {
-            setEditingId(null);
-            setFormData(initialFormData);
-            setCurrentItem(initialCurrentItem);
-            setShowForm(true);
-          }}
-          className="bg-slate-800 text-white px-6 py-2.5 rounded-lg hover:bg-slate-900 transition shadow-sm whitespace-nowrap"
-        >
-          + New Purchase
-        </button>
-      </div>
+      <div className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+        <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 px-6 py-5">
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+            <div className="relative w-full lg:w-[22%] lg:min-w-[260px]">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search purchases..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+              />
+            </div>
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 lg:w-56"
+            >
+              <option value="">Purchase History - All Time</option>
+              <option value="7d">Purchase History - 7 Days</option>
+              <option value="30d">Purchase History - 30 Days</option>
+              <option value="3m">Purchase History - 3 Months</option>
+              <option value="6m">Purchase History - 6 Months</option>
+              <option value="1y">Purchase History - 1 Year</option>
+            </select>
+            <button
+              onClick={() => {
+                setEditingId(null);
+                setFormData(initialFormData);
+                setCurrentItem(initialCurrentItem);
+                setShowForm(true);
+              }}
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900"
+            >
+              + New Purchase
+            </button>
+          </div>
+        </div>
 
       {loading && !showForm ? (
-        <div className="text-center py-8 text-gray-500">Loading...</div>
+        <div className="px-6 py-10 text-center text-slate-500">Loading...</div>
       ) : purchases.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-10 text-center text-gray-500">
+        <div className="rounded-[20px] border border-dashed border-slate-300 bg-white/80 px-6 py-10 text-center text-slate-500">
           No purchases found. Create your first purchase!
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
+        <div className="rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left whitespace-nowrap">
-              <thead className="bg-slate-800 text-white">
+            <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
+              <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                 <tr>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice No</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Manage Party</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Products</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Date</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice File</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Total</th>
-                  <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider text-right pr-8">Actions</th>
+                  <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Invoice No</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Manage Party</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold">Products</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Invoice File</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Total</th>
+                  <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
                 {purchases.map((purchase) => {
                   return (
-                    <tr key={purchase._id} className="bg-white hover:bg-slate-50 transition-colors duration-200 group">
-                      <td className="px-6 py-4 font-semibold text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
-                      <td className="px-6 py-4 font-medium text-slate-700">{resolveLeadgerNameById(purchase.party)}</td>
-                      <td className="px-6 py-4 text-slate-600">
+                    <tr key={purchase._id} className="transition-colors duration-150 hover:bg-slate-200/45">
+                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
+                      <td className="border border-slate-400 px-4 py-3 text-center font-medium text-slate-700">{resolveLeadgerNameById(purchase.party)}</td>
+                      <td className="border border-slate-400 px-4 py-3 text-slate-600">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {purchase.items?.length
                             ? (
@@ -463,8 +485,8 @@ export default function Purchases() {
                             : <span className="text-slate-400 italic">No items</span>}
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-slate-600">{new Date(purchase.purchaseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                      <td className="px-6 py-4">
+                      <td className="border border-slate-400 px-4 py-3 text-center text-slate-600">{new Date(purchase.purchaseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                      <td className="border border-slate-400 px-4 py-3 text-center">
                         {purchase.invoiceLink ? (
                           <a
                             href={purchase.invoiceLink}
@@ -479,22 +501,24 @@ export default function Purchases() {
                           </a>
                         ) : <span className="text-slate-400">-</span>}
                       </td>
-                      <td className="px-6 py-4 font-semibold text-emerald-600">
+                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-emerald-600">
                         Rs {Number(purchase.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
-                      <td className="px-6 py-4 text-right pr-6 space-x-2">
+                      <td className="border border-slate-400 px-4 py-3">
+                        <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleEdit(purchase)}
-                          className="inline-flex items-center justify-center text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                          className="inline-flex items-center justify-center rounded-md border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(purchase._id)}
-                          className="inline-flex items-center justify-center text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
+                          className="inline-flex items-center justify-center rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50"
                         >
                           Delete
                         </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -504,6 +528,8 @@ export default function Purchases() {
           </div>
         </div>
       )}
+      </div>
+      </div>
     </div>
   );
 }
