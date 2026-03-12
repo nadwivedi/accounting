@@ -20,10 +20,21 @@ export default function Purchases() {
     const normalizedValue = String(value || '').trim();
     if (!normalizedValue) return null;
 
-    const match = normalizedValue.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-    if (!match) return null;
+    const ddmmyyyyMatch = normalizedValue.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})$/);
+    const yyyymmddMatch = normalizedValue.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
 
-    const [, dayText, monthText, yearText] = match;
+    let dayText;
+    let monthText;
+    let yearText;
+
+    if (ddmmyyyyMatch) {
+      [, dayText, monthText, yearText] = ddmmyyyyMatch;
+    } else if (yyyymmddMatch) {
+      [, yearText, monthText, dayText] = yyyymmddMatch;
+    } else {
+      return null;
+    }
+
     const day = Number(dayText);
     const month = Number(monthText);
     const year = Number(yearText);
@@ -39,6 +50,21 @@ export default function Purchases() {
     }
 
     return parsedDate;
+  };
+
+  const normalizePurchaseDateValue = (value) => {
+    const text = String(value || '').trim();
+    if (!text) return '';
+
+    const parsedDate = parseDateInput(text);
+    if (parsedDate) {
+      return formatDateInput(parsedDate);
+    }
+
+    return text
+      .replace(/[/.]/g, '-')
+      .replace(/[^0-9-]/g, '')
+      .slice(0, 10);
   };
 
   const getInitialFormData = () => ({
@@ -388,6 +414,11 @@ export default function Purchases() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === 'purchaseDate') {
+      setFormData((prev) => ({ ...prev, purchaseDate: normalizePurchaseDateValue(value) }));
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 

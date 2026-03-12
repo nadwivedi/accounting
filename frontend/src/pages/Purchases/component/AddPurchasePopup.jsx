@@ -61,7 +61,7 @@ export default function AddPurchasePopup({
 
         <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex flex-1 flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.6fr)_minmax(240px,0.68fr)] xl:items-start">
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.76fr)_minmax(220px,0.58fr)] xl:items-start">
               <div className="space-y-3 md:space-y-4">
                 <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
                   <h3 className="mb-2.5 flex items-center gap-2 text-sm font-bold text-gray-800 md:mb-3 md:text-base">
@@ -223,8 +223,8 @@ export default function AddPurchasePopup({
                     Purchase Items
                   </h3>
 
-                  <div className="mb-3 grid grid-cols-1 gap-2.5 rounded-xl border border-dashed border-emerald-300 bg-white p-2.5 md:grid-cols-4">
-                    <div>
+                  <div className="mb-3 grid grid-cols-12 gap-2.5 rounded-xl border border-dashed border-emerald-300 bg-white p-2.5">
+                    <div className="col-span-12 md:col-span-6">
                       <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Product</label>
                       <select
                         value={currentItem.product}
@@ -241,7 +241,7 @@ export default function AddPurchasePopup({
                       </select>
                     </div>
 
-                    <div>
+                    <div className="col-span-6 md:col-span-2">
                       <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Quantity</label>
                       <input
                         type="number"
@@ -253,7 +253,7 @@ export default function AddPurchasePopup({
                       />
                     </div>
 
-                    <div>
+                    <div className="col-span-6 md:col-span-2">
                       <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Price</label>
                       <input
                         type="number"
@@ -266,7 +266,7 @@ export default function AddPurchasePopup({
                       />
                     </div>
 
-                    <div className="flex items-end">
+                    <div className="col-span-12 flex items-end md:col-span-2">
                       <button
                         type="button"
                         onClick={handleAddItem}
@@ -317,8 +317,8 @@ export default function AddPurchasePopup({
                       </div>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-dashed border-emerald-200 bg-white px-5 py-6 text-center text-[13px] text-gray-500">
-                      No items added yet. Use the form above to add purchase items.
+                    <div className="rounded-xl border border-dashed border-emerald-200 bg-white px-5 py-6 text-center">
+                      <p className="text-sm font-semibold text-emerald-700">No items added yet.</p>
                     </div>
                   )}
                 </div>
