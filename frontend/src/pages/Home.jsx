@@ -146,7 +146,7 @@ const sectionStyles = {
     headerClass: 'border-indigo-200/70 bg-indigo-50/95',
     accentTextClass: 'text-[28px] leading-none text-indigo-600',
     accentDotClass: 'h-2.5 w-2.5 rounded-full bg-indigo-500',
-    activeClass: 'bg-[linear-gradient(90deg,rgba(224,231,255,0.96),rgba(238,242,255,0.94))] text-slate-800',
+    activeClass: 'bg-yellow-200 text-slate-900',
     hoverClass: 'text-slate-700 hover:bg-indigo-50/90',
     barClass: 'bg-indigo-500'
   },
@@ -154,7 +154,7 @@ const sectionStyles = {
     headerClass: 'border-violet-200/70 bg-violet-50/95',
     accentTextClass: 'text-[28px] leading-none text-violet-600',
     accentDotClass: 'h-2.5 w-2.5 rounded-full bg-violet-500',
-    activeClass: 'bg-[linear-gradient(90deg,rgba(245,243,255,0.96),rgba(250,245,255,0.94))] text-slate-800',
+    activeClass: 'bg-yellow-200 text-slate-900',
     hoverClass: 'text-slate-700 hover:bg-violet-50/90',
     barClass: 'bg-violet-500'
   },
@@ -162,7 +162,7 @@ const sectionStyles = {
     headerClass: 'border-teal-200/70 bg-teal-50/95',
     accentTextClass: 'text-[28px] leading-none text-teal-600',
     accentDotClass: 'h-2.5 w-2.5 rounded-full bg-teal-500',
-    activeClass: 'bg-[linear-gradient(90deg,rgba(204,251,241,0.96),rgba(240,253,250,0.94))] text-slate-800',
+    activeClass: 'bg-yellow-200 text-slate-900',
     hoverClass: 'text-slate-700 hover:bg-teal-50/90',
     barClass: 'bg-teal-500'
   }
@@ -366,7 +366,7 @@ export default function Home() {
                         setExpandedSection(item.name);
                         setActiveHomePath(getSectionItems(item.name)[0]?.path || '');
                       }}
-                      className={`flex w-full items-center gap-3 border-y px-5 py-3 text-left text-slate-700 transition-all duration-200 ${sectionStyle.headerClass} ${isSelectedSection ? 'ring-2 ring-slate-900/10 shadow-sm' : ''} ${index > 0 ? 'mt-3' : ''} hover:shadow-sm`}
+                      className={`flex w-full items-center gap-3 border-y px-5 py-3 text-left text-slate-700 transition-all duration-200 ${isSelectedSection ? 'bg-yellow-200 ring-2 ring-yellow-300 shadow-sm' : sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''} hover:shadow-sm`}
                     >
                       <span className={`inline-flex ${index === 0 ? sectionStyle.accentTextClass : sectionStyle.accentDotClass}`}>
                         {index === 0 ? '+' : ''}
@@ -422,7 +422,7 @@ export default function Home() {
                     setExpandedSection('Reports');
                     setActiveHomePath(getSectionItems('Reports')[0]?.path || '');
                   }}
-                  className={`mt-3 flex w-full items-center gap-3 border-y border-slate-200/60 bg-slate-50/80 px-5 py-3 text-left text-slate-700 ${expandedSection === 'Reports' ? 'ring-2 ring-slate-900/10 shadow-sm' : ''}`}
+                  className={`mt-3 flex w-full items-center gap-3 border-y border-slate-200/60 px-5 py-3 text-left text-slate-700 ${expandedSection === 'Reports' ? 'bg-yellow-200 ring-2 ring-yellow-300 shadow-sm' : 'bg-slate-50/80'}`}
                 >
                   <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
                   <span className="text-[12px] font-bold tracking-[0.16em]">{renderSectionLabel('REPORTS')}</span>
@@ -441,7 +441,7 @@ export default function Home() {
                       to={item.path}
                       onMouseEnter={() => setActiveHomePath(item.path)}
                       onClick={() => setActiveHomePath(item.path)}
-                      className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 ${active ? 'bg-[linear-gradient(90deg,rgba(224,231,255,0.98),rgba(238,242,255,0.94))] text-slate-800' : 'text-slate-700 hover:bg-indigo-50/90'}`}
+                      className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 ${active ? 'bg-yellow-200 text-slate-900' : 'text-slate-700 hover:bg-indigo-50/90'}`}
                     >
                       {active && <div className="absolute inset-y-0 left-0 w-1 bg-indigo-500" />}
 
