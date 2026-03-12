@@ -175,6 +175,8 @@ const homeSectionHotkeys = {
   r: 'Reports'
 };
 
+const HOME_SECTION_ORDER = ['Masters', 'Vouchers', 'Expense', 'Reports'];
+
 const getSectionItems = (sectionName) => {
   if (sectionName === 'Reports') {
     return menuItems.filter((item) => !item.subItems?.length);
@@ -193,6 +195,27 @@ const renderSectionLabel = (label) => {
       <span>{remainder}</span>
     </>
   );
+};
+
+const activateHomeSection = (sectionName, navigate, setExpandedSection, setActiveHomePath) => {
+  setExpandedSection(sectionName);
+
+  if (sectionName === 'Masters') {
+    navigate('/masters');
+    return;
+  }
+
+  if (sectionName === 'Vouchers') {
+    navigate('/vouchers');
+    return;
+  }
+
+  if (sectionName === 'Expense') {
+    navigate('/expense-hub');
+    return;
+  }
+
+  setActiveHomePath(getSectionItems(sectionName)[0]?.path || '');
 };
 
 export default function Home() {
@@ -247,21 +270,32 @@ export default function Home() {
       if (homeSectionHotkeys[key]) {
         event.preventDefault();
         setExpandedSection(homeSectionHotkeys[key]);
+        if (homeSectionHotkeys[key] === 'Reports') {
+          setActiveHomePath(getSectionItems('Reports')[0]?.path || '');
+        }
         return;
       }
 
       if (isMoveDownKey || isMoveUpKey || key === 'enter') {
         if (isTypingTarget(event.target) || isPopupOpen()) return;
 
+        if (isMoveDownKey || isMoveUpKey) {
+          event.preventDefault();
+          const currentIndex = HOME_SECTION_ORDER.indexOf(expandedSection);
+          const safeCurrentIndex = currentIndex >= 0 ? currentIndex : 0;
+          const move = isMoveDownKey ? 1 : -1;
+          const nextSection = HOME_SECTION_ORDER[(safeCurrentIndex + move + HOME_SECTION_ORDER.length) % HOME_SECTION_ORDER.length];
+
+          setExpandedSection(nextSection);
+          if (nextSection === 'Reports') {
+            setActiveHomePath((currentPath) => currentPath || getSectionItems('Reports')[0]?.path || '');
+          }
+          return;
+        }
+
         if ((expandedSection === 'Masters' || expandedSection === 'Vouchers' || expandedSection === 'Expense') && key === 'enter') {
           event.preventDefault();
-          navigate(
-            expandedSection === 'Masters'
-              ? '/masters'
-              : expandedSection === 'Vouchers'
-                ? '/vouchers'
-                : '/expense-hub'
-          );
+          activateHomeSection(expandedSection, navigate, setExpandedSection, setActiveHomePath);
           return;
         }
 
@@ -317,6 +351,7 @@ export default function Home() {
               {menuItems.filter((item) => item.subItems?.length).map((item, index) => {
                 const sectionStyle = sectionStyles[item.name] || sectionStyles.Masters;
                 const isExpanded = !['Masters', 'Vouchers', 'Expense'].includes(item.name) && expandedSection === item.name;
+                const isSelectedSection = expandedSection === item.name;
 
                 return (
                   <div key={item.name} className="flex flex-col">
@@ -324,20 +359,14 @@ export default function Home() {
                       type="button"
                       onClick={() => {
                         if (item.name === 'Masters' || item.name === 'Vouchers' || item.name === 'Expense') {
-                          navigate(
-                            item.name === 'Masters'
-                              ? '/masters'
-                              : item.name === 'Vouchers'
-                                ? '/vouchers'
-                                : '/expense-hub'
-                          );
+                          activateHomeSection(item.name, navigate, setExpandedSection, setActiveHomePath);
                           return;
                         }
 
                         setExpandedSection(item.name);
                         setActiveHomePath(getSectionItems(item.name)[0]?.path || '');
                       }}
-                      className={`flex w-full items-center gap-3 border-y px-5 py-3 text-left text-slate-700 transition-all duration-200 ${sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''} hover:shadow-sm`}
+                      className={`flex w-full items-center gap-3 border-y px-5 py-3 text-left text-slate-700 transition-all duration-200 ${sectionStyle.headerClass} ${isSelectedSection ? 'ring-2 ring-slate-900/10 shadow-sm' : ''} ${index > 0 ? 'mt-3' : ''} hover:shadow-sm`}
                     >
                       <span className={`inline-flex ${index === 0 ? sectionStyle.accentTextClass : sectionStyle.accentDotClass}`}>
                         {index === 0 ? '+' : ''}
@@ -393,7 +422,7 @@ export default function Home() {
                     setExpandedSection('Reports');
                     setActiveHomePath(getSectionItems('Reports')[0]?.path || '');
                   }}
-                  className="mt-3 flex w-full items-center gap-3 border-y border-slate-200/60 bg-slate-50/80 px-5 py-3 text-left text-slate-700"
+                  className={`mt-3 flex w-full items-center gap-3 border-y border-slate-200/60 bg-slate-50/80 px-5 py-3 text-left text-slate-700 ${expandedSection === 'Reports' ? 'ring-2 ring-slate-900/10 shadow-sm' : ''}`}
                 >
                   <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
                   <span className="text-[12px] font-bold tracking-[0.16em]">{renderSectionLabel('REPORTS')}</span>
