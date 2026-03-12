@@ -226,17 +226,17 @@ export default function Party() {
               {parties.map((item) => (
                 <article
                   key={item._id}
-                  className="overflow-hidden rounded-2xl border border-slate-200 bg-white/95 shadow-[0_12px_28px_rgba(15,23,42,0.08)]"
+                  className="overflow-hidden rounded-2xl border border-cyan-200 bg-white shadow-[0_16px_32px_rgba(8,47,73,0.10)]"
                 >
-                  <div className="flex items-start justify-between gap-3 border-b border-slate-100 bg-[linear-gradient(135deg,rgba(14,165,233,0.10),rgba(59,130,246,0.04))] px-4 py-3">
+                  <div className="flex items-start justify-between gap-3 border-b border-cyan-900/20 bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] px-4 py-3 text-white">
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-bold text-slate-800">{item.name || '-'}</p>
-                      <p className="mt-1 text-xs text-slate-500">Party details</p>
+                      <p className="truncate text-sm font-bold text-white">{item.name || '-'}</p>
+                      <p className="mt-1 text-xs text-cyan-100">Party details</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => handleEdit(item)}
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-500 shadow-sm transition hover:border-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-white/30 bg-white/15 text-white shadow-sm backdrop-blur-sm transition hover:bg-white/25"
                       aria-label={`Edit ${item.name}`}
                     >
                       <Pencil className="h-4 w-4" />
@@ -244,21 +244,21 @@ export default function Party() {
                   </div>
 
                   <div className="space-y-3 px-4 py-4 text-sm">
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Type</span>
+                    <div className="flex items-center justify-between gap-3 rounded-xl bg-cyan-50 px-3 py-2.5">
+                      <span className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-700">Type</span>
                       <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getTypeBadgeClass(item.type)}`}>
                         {item.type || '-'}
                       </span>
                     </div>
 
-                    <div className="flex items-center justify-between gap-3">
-                      <span className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Mobile</span>
-                      <span className="text-right font-semibold text-slate-700">{item.mobile || '-'}</span>
+                    <div className="flex items-center justify-between gap-3 rounded-xl bg-sky-50 px-3 py-2.5">
+                      <span className="text-xs font-medium uppercase tracking-[0.18em] text-sky-700">Mobile</span>
+                      <span className="text-right font-semibold text-slate-800">{item.mobile || '-'}</span>
                     </div>
 
-                    <div className="rounded-xl bg-slate-50 px-3 py-2.5">
-                      <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-400">Notes</p>
-                      <p className="mt-1 text-sm text-slate-600 break-words">{item.notes || '-'}</p>
+                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                      <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Notes</p>
+                      <p className="mt-1 text-sm text-slate-700 break-words">{item.notes || '-'}</p>
                     </div>
                   </div>
                 </article>
