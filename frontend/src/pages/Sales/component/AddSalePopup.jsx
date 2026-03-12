@@ -1,4 +1,4 @@
-import { Building2, CalendarDays, ShoppingCart, Trash2, Plus, FileText } from 'lucide-react';
+import { Building2, CalendarDays, Package, ShoppingCart, Trash2, Plus } from 'lucide-react';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
 
 export default function AddSalePopup({
@@ -11,23 +11,36 @@ export default function AddSalePopup({
   popupFieldClass,
   popupLabelClass,
   leadgerSectionRef,
+  productSectionRef,
   leadgerQuery,
+  productQuery,
   leadgerListIndex,
+  productListIndex,
   filteredLeadgers,
+  filteredProducts,
   isLeadgerSectionActive,
+  isProductSectionActive,
   setCurrentItem,
   setIsLeadgerSectionActive,
+  setIsProductSectionActive,
   setLeadgerListIndex,
+  setProductListIndex,
   getLeadgerDisplayName,
+  getProductDisplayName,
   handleCancel,
   handleSubmit,
   handleInputChange,
+  handleLeadgerFocus,
   handleLeadgerInputChange,
   handleLeadgerInputKeyDown,
+  handleProductFocus,
+  handleProductInputChange,
+  handleProductInputKeyDown,
   handleSelectEnterMoveNext,
   handleAddItem,
   handleRemoveItem,
-  selectLeadger
+  selectLeadger,
+  selectProduct
 }) {
   if (!showForm) return null;
 
@@ -39,7 +52,7 @@ export default function AddSalePopup({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-start bg-black/60 p-2 md:p-4" onClick={handleCancel}>
-      <div className="flex max-h-[95vh] w-full max-w-[84rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="flex h-[98vh] max-h-[99vh] w-full max-w-[84rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2.5 text-white md:px-4 md:py-3">
           <div className="flex justify-between items-center">
             <h2 className="text-base font-bold md:text-xl">
@@ -60,9 +73,9 @@ export default function AddSalePopup({
 
         <form id="sales-form" onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex flex-1 flex-col overflow-hidden bg-white">
           <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.6fr)_minmax(240px,0.68fr)] xl:items-start">
+            <div className="grid h-full grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1.76fr)_minmax(220px,0.58fr)] xl:items-stretch">
               
-              <div className="space-y-3 md:space-y-4">
+              <div className="flex h-full flex-col gap-3 md:gap-4">
                 <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
                   <h3 className="mb-2.5 flex items-center gap-2 text-sm font-bold text-gray-800 md:mb-3 md:text-base">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">1</span>
@@ -91,7 +104,7 @@ export default function AddSalePopup({
                     <div
                       ref={leadgerSectionRef}
                       className="relative"
-                      onFocusCapture={() => setIsLeadgerSectionActive(true)}
+                      onFocusCapture={handleLeadgerFocus}
                       onBlurCapture={(event) => {
                         const nextFocused = event.relatedTarget;
                         if (leadgerSectionRef.current && nextFocused instanceof Node && leadgerSectionRef.current.contains(nextFocused)) return;
@@ -111,13 +124,16 @@ export default function AddSalePopup({
                       </div>
 
                       {isLeadgerSectionActive && (
-                        <div className="absolute z-50 mt-1 w-full rounded-lg border border-slate-200 bg-white shadow-2xl overflow-hidden">
-                          <div className="px-3 py-2 text-[11px] font-bold text-slate-500 bg-slate-50 border-b border-slate-200 uppercase tracking-wider">
-                            Select Party
+                        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
+                          <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Party List</span>
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                              {filteredLeadgers.length}
+                            </span>
                           </div>
-                          <div className="max-h-60 overflow-y-auto">
+                          <div className="max-h-64 overflow-y-auto py-1">
                             {filteredLeadgers.length === 0 ? (
-                              <div className="px-3 py-3 text-center text-sm text-slate-500 border-t">
+                              <div className="px-3 py-3 text-center text-sm text-slate-500">
                                 No matching parties found.
                               </div>
                             ) : (
@@ -132,11 +148,20 @@ export default function AddSalePopup({
                                     onMouseDown={(event) => event.preventDefault()}
                                     onMouseEnter={() => setLeadgerListIndex(index)}
                                     onClick={() => selectLeadger(leadger)}
-                                    className={`w-full px-3 py-2 text-left text-sm transition-colors border-t border-slate-100 first:border-t-0 ${
-                                      isActive || isSelected ? 'bg-blue-50 text-blue-700 font-medium' : 'hover:bg-slate-50 text-slate-700'
+                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
+                                      isActive
+                                        ? 'bg-yellow-200 text-amber-950'
+                                        : isSelected
+                                        ? 'bg-yellow-50 text-amber-800'
+                                        : 'text-slate-700 hover:bg-amber-50'
                                     }`}
                                   >
-                                    {getLeadgerDisplayName(leadger)}
+                                    <span className="truncate font-medium">{getLeadgerDisplayName(leadger)}</span>
+                                    {isSelected && (
+                                      <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                        Selected
+                                      </span>
+                                    )}
                                   </button>
                                 );
                               })
@@ -160,7 +185,7 @@ export default function AddSalePopup({
                 </div>
                 </div>
 
-                <div className="rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-green-50 to-emerald-50 p-2.5 md:p-4">
+                <div className="flex flex-1 flex-col rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-green-50 to-emerald-50 p-2.5 md:p-4">
                   <div className="mb-2.5 flex items-center justify-between gap-2">
                     <h3 className="flex items-center gap-2 text-sm font-bold text-gray-800 md:text-base">
                       <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">2</span>
@@ -174,17 +199,76 @@ export default function AddSalePopup({
                   <div className="mb-3 grid grid-cols-12 gap-2 items-end rounded-xl border border-dashed border-emerald-300 bg-white p-2.5">
                       <div className="col-span-6 md:col-span-5">
                         <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Product</label>
-                        <select
-                          value={currentItem.product}
-                          onChange={(e) => setCurrentItem({ ...currentItem, product: e.target.value })}
-                          onKeyDown={handleSelectEnterMoveNext}
-                          className={`${inputClass} focus:ring-emerald-500`}
+                        <div
+                          ref={productSectionRef}
+                          className="relative"
+                          onFocusCapture={handleProductFocus}
+                          onBlurCapture={(event) => {
+                            const nextFocused = event.relatedTarget;
+                            if (productSectionRef.current && nextFocused instanceof Node && productSectionRef.current.contains(nextFocused)) return;
+                            setIsProductSectionActive(false);
+                          }}
                         >
-                          <option value="">Select...</option>
-                          {products.map((p) => (
-                            <option key={p._id} value={p._id}>{p.name}</option>
-                          ))}
-                        </select>
+                          <div className="relative">
+                            <Package className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-500" />
+                            <input
+                              type="text"
+                              value={productQuery}
+                              onChange={handleProductInputChange}
+                              onKeyDown={handleProductInputKeyDown}
+                              className={`${inputClass} pl-9 focus:ring-emerald-500`}
+                              placeholder="Type to search product..."
+                              autoComplete="off"
+                            />
+                          </div>
+
+                          {isProductSectionActive && (
+                            <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
+                              <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Product List</span>
+                                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                  {filteredProducts.length}
+                                </span>
+                              </div>
+                              <div className="max-h-64 overflow-y-auto py-1">
+                                {filteredProducts.length === 0 ? (
+                                  <div className="px-3 py-3 text-center text-sm text-slate-500">
+                                    No matching products found.
+                                  </div>
+                                ) : (
+                                  filteredProducts.map((product, index) => {
+                                    const isActive = index === productListIndex;
+                                    const isSelected = String(currentItem.product || '') === String(product._id);
+
+                                    return (
+                                      <button
+                                        key={product._id}
+                                        type="button"
+                                        onMouseDown={(event) => event.preventDefault()}
+                                        onMouseEnter={() => setProductListIndex(index)}
+                                        onClick={() => selectProduct(product)}
+                                        className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
+                                          isActive
+                                            ? 'bg-yellow-200 text-amber-950'
+                                            : isSelected
+                                            ? 'bg-yellow-50 text-amber-800'
+                                            : 'text-slate-700 hover:bg-amber-50'
+                                        }`}
+                                      >
+                                        <span className="truncate font-medium">{getProductDisplayName(product)}</span>
+                                        {isSelected && (
+                                          <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                            Selected
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="col-span-2">
                         <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Qty</label>
@@ -220,7 +304,8 @@ export default function AddSalePopup({
                     </div>
 
                     {formData.items.length > 0 ? (
-                      <div className="overflow-x-auto rounded-xl border border-emerald-200 bg-white shadow-sm">
+                      <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
+                        <div className="flex-1 overflow-auto">
                         <table className="w-full text-[13px]">
                           <thead className="border-b border-emerald-100 bg-emerald-50/60">
                             <tr>
@@ -251,12 +336,11 @@ export default function AddSalePopup({
                             ))}
                           </tbody>
                         </table>
+                        </div>
                       </div>
                     ) : (
-                      <div className="rounded-xl border border-dashed border-emerald-200 bg-white px-5 py-6 text-center text-[13px] text-gray-500">
-                        <FileText className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p className="text-xs font-medium">No items added yet.</p>
-                        <p className="text-[10px] text-slate-300 mt-1">Use the form above to add line items.</p>
+                      <div className="flex flex-1 items-center justify-center rounded-xl border border-dashed border-emerald-200 bg-white px-5 py-6 text-center">
+                        <p className="text-sm font-semibold text-emerald-700">No items added yet.</p>
                       </div>
                     )}
                 </div>

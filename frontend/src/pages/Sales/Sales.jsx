@@ -103,7 +103,11 @@ export default function Sales() {
   const [leadgerQuery, setLeadgerQuery] = useState('');
   const [leadgerListIndex, setLeadgerListIndex] = useState(-1);
   const [isLeadgerSectionActive, setIsLeadgerSectionActive] = useState(false);
+  const [productQuery, setProductQuery] = useState('');
+  const [productListIndex, setProductListIndex] = useState(-1);
+  const [isProductSectionActive, setIsProductSectionActive] = useState(false);
   const leadgerSectionRef = useRef(null);
+  const productSectionRef = useRef(null);
 
   useEffect(() => {
     fetchSales();
@@ -220,6 +224,14 @@ export default function Sales() {
     if (name) return name;
     return 'Party Name';
   };
+
+  const resolveLeadgerNameById = (leadgerId) => {
+    const resolvedId = typeof leadgerId === 'object' ? leadgerId?._id : leadgerId;
+    if (!resolvedId) return '';
+    const matching = leadgers.find((leadger) => String(leadger._id) === String(resolvedId));
+    return matching ? getLeadgerDisplayName(matching) : '';
+  };
+
   const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
   const getMatchingLeadgers = (queryValue) => {
@@ -235,7 +247,22 @@ export default function Sales() {
     return [...startsWith, ...includes];
   };
 
-  const filteredLeadgers = useMemo(() => getMatchingLeadgers(leadgerQuery), [leadgers, leadgerQuery]);
+  const selectedLeadgerName = useMemo(() => resolveLeadgerNameById(formData.party), [formData.party, leadgers]);
+
+  const filteredLeadgers = useMemo(() => {
+    const normalizedQuery = normalizeText(leadgerQuery);
+    const normalizedSelectedName = normalizeText(selectedLeadgerName);
+
+    if (
+      isLeadgerSectionActive
+      && normalizedQuery
+      && normalizedQuery === normalizedSelectedName
+    ) {
+      return leadgers;
+    }
+
+    return getMatchingLeadgers(leadgerQuery);
+  }, [leadgers, leadgerQuery, isLeadgerSectionActive, selectedLeadgerName]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -245,12 +272,29 @@ export default function Sales() {
       return;
     }
 
+    const shouldHighlightSelectedLeadger = (
+      isLeadgerSectionActive
+      && normalizeText(leadgerQuery)
+      && normalizeText(leadgerQuery) === normalizeText(selectedLeadgerName)
+      && formData.party
+    );
+
+    if (shouldHighlightSelectedLeadger) {
+      const selectedIndex = filteredLeadgers.findIndex((item) => String(item._id) === String(formData.party));
+      setLeadgerListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+      return;
+    }
+
     setLeadgerListIndex((prev) => {
       if (prev < 0) return 0;
       if (prev >= filteredLeadgers.length) return filteredLeadgers.length - 1;
       return prev;
     });
-  }, [showForm, filteredLeadgers]);
+  }, [showForm, filteredLeadgers, isLeadgerSectionActive, leadgerQuery, selectedLeadgerName, formData.party]);
+
+  const handleLeadgerFocus = () => {
+    setIsLeadgerSectionActive(true);
+  };
 
   const findExactLeadger = (value) => {
     const normalized = normalizeText(value);
@@ -402,6 +446,188 @@ export default function Sales() {
     }
   };
 
+  const getProductDisplayName = (product) => String(product?.name || '').trim() || 'Product';
+
+  const resolveProductNameById = (productId) => {
+    const resolvedId = typeof productId === 'object' ? productId?._id : productId;
+    if (!resolvedId) return '';
+    const matching = products.find((product) => String(product._id) === String(resolvedId));
+    return matching ? getProductDisplayName(matching) : '';
+  };
+
+  const getMatchingProducts = (queryValue) => {
+    const normalized = normalizeText(queryValue);
+    if (!normalized) return products;
+
+    const startsWith = products.filter((product) => normalizeText(getProductDisplayName(product)).startsWith(normalized));
+    const includes = products.filter((product) => (
+      !normalizeText(getProductDisplayName(product)).startsWith(normalized)
+      && normalizeText(getProductDisplayName(product)).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  };
+
+  const selectedProductName = useMemo(() => {
+    const resolvedName = resolveProductNameById(currentItem.product);
+    return resolvedName || currentItem.productName || '';
+  }, [currentItem.product, currentItem.productName, products]);
+
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = normalizeText(productQuery);
+    const normalizedSelectedName = normalizeText(selectedProductName);
+
+    if (
+      isProductSectionActive
+      && normalizedQuery
+      && normalizedQuery === normalizedSelectedName
+    ) {
+      return products;
+    }
+
+    return getMatchingProducts(productQuery);
+  }, [products, productQuery, isProductSectionActive, selectedProductName]);
+
+  useEffect(() => {
+    if (!showForm) return;
+
+    if (filteredProducts.length === 0) {
+      setProductListIndex(-1);
+      return;
+    }
+
+    const shouldHighlightSelectedProduct = (
+      isProductSectionActive
+      && normalizeText(productQuery)
+      && normalizeText(productQuery) === normalizeText(selectedProductName)
+      && currentItem.product
+    );
+
+    if (shouldHighlightSelectedProduct) {
+      const selectedIndex = filteredProducts.findIndex((item) => String(item._id) === String(currentItem.product));
+      setProductListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+      return;
+    }
+
+    setProductListIndex((prev) => {
+      if (prev < 0) return 0;
+      if (prev >= filteredProducts.length) return filteredProducts.length - 1;
+      return prev;
+    });
+  }, [showForm, filteredProducts, isProductSectionActive, productQuery, selectedProductName, currentItem.product]);
+
+  const findExactProduct = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return products.find((product) => normalizeText(getProductDisplayName(product)) === normalized) || null;
+  };
+
+  const findBestProductMatch = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return products.find((product) => normalizeText(getProductDisplayName(product)).startsWith(normalized))
+      || products.find((product) => normalizeText(getProductDisplayName(product)).includes(normalized))
+      || null;
+  };
+
+  const selectProduct = (product) => {
+    if (!product) {
+      setProductQuery('');
+      setCurrentItem((prev) => ({
+        ...prev,
+        product: '',
+        productName: ''
+      }));
+      setProductListIndex(-1);
+      return;
+    }
+
+    const productName = getProductDisplayName(product);
+    setProductQuery(productName);
+    setCurrentItem((prev) => ({
+      ...prev,
+      product: product._id,
+      productName
+    }));
+
+    const selectedIndex = filteredProducts.findIndex((item) => String(item._id) === String(product._id));
+    setProductListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  };
+
+  const handleProductFocus = () => {
+    setIsProductSectionActive(true);
+  };
+
+  const handleProductInputChange = (e) => {
+    const value = e.target.value;
+    setProductQuery(value);
+
+    if (!normalizeText(value)) {
+      selectProduct(null);
+      return;
+    }
+
+    const exactProduct = findExactProduct(value);
+    if (exactProduct) {
+      setCurrentItem((prev) => ({
+        ...prev,
+        product: exactProduct._id,
+        productName: getProductDisplayName(exactProduct)
+      }));
+      const exactIndex = getMatchingProducts(value).findIndex((item) => String(item._id) === String(exactProduct._id));
+      setProductListIndex(exactIndex >= 0 ? exactIndex : 0);
+      return;
+    }
+
+    const matches = getMatchingProducts(value);
+    const firstMatch = matches[0] || null;
+    setCurrentItem((prev) => ({
+      ...prev,
+      product: firstMatch?._id || '',
+      productName: firstMatch ? getProductDisplayName(firstMatch) : ''
+    }));
+    setProductListIndex(firstMatch ? 0 : -1);
+  };
+
+  const handleProductInputKeyDown = (e) => {
+    const key = e.key?.toLowerCase();
+
+    if (key === 'arrowdown') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredProducts.length === 0) return;
+      setProductListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredProducts.length - 1);
+      });
+      return;
+    }
+
+    if (key === 'arrowup') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredProducts.length === 0) return;
+      setProductListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const activeProduct = productListIndex >= 0 ? filteredProducts[productListIndex] : null;
+      const matchedProduct = activeProduct || findExactProduct(productQuery) || findBestProductMatch(productQuery);
+      if (matchedProduct) {
+        selectProduct(matchedProduct);
+      }
+      setIsProductSectionActive(false);
+      focusNextPopupField(e.currentTarget);
+    }
+  };
+
   const handleAddItem = () => {
     if (!currentItem.product || !currentItem.quantity || !currentItem.unitPrice) {
       setError('Product, quantity and price are required');
@@ -433,6 +659,9 @@ export default function Sales() {
     });
 
     setCurrentItem(initialCurrentItem);
+    setProductQuery('');
+    setProductListIndex(-1);
+    setIsProductSectionActive(false);
 
     calculateTotals([...formData.items, newItem]);
   };
@@ -518,6 +747,9 @@ export default function Sales() {
       setLeadgerQuery('');
       setLeadgerListIndex(-1);
       setIsLeadgerSectionActive(false);
+      setProductQuery('');
+      setProductListIndex(-1);
+      setIsProductSectionActive(false);
       setShowForm(false);
       setError('');
     } catch (err) {
@@ -545,6 +777,9 @@ export default function Sales() {
     setLeadgerQuery(resolvedLeadgerName);
     setLeadgerListIndex(resolvedLeadgerName ? 0 : -1);
     setIsLeadgerSectionActive(false);
+    setProductQuery('');
+    setProductListIndex(-1);
+    setIsProductSectionActive(false);
     setEditingId(sale._id);
     setShowForm(true);
   };
@@ -570,6 +805,9 @@ export default function Sales() {
     setLeadgerQuery('');
     setLeadgerListIndex(-1);
     setIsLeadgerSectionActive(false);
+    setProductQuery('');
+    setProductListIndex(-1);
+    setIsProductSectionActive(false);
   };
 
   const handleOpenForm = () => {
@@ -579,14 +817,10 @@ export default function Sales() {
     setLeadgerQuery('');
     setLeadgerListIndex(0);
     setIsLeadgerSectionActive(false);
+    setProductQuery('');
+    setProductListIndex(0);
+    setIsProductSectionActive(false);
     setShowForm(true);
-  };
-
-  const resolveLeadgerNameById = (leadgerId) => {
-    const resolvedId = typeof leadgerId === 'object' ? leadgerId?._id : leadgerId;
-    if (!resolvedId) return '';
-    const matching = leadgers.find((leadger) => String(leadger._id) === String(resolvedId));
-    return matching ? getLeadgerDisplayName(matching) : '';
   };
 
   const saleReceiptMap = useMemo(() => buildSaleReceiptMap(allReceipts), [allReceipts]);
@@ -704,23 +938,36 @@ export default function Sales() {
         popupLabelClass={popupLabelClass}
         popupSectionClass={popupSectionClass}
         leadgerSectionRef={leadgerSectionRef}
+        productSectionRef={productSectionRef}
         leadgerQuery={leadgerQuery}
+        productQuery={productQuery}
         leadgerListIndex={leadgerListIndex}
+        productListIndex={productListIndex}
         filteredLeadgers={filteredLeadgers}
+        filteredProducts={filteredProducts}
         isLeadgerSectionActive={isLeadgerSectionActive}
+        isProductSectionActive={isProductSectionActive}
         setCurrentItem={setCurrentItem}
         setIsLeadgerSectionActive={setIsLeadgerSectionActive}
+        setIsProductSectionActive={setIsProductSectionActive}
         setLeadgerListIndex={setLeadgerListIndex}
+        setProductListIndex={setProductListIndex}
         getLeadgerDisplayName={getLeadgerDisplayName}
+        getProductDisplayName={getProductDisplayName}
         handleCancel={handleCancel}
         handleSubmit={handleSubmit}
         handleInputChange={handleInputChange}
+        handleLeadgerFocus={handleLeadgerFocus}
         handleLeadgerInputChange={handleLeadgerInputChange}
         handleLeadgerInputKeyDown={handleLeadgerInputKeyDown}
+        handleProductFocus={handleProductFocus}
+        handleProductInputChange={handleProductInputChange}
+        handleProductInputKeyDown={handleProductInputKeyDown}
         handleSelectEnterMoveNext={handleSelectEnterMoveNext}
         handleAddItem={handleAddItem}
         handleRemoveItem={handleRemoveItem}
         selectLeadger={selectLeadger}
+        selectProduct={selectProduct}
       />
       <div className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
         <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 px-6 py-5">

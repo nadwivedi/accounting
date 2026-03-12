@@ -330,7 +330,13 @@ export default function AddPurchasePopup({
                         placeholder="0.00"
                         value={currentItem.unitPrice}
                         onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
-                        onKeyDown={handleSelectEnterMoveNext}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleAddItem();
+                          }
+                        }}
                         className={`${inputClass} focus:ring-emerald-500`}
                         step="0.01"
                       />
