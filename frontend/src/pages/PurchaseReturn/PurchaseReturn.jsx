@@ -1,4 +1,4 @@
-import VoucherRegisterPage from '../components/VoucherRegisterPage';
+import VoucherRegisterPage from '../../components/VoucherRegisterPage';
 
 export default function PurchaseReturn() {
   return (

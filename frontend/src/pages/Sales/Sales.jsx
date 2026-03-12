@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { ShoppingCart, IndianRupee, AlertCircle } from 'lucide-react';
 import { toast } from 'react-toastify';
-import apiClient from '../utils/api';
-import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
+import apiClient from '../../utils/api';
+import AddSalePopup from './component/AddSalePopup';
 
 const buildSaleReceiptMap = (receipts) => {
   const map = new Map();
@@ -26,26 +26,60 @@ const getSalePaymentStats = (sale, receiptMap) => {
   return { paid, due, status };
 };
 
+const formatDateForInput = (value = new Date()) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = String(date.getFullYear());
+  return `${day}-${month}-${year}`;
+};
+
+const parseManualDate = (value) => {
+  const normalized = String(value || '').trim();
+  const match = normalized.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (!match) return null;
+
+  const [, dayText, monthText, yearText] = match;
+  const day = Number(dayText);
+  const month = Number(monthText);
+  const year = Number(yearText);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    Number.isNaN(date.getTime())
+    || date.getFullYear() !== year
+    || date.getMonth() !== month - 1
+    || date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+};
+
+const getInitialFormData = () => ({
+  party: '',
+  customerName: '',
+  customerPhone: '',
+  customerAddress: '',
+  items: [],
+  saleDate: formatDateForInput(),
+  dueDate: '',
+  subtotal: 0,
+  discountAmount: 0,
+  taxAmount: 0,
+  roundOff: 0,
+  totalAmount: 0,
+  paidAmount: 0,
+  paymentMode: 'cash',
+  notes: ''
+});
+
 export default function Sales() {
   const toastOptions = { autoClose: 1200 };
-
-  const initialFormData = {
-    party: '',
-    customerName: '',
-    customerPhone: '',
-    customerAddress: '',
-    items: [],
-    saleDate: new Date().toISOString().split('T')[0],
-    dueDate: '',
-    subtotal: 0,
-    discountAmount: 0,
-    taxAmount: 0,
-    roundOff: 0,
-    totalAmount: 0,
-    paidAmount: 0,
-    paymentMode: 'cash',
-    notes: ''
-  };
+  const initialFormData = getInitialFormData();
   const initialCurrentItem = {
     product: '',
     productName: '',
@@ -421,11 +455,24 @@ export default function Sales() {
       setFormData({ ...formData, customerPhone: normalizedPhone });
       return;
     }
+    if (name === 'saleDate') {
+      setFormData({ ...formData, saleDate: value });
+      return;
+    }
     setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!formData.party) {
+      setError('Party name is required');
+      return;
+    }
+    const parsedSaleDate = parseManualDate(formData.saleDate);
+    if (!parsedSaleDate) {
+      setError('Invoice date must be in dd-mm-yyyy format');
+      return;
+    }
     if (formData.items.length === 0) {
       setError('At least one item is required');
       return;
@@ -436,7 +483,7 @@ export default function Sales() {
       const isEditMode = Boolean(editingId);
       const submitData = {
         ...formData,
-        saleDate: new Date(formData.saleDate),
+        saleDate: parsedSaleDate,
         dueDate: formData.dueDate ? new Date(formData.dueDate) : null
       };
 
@@ -451,7 +498,7 @@ export default function Sales() {
       );
       fetchSales();
       fetchReceipts();
-      setFormData(initialFormData);
+      setFormData(getInitialFormData());
       setCurrentItem(initialCurrentItem);
       setEditingId(null);
       setLeadgerQuery('');
@@ -473,16 +520,17 @@ export default function Sales() {
     const resolvedLeadgerName = resolveLeadgerNameById(normalizedPartyId) || sale.customerName || '';
 
     setFormData({
-      ...initialFormData,
+      ...getInitialFormData(),
       ...sale,
       party: normalizedPartyId,
+      saleDate: formatDateForInput(sale.saleDate),
       customerName: resolvedLeadgerName,
       customerPhone: String(sale.customerPhone || '').replace(/\D/g, '').slice(0, 10),
       customerAddress: sale.customerAddress || ''
     });
     setLeadgerQuery(resolvedLeadgerName);
     setLeadgerListIndex(resolvedLeadgerName ? 0 : -1);
-    setIsLeadgerSectionActive(true);
+    setIsLeadgerSectionActive(false);
     setEditingId(sale._id);
     setShowForm(true);
   };
@@ -503,7 +551,7 @@ export default function Sales() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData(initialFormData);
+    setFormData(getInitialFormData());
     setCurrentItem(initialCurrentItem);
     setLeadgerQuery('');
     setLeadgerListIndex(-1);
@@ -512,11 +560,11 @@ export default function Sales() {
 
   const handleOpenForm = () => {
     setEditingId(null);
-    setFormData(initialFormData);
+    setFormData(getInitialFormData());
     setCurrentItem(initialCurrentItem);
     setLeadgerQuery('');
     setLeadgerListIndex(0);
-    setIsLeadgerSectionActive(true);
+    setIsLeadgerSectionActive(false);
     setShowForm(true);
   };
 
@@ -630,351 +678,35 @@ export default function Sales() {
         </div>
       </div>
 
-      {showForm && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-[1.5px] z-50 flex items-stretch justify-start p-1.5 sm:p-2" onClick={handleCancel}>
-          <div className="bg-white h-full w-full md:w-[75vw] overflow-hidden flex flex-col shadow-2xl ring-1 ring-slate-200/80 rounded-xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-2 md:px-4 md:py-2.5 text-white flex-shrink-0 border-b border-white/15">
-              <div className="flex justify-between items-center">
-                <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 rounded-md bg-white/20 ring-1 ring-white/30 flex items-center justify-center text-white">
-                    <ShoppingCart className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg md:text-2xl font-bold">
-                      {editingId ? 'Edit Sale Voucher' : 'Add New Sale Voucher'}
-                    </h2>
-                    <p className="text-cyan-100 text-xs md:text-sm mt-1">Create or update sale entries in a clean accounting format.</p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="text-white hover:bg-white/25 rounded-lg p-1.5 md:p-2 transition"
-                  aria-label="Close popup"
-                >
-                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            <form id="sales-form" onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex flex-col flex-1 overflow-hidden">
-              <div className="flex-1 overflow-y-auto p-2.5 md:p-4 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1.15fr)] gap-2.5 md:gap-4 items-stretch">
-                <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-2.5 md:p-4 space-y-4">
-                  <div className={popupSectionClass}>
-                    <div className="mb-4 border-b border-indigo-200 pb-2">
-                      <h3 className="text-base md:text-lg font-bold text-gray-800 flex items-center gap-2">
-                        <span className="bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
-                        Voucher Details
-                      </h3>
-                      <p className="mt-1 text-xs text-slate-500">Select party and voucher dates.</p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="sm:col-span-2">
-                        <label className={popupLabelClass}>Party Name</label>
-                        <div
-                          ref={leadgerSectionRef}
-                          className="relative"
-                          onFocusCapture={() => setIsLeadgerSectionActive(true)}
-                          onBlurCapture={(event) => {
-                            const nextFocused = event.relatedTarget;
-                            if (
-                              leadgerSectionRef.current
-                              && nextFocused instanceof Node
-                              && leadgerSectionRef.current.contains(nextFocused)
-                            ) {
-                              return;
-                            }
-                            setIsLeadgerSectionActive(false);
-                          }}
-                        >
-                          <input
-                            type="text"
-                            value={leadgerQuery}
-                            onChange={handleLeadgerInputChange}
-                            onKeyDown={handleLeadgerInputKeyDown}
-                            autoFocus
-                            className={popupFieldClass}
-                            placeholder="Select party name only"
-                          />
-
-                          {isLeadgerSectionActive && (
-                            <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
-                              <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
-                                <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
-                                  Party List
-                                </div>
-                                <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
-                                  <button
-                                    type="button"
-                                    onMouseDown={(event) => event.preventDefault()}
-                                    onClick={() => selectLeadger(null)}
-                                    className={`w-full border-b border-slate-100 px-3 py-2 text-left text-sm transition-colors ${
-                                      !formData.party
-                                        ? 'bg-yellow-300 text-black font-semibold'
-                                        : 'bg-transparent text-slate-700 hover:bg-slate-50'
-                                    }`}
-                                  >
-                                    Walk-in / No Party
-                                  </button>
-                                  {filteredLeadgers.length === 0 ? (
-                                    <div className="px-3 py-2 text-sm text-slate-500">No matching parties</div>
-                                  ) : (
-                                    filteredLeadgers.map((leadger, index) => {
-                                      const isActive = index === leadgerListIndex;
-                                      const isSelected = String(formData.party || '') === String(leadger._id);
-                                      return (
-                                        <button
-                                          key={leadger._id}
-                                          type="button"
-                                          onMouseDown={(event) => event.preventDefault()}
-                                          onMouseEnter={() => setLeadgerListIndex(index)}
-                                          onClick={() => selectLeadger(leadger)}
-                                          className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
-                                            isActive || isSelected
-                                              ? 'bg-yellow-300 text-black font-semibold'
-                                              : 'bg-transparent text-slate-700 hover:bg-slate-50'
-                                          }`}
-                                        >
-                                          {getLeadgerDisplayName(leadger)}
-                                        </button>
-                                      );
-                                    })
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className={popupLabelClass}>Sale Date</label>
-                        <input
-                          type="date"
-                          name="saleDate"
-                          value={formData.saleDate}
-                          onChange={handleInputChange}
-                          className={popupFieldClass}
-                        />
-                      </div>
-
-                      <div>
-                        <label className={popupLabelClass}>Due Date</label>
-                        <input
-                          type="date"
-                          name="dueDate"
-                          value={formData.dueDate}
-                          onChange={handleInputChange}
-                          className={popupFieldClass}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-indigo-200 bg-white/75 p-3 md:p-4">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm md:text-base font-bold text-slate-800">Item Entry</h3>
-                        <p className="mt-1 text-xs text-slate-500">Add stock items with product, quantity and rate.</p>
-                      </div>
-                      <span className="inline-flex items-center rounded-md border border-indigo-200 bg-indigo-100 px-3 py-1 text-xs font-semibold text-indigo-700">
-                        {formData.items.length} item(s)
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_auto] gap-3 mb-4 items-end">
-                      <select
-                        value={currentItem.product}
-                        onChange={(e) => setCurrentItem({ ...currentItem, product: e.target.value })}
-                        onKeyDown={handleSelectEnterMoveNext}
-                        className={popupFieldClass}
-                      >
-                        <option value="">Select product</option>
-                        {products.map((p) => (
-                          <option key={p._id} value={p._id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        type="number"
-                        placeholder="Qty"
-                        value={currentItem.quantity}
-                        onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
-                        className={popupFieldClass}
-                      />
-                      <input
-                        type="number"
-                        placeholder="Price"
-                        value={currentItem.unitPrice}
-                        onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
-                        className={popupFieldClass}
-                        step="0.01"
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddItem}
-                        className="rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:shadow-md transition whitespace-nowrap"
-                      >
-                        Add Item
-                      </button>
-                    </div>
-
-                    {formData.items.length > 0 && (
-                      <div className="overflow-hidden rounded-lg border border-indigo-200">
-                        <table className="w-full text-xs">
-                          <thead className="bg-indigo-100 text-slate-700">
-                            <tr>
-                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Product</th>
-                              <th className="px-2 py-2 text-right font-semibold sm:px-3">Qty</th>
-                              <th className="px-2 py-2 text-right font-semibold sm:px-3">Rate</th>
-                              <th className="px-2 py-2 text-right font-semibold sm:px-3">Amount</th>
-                              <th className="px-2 py-2 text-left font-semibold sm:px-3">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-slate-100 bg-white">
-                            {formData.items.map((item, index) => (
-                              <tr key={index}>
-                                <td className="px-2 py-2 font-medium text-slate-700 sm:px-3">{item.productName}</td>
-                                <td className="px-2 py-2 text-right font-mono text-slate-600 sm:px-3">{item.quantity}</td>
-                                <td className="px-2 py-2 text-right font-mono text-slate-600 sm:px-3">{Number(item.unitPrice || 0).toFixed(2)}</td>
-                                <td className="px-2 py-2 text-right font-mono font-semibold text-slate-800 sm:px-3">{Number(item.total || 0).toFixed(2)}</td>
-                                <td className="px-2 py-2 sm:px-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveItem(index)}
-                                    className="rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-100 transition"
-                                  >
-                                    Remove
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-
-                <div className="hidden lg:block h-full w-px bg-slate-300" aria-hidden="true"></div>
-
-                <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-2.5 md:p-4 space-y-3">
-                  <h3 className="text-base md:text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
-                    <span className="bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">2</span>
-                    Payment & Summary
-                  </h3>
-
-                  <div className="rounded-xl border border-emerald-200 bg-white/75 p-3 md:p-4 space-y-3">
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Paid Amount</label>
-                      <input
-                        type="number"
-                        name="paidAmount"
-                        value={formData.paidAmount}
-                        onChange={handleInputChange}
-                        step="0.01"
-                        min="0"
-                        className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                        placeholder="Enter paid amount"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Payment Mode</label>
-                      <select
-                        name="paymentMode"
-                        value={formData.paymentMode}
-                        onChange={handleInputChange}
-                        onKeyDown={handleSelectEnterMoveNext}
-                        className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 transition-all focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
-                      >
-                        <option value="cash">Cash</option>
-                        <option value="upi">UPI</option>
-                        <option value="card">Card</option>
-                        <option value="bank">Bank Transfer</option>
-                        <option value="cheque">Cheque</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-emerald-200 bg-white p-4 shadow-sm">
-                    <h4 className="mb-3 border-b border-emerald-100 pb-2 text-sm font-bold uppercase tracking-wide text-slate-800">Voucher Totals</h4>
-                    <div className="space-y-1.5 text-sm">
-                      <div className="flex items-center justify-between rounded-md bg-emerald-50 px-3 py-2">
-                        <span className="text-slate-600">Subtotal</span>
-                        <span className="font-mono font-semibold text-slate-800">Rs {formData.subtotal.toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-100 px-3 py-2">
-                        <span className="font-semibold text-slate-700">Total Amount</span>
-                        <span className="font-mono font-bold text-slate-900">Rs {formData.totalAmount.toFixed(2)}</span>
-                      </div>
-                      <div className="flex items-center justify-between rounded-md border border-emerald-200 bg-emerald-100 px-3 py-2">
-                        <span className="font-semibold text-slate-700">Balance Due</span>
-                        <span className="font-mono font-bold text-slate-900">Rs {(formData.totalAmount - formData.paidAmount).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-emerald-200 bg-white p-3 shadow-sm">
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-emerald-700">Notes</label>
-                    <textarea
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleInputChange}
-                      className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-1.5 text-xs text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200 transition"
-                      placeholder="Optional notes"
-                      rows="2"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-gray-200 px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
-                <div className="text-xs md:text-sm text-gray-600">
-                  <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Esc</kbd> to close
-                </div>
-
-                <div className="flex gap-2 md:gap-3 w-full md:w-auto">
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="flex-1 md:flex-none px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-semibold transition"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    form="sales-form"
-                    disabled={loading}
-                    className="flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {loading ? (
-                      <>
-                        <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        {editingId ? 'Update Sale' : 'Save Sale'}
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <AddSalePopup
+        showForm={showForm}
+        editingId={editingId}
+        loading={loading}
+        formData={formData}
+        currentItem={currentItem}
+        products={products}
+        popupFieldClass={popupFieldClass}
+        popupLabelClass={popupLabelClass}
+        popupSectionClass={popupSectionClass}
+        leadgerSectionRef={leadgerSectionRef}
+        leadgerQuery={leadgerQuery}
+        leadgerListIndex={leadgerListIndex}
+        filteredLeadgers={filteredLeadgers}
+        isLeadgerSectionActive={isLeadgerSectionActive}
+        setCurrentItem={setCurrentItem}
+        setIsLeadgerSectionActive={setIsLeadgerSectionActive}
+        setLeadgerListIndex={setLeadgerListIndex}
+        getLeadgerDisplayName={getLeadgerDisplayName}
+        handleCancel={handleCancel}
+        handleSubmit={handleSubmit}
+        handleInputChange={handleInputChange}
+        handleLeadgerInputChange={handleLeadgerInputChange}
+        handleLeadgerInputKeyDown={handleLeadgerInputKeyDown}
+        handleSelectEnterMoveNext={handleSelectEnterMoveNext}
+        handleAddItem={handleAddItem}
+        handleRemoveItem={handleRemoveItem}
+        selectLeadger={selectLeadger}
+      />
       {/* Search */}
       <div className="mb-6 flex flex-col sm:flex-row gap-3">
         <input
@@ -1113,7 +845,7 @@ export default function Sales() {
                   return (
                   <tr key={sale._id} className="bg-white hover:bg-slate-50 transition-colors duration-200 group">
                     <td className="px-6 py-4 font-semibold text-slate-800">{sale.invoiceNumber}</td>
-                    <td className="px-6 py-4 font-medium text-slate-700">{resolveLeadgerNameById(sale.party) || sale.customerName || 'Walk-in'}</td>
+                    <td className="px-6 py-4 font-medium text-slate-700">{resolveLeadgerNameById(sale.party) || sale.customerName || '-'}</td>
                     <td className="px-6 py-4 text-slate-600">
                       {sale.items?.length
                         ? (
