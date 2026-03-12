@@ -180,29 +180,6 @@ export default function Payments() {
   const totalPurchaseAmount = purchases.reduce((sum, p) => sum + Number(p.totalAmount || 0), 0);
   const totalPayable = Math.max(0, totalPurchaseAmount - totalPayments);
 
-  const billWisePendingPurchases = useMemo(() => {
-    const billWiseRefSet = new Set(
-      payments
-        .filter((payment) => payment.refType === 'purchase' && payment.refId)
-        .map((payment) => String(payment.refId))
-    );
-
-    return purchases
-      .map((purchase) => {
-        const pendingAmount = Math.max(
-          0,
-          Number(purchase.totalAmount || 0) - Number(purchasePaymentMap.get(String(purchase._id)) || 0)
-        );
-        return {
-          ...purchase,
-          pendingAmount
-        };
-      })
-      .filter((purchase) => purchase.pendingAmount > 0 && billWiseRefSet.has(String(purchase._id)));
-  }, [purchases, payments, purchasePaymentMap]);
-
-  const billWisePendingTotal = billWisePendingPurchases.reduce((sum, p) => sum + Number(p.pendingAmount || 0), 0);
-
   return (
     <div className="min-h-screen bg-[#f8f6f1] p-4 pt-16 md:px-8 md:pb-8 md:pt-5">
       {error && (
@@ -211,7 +188,7 @@ export default function Payments() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 mb-6">
         <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -254,21 +231,6 @@ export default function Payments() {
           </div>
           <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-amber-500 to-orange-400 opacity-80"></div>
         </div>
-        <div className="relative overflow-hidden rounded-xl sm:rounded-2xl bg-white p-2.5 sm:p-5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md group">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Bill-wise Pending</p>
-              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
-                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
-                {billWisePendingTotal.toFixed(2)}
-              </p>
-            </div>
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-transform group-hover:scale-110">
-              <Wallet className="h-6 w-6" />
-            </div>
-          </div>
-          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-rose-500 to-red-400 opacity-80"></div>
-        </div>
       </div>
 
       <div className="mb-4 flex flex-col md:flex-row gap-3">
@@ -297,42 +259,6 @@ export default function Payments() {
         >
           + Add Payment
         </button>
-      </div>
-
-      <div className="mb-6 bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 bg-white">
-          <h3 className="text-base font-semibold text-slate-800">Pending Bill-wise Purchases</h3>
-          <p className="text-xs text-slate-500 mt-1">Only purchases with bill reference and pending balance are shown.</p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left whitespace-nowrap">
-            <thead className="bg-slate-800 text-white">
-              <tr>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Invoice No</th>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Supplier</th>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Purchase Date</th>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Due Date</th>
-                <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Pending</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {billWisePendingPurchases.map((purchase) => (
-                <tr key={purchase._id} className="bg-white hover:bg-slate-50 transition-colors duration-200">
-                  <td className="px-6 py-4 font-semibold text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
-                  <td className="px-6 py-4 font-medium text-slate-700">{purchase.party?.partyName || '-'}</td>
-                  <td className="px-6 py-4 text-slate-600">{purchase.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString() : '-'}</td>
-                  <td className="px-6 py-4 text-slate-600">{purchase.dueDate ? new Date(purchase.dueDate).toLocaleDateString() : '-'}</td>
-                  <td className="px-6 py-4 text-rose-600 font-semibold">Rs {Number(purchase.pendingAmount || 0).toFixed(2)}</td>
-                </tr>
-              ))}
-              {!loading && billWisePendingPurchases.length === 0 && (
-                <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-slate-500 italic bg-slate-50/50">No pending bill-wise purchases</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
       </div>
 
       <AddPaymentPopup
