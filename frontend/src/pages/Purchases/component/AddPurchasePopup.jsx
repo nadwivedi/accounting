@@ -1,4 +1,4 @@
-import { CalendarDays, PackagePlus, ShoppingCart, Upload } from 'lucide-react';
+import { Building2, CalendarDays, PackagePlus, ShoppingCart, Upload } from 'lucide-react';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
 
 export default function AddPurchasePopup({
@@ -7,17 +7,27 @@ export default function AddPurchasePopup({
   loading,
   formData,
   currentItem,
-  leadgers,
   products,
   uploadingInvoice,
+  leadgerSectionRef,
+  leadgerQuery,
+  leadgerListIndex,
+  filteredLeadgers,
+  isLeadgerSectionActive,
   getLeadgerDisplayName,
   setCurrentItem,
+  setIsLeadgerSectionActive,
+  setLeadgerListIndex,
   handleCancel,
   handleSubmit,
   handleInputChange,
+  handleLeadgerInputChange,
+  handleLeadgerInputKeyDown,
+  handleSelectEnterMoveNext,
   handleInvoiceUpload,
   handleAddItem,
-  handleRemoveItem
+  handleRemoveItem,
+  selectLeadger
 }) {
   if (!showForm) return null;
 
@@ -69,31 +79,90 @@ export default function AddPurchasePopup({
                           name="purchaseDate"
                           value={formData.purchaseDate}
                           onChange={handleInputChange}
+                          onKeyDown={handleSelectEnterMoveNext}
                           className={`${inputClass} pl-10 focus:ring-indigo-500`}
                           placeholder="DD-MM-YYYY"
+                          inputMode="numeric"
                           autoFocus
                         />
                       </div>
                     </div>
 
-                    <div>
+                    <div className="relative">
                       <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">
                         Party Name <span className="text-red-500">*</span>
                       </label>
-                      <select
-                        name="party"
-                        value={formData.party}
-                        onChange={handleInputChange}
-                        className={`${inputClass} focus:ring-indigo-500`}
-                        required
+                      <div
+                        ref={leadgerSectionRef}
+                        className="relative"
+                        onFocusCapture={() => setIsLeadgerSectionActive(true)}
+                        onBlurCapture={(event) => {
+                          const nextFocused = event.relatedTarget;
+                          if (leadgerSectionRef.current && nextFocused instanceof Node && leadgerSectionRef.current.contains(nextFocused)) return;
+                          setIsLeadgerSectionActive(false);
+                        }}
                       >
-                        <option value="">Select leadger/account</option>
-                        {leadgers.map((leadger) => (
-                          <option key={leadger._id} value={leadger._id}>
-                            {getLeadgerDisplayName(leadger)}
-                          </option>
-                        ))}
-                      </select>
+                        <div className="relative">
+                          <Building2 className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-indigo-400" />
+                          <input
+                            type="text"
+                            value={leadgerQuery}
+                            onChange={handleLeadgerInputChange}
+                            onKeyDown={handleLeadgerInputKeyDown}
+                            className={`${inputClass} pl-9 focus:ring-indigo-500`}
+                            placeholder="Type to search party..."
+                            autoComplete="off"
+                            required
+                          />
+                        </div>
+
+                        {isLeadgerSectionActive && (
+                          <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
+                            <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Party List</span>
+                              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                {filteredLeadgers.length}
+                              </span>
+                            </div>
+                            <div className="max-h-64 overflow-y-auto py-1">
+                              {filteredLeadgers.length === 0 ? (
+                                <div className="px-3 py-3 text-center text-sm text-slate-500">
+                                  No matching parties found.
+                                </div>
+                              ) : (
+                                filteredLeadgers.map((leadger, index) => {
+                                  const isActive = index === leadgerListIndex;
+                                  const isSelected = String(formData.party || '') === String(leadger._id);
+
+                                  return (
+                                    <button
+                                      key={leadger._id}
+                                      type="button"
+                                      onMouseDown={(event) => event.preventDefault()}
+                                      onMouseEnter={() => setLeadgerListIndex(index)}
+                                      onClick={() => selectLeadger(leadger)}
+                                      className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
+                                        isActive
+                                          ? 'bg-yellow-200 text-amber-950'
+                                          : isSelected
+                                          ? 'bg-yellow-50 text-amber-800'
+                                          : 'text-slate-700 hover:bg-amber-50'
+                                      }`}
+                                    >
+                                      <span className="truncate font-medium">{getLeadgerDisplayName(leadger)}</span>
+                                      {isSelected && (
+                                        <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                          Selected
+                                        </span>
+                                      )}
+                                    </button>
+                                  );
+                                })
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div>
@@ -105,6 +174,7 @@ export default function AddPurchasePopup({
                         name="invoiceNo"
                         value={formData.invoiceNo || ''}
                         onChange={handleInputChange}
+                        onKeyDown={handleSelectEnterMoveNext}
                         className={`${inputClass} focus:ring-indigo-500`}
                         placeholder="Enter invoice no."
                       />
@@ -117,6 +187,7 @@ export default function AddPurchasePopup({
                         name="dueDate"
                         value={formData.dueDate || ''}
                         onChange={handleInputChange}
+                        onKeyDown={handleSelectEnterMoveNext}
                         className={`${inputClass} focus:ring-indigo-500`}
                       />
                     </div>
@@ -158,6 +229,7 @@ export default function AddPurchasePopup({
                       <select
                         value={currentItem.product}
                         onChange={(e) => setCurrentItem({ ...currentItem, product: e.target.value })}
+                        onKeyDown={handleSelectEnterMoveNext}
                         className={`${inputClass} focus:ring-emerald-500`}
                       >
                         <option value="">Select product</option>
@@ -176,6 +248,7 @@ export default function AddPurchasePopup({
                         placeholder="0"
                         value={currentItem.quantity}
                         onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
+                        onKeyDown={handleSelectEnterMoveNext}
                         className={`${inputClass} focus:ring-emerald-500`}
                       />
                     </div>
@@ -187,6 +260,7 @@ export default function AddPurchasePopup({
                         placeholder="0.00"
                         value={currentItem.unitPrice}
                         onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
+                        onKeyDown={handleSelectEnterMoveNext}
                         className={`${inputClass} focus:ring-emerald-500`}
                         step="0.01"
                       />
@@ -307,6 +381,7 @@ export default function AddPurchasePopup({
                     name="paymentMethod"
                     value={formData.paymentMethod}
                     onChange={handleInputChange}
+                    onKeyDown={handleSelectEnterMoveNext}
                     disabled={Boolean(editingId) || paidAmount <= 0}
                     className={`${inputClass} ${Boolean(editingId) || paidAmount <= 0 ? 'bg-gray-100 text-gray-500' : 'bg-white'} focus:ring-purple-500`}
                   >

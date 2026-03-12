@@ -188,6 +188,7 @@ exports.getAllPurchases = async (req, res) => {
     }
 
     let query = Purchase.find(filter)
+      .populate('party', 'name')
       .populate('items.product', 'name');
 
     if (search) {
@@ -223,6 +224,7 @@ exports.getPurchaseById = async (req, res) => {
     const userId = req.userId;
 
     const purchase = await Purchase.findOne({ _id: id, userId })
+      .populate('party', 'name')
       .populate('items.product', 'name');
 
     if (!purchase) {
@@ -342,6 +344,7 @@ exports.updatePurchase = async (req, res) => {
     await purchase.save();
 
     const updatedPurchase = await Purchase.findById(id)
+      .populate('party', 'name')
       .populate('items.product', 'name');
 
     res.status(200).json({

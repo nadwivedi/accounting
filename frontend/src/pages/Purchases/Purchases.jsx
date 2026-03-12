@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Upload, ShoppingCart, IndianRupee, Search } from 'lucide-react';
+import { useState, useEffect, useMemo, useRef } from 'react';
+import { ShoppingCart, IndianRupee, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import AddPurchasePopup from './component/AddPurchasePopup';
@@ -41,7 +41,7 @@ export default function Purchases() {
     return parsedDate;
   };
 
-  const initialFormData = {
+  const getInitialFormData = () => ({
     party: '',
     invoiceNo: '',
     items: [],
@@ -55,7 +55,7 @@ export default function Purchases() {
     paymentDate: new Date().toISOString().split('T')[0],
     paymentNotes: '',
     isBillWisePayment: false
-  };
+  });
 
   const initialCurrentItem = {
     product: '',
@@ -73,9 +73,13 @@ export default function Purchases() {
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
   const [dateFilter, setDateFilter] = useState('');
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState(getInitialFormData());
   const [currentItem, setCurrentItem] = useState(initialCurrentItem);
   const [uploadingInvoice, setUploadingInvoice] = useState(false);
+  const [leadgerQuery, setLeadgerQuery] = useState('');
+  const [leadgerListIndex, setLeadgerListIndex] = useState(-1);
+  const [isLeadgerSectionActive, setIsLeadgerSectionActive] = useState(false);
+  const leadgerSectionRef = useRef(null);
 
   useEffect(() => {
     fetchPurchases();
@@ -90,10 +94,7 @@ export default function Purchases() {
       if (key !== 'n') return;
 
       event.preventDefault();
-      setEditingId(null);
-      setFormData(initialFormData);
-      setCurrentItem(initialCurrentItem);
-      setShowForm(true);
+      handleOpenForm();
     };
 
     window.addEventListener('keydown', handleKeyDown);
@@ -157,7 +158,163 @@ export default function Purchases() {
     const name = String(leadger?.name || '').trim();
 
     if (name) return name;
-    return 'Manage Party';
+    return 'Party Name';
+  };
+
+  const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+  const getMatchingLeadgers = (queryValue) => {
+    const normalized = normalizeText(queryValue);
+    if (!normalized) return leadgers;
+
+    const startsWith = leadgers.filter((leadger) => normalizeText(getLeadgerDisplayName(leadger)).startsWith(normalized));
+    const includes = leadgers.filter((leadger) => (
+      !normalizeText(getLeadgerDisplayName(leadger)).startsWith(normalized)
+      && normalizeText(getLeadgerDisplayName(leadger)).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  };
+
+  const filteredLeadgers = useMemo(() => getMatchingLeadgers(leadgerQuery), [leadgers, leadgerQuery]);
+
+  useEffect(() => {
+    if (!showForm) return;
+
+    if (filteredLeadgers.length === 0) {
+      setLeadgerListIndex(-1);
+      return;
+    }
+
+    setLeadgerListIndex((prev) => {
+      if (prev < 0) return 0;
+      if (prev >= filteredLeadgers.length) return filteredLeadgers.length - 1;
+      return prev;
+    });
+  }, [showForm, filteredLeadgers]);
+
+  const findExactLeadger = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return leadgers.find((leadger) => normalizeText(getLeadgerDisplayName(leadger)) === normalized) || null;
+  };
+
+  const findBestLeadgerMatch = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return leadgers.find((leadger) => normalizeText(getLeadgerDisplayName(leadger)).startsWith(normalized))
+      || leadgers.find((leadger) => normalizeText(getLeadgerDisplayName(leadger)).includes(normalized))
+      || null;
+  };
+
+  const selectLeadger = (leadger) => {
+    if (!leadger) {
+      setLeadgerQuery('');
+      setFormData((prev) => ({ ...prev, party: '' }));
+      setLeadgerListIndex(-1);
+      return;
+    }
+
+    const leadgerName = getLeadgerDisplayName(leadger);
+    setLeadgerQuery(leadgerName);
+    setFormData((prev) => ({ ...prev, party: leadger._id }));
+
+    const selectedIndex = filteredLeadgers.findIndex((item) => String(item._id) === String(leadger._id));
+    setLeadgerListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  };
+
+  const handleLeadgerInputChange = (e) => {
+    const value = e.target.value;
+    setLeadgerQuery(value);
+
+    if (!normalizeText(value)) {
+      selectLeadger(null);
+      return;
+    }
+
+    const exactLeadger = findExactLeadger(value);
+    if (exactLeadger) {
+      setFormData((prev) => ({ ...prev, party: exactLeadger._id }));
+      const exactIndex = getMatchingLeadgers(value).findIndex((item) => String(item._id) === String(exactLeadger._id));
+      setLeadgerListIndex(exactIndex >= 0 ? exactIndex : 0);
+      return;
+    }
+
+    const matches = getMatchingLeadgers(value);
+    const firstMatch = matches[0] || null;
+    setFormData((prev) => ({ ...prev, party: firstMatch?._id || '' }));
+    setLeadgerListIndex(firstMatch ? 0 : -1);
+  };
+
+  const focusNextPopupField = (element) => {
+    if (!(element instanceof HTMLElement)) return;
+    const form = element.closest('form');
+    if (!form) return;
+
+    const fields = Array.from(form.querySelectorAll(
+      'input:not([type="hidden"]):not([disabled]):not([readonly]), select:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly])'
+    )).filter((field) => {
+      if (!(field instanceof HTMLElement)) return false;
+      if (field.tabIndex === -1) return false;
+      const style = window.getComputedStyle(field);
+      return style.display !== 'none' && style.visibility !== 'hidden';
+    });
+
+    const currentIndex = fields.indexOf(element);
+    if (currentIndex === -1) return;
+
+    const nextField = fields[currentIndex + 1];
+    if (!(nextField instanceof HTMLElement)) return;
+    nextField.focus();
+    if (nextField instanceof HTMLInputElement && typeof nextField.select === 'function') {
+      nextField.select();
+    }
+  };
+
+  const handleSelectEnterMoveNext = (e) => {
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    e.preventDefault();
+    e.stopPropagation();
+    focusNextPopupField(e.currentTarget);
+  };
+
+  const handleLeadgerInputKeyDown = (e) => {
+    const key = e.key?.toLowerCase();
+
+    if (key === 'arrowdown') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredLeadgers.length === 0) return;
+      setLeadgerListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredLeadgers.length - 1);
+      });
+      return;
+    }
+
+    if (key === 'arrowup') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredLeadgers.length === 0) return;
+      setLeadgerListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const activeLeadger = leadgerListIndex >= 0 ? filteredLeadgers[leadgerListIndex] : null;
+      const matchedLeadger = activeLeadger || findExactLeadger(leadgerQuery) || findBestLeadgerMatch(leadgerQuery);
+      if (matchedLeadger) {
+        selectLeadger(matchedLeadger);
+      }
+      setIsLeadgerSectionActive(false);
+      focusNextPopupField(e.currentTarget);
+    }
   };
 
   const resolveLeadgerNameById = (leadgerId) => {
@@ -238,7 +395,7 @@ export default function Purchases() {
     e.preventDefault();
 
     if (!formData.party || formData.items.length === 0) {
-      setError('Manage Party and at least one item are required');
+      setError('Party name and at least one item are required');
       return;
     }
 
@@ -284,9 +441,12 @@ export default function Purchases() {
       );
 
       fetchPurchases();
-      setFormData(initialFormData);
+      setFormData(getInitialFormData());
       setCurrentItem(initialCurrentItem);
       setEditingId(null);
+      setLeadgerQuery('');
+      setLeadgerListIndex(-1);
+      setIsLeadgerSectionActive(false);
       setShowForm(false);
       setError('');
     } catch (err) {
@@ -306,8 +466,11 @@ export default function Purchases() {
       total: Number(item.total || (Number(item.quantity || 0) * Number(item.unitPrice || 0)))
     }));
 
+    const normalizedPartyId = purchase.party?._id || purchase.party || '';
+    const resolvedLeadgerName = resolveLeadgerNameById(normalizedPartyId);
+
     setFormData({
-      party: purchase.party?._id || purchase.party || '',
+      party: normalizedPartyId,
       invoiceNo: purchase.invoiceNo || purchase.invoiceNumber || '',
       items: normalizedItems,
       purchaseDate: purchase.purchaseDate ? formatDateInput(purchase.purchaseDate) : '',
@@ -323,6 +486,9 @@ export default function Purchases() {
     });
 
     setCurrentItem(initialCurrentItem);
+    setLeadgerQuery(resolvedLeadgerName === '-' ? '' : resolvedLeadgerName);
+    setLeadgerListIndex(resolvedLeadgerName && resolvedLeadgerName !== '-' ? 0 : -1);
+    setIsLeadgerSectionActive(false);
     setEditingId(purchase._id);
     setShowForm(true);
   };
@@ -342,8 +508,21 @@ export default function Purchases() {
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setFormData(initialFormData);
+    setFormData(getInitialFormData());
     setCurrentItem(initialCurrentItem);
+    setLeadgerQuery('');
+    setLeadgerListIndex(-1);
+    setIsLeadgerSectionActive(false);
+  };
+
+  const handleOpenForm = () => {
+    setEditingId(null);
+    setFormData(getInitialFormData());
+    setCurrentItem(initialCurrentItem);
+    setLeadgerQuery('');
+    setLeadgerListIndex(0);
+    setIsLeadgerSectionActive(false);
+    setShowForm(true);
   };
 
   const handleInvoiceUpload = async (event) => {
@@ -423,17 +602,27 @@ export default function Purchases() {
         loading={loading}
         formData={formData}
         currentItem={currentItem}
-        leadgers={leadgers}
         products={products}
         uploadingInvoice={uploadingInvoice}
+        leadgerSectionRef={leadgerSectionRef}
+        leadgerQuery={leadgerQuery}
+        leadgerListIndex={leadgerListIndex}
+        filteredLeadgers={filteredLeadgers}
+        isLeadgerSectionActive={isLeadgerSectionActive}
         getLeadgerDisplayName={getLeadgerDisplayName}
         setCurrentItem={setCurrentItem}
+        setIsLeadgerSectionActive={setIsLeadgerSectionActive}
+        setLeadgerListIndex={setLeadgerListIndex}
         handleCancel={handleCancel}
         handleSubmit={handleSubmit}
         handleInputChange={handleInputChange}
+        handleLeadgerInputChange={handleLeadgerInputChange}
+        handleLeadgerInputKeyDown={handleLeadgerInputKeyDown}
+        handleSelectEnterMoveNext={handleSelectEnterMoveNext}
         handleInvoiceUpload={handleInvoiceUpload}
         handleAddItem={handleAddItem}
         handleRemoveItem={handleRemoveItem}
+        selectLeadger={selectLeadger}
       />
 
       <div className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
@@ -462,12 +651,7 @@ export default function Purchases() {
               <option value="1y">Purchase History - 1 Year</option>
             </select>
             <button
-              onClick={() => {
-                setEditingId(null);
-                setFormData(initialFormData);
-                setCurrentItem(initialCurrentItem);
-                setShowForm(true);
-              }}
+              onClick={handleOpenForm}
               className="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900"
             >
               + New Purchase
