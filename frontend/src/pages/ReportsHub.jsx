@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Boxes, Package, ShoppingCart, Users } from 'lucide-react';
+import { BookText, Boxes, FileBarChart, Package, ReceiptText, ShoppingCart, Users } from 'lucide-react';
 import { getSectionConfig } from '../navigation/sectionMenu';
 
 const REPORT_ITEMS = [
   { name: 'Party Ledger', path: '/reports/party-ledger', Icon: Users },
   { name: 'Stock Ledger', path: '/reports/stock-ledger', Icon: Boxes },
   { name: 'Sales Report', path: '/reports/sales-report', Icon: ShoppingCart },
-  { name: 'Purchase Report', path: '/reports/purchase-report', Icon: Package }
+  { name: 'Purchase Report', path: '/reports/purchase-report', Icon: Package },
+  { name: 'Day Book Report', path: '/reports/day-book-report', Icon: BookText },
+  { name: 'Expense Report', path: '/reports/expense-report', Icon: ReceiptText },
+  { name: 'Profit And Loss Report', path: '/reports/profit-loss-report', Icon: FileBarChart }
 ];
 
 export default function ReportsHub() {

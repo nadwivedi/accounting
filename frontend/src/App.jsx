@@ -25,6 +25,7 @@ import SaleReturn from './pages/SaleReturn/SaleReturn';
 import PurchaseReturn from './pages/PurchaseReturn/PurchaseReturn';
 import ReportsHub from './pages/ReportsHub';
 import ReportsDashboard from './pages/ReportsDashboard';
+import ReportsPlaceholder from './pages/ReportsPlaceholder';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 import SectionHubPage from './components/SectionHubPage';
@@ -214,6 +215,42 @@ function App() {
           element={
             <ProtectedRoute>
               <ReportsDashboard initialReport="purchaseReport" />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/day-book-report"
+          element={
+            <ProtectedRoute>
+              <ReportsPlaceholder
+                title="Day Book Report"
+                description="Daily voucher-wise business movement will be shown here."
+              />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/expense-report"
+          element={
+            <ProtectedRoute>
+              <ReportsPlaceholder
+                title="Expense Report"
+                description="Expense-wise report summary and detailed entries will be shown here."
+              />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/profit-loss-report"
+          element={
+            <ProtectedRoute>
+              <ReportsPlaceholder
+                title="Profit And Loss Report"
+                description="Profit and loss statement will be shown here after the report is implemented."
+              />
             </ProtectedRoute>
           }
         />
