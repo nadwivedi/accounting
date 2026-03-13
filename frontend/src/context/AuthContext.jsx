@@ -5,14 +5,21 @@ const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    if (savedToken) {
-      setToken(savedToken);
-    }
+    const bootstrapAuth = async () => {
+      try {
+        const response = await apiClient.get('/users/current');
+        setUser(response.data || null);
+      } catch (error) {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    bootstrapAuth();
   }, []);
 
   const login = async (emailOrPhone, password) => {
@@ -21,8 +28,6 @@ export const AuthProvider = ({ children }) => {
       const response = await apiClient.post('/users/login', { emailOrPhone, password });
 
       if (response.success) {
-        localStorage.setItem('token', response.token);
-        setToken(response.token);
         setUser(response.user);
         return { success: true };
       } else {
@@ -47,8 +52,6 @@ export const AuthProvider = ({ children }) => {
       });
 
       if (response.success) {
-        localStorage.setItem('token', response.token);
-        setToken(response.token);
         setUser(response.user);
         return { success: true };
       } else {
@@ -61,20 +64,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setToken(null);
+  const logout = async () => {
     setUser(null);
+    try {
+      await apiClient.post('/users/logout');
+    } catch (error) {
+      // Clear client auth state even if the cookie was already invalid server-side.
+    }
   };
 
   const value = {
     user,
-    token,
     loading,
     login,
     register,
     logout,
-    isAuthenticated: !!token
+    isAuthenticated: !!user
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

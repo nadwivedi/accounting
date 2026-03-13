@@ -1,8 +1,10 @@
 const jwt = require('jsonwebtoken');
 
+const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'auth_token';
+
 const auth = (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1];
+    const token = req.cookies?.[AUTH_COOKIE_NAME] || req.headers.authorization?.split(' ')[1];
 
     if (!token) {
       return res.status(401).json({

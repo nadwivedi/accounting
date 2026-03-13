@@ -2,10 +2,35 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
+const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'auth_token';
+
 // Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'your_jwt_secret', {
     expiresIn: '7d'
+  });
+};
+
+const getCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/'
+  };
+};
+
+const setAuthCookie = (res, token) => {
+  res.cookie(AUTH_COOKIE_NAME, token, getCookieOptions());
+};
+
+const clearAuthCookie = (res) => {
+  res.clearCookie(AUTH_COOKIE_NAME, {
+    ...getCookieOptions(),
+    maxAge: undefined
   });
 };
 
@@ -44,10 +69,11 @@ exports.register = async (req, res) => {
 
     const token = generateToken(user._id);
 
+    setAuthCookie(res, token);
+
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      token,
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -112,10 +138,11 @@ exports.login = async (req, res) => {
 
     const token = generateToken(user._id);
 
+    setAuthCookie(res, token);
+
     res.status(200).json({
       success: true,
       message: 'Login successful',
-      token,
       user: {
         id: user._id,
         firstName: user.firstName,
@@ -131,6 +158,22 @@ exports.login = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error logging in'
+    });
+  }
+};
+
+exports.logout = async (req, res) => {
+  try {
+    clearAuthCookie(res);
+    res.status(200).json({
+      success: true,
+      message: 'Logout successful'
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error logging out'
     });
   }
 };
