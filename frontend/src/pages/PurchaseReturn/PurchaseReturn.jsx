@@ -12,10 +12,15 @@ const getInitialForm = () => ({
   notes: ''
 });
 
+const formatPurchaseNumber = (value) => {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) return '-';
+  return String(parsed).padStart(2, '0');
+};
+
 const getPurchaseLabel = (purchase) => {
-  const invoice = String(purchase?.supplierInvoice || purchase?.invoiceNo || purchase?.invoiceNumber || 'No Invoice').trim();
   const date = purchase?.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString('en-GB') : '-';
-  return `${invoice} | ${date}`;
+  return `Purchase No. ${formatPurchaseNumber(purchase?.purchaseNumber)} | ${date}`;
 };
 
 export default function PurchaseReturn() {
@@ -146,7 +151,7 @@ export default function PurchaseReturn() {
     event.preventDefault();
 
     if (!formData.purchase) {
-      setError('Purchase invoice is required');
+      setError('Purchase number is required');
       return;
     }
 
@@ -227,7 +232,7 @@ export default function PurchaseReturn() {
                   <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                     <tr>
                       <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Voucher No</th>
-                      <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Purchase ID</th>
+                      <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Purchase No.</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Party</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold">Returned Items</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date</th>
@@ -238,7 +243,7 @@ export default function PurchaseReturn() {
                     {entries.map((entry) => (
                       <tr key={entry._id} className="transition-colors duration-150 hover:bg-slate-200/45">
                         <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{entry.voucherNumber || '-'}</td>
-                        <td className="border border-slate-400 px-4 py-3 text-center">{entry.purchase?.supplierInvoice || entry.purchase?.invoiceNo || '-'}</td>
+                        <td className="border border-slate-400 px-4 py-3 text-center">{formatPurchaseNumber(entry.purchase?.purchaseNumber)}</td>
                         <td className="border border-slate-400 px-4 py-3 text-center">{entry.party?.name || '-'}</td>
                         <td className="border border-slate-400 px-4 py-3"><div className="max-w-[24rem] truncate">{(entry.items || []).map((item) => `${item.productName} (${item.quantity})`).join(', ') || '-'}</div></td>
                         <td className="border border-slate-400 px-4 py-3 text-center">{entry.voucherDate ? new Date(entry.voucherDate).toLocaleDateString('en-GB') : '-'}</td>
@@ -259,7 +264,7 @@ export default function PurchaseReturn() {
               <div className="flex shrink-0 items-center justify-between border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-2 text-white md:px-4 md:py-2.5">
                 <div>
                   <h2 className="text-lg font-bold md:text-2xl">Purchase Return Voucher</h2>
-                  <p className="mt-1 text-xs text-cyan-100 md:text-sm">Select a purchase invoice, choose the returned items, and enter return quantities.</p>
+                  <p className="mt-1 text-xs text-cyan-100 md:text-sm">Select a purchase number, choose the returned items, and enter return quantities.</p>
                 </div>
                 <button type="button" onClick={handleCloseForm} className="rounded-lg p-1.5 text-white transition hover:bg-white/25 md:p-2" aria-label="Close popup">&times;</button>
               </div>
@@ -271,9 +276,9 @@ export default function PurchaseReturn() {
                       <h3 className="mb-4 text-base font-bold text-gray-800 md:text-lg">Voucher Details</h3>
                       <div className="space-y-4">
                         <div>
-                          <label className="mb-1 block text-sm font-semibold text-slate-700">Purchase Invoice *</label>
+                          <label className="mb-1 block text-sm font-semibold text-slate-700">Purchase No. *</label>
                           <select name="purchase" value={formData.purchase} onChange={(e) => { setFormData((prev) => ({ ...prev, purchase: e.target.value })); setReturnQuantities({}); }} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100">
-                            <option value="">Select purchase invoice</option>
+                            <option value="">Select purchase number</option>
                             {purchases.map((purchase) => (
                               <option key={purchase._id} value={purchase._id}>{getPurchaseLabel(purchase)}</option>
                             ))}
@@ -289,7 +294,9 @@ export default function PurchaseReturn() {
                         </div>
                         {selectedPurchase && (
                           <div className="rounded-2xl border border-indigo-200 bg-white/80 p-4 text-sm shadow-sm">
+                            <p><span className="font-semibold text-slate-700">Purchase No.:</span> {formatPurchaseNumber(selectedPurchase.purchaseNumber)}</p>
                             <p><span className="font-semibold text-slate-700">Party:</span> {selectedPurchase.party?.name || '-'}</p>
+                            <p className="mt-2"><span className="font-semibold text-slate-700">Supplier Invoice:</span> {selectedPurchase.supplierInvoice || '-'}</p>
                             <p className="mt-2"><span className="font-semibold text-slate-700">Purchase Date:</span> {selectedPurchase.purchaseDate ? new Date(selectedPurchase.purchaseDate).toLocaleDateString('en-GB') : '-'}</p>
                             <p className="mt-2"><span className="font-semibold text-slate-700">Original Amount:</span> Rs {Number(selectedPurchase.totalAmount || 0).toFixed(2)}</p>
                           </div>
@@ -306,7 +313,7 @@ export default function PurchaseReturn() {
                       </div>
 
                       {!selectedPurchase ? (
-                        <div className="rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-10 text-center text-slate-500">Select a purchase invoice to load purchased items.</div>
+                        <div className="rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-10 text-center text-slate-500">Select a purchase number to load purchased items.</div>
                       ) : (
                         <div className="space-y-3">
                           {purchaseItems.map((item) => (

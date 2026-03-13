@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const Sale = require('../models/voucher/Sales');
 const Purchase = require('../models/voucher/Purchase');
+const PurchaseReturn = require('../models/voucher/PurchaseReturn');
 const Payment = require('../models/voucher/Payment');
 const Receipt = require('../models/voucher/Receipt');
 const Product = require('../models/master/Stock');
@@ -347,12 +348,15 @@ exports.getStockLedger = async (req, res) => {
 
     const purchaseFilter = { userId };
     const saleFilter = { userId };
+    const purchaseReturnFilter = { userId };
     withDateFilters(purchaseFilter, 'purchaseDate', fromDate, toDate);
     withDateFilters(saleFilter, 'saleDate', fromDate, toDate);
+    withDateFilters(purchaseReturnFilter, 'voucherDate', fromDate, toDate);
 
-    const [purchases, sales, products] = await Promise.all([
+    const [purchases, sales, purchaseReturns, products] = await Promise.all([
       Purchase.find(purchaseFilter).populate('items.product', 'name'),
       Sale.find(saleFilter).populate('items.product', 'name'),
+      PurchaseReturn.find(purchaseReturnFilter).populate('items.product', 'name'),
       Product.find({ userId }, 'name currentStock')
     ]);
 
@@ -398,7 +402,35 @@ exports.getStockLedger = async (req, res) => {
       });
     });
 
-    rows.sort((a, b) => new Date(a.date) - new Date(b.date));
+    purchaseReturns.forEach((purchaseReturn) => {
+      purchaseReturn.items.forEach((item) => {
+        if (!item.product) return;
+        const productKey = String(item.product._id || item.product);
+        if (productId && productKey !== String(productId)) return;
+        rows.push({
+          date: purchaseReturn.voucherDate,
+          entryCreatedAt: purchaseReturn.createdAt || purchaseReturn.voucherDate,
+          type: 'purchase return',
+          refId: purchaseReturn._id,
+          refNumber: purchaseReturn.voucherNumber || '-',
+          productId: item.product._id || item.product,
+          productName: item.productName || item.product?.name || 'Item',
+          inQty: 0,
+          outQty: toNumber(item.quantity),
+          note: purchaseReturn.notes || ''
+        });
+      });
+    });
+
+    rows.sort((a, b) => {
+      const aDate = new Date(a.date).getTime() || 0;
+      const bDate = new Date(b.date).getTime() || 0;
+      if (aDate !== bDate) return aDate - bDate;
+
+      const aCreated = new Date(a.entryCreatedAt).getTime() || 0;
+      const bCreated = new Date(b.entryCreatedAt).getTime() || 0;
+      return aCreated - bCreated;
+    });
 
     const runningByProduct = new Map();
     const ledger = rows.map((row) => {

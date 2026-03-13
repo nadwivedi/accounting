@@ -12,6 +12,11 @@ const formatDate = (value) => {
   return `${day}/${month}/${year}`;
 };
 
+const formatQuantity = (value) => Number(value || 0).toLocaleString('en-IN', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2
+});
+
 const getTypeMeta = (row) => {
   if (row.type === 'purchase') {
     return {
@@ -24,6 +29,20 @@ const getTypeMeta = (row) => {
     return {
       label: 'Sale',
       className: 'bg-rose-100 text-rose-800'
+    };
+  }
+
+  if (row.type === 'purchase return') {
+    return {
+      label: 'Purchase Return',
+      className: 'bg-amber-100 text-amber-800'
+    };
+  }
+
+  if (row.type === 'sale return') {
+    return {
+      label: 'Sale Return',
+      className: 'bg-violet-100 text-violet-800'
     };
   }
 
@@ -111,6 +130,22 @@ export default function StockDetail() {
     });
   }, [stockLedger]);
 
+  const ledgerSummary = useMemo(() => {
+    if (sortedLedgerRows.length === 0) {
+      return {
+        movementCount: 0,
+        latestMovement: '-',
+        oldestMovement: '-'
+      };
+    }
+
+    return {
+      movementCount: sortedLedgerRows.length,
+      latestMovement: formatDate(sortedLedgerRows[0]?.date),
+      oldestMovement: formatDate(sortedLedgerRows[sortedLedgerRows.length - 1]?.date)
+    };
+  }, [sortedLedgerRows]);
+
   const handleApplyFilter = async () => {
     await loadStockDetails(true);
   };
@@ -122,7 +157,7 @@ export default function StockDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 px-3 pb-6 pt-4 md:px-6 md:pt-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 px-3 pb-6 pt-4 md:px-6 md:pt-6">
       <div className="mb-4 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm md:px-5 md:py-4">
         <div className="flex items-start gap-3">
           <Link
@@ -156,19 +191,19 @@ export default function StockDetail() {
       <div className="mb-4 grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
         <div className="rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 shadow-sm">
           <p className="text-[11px] font-medium uppercase tracking-wide text-blue-700">Current Stock</p>
-          <p className="mt-1 text-lg font-bold text-blue-900 md:text-xl">{displayedCurrentStock}</p>
+          <p className="mt-1 text-lg font-bold text-blue-900 md:text-xl">{formatQuantity(displayedCurrentStock)}</p>
         </div>
         <div className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 shadow-sm">
           <p className="text-[11px] font-medium uppercase tracking-wide text-emerald-700">Total In</p>
-          <p className="mt-1 text-lg font-bold text-emerald-900 md:text-xl">{totals.totalIn}</p>
+          <p className="mt-1 text-lg font-bold text-emerald-900 md:text-xl">{formatQuantity(totals.totalIn)}</p>
         </div>
         <div className="rounded-xl border border-rose-100 bg-rose-50 px-3 py-2.5 shadow-sm">
           <p className="text-[11px] font-medium uppercase tracking-wide text-rose-700">Total Out</p>
-          <p className="mt-1 text-lg font-bold text-rose-900 md:text-xl">{totals.totalOut}</p>
+          <p className="mt-1 text-lg font-bold text-rose-900 md:text-xl">{formatQuantity(totals.totalOut)}</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-sm">
           <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">Net Movement</p>
-          <p className="mt-1 text-lg font-bold text-slate-800 md:text-xl">{totals.totalIn - totals.totalOut}</p>
+          <p className="mt-1 text-lg font-bold text-slate-800 md:text-xl">{formatQuantity(totals.totalIn - totals.totalOut)}</p>
         </div>
       </div>
 
@@ -215,8 +250,29 @@ export default function StockDetail() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 bg-gradient-to-r from-slate-50 via-blue-50 to-cyan-50 px-4 py-3 md:px-5">
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-base font-bold text-slate-900 md:text-lg">Stock Ledger</h2>
+              <p className="mt-1 text-xs text-slate-500 md:text-sm">
+                Purchase, sale, and purchase return movement for this stock item.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 text-xs font-semibold">
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700">
+                Movements: {ledgerSummary.movementCount}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700">
+                Latest: {ledgerSummary.latestMovement}
+              </span>
+              <span className="rounded-full border border-slate-200 bg-white px-3 py-1 text-slate-700">
+                Oldest: {ledgerSummary.oldestMovement}
+              </span>
+            </div>
+          </div>
+        </div>
         <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-sm">
+        <table className="w-full min-w-[820px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">Date</th>
@@ -241,17 +297,21 @@ export default function StockDetail() {
               sortedLedgerRows.map((row, idx) => {
                 const typeMeta = getTypeMeta(row);
                 return (
-                  <tr key={`${row.refId}-${idx}`} className="border-b border-slate-100 transition-colors hover:bg-slate-700/[0.06]">
+                  <tr key={`${row.refId}-${idx}`} className="border-b border-slate-100 transition-colors odd:bg-white even:bg-slate-50/60 hover:bg-slate-700/[0.06]">
                     <td className="px-4 py-2.5 text-slate-700">{formatDate(row.date)}</td>
                     <td className="px-4 py-2.5">
                       <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold ${typeMeta.className}`}>
                         {typeMeta.label}
                       </span>
                     </td>
-                    <td className="px-4 py-2.5 text-slate-700">{row.refNumber || '-'}</td>
-                    <td className="px-4 py-2.5 font-medium text-emerald-700">{Number(row.inQty || 0)}</td>
-                    <td className="px-4 py-2.5 font-medium text-rose-700">{Number(row.outQty || 0)}</td>
-                    <td className="px-4 py-2.5 font-semibold text-slate-800">{Number(row.runningQty || 0)}</td>
+                    <td className="px-4 py-2.5 font-medium text-slate-700">{row.refNumber || '-'}</td>
+                    <td className="px-4 py-2.5 font-medium text-emerald-700">{formatQuantity(row.inQty || 0)}</td>
+                    <td className="px-4 py-2.5 font-medium text-rose-700">{formatQuantity(row.outQty || 0)}</td>
+                    <td className="px-4 py-2.5">
+                      <span className="inline-flex rounded-lg bg-slate-100 px-2.5 py-1 font-semibold text-slate-800">
+                        {formatQuantity(row.runningQty || 0)}
+                      </span>
+                    </td>
                     <td className="px-4 py-2.5 text-slate-600">{row.note || '-'}</td>
                   </tr>
                 );
