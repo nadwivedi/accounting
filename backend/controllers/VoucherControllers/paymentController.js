@@ -120,7 +120,8 @@ exports.createPayment = async (req, res) => {
       notes
     });
 
-    const savedPayment = await Payment.findById(payment._id);
+    const savedPayment = await Payment.findById(payment._id)
+      .populate('party', 'name');
 
     res.status(201).json({
       success: true,
@@ -169,6 +170,7 @@ exports.getAllPayments = async (req, res) => {
     }
 
     const payments = await Payment.find(filter)
+      .populate('party', 'name')
       .sort({ paymentDate: -1, createdAt: -1 });
 
     res.status(200).json({

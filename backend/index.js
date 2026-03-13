@@ -28,7 +28,7 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const app = express();
 
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:5174'],
+  origin: ['http://localhost:5173', 'http://localhost:5174','https://accounting.softwarebytes.in','https://accountingapi.softwarebytes.in'],
   credentials: true
 }));
 app.use(express.json());

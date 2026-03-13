@@ -8,6 +8,7 @@ const paymentSchema = new mongoose.Schema({
   },
   party: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: 'Party',
     default: null
   },
   refType: {
@@ -17,6 +18,7 @@ const paymentSchema = new mongoose.Schema({
   },
   refId: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: 'Purchase',
     default: null
   },
   amount: {
