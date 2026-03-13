@@ -2,9 +2,11 @@ const mongoose = require('mongoose');
 const Sale = require('../models/voucher/Sales');
 const Purchase = require('../models/voucher/Purchase');
 const PurchaseReturn = require('../models/voucher/PurchaseReturn');
+const SaleReturn = require('../models/voucher/SaleReturn');
 const Payment = require('../models/voucher/Payment');
 const Receipt = require('../models/voucher/Receipt');
 const Product = require('../models/master/Stock');
+const Party = require('../models/master/Party');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -30,6 +32,45 @@ const getPartyLabel = (partyId, fallback = 'Account') => {
   if (!partyId) return '-';
   const suffix = String(partyId).slice(-6).toUpperCase();
   return `${fallback} ${suffix}`;
+};
+
+const getTotalQuantity = (items = []) => items.reduce(
+  (sum, item) => sum + toNumber(item.quantity),
+  0
+);
+
+const getItemSummary = (items = []) => {
+  if (!Array.isArray(items) || items.length === 0) return '';
+
+  const preview = items.slice(0, 3).map((item) => {
+    const itemName = String(item.productName || item.product?.name || 'Item').trim() || 'Item';
+    return `${itemName} x${toNumber(item.quantity)}`;
+  });
+
+  return items.length > 3
+    ? `${preview.join(', ')} +${items.length - 3} more`
+    : preview.join(', ');
+};
+
+const getPartyNameMap = async (userId, partyIds = []) => {
+  const uniqueIds = [...new Set(
+    partyIds
+      .filter(Boolean)
+      .map((partyId) => String(partyId))
+  )];
+
+  if (uniqueIds.length === 0) {
+    return new Map();
+  }
+
+  const parties = await Party.find({
+    userId,
+    _id: { $in: uniqueIds }
+  }).select('name');
+
+  return new Map(
+    parties.map((party) => [String(party._id), String(party.name || '').trim() || 'Party'])
+  );
 };
 
 const buildPurchasePaymentMap = (payments) => {
@@ -213,27 +254,49 @@ exports.getPartyLedger = async (req, res) => {
 
     const saleFilter = { userId };
     const purchaseFilter = { userId };
+    const purchaseReturnFilter = { userId };
+    const saleReturnFilter = { userId };
     const paymentFilter = { userId };
     const receiptFilter = { userId };
 
     if (partyId) {
       saleFilter.party = partyId;
       purchaseFilter.party = partyId;
+      purchaseReturnFilter.party = partyId;
+      saleReturnFilter.party = partyId;
       paymentFilter.party = partyId;
       receiptFilter.party = partyId;
     }
 
     withDateFilters(saleFilter, 'saleDate', fromDate, toDate);
     withDateFilters(purchaseFilter, 'purchaseDate', fromDate, toDate);
+    withDateFilters(purchaseReturnFilter, 'voucherDate', fromDate, toDate);
+    withDateFilters(saleReturnFilter, 'voucherDate', fromDate, toDate);
     withDateFilters(paymentFilter, 'paymentDate', fromDate, toDate);
     withDateFilters(receiptFilter, 'receiptDate', fromDate, toDate);
 
-    const [sales, purchases, payments, receipts] = await Promise.all([
+    const [sales, purchases, purchaseReturns, saleReturns, payments, receipts] = await Promise.all([
       Sale.find(saleFilter),
       Purchase.find(purchaseFilter),
+      PurchaseReturn.find(purchaseReturnFilter),
+      SaleReturn.find(saleReturnFilter),
       Payment.find(paymentFilter),
       Receipt.find(receiptFilter)
     ]);
+
+    const partyNameMap = await getPartyNameMap(userId, [
+      ...sales.map((sale) => getRawPartyId(sale.party)),
+      ...purchases.map((purchase) => getRawPartyId(purchase.party)),
+      ...purchaseReturns.map((purchaseReturn) => getRawPartyId(purchaseReturn.party)),
+      ...saleReturns.map((saleReturn) => getRawPartyId(saleReturn.party)),
+      ...payments.map((payment) => getRawPartyId(payment.party)),
+      ...receipts.map((receipt) => getRawPartyId(receipt.party))
+    ]);
+
+    const resolvePartyName = (rawPartyId, fallback = 'Account') => {
+      if (!rawPartyId) return fallback === 'Walk-in' ? 'Walk-in' : '-';
+      return partyNameMap.get(String(rawPartyId)) || getPartyLabel(rawPartyId, fallback);
+    };
 
     const entries = [];
 
@@ -246,9 +309,12 @@ exports.getPartyLedger = async (req, res) => {
         refId: sale._id,
         refNumber: sale.invoiceNumber,
         partyId: salePartyId || null,
-        partyName: sale.customerName || (salePartyId ? getPartyLabel(salePartyId, 'Account') : 'Walk-in'),
+        partyName: sale.customerName || resolvePartyName(salePartyId, salePartyId ? 'Account' : 'Walk-in'),
         amount: toNumber(sale.totalAmount),
         impact: toNumber(sale.totalAmount),
+        quantity: getTotalQuantity(sale.items),
+        itemSummary: getItemSummary(sale.items),
+        method: sale.paymentMode || '',
         note: sale.notes || ''
       });
     });
@@ -262,9 +328,12 @@ exports.getPartyLedger = async (req, res) => {
         refId: receipt._id,
         refNumber: receipt.refId || null,
         partyId: receiptPartyId || null,
-        partyName: getPartyLabel(receiptPartyId, 'Account'),
+        partyName: resolvePartyName(receiptPartyId),
         amount: toNumber(receipt.amount),
         impact: -toNumber(receipt.amount),
+        quantity: 0,
+        itemSummary: '',
+        method: receipt.method || '',
         note: receipt.notes || ''
       });
     });
@@ -278,10 +347,51 @@ exports.getPartyLedger = async (req, res) => {
         refId: purchase._id,
         refNumber: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-',
         partyId: purchasePartyId || null,
-        partyName: getPartyLabel(purchasePartyId, 'Account'),
+        partyName: resolvePartyName(purchasePartyId),
         amount: toNumber(purchase.totalAmount),
         impact: -toNumber(purchase.totalAmount),
+        quantity: getTotalQuantity(purchase.items),
+        itemSummary: getItemSummary(purchase.items),
+        method: '',
         note: purchase.notes || ''
+      });
+    });
+
+    purchaseReturns.forEach((purchaseReturn) => {
+      const purchaseReturnPartyId = getRawPartyId(purchaseReturn.party);
+      entries.push({
+        date: purchaseReturn.voucherDate,
+        entryCreatedAt: purchaseReturn.createdAt || purchaseReturn.voucherDate,
+        type: 'purchase return',
+        refId: purchaseReturn._id,
+        refNumber: purchaseReturn.voucherNumber,
+        partyId: purchaseReturnPartyId || null,
+        partyName: resolvePartyName(purchaseReturnPartyId),
+        amount: toNumber(purchaseReturn.totalAmount),
+        impact: toNumber(purchaseReturn.totalAmount),
+        quantity: getTotalQuantity(purchaseReturn.items),
+        itemSummary: getItemSummary(purchaseReturn.items),
+        method: '',
+        note: purchaseReturn.notes || ''
+      });
+    });
+
+    saleReturns.forEach((saleReturn) => {
+      const saleReturnPartyId = getRawPartyId(saleReturn.party);
+      entries.push({
+        date: saleReturn.voucherDate,
+        entryCreatedAt: saleReturn.createdAt || saleReturn.voucherDate,
+        type: 'sale return',
+        refId: saleReturn._id,
+        refNumber: saleReturn.voucherNumber,
+        partyId: saleReturnPartyId || null,
+        partyName: resolvePartyName(saleReturnPartyId),
+        amount: toNumber(saleReturn.amount),
+        impact: -toNumber(saleReturn.amount),
+        quantity: 0,
+        itemSummary: '',
+        method: saleReturn.method || '',
+        note: saleReturn.notes || ''
       });
     });
 
@@ -294,9 +404,12 @@ exports.getPartyLedger = async (req, res) => {
         refId: payment._id,
         refNumber: payment.refId || null,
         partyId: paymentPartyId || null,
-        partyName: getPartyLabel(paymentPartyId, 'Account'),
+        partyName: resolvePartyName(paymentPartyId),
         amount: toNumber(payment.amount),
         impact: toNumber(payment.amount),
+        quantity: 0,
+        itemSummary: '',
+        method: payment.method || '',
         note: payment.notes || ''
       });
     });

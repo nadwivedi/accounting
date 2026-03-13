@@ -29,6 +29,13 @@ const buildPurchasePaymentMap = (payments) => {
   return map;
 };
 
+const formatDisplayDate = (value) => {
+  if (!value) return '-';
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) return '-';
+  return parsedDate.toLocaleDateString('en-GB');
+};
+
 export default function Payments({ modalOnly = false, onModalFinish = null }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -608,7 +615,7 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-bold text-white">{payment.party?.partyName || 'Walk-in / Unassigned'}</p>
                         <p className="mt-1 text-xs text-cyan-100">
-                          {payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString() : '-'}
+                          {formatDisplayDate(payment.paymentDate)}
                         </p>
                       </div>
                       <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-1.5 text-right">
@@ -661,7 +668,7 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
                     {payments.map((payment) => (
                       <tr key={payment._id} className="transition-colors duration-150 hover:bg-slate-200/45">
                         <td className="border border-slate-400 px-4 py-3 text-center font-medium text-slate-700">
-                          {payment.paymentDate ? new Date(payment.paymentDate).toLocaleDateString() : '-'}
+                          {formatDisplayDate(payment.paymentDate)}
                         </td>
                         <td className="border border-slate-400 px-4 py-3 font-semibold text-slate-800">
                           {payment.party?.partyName || '-'}

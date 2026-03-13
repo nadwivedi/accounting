@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Pencil, Search, Wallet } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
@@ -28,6 +29,7 @@ const getTypeBadgeClass = (type) => (
 );
 
 export default function Party() {
+  const navigate = useNavigate();
   const [parties, setParties] = useState([]);
   const [formData, setFormData] = useState(getInitialForm());
   const [loading, setLoading] = useState(false);
@@ -113,6 +115,11 @@ export default function Party() {
     });
     setError('');
     setShowForm(true);
+  };
+
+  const handleOpenPartyLedger = (party) => {
+    if (!party?._id) return;
+    navigate(`/party/${party._id}`);
   };
 
   const handleSubmit = async (e) => {
@@ -226,16 +233,20 @@ export default function Party() {
               {parties.map((item) => (
                 <article
                   key={item._id}
-                  className="overflow-hidden rounded-2xl border border-cyan-200 bg-white shadow-[0_16px_32px_rgba(8,47,73,0.10)]"
+                  onClick={() => handleOpenPartyLedger(item)}
+                  className="cursor-pointer overflow-hidden rounded-2xl border border-cyan-200 bg-white shadow-[0_16px_32px_rgba(8,47,73,0.10)] transition hover:-translate-y-0.5 hover:shadow-[0_20px_36px_rgba(8,47,73,0.14)]"
                 >
                   <div className="flex items-start justify-between gap-3 border-b border-cyan-900/20 bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] px-4 py-3 text-white">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-white">{item.name || '-'}</p>
-                      <p className="mt-1 text-xs text-cyan-100">Party details</p>
+                      <p className="mt-1 text-xs text-cyan-100">Open party ledger</p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => handleEdit(item)}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleEdit(item);
+                      }}
                       className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
                       aria-label={`Edit ${item.name}`}
                     >
@@ -284,7 +295,11 @@ export default function Party() {
                 </thead>
                 <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
                   {parties.map((item) => (
-                    <tr key={item._id} className="transition-colors duration-150 hover:bg-slate-200/45">
+                    <tr
+                      key={item._id}
+                      onClick={() => handleOpenPartyLedger(item)}
+                      className="cursor-pointer transition-colors duration-150 hover:bg-slate-200/45"
+                    >
                       <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{item.name || '-'}</td>
                       <td className="border border-slate-400 px-4 py-3 text-center">
                         <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getTypeBadgeClass(item.type)}`}>
@@ -299,7 +314,10 @@ export default function Party() {
                         <div className="flex items-center justify-center">
                           <button
                             type="button"
-                            onClick={() => handleEdit(item)}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleEdit(item);
+                            }}
                             className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
                             aria-label={`Edit ${item.name}`}
                           >

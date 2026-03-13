@@ -16,6 +16,7 @@ import Purchases from './pages/Purchases/Purchases';
 import Payments from './pages/Payments/Payments';
 import Receipts from './pages/Receipts/Receipts';
 import Party from './pages/Party/Party';
+import PartyDetail from './pages/PartyDetail';
 import Expenses from './pages/Expenses';
 import ExpenseGroups from './pages/ExpenseGroups';
 import ExpenseHub from './pages/ExpenseHub';
@@ -305,6 +306,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Party />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/party/:id"
+          element={
+            <ProtectedRoute>
+              <PartyDetail />
             </ProtectedRoute>
           }
         />
