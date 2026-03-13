@@ -206,16 +206,16 @@ export default function AddPurchasePopup({
 
                     <div>
                       <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">
-                        Purchase Invoice No. <span className="text-xs text-gray-500">(Optional)</span>
+                        Supplier Invoice No. <span className="text-xs text-gray-500">(Optional)</span>
                       </label>
                       <input
                         type="text"
-                        name="invoiceNo"
-                        value={formData.invoiceNo || ''}
+                        name="supplierInvoice"
+                        value={formData.supplierInvoice || ''}
                         onChange={handleInputChange}
                         onKeyDown={handleSelectEnterMoveNext}
                         className={`${inputClass} focus:ring-indigo-500`}
-                        placeholder="Enter invoice no."
+                        placeholder="Enter supplier invoice no."
                       />
                     </div>
 

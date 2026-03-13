@@ -8,10 +8,17 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const toPurchaseNumber = (value) => {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+};
+
 const isDuplicatePurchaseInvoiceError = (error) => (
   error?.code === 11000 && (
+    Object.prototype.hasOwnProperty.call(error?.keyPattern || {}, 'supplierInvoice') ||
     Object.prototype.hasOwnProperty.call(error?.keyPattern || {}, 'invoiceNo') ||
     Object.prototype.hasOwnProperty.call(error?.keyPattern || {}, 'invoiceNumber') ||
+    Object.prototype.hasOwnProperty.call(error?.keyValue || {}, 'supplierInvoice') ||
     Object.prototype.hasOwnProperty.call(error?.keyValue || {}, 'invoiceNo') ||
     Object.prototype.hasOwnProperty.call(error?.keyValue || {}, 'invoiceNumber')
   )
@@ -73,6 +80,32 @@ const getLinkedPurchasePaymentTotal = async ({ purchaseId, userId }) => {
   return toNumber(result[0]?.total);
 };
 
+const ensurePurchaseNumbersForUser = async (userId) => {
+  const purchases = await Purchase.find({ userId })
+    .select('_id purchaseNumber createdAt')
+    .sort({ createdAt: 1, _id: 1 })
+    .lean();
+
+  let nextPurchaseNumber = purchases.reduce((max, purchase) => {
+    return Math.max(max, toPurchaseNumber(purchase.purchaseNumber) || 0);
+  }, 0) + 1;
+
+  const updates = purchases
+    .filter((purchase) => toPurchaseNumber(purchase.purchaseNumber) === null)
+    .map((purchase) => ({
+      updateOne: {
+        filter: { _id: purchase._id },
+        update: { $set: { purchaseNumber: nextPurchaseNumber++ } }
+      }
+    }));
+
+  if (updates.length > 0) {
+    await Purchase.bulkWrite(updates);
+  }
+
+  return nextPurchaseNumber;
+};
+
 // Create purchase
 exports.createPurchase = async (req, res) => {
   try {
@@ -83,6 +116,7 @@ exports.createPurchase = async (req, res) => {
       dueDate,
       invoiceLink,
       notes,
+      supplierInvoice,
       invoiceNo,
       invoiceNumber,
       totalAmount,
@@ -94,13 +128,15 @@ exports.createPurchase = async (req, res) => {
     } = req.body;
     const userId = req.userId;
 
+    const nextPurchaseNumber = await ensurePurchaseNumbersForUser(userId);
+
     const normalizedItems = normalizeItems(items || []);
     const itemError = validateItems(normalizedItems);
     if (itemError) {
       return res.status(400).json({ success: false, message: itemError });
     }
 
-    const normalizedInvoiceNo = String(invoiceNo || invoiceNumber || '').trim();
+    const normalizedSupplierInvoice = String(supplierInvoice || invoiceNo || invoiceNumber || '').trim();
     const resolvedTotalAmount = calculateTotalAmount(normalizedItems, totalAmount);
     const resolvedPaymentAmount = Math.max(0, toNumber(paymentAmount, 0));
     const resolvedBillWiseFlag = toBoolean(isBillWisePayment);
@@ -114,7 +150,8 @@ exports.createPurchase = async (req, res) => {
 
     const basePayload = {
       userId,
-      invoiceNo: normalizedInvoiceNo || undefined,
+      purchaseNumber: nextPurchaseNumber,
+      supplierInvoice: normalizedSupplierInvoice || undefined,
       party: party || null,
       items: normalizedItems,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : new Date(),
@@ -125,7 +162,7 @@ exports.createPurchase = async (req, res) => {
     };
 
     const purchase = await Purchase.create(basePayload);
-    const purchaseRefLabel = normalizedInvoiceNo ? `purchase ${normalizedInvoiceNo}` : 'purchase entry';
+    const purchaseRefLabel = normalizedSupplierInvoice ? `purchase ${normalizedSupplierInvoice}` : 'purchase entry';
 
     for (const item of normalizedItems) {
       await Product.findByIdAndUpdate(
@@ -179,6 +216,8 @@ exports.getAllPurchases = async (req, res) => {
     const userId = req.userId;
     const filter = { userId };
 
+    await ensurePurchaseNumbersForUser(userId);
+
     if (party) filter.party = party;
     if (fromDate) {
       const parsedFromDate = new Date(fromDate);
@@ -192,8 +231,11 @@ exports.getAllPurchases = async (req, res) => {
       .populate('items.product', 'name');
 
     if (search) {
+      const purchaseNumberSearch = toPurchaseNumber(search);
       query = query.where({
         $or: [
+          ...(purchaseNumberSearch ? [{ purchaseNumber: purchaseNumberSearch }] : []),
+          { supplierInvoice: { $regex: search, $options: 'i' } },
           { invoiceNo: { $regex: search, $options: 'i' } },
           { invoiceNumber: { $regex: search, $options: 'i' } },
           { notes: { $regex: search, $options: 'i' } }
@@ -222,6 +264,8 @@ exports.getPurchaseById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
+
+    await ensurePurchaseNumbersForUser(userId);
 
     const purchase = await Purchase.findOne({ _id: id, userId })
       .populate('party', 'name')
@@ -260,9 +304,12 @@ exports.updatePurchase = async (req, res) => {
       totalAmount,
       notes,
       invoiceLink,
+      supplierInvoice,
       invoiceNo,
       invoiceNumber
     } = req.body;
+
+    await ensurePurchaseNumbersForUser(userId);
 
     const purchase = await Purchase.findOne({ _id: id, userId });
     if (!purchase) {
@@ -311,9 +358,9 @@ exports.updatePurchase = async (req, res) => {
       purchase.dueDate = dueDate ? new Date(dueDate) : null;
     }
 
-    const normalizedInvoiceNo = String(invoiceNo || invoiceNumber || '').trim();
-    if (invoiceNo !== undefined || invoiceNumber !== undefined) {
-      purchase.invoiceNo = normalizedInvoiceNo || undefined;
+    const normalizedSupplierInvoice = String(supplierInvoice || invoiceNo || invoiceNumber || '').trim();
+    if (supplierInvoice !== undefined || invoiceNo !== undefined || invoiceNumber !== undefined) {
+      purchase.supplierInvoice = normalizedSupplierInvoice || undefined;
     }
 
     if (invoiceLink !== undefined) {

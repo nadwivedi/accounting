@@ -638,7 +638,7 @@ export default function ReportsDashboard({ initialReport = 'partyLedger' }) {
             <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.96)_0%,rgba(248,250,252,0.98)_100%)] text-slate-700">
               {sortedPurchases.map((purchase) => (
                 <tr key={purchase._id} className="transition-colors hover:bg-slate-200/45">
-                  <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-slate-900">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
+                  <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-slate-900">{purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
                   <td className="border border-slate-300 px-4 py-3 text-center">{formatDate(purchase.purchaseDate)}</td>
                   <td className="border border-slate-300 px-4 py-3 text-center">{getPartyName(purchase.party, 'Party')}</td>
                   <td className="border border-slate-300 px-4 py-3">

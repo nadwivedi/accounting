@@ -97,7 +97,7 @@ exports.getOutstandingReport = async (req, res) => {
         const pending = Math.max(0, toNumber(purchase.totalAmount) - paidAmount);
         return {
           id: purchase._id,
-          invoiceNo: purchase.invoiceNo || purchase.invoiceNumber || '-',
+          supplierInvoice: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-',
           date: purchase.purchaseDate,
           partyId: partyId || null,
           partyName: getPartyLabel(partyId, 'Account'),
@@ -275,7 +275,7 @@ exports.getPartyLedger = async (req, res) => {
         entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
         type: 'purchase',
         refId: purchase._id,
-        refNumber: purchase.invoiceNo || purchase.invoiceNumber || '-',
+        refNumber: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-',
         partyId: purchasePartyId || null,
         partyName: getPartyLabel(purchasePartyId, 'Account'),
         amount: toNumber(purchase.totalAmount),
@@ -368,7 +368,7 @@ exports.getStockLedger = async (req, res) => {
           entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
           type: 'purchase',
           refId: purchase._id,
-          refNumber: purchase.invoiceNo || purchase.invoiceNumber || '-',
+          refNumber: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-',
           productId: item.product._id,
           productName: item.product.name,
           inQty: toNumber(item.quantity),

@@ -26,28 +26,32 @@ const backfillPurchaseInvoices = async (purchaseCollection) => {
     $and: [
       {
         $or: [
-          { invoiceNo: { $exists: false } },
-          { invoiceNo: null },
-          { invoiceNo: '' }
+          { supplierInvoice: { $exists: false } },
+          { supplierInvoice: null },
+          { supplierInvoice: '' }
         ]
       },
       {
-        invoiceNumber: { $exists: true, $type: 'string', $ne: '' }
+        $or: [
+          { invoiceNo: { $exists: true, $type: 'string', $ne: '' } },
+          { invoiceNumber: { $exists: true, $type: 'string', $ne: '' } }
+        ]
       }
     ]
   };
 
   const cursor = purchaseCollection.find(filter, {
-    projection: { _id: 1, invoiceNo: 1, invoiceNumber: 1 }
+    projection: { _id: 1, supplierInvoice: 1, invoiceNo: 1, invoiceNumber: 1 }
   });
 
   const ops = [];
   let updated = 0;
 
   for await (const doc of cursor) {
+    const supplierInvoice = normalizeInvoiceValue(doc.supplierInvoice);
     const invoiceNo = normalizeInvoiceValue(doc.invoiceNo);
     const invoiceNumber = normalizeInvoiceValue(doc.invoiceNumber);
-    const resolvedInvoice = invoiceNo || invoiceNumber;
+    const resolvedInvoice = supplierInvoice || invoiceNo || invoiceNumber;
 
     if (!resolvedInvoice) {
       continue;
@@ -58,7 +62,7 @@ const backfillPurchaseInvoices = async (purchaseCollection) => {
         filter: { _id: doc._id },
         update: {
           $set: {
-            invoiceNo: resolvedInvoice
+            supplierInvoice: resolvedInvoice
           }
         }
       }

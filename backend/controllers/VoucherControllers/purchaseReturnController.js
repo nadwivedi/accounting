@@ -110,7 +110,7 @@ exports.createPurchaseReturn = async (req, res) => {
     });
 
     const savedEntry = await PurchaseReturn.findById(purchaseReturn._id)
-      .populate('purchase', 'invoiceNo purchaseDate')
+      .populate('purchase', 'supplierInvoice purchaseDate')
       .populate('party', 'name')
       .populate('items.product', 'name');
 
@@ -131,7 +131,7 @@ exports.getAllPurchaseReturns = async (req, res) => {
     const search = String(req.query.search || '').trim();
 
     let query = PurchaseReturn.find({ userId })
-      .populate('purchase', 'invoiceNo purchaseDate')
+      .populate('purchase', 'supplierInvoice purchaseDate')
       .populate('party', 'name')
       .populate('items.product', 'name');
 

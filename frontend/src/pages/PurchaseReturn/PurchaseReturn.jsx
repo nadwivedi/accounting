@@ -13,7 +13,7 @@ const getInitialForm = () => ({
 });
 
 const getPurchaseLabel = (purchase) => {
-  const invoice = String(purchase?.invoiceNo || purchase?.invoiceNumber || 'No Invoice').trim();
+  const invoice = String(purchase?.supplierInvoice || purchase?.invoiceNo || purchase?.invoiceNumber || 'No Invoice').trim();
   const date = purchase?.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString('en-GB') : '-';
   return `${invoice} | ${date}`;
 };
@@ -238,7 +238,7 @@ export default function PurchaseReturn() {
                     {entries.map((entry) => (
                       <tr key={entry._id} className="transition-colors duration-150 hover:bg-slate-200/45">
                         <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{entry.voucherNumber || '-'}</td>
-                        <td className="border border-slate-400 px-4 py-3 text-center">{entry.purchase?.invoiceNo || '-'}</td>
+                        <td className="border border-slate-400 px-4 py-3 text-center">{entry.purchase?.supplierInvoice || entry.purchase?.invoiceNo || '-'}</td>
                         <td className="border border-slate-400 px-4 py-3 text-center">{entry.party?.name || '-'}</td>
                         <td className="border border-slate-400 px-4 py-3"><div className="max-w-[24rem] truncate">{(entry.items || []).map((item) => `${item.productName} (${item.quantity})`).join(', ') || '-'}</div></td>
                         <td className="border border-slate-400 px-4 py-3 text-center">{entry.voucherDate ? new Date(entry.voucherDate).toLocaleDateString('en-GB') : '-'}</td>

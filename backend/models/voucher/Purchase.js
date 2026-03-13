@@ -32,9 +32,14 @@ const purchaseSchema = new mongoose.Schema({
     ref: 'User',
     required: true
   },
-  invoiceNo: {
+  supplierInvoice: {
     type: String,
     trim: true,
+    default: undefined
+  },
+  purchaseNumber: {
+    type: Number,
+    min: 1,
     default: undefined
   },
   party: {

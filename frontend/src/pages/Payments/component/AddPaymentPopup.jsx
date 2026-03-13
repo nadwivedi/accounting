@@ -244,7 +244,7 @@ export default function AddPaymentPopup({
 
                         return (
                           <option key={purchase._id} value={purchase._id}>
-                            {purchase.invoiceNo || purchase.invoiceNumber || '-'} - {purchase.party?.partyName || '-'} - Pending Rs {pendingAmount.toFixed(2)}
+                            {purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-'} - {purchase.party?.partyName || '-'} - Pending Rs {pendingAmount.toFixed(2)}
                           </option>
                         );
                       })}

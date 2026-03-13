@@ -70,9 +70,15 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       .slice(0, 10);
   };
 
+  const formatPurchaseNumber = (value) => {
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isInteger(parsed) || parsed <= 0) return '-';
+    return String(parsed).padStart(2, '0');
+  };
+
   const getInitialFormData = () => ({
     party: '',
-    invoiceNo: '',
+    supplierInvoice: '',
     items: [],
     purchaseDate: formatDateInput(),
     dueDate: '',
@@ -695,7 +701,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
 
       const submitData = {
         ...formData,
-        invoiceNo: String(formData.invoiceNo || '').trim(),
+        supplierInvoice: String(formData.supplierInvoice || '').trim(),
         purchaseDate: parsedPurchaseDate,
         dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
         totalAmount: Number(formData.totalAmount || 0),
@@ -756,7 +762,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
 
     setFormData({
       party: normalizedPartyId,
-      invoiceNo: purchase.invoiceNo || purchase.invoiceNumber || '',
+      supplierInvoice: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '',
       items: normalizedItems,
       purchaseDate: purchase.purchaseDate ? formatDateInput(purchase.purchaseDate) : '',
       dueDate: purchase.dueDate ? new Date(purchase.dueDate).toISOString().split('T')[0] : '',
@@ -1037,7 +1043,8 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
             <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
               <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                 <tr>
-                  <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Invoice No</th>
+                  <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Purchase No</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Supplier Invoice No.</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Manage Party</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold">Products</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date</th>
@@ -1050,7 +1057,8 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                 {purchases.map((purchase) => {
                   return (
                     <tr key={purchase._id} className="transition-colors duration-150 hover:bg-slate-200/45">
-                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
+                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{formatPurchaseNumber(purchase.purchaseNumber)}</td>
+                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
                       <td className="border border-slate-400 px-4 py-3 text-center font-medium text-slate-700">{resolveLeadgerNameById(purchase.party)}</td>
                       <td className="border border-slate-400 px-4 py-3 text-slate-600">
                         <div className="flex items-center gap-1.5 flex-wrap">
