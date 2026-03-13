@@ -466,26 +466,25 @@ export default function Home() {
           </div>
           </div>
 
-          <aside className="relative w-full max-w-[23rem] overflow-hidden rounded-[30px] border border-white/15 bg-[linear-gradient(165deg,rgba(15,23,42,0.95),rgba(30,41,59,0.92))] shadow-[0_28px_70px_rgba(0,0,0,0.45),0_0_50px_rgba(14,165,233,0.12)] lg:max-w-[18rem]">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.18),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.12),transparent_28%)]" />
+          <aside className="relative w-full max-w-[19rem] overflow-hidden rounded-[30px] border border-slate-200/15 bg-[linear-gradient(165deg,rgba(30,41,59,0.92),rgba(51,65,85,0.9),rgba(71,85,105,0.88))] shadow-[0_24px_60px_rgba(15,23,42,0.34),0_0_42px_rgba(14,165,233,0.08)] lg:max-w-[14.75rem]">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.16),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.1),transparent_28%)]" />
             <div className="relative z-10 flex h-full flex-col">
               <div className="border-b border-white/10 px-5 py-5">
-                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-300">Quick Keys</p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-200">Quick Keys</p>
               </div>
 
-              <div className="flex flex-1 flex-col gap-3 px-4 py-4">
+              <div className="flex flex-1 flex-col gap-2.5 px-3 py-3">
                 {homeQuickShortcuts.map((shortcut) => (
                   <div
                     key={shortcut.combo}
-                    className="rounded-2xl border border-white/10 bg-white/5 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm"
+                    className="rounded-2xl border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.94))] p-2.5 shadow-[0_14px_30px_rgba(148,163,184,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-sm"
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`h-10 w-1.5 rounded-full bg-gradient-to-b ${shortcut.accent}`} />
+                      <div className={`h-8 w-1.5 rounded-full bg-gradient-to-b ${shortcut.accent}`} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-white">{shortcut.label}</p>
-                        <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Shortcut</p>
+                        <p className="text-[12px] font-semibold text-slate-800">{shortcut.label}</p>
                       </div>
-                      <span className="rounded-full border border-white/15 bg-slate-950/50 px-3 py-1 text-xs font-bold tracking-[0.18em] text-cyan-200">
+                      <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-bold tracking-[0.14em] text-sky-700">
                         {shortcut.combo}
                       </span>
                     </div>
