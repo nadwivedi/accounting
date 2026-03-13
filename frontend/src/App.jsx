@@ -18,6 +18,7 @@ import Receipts from './pages/Receipts/Receipts';
 import Party from './pages/Party/Party';
 import Expenses from './pages/Expenses';
 import ExpenseGroups from './pages/ExpenseGroups';
+import ExpenseHub from './pages/ExpenseHub';
 import Contra from './pages/Contra';
 import StockAdjustment from './pages/StockAdjustment';
 import SaleReturn from './pages/SaleReturn/SaleReturn';
@@ -26,6 +27,7 @@ import ReportsHub from './pages/ReportsHub';
 import ReportsDashboard from './pages/ReportsDashboard';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
+import SectionHubPage from './components/SectionHubPage';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -99,7 +101,7 @@ function App() {
           path="/expense-hub"
           element={
             <ProtectedRoute>
-              <Navigate to="/expenses" replace />
+              <ExpenseHub />
             </ProtectedRoute>
           }
         />

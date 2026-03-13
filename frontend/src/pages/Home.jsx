@@ -197,7 +197,7 @@ const homeQuickShortcuts = [
 
 const getSectionItems = (sectionName) => {
   if (sectionName === 'Reports') {
-    return menuItems.filter((item) => !item.subItems?.length);
+    return [{ name: 'Reports', path: '/reports', Icon: ReportIcon }];
   }
 
   return menuItems.find((item) => item.name === sectionName)?.subItems || [];
@@ -229,7 +229,12 @@ const activateHomeSection = (sectionName, navigate, setExpandedSection, setActiv
   }
 
   if (sectionName === 'Expense') {
-    navigate('/expenses');
+    navigate('/expense-hub');
+    return;
+  }
+
+  if (sectionName === 'Reports') {
+    navigate('/reports');
     return;
   }
 
@@ -451,43 +456,18 @@ export default function Home() {
               <div className="flex flex-col">
                 <button
                   type="button"
-                  onClick={() => {
-                    setExpandedSection('Reports');
-                    setActiveHomePath(getSectionItems('Reports')[0]?.path || '');
-                  }}
+                  onClick={() => activateHomeSection('Reports', navigate, setExpandedSection, setActiveHomePath)}
                   className={`mt-3 flex w-full cursor-pointer items-center gap-3 border-y border-slate-200/60 px-5 py-3 text-left text-slate-700 ${expandedSection === 'Reports' ? 'bg-yellow-200 ring-2 ring-yellow-300 shadow-sm' : 'bg-slate-50/80'}`}
                 >
-                  <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-700">
+                    <ReportIcon />
+                  </div>
                   <span className="text-[12px] font-bold tracking-[0.16em]">{renderSectionLabel('REPORTS')}</span>
-                  <span className={`ml-auto text-lg text-slate-500 transition-transform ${expandedSection === 'Reports' ? 'rotate-90' : ''}`}>
+                  <span className="ml-auto hidden">
                     ›
                   </span>
                 </button>
 
-                {expandedSection === 'Reports' && menuItems.filter((item) => !item.subItems?.length).map((item) => {
-                  const active = activeHomePath === item.path;
-                  const Icon = item.Icon;
-
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onMouseEnter={() => setActiveHomePath(item.path)}
-                      onClick={() => setActiveHomePath(item.path)}
-                      className={`group relative flex cursor-pointer items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 ${active ? 'bg-yellow-200 text-slate-900' : 'text-slate-700 hover:bg-indigo-50/90'}`}
-                    >
-                      {active && <div className="absolute inset-y-0 left-0 w-1 bg-indigo-500" />}
-
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-700">
-                        <Icon />
-                      </div>
-
-                      <span className={active ? 'font-semibold text-slate-800' : 'font-medium text-slate-700 group-hover:text-slate-900'}>
-                        {item.name}
-                      </span>
-                    </Link>
-                  );
-                })}
               </div>
             </nav>
           </div>

@@ -158,7 +158,7 @@ export const SECTION_CONFIG = {
   },
   Expense: {
     name: 'Expense',
-    hubPath: '/expenses',
+    hubPath: '/expense-hub',
     Icon: ExpenseIcon,
     description: 'Expenses and expense groups in one place',
     theme: {
@@ -169,7 +169,7 @@ export const SECTION_CONFIG = {
       accent: 'bg-emerald-500'
     },
     items: [
-      { name: 'Expense', path: '/expenses', Icon: ExpenseIcon },
+      { name: 'Manage Expense', path: '/expenses', Icon: ExpenseIcon },
       { name: 'Expense Group', path: '/expense-groups', Icon: ExpenseGroupIcon }
     ]
   },
