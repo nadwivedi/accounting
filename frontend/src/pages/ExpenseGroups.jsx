@@ -8,8 +8,7 @@ const TOAST_OPTIONS = { autoClose: 1200 };
 
 const getInitialForm = () => ({
   name: '',
-  description: '',
-  isActive: true
+  description: ''
 });
 
 export default function ExpenseGroups() {
@@ -39,10 +38,10 @@ export default function ExpenseGroups() {
   };
 
   const handleChange = (event) => {
-    const { name, value, type, checked } = event.target;
+    const { name, value } = event.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
   };
 
@@ -62,8 +61,7 @@ export default function ExpenseGroups() {
   const handleEdit = (expenseGroup) => {
     setFormData({
       name: expenseGroup.name || '',
-      description: expenseGroup.description || '',
-      isActive: Boolean(expenseGroup.isActive)
+      description: expenseGroup.description || ''
     });
     setEditingId(expenseGroup._id);
     setError('');
@@ -110,8 +108,6 @@ export default function ExpenseGroups() {
   };
 
   const totalGroups = expenseGroups.length;
-  const activeGroups = expenseGroups.filter((item) => item.isActive).length;
-  const inactiveGroups = totalGroups - activeGroups;
 
   return (
     <div className="min-h-screen bg-[#f3f6fb] p-4 pt-16 md:px-8 md:pb-8 md:pt-5">
@@ -121,18 +117,10 @@ export default function ExpenseGroups() {
         </div>
       )}
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
+      <div className="mb-6 grid grid-cols-1 gap-3 md:gap-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Total Groups</p>
           <p className="mt-2 text-2xl font-semibold text-slate-900">{totalGroups}</p>
-        </div>
-        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-emerald-700">Active</p>
-          <p className="mt-2 text-2xl font-semibold text-emerald-900">{activeGroups}</p>
-        </div>
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-amber-700">Inactive</p>
-          <p className="mt-2 text-2xl font-semibold text-amber-900">{inactiveGroups}</p>
         </div>
       </div>
 
@@ -214,17 +202,6 @@ export default function ExpenseGroups() {
                 />
               </div>
 
-              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700">
-                <input
-                  type="checkbox"
-                  name="isActive"
-                  checked={Boolean(formData.isActive)}
-                  onChange={handleChange}
-                  className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-200"
-                />
-                Keep this expense group active
-              </label>
-
               <div className="flex flex-col gap-3 sm:flex-row">
                 <button
                   type="submit"
@@ -253,7 +230,6 @@ export default function ExpenseGroups() {
               <tr>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em]">Name</th>
                 <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em]">Description</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em]">Status</th>
                 <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-[0.18em]">Actions</th>
               </tr>
             </thead>
@@ -262,15 +238,6 @@ export default function ExpenseGroups() {
                 <tr key={expenseGroup._id} className="hover:bg-slate-50">
                   <td className="px-6 py-4 font-medium text-slate-900">{expenseGroup.name}</td>
                   <td className="px-6 py-4 text-sm text-slate-600">{expenseGroup.description || '-'}</td>
-                  <td className="px-6 py-4">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      expenseGroup.isActive
-                        ? 'bg-emerald-100 text-emerald-700'
-                        : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {expenseGroup.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
                   <td className="px-6 py-4">
                     <div className="flex justify-end gap-3">
                       <button
@@ -295,7 +262,7 @@ export default function ExpenseGroups() {
 
               {!loading && expenseGroups.length === 0 && (
                 <tr>
-                  <td colSpan="4" className="px-6 py-12 text-center text-sm text-slate-500">
+                  <td colSpan="3" className="px-6 py-12 text-center text-sm text-slate-500">
                     No expense groups found. Add your first expense group.
                   </td>
                 </tr>

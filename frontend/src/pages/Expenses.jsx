@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, ReceiptIndianRupee } from 'lucide-react';
+import { Plus, ReceiptIndianRupee, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
@@ -14,6 +14,28 @@ const getInitialForm = () => ({
   expenseDate: new Date().toISOString().split('T')[0],
   notes: ''
 });
+
+const formatCurrency = (value) => `Rs ${Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+const formatDate = (value) => (
+  value
+    ? new Date(value).toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric'
+    })
+    : '-'
+);
+
+const getMethodBadgeClass = (method) => {
+  const normalized = String(method || '').toLowerCase();
+  if (normalized === 'cash') return 'border border-emerald-200 bg-emerald-50 text-emerald-700';
+  if (normalized === 'bank') return 'border border-blue-200 bg-blue-50 text-blue-700';
+  if (normalized === 'upi') return 'border border-violet-200 bg-violet-50 text-violet-700';
+  if (normalized === 'card') return 'border border-amber-200 bg-amber-50 text-amber-700';
+  if (normalized === 'credit') return 'border border-rose-200 bg-rose-50 text-rose-700';
+  return 'border border-slate-200 bg-slate-100 text-slate-700';
+};
 
 export default function Expenses() {
   const [expenses, setExpenses] = useState([]);
@@ -81,9 +103,7 @@ export default function Expenses() {
 
   const fetchExpenseGroups = async () => {
     try {
-      const response = await apiClient.get('/expense-groups', {
-        params: { isActive: true }
-      });
+      const response = await apiClient.get('/expense-groups');
       setExpenseGroups(response.data || []);
     } catch (err) {
       console.error('Error fetching expense groups:', err);
@@ -166,68 +186,112 @@ export default function Expenses() {
   }, 0);
 
   return (
-    <div className="min-h-screen bg-[#f3f6fb] p-4 pt-16 md:px-8 md:pb-8 md:pt-5">
-      {error && (
-        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          {error}
-        </div>
-      )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+      <div className="w-full px-3 pb-8 pt-4 md:px-4 lg:px-6 lg:pt-4">
+        {error && (
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
+            {error}
+          </div>
+        )}
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Total Expenses</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{totalExpenses}</p>
-        </div>
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-red-700">Total Amount</p>
-          <p className="mt-2 text-2xl font-semibold text-red-900">Rs {totalAmount.toFixed(2)}</p>
-        </div>
-        <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-cyan-700">Groups Used</p>
-          <p className="mt-2 text-2xl font-semibold text-cyan-900">{usedGroups}</p>
-        </div>
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-amber-700">This Month</p>
-          <p className="mt-2 text-2xl font-semibold text-amber-900">Rs {currentMonthTotal.toFixed(2)}</p>
-        </div>
-      </div>
+        <div className="mb-5 mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
+          <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium leading-tight text-slate-500 sm:text-xs">Expense Count</p>
+                <p className="mt-1 text-base font-bold leading-tight text-slate-800 sm:mt-2 sm:text-2xl">{totalExpenses}</p>
+              </div>
+              <div className="hidden h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform group-hover:scale-110 sm:flex">
+                <ReceiptIndianRupee className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-80 sm:h-1"></div>
+          </div>
 
-      {expenseGroups.length === 0 && (
-        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
-          Create an expense group first, then add expenses under that head.
-        </div>
-      )}
+          <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium leading-tight text-slate-500 sm:text-xs">Total Amount</p>
+                <p className="mt-1 text-[11px] font-bold leading-tight text-slate-800 sm:mt-2 sm:text-2xl">{formatCurrency(totalAmount)}</p>
+              </div>
+              <div className="hidden h-12 w-12 items-center justify-center rounded-xl bg-cyan-50 text-cyan-700 transition-transform group-hover:scale-110 sm:flex">
+                <ReceiptIndianRupee className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-cyan-500 to-sky-400 opacity-80 sm:h-1"></div>
+          </div>
 
-      <div className="mb-4 flex flex-col gap-3 md:flex-row">
-        <input
-          type="text"
-          placeholder="Search by notes, group, or party..."
-          value={search}
-          onChange={(event) => setSearch(event.target.value)}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-red-200"
-        />
-        <select
-          value={dateFilter}
-          onChange={(event) => setDateFilter(event.target.value)}
-          className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 md:w-56"
-        >
-          <option value="">Expense History - All Time</option>
-          <option value="7d">Expense History - 7 Days</option>
-          <option value="30d">Expense History - 30 Days</option>
-          <option value="3m">Expense History - 3 Months</option>
-          <option value="6m">Expense History - 6 Months</option>
-          <option value="1y">Expense History - 1 Year</option>
-        </select>
-        <button
-          type="button"
-          onClick={handleOpenForm}
-          disabled={expenseGroups.length === 0}
-          className="inline-flex items-center justify-center gap-2 rounded-2xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <Plus className="h-4 w-4" />
-          Add Expense
-        </button>
-      </div>
+          <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium leading-tight text-slate-500 sm:text-xs">Groups Used</p>
+                <p className="mt-1 text-base font-bold leading-tight text-slate-800 sm:mt-2 sm:text-2xl">{usedGroups}</p>
+              </div>
+              <div className="hidden h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 transition-transform group-hover:scale-110 sm:flex">
+                <ReceiptIndianRupee className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80 sm:h-1"></div>
+          </div>
+
+          <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] font-medium leading-tight text-slate-500 sm:text-xs">This Month</p>
+                <p className="mt-1 text-[11px] font-bold leading-tight text-slate-800 sm:mt-2 sm:text-2xl">{formatCurrency(currentMonthTotal)}</p>
+              </div>
+              <div className="hidden h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-700 transition-transform group-hover:scale-110 sm:flex">
+                <ReceiptIndianRupee className="h-6 w-6" />
+              </div>
+            </div>
+            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-amber-500 to-orange-400 opacity-80 sm:h-1"></div>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+          <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 px-6 py-5">
+            {expenseGroups.length === 0 && (
+              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+                Create an expense group first, then add expenses under that head.
+              </div>
+            )}
+
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+              <div className="relative w-full lg:w-[22%] lg:min-w-[260px]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search expenses..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                />
+              </div>
+
+              <select
+                value={dateFilter}
+                onChange={(event) => setDateFilter(event.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 lg:w-56"
+              >
+                <option value="">Expense History - All Time</option>
+                <option value="7d">Expense History - 7 Days</option>
+                <option value="30d">Expense History - 30 Days</option>
+                <option value="3m">Expense History - 3 Months</option>
+                <option value="6m">Expense History - 6 Months</option>
+                <option value="1y">Expense History - 1 Year</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={handleOpenForm}
+                disabled={expenseGroups.length === 0}
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Plus className="h-4 w-4" />
+                Add Expense
+              </button>
+            </div>
+          </div>
 
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCloseForm}>
@@ -237,13 +301,13 @@ export default function Expenses() {
           >
             <div className="flex items-center justify-between border-b border-slate-200 px-6 py-5">
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-red-100 text-red-700">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-cyan-100 text-cyan-700">
                   <ReceiptIndianRupee className="h-5 w-5" />
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-slate-900">Add Expense</h2>
                   <p className="mt-1 text-sm text-slate-500">
-                    Record a business expense against a selected expense head.
+                    Record an expense entry with the same flow as party management.
                   </p>
                 </div>
               </div>
@@ -355,7 +419,7 @@ export default function Expenses() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="rounded-2xl bg-red-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+                  className="rounded-2xl bg-slate-800 px-6 py-3 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:opacity-50"
                 >
                   {loading ? 'Saving...' : 'Save Expense'}
                 </button>
@@ -372,52 +436,102 @@ export default function Expenses() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px]">
-            <thead className="bg-slate-900 text-white">
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em]">Date</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em]">Expense Group</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em]">Party</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em]">Amount</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em]">Method</th>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-[0.18em]">Notes</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {expenses.map((expense) => (
-                <tr key={expense._id} className="hover:bg-slate-50">
-                  <td className="px-6 py-4 text-sm font-medium text-slate-700">
-                    {expense.expenseDate ? new Date(expense.expenseDate).toLocaleDateString() : '-'}
-                  </td>
-                  <td className="px-6 py-4 font-medium text-slate-900">
-                    {expense.expenseGroup?.name || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">
-                    {expense.party?.name || '-'}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-semibold text-red-700">
-                    Rs {Number(expense.amount || 0).toFixed(2)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs font-semibold capitalize text-slate-700">
-                      {expense.method}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-600">{expense.notes || '-'}</td>
-                </tr>
-              ))}
+          {loading ? (
+            <div className="px-6 py-10 text-center text-slate-500">Loading...</div>
+          ) : (
+            <div className="rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
+              <div className="space-y-3 md:hidden">
+                {expenses.map((expense) => (
+                  <article
+                    key={expense._id}
+                    className="overflow-hidden rounded-2xl border border-cyan-200 bg-white shadow-[0_16px_32px_rgba(8,47,73,0.10)]"
+                  >
+                    <div className="flex items-start justify-between gap-3 border-b border-cyan-900/20 bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] px-4 py-3 text-white">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold text-white">{expense.expenseGroup?.name || 'Expense'}</p>
+                        <p className="mt-1 text-xs text-cyan-100">{formatDate(expense.expenseDate)}</p>
+                      </div>
+                      <div className="rounded-xl bg-white/15 px-3 py-1.5 text-right">
+                        <p className="text-[10px] uppercase tracking-[0.18em] text-cyan-100">Amount</p>
+                        <p className="mt-1 text-sm font-bold text-white">{formatCurrency(expense.amount)}</p>
+                      </div>
+                    </div>
 
-              {!loading && expenses.length === 0 && (
-                <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-sm text-slate-500">
-                    No expenses found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    <div className="space-y-3 px-4 py-4 text-sm">
+                      <div className="flex items-center justify-between gap-3 rounded-xl bg-cyan-50 px-3 py-2.5">
+                        <span className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-700">Party</span>
+                        <span className="text-right font-semibold text-slate-800">{expense.party?.name || '-'}</span>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-3 rounded-xl bg-sky-50 px-3 py-2.5">
+                        <span className="text-xs font-medium uppercase tracking-[0.18em] text-sky-700">Method</span>
+                        <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getMethodBadgeClass(expense.method)}`}>
+                          {expense.method}
+                        </span>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                        <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Notes</p>
+                        <p className="mt-1 break-words text-sm text-slate-700">{expense.notes || '-'}</p>
+                      </div>
+                    </div>
+                  </article>
+                ))}
+
+                {expenses.length === 0 && (
+                  <div className="rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-10 text-center text-slate-500">
+                    No expenses found
+                  </div>
+                )}
+              </div>
+
+              <div className="hidden overflow-x-auto md:block">
+                <table className="w-full min-w-[920px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap overflow-hidden">
+                  <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
+                    <tr>
+                      <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Date</th>
+                      <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Expense Group</th>
+                      <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party</th>
+                      <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Amount</th>
+                      <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Method</th>
+                      <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
+                    {expenses.map((expense) => (
+                      <tr key={expense._id} className="transition-colors duration-150 hover:bg-slate-200/45">
+                        <td className="border border-slate-400 px-4 py-3 text-center font-medium text-slate-700">
+                          {formatDate(expense.expenseDate)}
+                        </td>
+                        <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">
+                          {expense.expenseGroup?.name || '-'}
+                        </td>
+                        <td className="border border-slate-400 px-4 py-3 text-center">{expense.party?.name || '-'}</td>
+                        <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">
+                          {formatCurrency(expense.amount)}
+                        </td>
+                        <td className="border border-slate-400 px-4 py-3 text-center">
+                          <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getMethodBadgeClass(expense.method)}`}>
+                            {expense.method}
+                          </span>
+                        </td>
+                        <td className="border border-slate-400 px-4 py-3">
+                          <div className="max-w-[24rem] truncate">{expense.notes || '-'}</div>
+                        </td>
+                      </tr>
+                    ))}
+                    {expenses.length === 0 && (
+                      <tr>
+                        <td colSpan="6" className="border border-slate-400 px-6 py-10 text-center text-slate-500">
+                          No expenses found
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

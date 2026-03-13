@@ -11,7 +11,7 @@ const isDuplicateExpenseGroupNameError = (error) => (
 
 exports.createExpenseGroup = async (req, res) => {
   try {
-    const { name, description, isActive } = req.body;
+    const { name, description } = req.body;
     const userId = req.userId;
 
     if (!String(name || '').trim()) {
@@ -24,8 +24,7 @@ exports.createExpenseGroup = async (req, res) => {
     const expenseGroup = await ExpenseGroup.create({
       userId,
       name: String(name || '').trim(),
-      description: String(description || '').trim(),
-      isActive: isActive !== undefined ? Boolean(isActive) : true
+      description: String(description || '').trim()
     });
 
     return res.status(201).json({
@@ -50,13 +49,9 @@ exports.createExpenseGroup = async (req, res) => {
 
 exports.getAllExpenseGroups = async (req, res) => {
   try {
-    const { search, isActive } = req.query;
+    const { search } = req.query;
     const userId = req.userId;
     const filter = { userId };
-
-    if (isActive !== undefined) {
-      filter.isActive = isActive === 'true';
-    }
 
     if (search) {
       const searchRegex = { $regex: search, $options: 'i' };
@@ -86,7 +81,7 @@ exports.updateExpenseGroup = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const { name, description, isActive } = req.body;
+    const { name, description } = req.body;
 
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
@@ -106,8 +101,7 @@ exports.updateExpenseGroup = async (req, res) => {
       { _id: id, userId },
       {
         name: String(name || '').trim(),
-        description: String(description || '').trim(),
-        isActive: isActive !== undefined ? Boolean(isActive) : true
+        description: String(description || '').trim()
       },
       { new: true, runValidators: true }
     );

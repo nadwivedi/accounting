@@ -15,10 +15,6 @@ const expenseGroupSchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: ''
-  },
-  isActive: {
-    type: Boolean,
-    default: true
   }
 }, { timestamps: true });
 

@@ -35,7 +35,7 @@ exports.createExpense = async (req, res) => {
       });
     }
 
-    const existingExpenseGroup = await ExpenseGroup.findOne({ _id: expenseGroup, userId, isActive: true });
+    const existingExpenseGroup = await ExpenseGroup.findOne({ _id: expenseGroup, userId });
     if (!existingExpenseGroup) {
       return res.status(404).json({
         success: false,

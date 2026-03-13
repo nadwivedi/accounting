@@ -307,10 +307,7 @@ export default function Home() {
 
       if (homeSectionHotkeys[key]) {
         event.preventDefault();
-        setExpandedSection(homeSectionHotkeys[key]);
-        if (homeSectionHotkeys[key] === 'Reports') {
-          setActiveHomePath(getSectionItems('Reports')[0]?.path || '');
-        }
+        activateHomeSection(homeSectionHotkeys[key], navigate, setExpandedSection, setActiveHomePath);
         return;
       }
 
