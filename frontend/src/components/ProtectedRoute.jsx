@@ -7,6 +7,7 @@ const homeNavigationEntries = [
   { section: 'Masters', path: '/stock' },
   { section: 'Masters', path: '/stock-groups' },
   { section: 'Masters', path: '/units' },
+  { section: 'Masters', path: '/banks' },
   { section: 'Vouchers', path: '/sales' },
   { section: 'Vouchers', path: '/purchases' },
   { section: 'Vouchers', path: '/sale-return' },

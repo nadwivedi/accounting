@@ -130,7 +130,8 @@ export const SECTION_CONFIG = {
       { name: 'Manage Party', path: '/party', Icon: PartyIcon },
       { name: 'Stock Item', path: '/stock', Icon: ProductIcon },
       { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
-      { name: 'Unit', path: '/units', Icon: UnitIcon }
+      { name: 'Unit', path: '/units', Icon: UnitIcon },
+      { name: 'Bank', path: '/banks', Icon: BankIcon }
     ]
   },
   Vouchers: {
@@ -174,7 +175,7 @@ export const SECTION_CONFIG = {
   },
   Reports: {
     name: 'Reports',
-    hubPath: '/reports-hub',
+    hubPath: '/reports',
     Icon: ReportIcon,
     description: 'Reports and settings shortcuts',
     theme: {

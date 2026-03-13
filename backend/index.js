@@ -9,6 +9,7 @@ const connectDB = require('./utils/mongodb');
 const userRoutes = require('./routes/userRoutes');
 const stockGroupRoutes = require('./routes/MasterRoutes/stockGroupRoutes');
 const unitRoutes = require('./routes/MasterRoutes/unitRoutes');
+const bankRoutes = require('./routes/MasterRoutes/bankRoutes');
 const productRoutes = require('./routes/MasterRoutes/productRoutes');
 const expenseGroupRoutes = require('./routes/MasterRoutes/expenseGroupRoutes');
 const purchaseRoutes = require('./routes/VoucherRoutes/purchaseRoutes');
@@ -43,6 +44,7 @@ app.get('/', (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/stock-groups', stockGroupRoutes);
 app.use('/api/units', unitRoutes);
+app.use('/api/banks', bankRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/expense-groups', expenseGroupRoutes);
 app.use('/api/purchases', purchaseRoutes);

@@ -5,7 +5,7 @@ import apiClient from '../../utils/api';
 import AddPartyPopup from './component/AddPartyPopup';
 
 const getInitialForm = () => ({
-  type: 'supplier',
+  type: '',
   name: '',
   mobile: '',
   email: '',

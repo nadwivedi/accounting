@@ -10,6 +10,7 @@ import Products from './pages/Products';
 import StockDetail from './pages/StockDetail';
 import StockGroups from './pages/StockGroups';
 import Unit from './pages/Unit';
+import Banks from './pages/Banks';
 import Sales from './pages/Sales/Sales';
 import Purchases from './pages/Purchases/Purchases';
 import Payments from './pages/Payments/Payments';
@@ -21,6 +22,7 @@ import Contra from './pages/Contra';
 import StockAdjustment from './pages/StockAdjustment';
 import SaleReturn from './pages/SaleReturn/SaleReturn';
 import PurchaseReturn from './pages/PurchaseReturn/PurchaseReturn';
+import ReportsHub from './pages/ReportsHub';
 import ReportsDashboard from './pages/ReportsDashboard';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -121,6 +123,15 @@ function App() {
         />
 
         <Route
+          path="/banks"
+          element={
+            <ProtectedRoute>
+              <Banks />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/stock"
           element={
             <ProtectedRoute>
@@ -164,7 +175,52 @@ function App() {
           path="/reports"
           element={
             <ProtectedRoute>
-              <ReportsDashboard />
+              <ReportsHub />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/party-ledger"
+          element={
+            <ProtectedRoute>
+              <ReportsDashboard initialReport="partyLedger" />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/stock-ledger"
+          element={
+            <ProtectedRoute>
+              <ReportsDashboard initialReport="stockLedger" />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/sales-report"
+          element={
+            <ProtectedRoute>
+              <ReportsDashboard initialReport="saleReport" />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/purchase-report"
+          element={
+            <ProtectedRoute>
+              <ReportsDashboard initialReport="purchaseReport" />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports-hub"
+          element={
+            <ProtectedRoute>
+              <Navigate to="/reports" replace />
             </ProtectedRoute>
           }
         />

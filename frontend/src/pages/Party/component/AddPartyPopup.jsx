@@ -103,17 +103,14 @@ export default function AddPartyPopup({
   useEffect(() => {
     if (!showForm) {
       setTypeQuery('');
-      setTypeListIndex(0);
+      setTypeListIndex(-1);
       setIsTypeDropdownOpen(false);
       return;
     }
 
     const nextLabel = getTypeLabel(formData.type);
     setTypeQuery(nextLabel);
-    setTypeListIndex(Math.max(
-      TYPE_OPTIONS.findIndex((option) => option.value === formData.type),
-      0
-    ));
+    setTypeListIndex(TYPE_OPTIONS.findIndex((option) => option.value === formData.type));
   }, [showForm, formData.type]);
 
   useEffect(() => {
@@ -159,10 +156,8 @@ export default function AddPartyPopup({
   const handleTypeFocus = () => {
     setIsTypeDropdownOpen(true);
     setTypeQuery(getTypeLabel(formData.type));
-    setTypeListIndex(Math.max(
-      TYPE_OPTIONS.findIndex((option) => option.value === formData.type),
-      0
-    ));
+    const selectedIndex = TYPE_OPTIONS.findIndex((option) => option.value === formData.type);
+    setTypeListIndex(selectedIndex >= 0 ? selectedIndex : 0);
   };
 
   const handleTypeInputChange = (event) => {
@@ -334,41 +329,53 @@ export default function AddPartyPopup({
                       </div>
 
                       {isTypeDropdownOpen && (
-                        <div className="mt-2 overflow-hidden rounded-2xl border border-indigo-200 bg-white shadow-xl md:absolute md:left-0 md:right-0 md:top-[calc(100%+12px)] md:z-30 md:h-[42vh]">
-                          <div className="border-b border-indigo-100 bg-gradient-to-r from-indigo-600 to-blue-600 px-4 py-3 text-xs font-semibold uppercase tracking-[0.18em] text-white">
-                            Party Type List
+                        <div className="mt-2 overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)] md:absolute md:left-0 md:right-0 md:top-[calc(100%+12px)] md:z-30">
+                          <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Type List</span>
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                              {(filteredTypeOptions.length > 0 ? filteredTypeOptions : TYPE_OPTIONS).length}
+                            </span>
                           </div>
-                          <div className="grid h-[18rem] grid-rows-2 gap-3 p-3 md:h-[calc(42vh-53px)]">
-                            {(filteredTypeOptions.length > 0 ? filteredTypeOptions : TYPE_OPTIONS).map((option, index) => {
-                              const isActive = index === typeListIndex;
+                          <div className="max-h-64 overflow-y-auto py-1">
+                            {(filteredTypeOptions.length > 0 ? filteredTypeOptions : TYPE_OPTIONS).length === 0 ? (
+                              <div className="px-3 py-3 text-center text-sm text-slate-500">
+                                No matching types found.
+                              </div>
+                            ) : (
+                              (filteredTypeOptions.length > 0 ? filteredTypeOptions : TYPE_OPTIONS).map((option, index) => {
+                                const isActive = index === typeListIndex;
+                                const isSelected = String(formData.type || '') === String(option.value);
 
-                              return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  onMouseDown={(event) => event.preventDefault()}
-                                  onMouseEnter={() => setTypeListIndex(index)}
-                                  onClick={() => selectType(option, true)}
-                                  className={`flex h-full flex-col items-start justify-between rounded-2xl border px-4 py-4 text-left transition ${
-                                    isActive
-                                      ? 'border-indigo-600 bg-indigo-600 text-white shadow-lg'
-                                      : 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100'
-                                  }`}
-                                >
-                                  <div>
-                                    <p className="text-lg font-bold tracking-wide">{option.label}</p>
-                                    <p className={`mt-2 text-sm leading-6 ${isActive ? 'text-indigo-100' : 'text-slate-500'}`}>
-                                      {option.description}
-                                    </p>
-                                  </div>
-                                  <span className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] ${
-                                    isActive ? 'bg-white/15 text-white' : 'bg-white text-indigo-600'
-                                  }`}>
-                                    Press Enter
-                                  </span>
-                                </button>
-                              );
-                            })}
+                                return (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onMouseEnter={() => setTypeListIndex(index)}
+                                    onClick={() => selectType(option, true)}
+                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
+                                      isActive
+                                        ? 'bg-yellow-200 text-amber-950'
+                                        : isSelected
+                                        ? 'bg-yellow-50 text-amber-800'
+                                        : 'text-slate-700 hover:bg-amber-50'
+                                    }`}
+                                  >
+                                    <div className="min-w-0">
+                                      <p className="truncate font-medium">{option.label}</p>
+                                      <p className={`mt-0.5 text-[11px] ${isActive ? 'text-amber-900' : isSelected ? 'text-amber-700' : 'text-slate-500'}`}>
+                                        {option.description}
+                                      </p>
+                                    </div>
+                                    {isSelected && (
+                                      <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                        Selected
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })
+                            )}
                           </div>
                         </div>
                       )}

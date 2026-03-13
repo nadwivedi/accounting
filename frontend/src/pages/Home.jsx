@@ -21,6 +21,17 @@ function UnitIcon() {
   return <AssetIcon src="/units_converted.avif" />;
 }
 
+function BankIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5">
+      <path d="M3 9.5 12 4l9 5.5" />
+      <path d="M5 10.5h14" />
+      <path d="M6.5 10.5v7.5M10 10.5v7.5M14 10.5v7.5M17.5 10.5v7.5" />
+      <path d="M4 20h16" />
+    </svg>
+  );
+}
+
 function PartyIcon() {
   return <AssetIcon src="/party_converted.avif" />;
 }
@@ -113,7 +124,8 @@ const menuItems = [
       { name: 'Manage Party', path: '/party', Icon: PartyIcon },
       { name: 'Stock Item', path: '/stock', Icon: ProductIcon },
       { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
-      { name: 'Unit', path: '/units', Icon: UnitIcon }
+      { name: 'Unit', path: '/units', Icon: UnitIcon },
+      { name: 'Bank', path: '/banks', Icon: BankIcon }
     ]
   },
   {

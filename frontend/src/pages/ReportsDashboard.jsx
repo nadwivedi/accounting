@@ -1,10 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowDownRight,
-  ArrowUpRight,
-  BarChart3,
   Boxes,
-  FileText,
   Package,
   RefreshCw,
   ShoppingCart,
@@ -162,8 +158,8 @@ function ItemPreview({ items }) {
   );
 }
 
-export default function ReportsDashboard() {
-  const [activeReport, setActiveReport] = useState('partyLedger');
+export default function ReportsDashboard({ initialReport = 'partyLedger' }) {
+  const [activeReport, setActiveReport] = useState(initialReport);
   const [outstanding, setOutstanding] = useState(null);
   const [partyLedger, setPartyLedger] = useState([]);
   const [stockLedger, setStockLedger] = useState({ ledger: [], currentStock: [] });
@@ -260,14 +256,13 @@ export default function ReportsDashboard() {
     };
   }, [sortedPurchases]);
 
-  const topOutstandingRows = useMemo(
-    () => [...partyOutstandingRows].sort((a, b) => Math.abs(Number(b.netBalance || 0)) - Math.abs(Number(a.netBalance || 0))).slice(0, 6),
-    [partyOutstandingRows]
-  );
-
   useEffect(() => {
     loadAllReports();
   }, []);
+
+  useEffect(() => {
+    setActiveReport(initialReport);
+  }, [initialReport]);
 
   const loadAllReports = async () => {
     setPageLoading(true);
@@ -311,19 +306,6 @@ export default function ReportsDashboard() {
     }
 
     setPageLoading(false);
-  };
-
-  const refreshOutstanding = async () => {
-    try {
-      setSectionLoading('outstanding');
-      const response = await apiClient.get('/reports/outstanding');
-      setOutstanding(response.data || null);
-      setError('');
-    } catch (err) {
-      setError(getErrorMessage(err, 'Error loading outstanding report'));
-    } finally {
-      setSectionLoading('');
-    }
   };
 
   const refreshPartyLedger = async (selectedPartyId = partyId) => {
@@ -704,10 +686,7 @@ export default function ReportsDashboard() {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.32em] text-slate-300">BillHub Reports</p>
-                <h1 className="mt-3 text-3xl font-black tracking-tight text-white md:text-5xl">Reports Dashboard</h1>
-                <p className="mt-3 max-w-3xl text-sm font-medium text-slate-300 md:text-base">
-                  Party ledger, stock ledger, sale report, and purchase report are now grouped here with a cleaner report switcher and faster summaries.
-                </p>
+                <h1 className="mt-3 text-2xl font-black tracking-tight text-white md:text-4xl">Reports Dashboard</h1>
               </div>
 
               <button
@@ -745,90 +724,6 @@ export default function ReportsDashboard() {
                   onClick={() => setActiveReport(option.id)}
                 />
               ))}
-            </div>
-
-            <div className="mb-8 grid grid-cols-1 gap-5 xl:grid-cols-[1.25fr_0.95fr]">
-              <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.26em] text-slate-500">Outstanding Snapshot</p>
-                    <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Pending Overview</h2>
-                    <p className="mt-1 text-sm text-slate-500">Quick look at the biggest balances across your parties.</p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={refreshOutstanding}
-                    disabled={sectionLoading === 'outstanding'}
-                    className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {sectionLoading === 'outstanding' ? 'Refreshing...' : 'Refresh'}
-                  </button>
-                </div>
-
-                <div className="mt-5 overflow-hidden rounded-2xl border border-slate-200">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-900 text-white">
-                      <tr>
-                        <th className="px-4 py-3 text-left font-semibold">Party</th>
-                        <th className="px-4 py-3 text-left font-semibold">Receivable</th>
-                        <th className="px-4 py-3 text-left font-semibold">Payable</th>
-                        <th className="px-4 py-3 text-left font-semibold">Net</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200 bg-white">
-                      {topOutstandingRows.map((row) => (
-                        <tr key={String(row.partyId)} className="hover:bg-slate-50">
-                          <td className="px-4 py-3 font-semibold text-slate-900">{row.partyName}</td>
-                          <td className="px-4 py-3 text-emerald-700">{formatCurrency(row.receivable)}</td>
-                          <td className="px-4 py-3 text-rose-700">{formatCurrency(row.payable)}</td>
-                          <td className={`px-4 py-3 font-semibold ${Number(row.netBalance || 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                            {formatCurrency(row.netBalance)}
-                          </td>
-                        </tr>
-                      ))}
-                      {topOutstandingRows.length === 0 ? (
-                        <tr>
-                          <td colSpan="4" className="px-4 py-10 text-center text-slate-500">No outstanding balances found.</td>
-                        </tr>
-                      ) : null}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="rounded-[28px] border border-slate-200 bg-white p-5 shadow-[0_18px_40px_rgba(15,23,42,0.08)]">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
-                    <BarChart3 className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-bold uppercase tracking-[0.26em] text-slate-500">How To Use</p>
-                    <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900">Report Navigator</h2>
-                  </div>
-                </div>
-
-                <div className="mt-5 space-y-3">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-center gap-3">
-                      <ArrowUpRight className="h-4 w-4 text-emerald-600" />
-                      <p className="text-sm font-semibold text-slate-800">Click a report card to switch the table below.</p>
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-center gap-3">
-                      <ArrowDownRight className="h-4 w-4 text-sky-600" />
-                      <p className="text-sm font-semibold text-slate-800">Use the party or stock filters before loading the ledger.</p>
-                    </div>
-                  </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-4 w-4 text-violet-600" />
-                      <p className="text-sm font-semibold text-slate-800">Sale and purchase reports show invoice history in one place.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
 
             {pageLoading ? (
