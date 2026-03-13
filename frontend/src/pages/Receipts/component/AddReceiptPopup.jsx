@@ -18,7 +18,10 @@ export default function AddReceiptPopup({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={handleCloseForm}>
       <div className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl border border-gray-200" onClick={(e) => e.stopPropagation()}>
         <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white rounded-t-2xl">
-          <h2 className="text-xl font-bold text-gray-800">New Receipt (Money Received)</h2>
+          <h2 className="text-xl font-bold text-gray-800">
+            New Receipt
+            <span className="ml-2 text-sm font-medium text-slate-500">Money Received</span>
+          </h2>
           <button
             type="button"
             onClick={handleCloseForm}

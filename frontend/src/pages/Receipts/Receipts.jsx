@@ -313,9 +313,10 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
         </select>
         <button
           onClick={handleOpenForm}
-          className="bg-emerald-600 text-white px-6 py-2.5 rounded-lg hover:bg-emerald-700 transition shadow-sm whitespace-nowrap"
+          className="inline-flex flex-col items-center justify-center rounded-lg bg-emerald-600 px-6 py-2.5 text-white shadow-sm transition hover:bg-emerald-700 whitespace-nowrap"
         >
-          + Add Receipt
+          <span className="text-sm font-semibold">+ New Receipt</span>
+          <span className="text-[11px] font-medium text-emerald-100">Money Received</span>
         </button>
       </div>
 

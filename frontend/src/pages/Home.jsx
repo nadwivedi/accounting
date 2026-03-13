@@ -177,10 +177,10 @@ const homeSectionHotkeys = {
 
 const HOME_SECTION_ORDER = ['Masters', 'Vouchers', 'Expense', 'Reports'];
 const homeQuickShortcuts = [
-  { label: 'New Sale', combo: 'Alt + 1', accent: 'from-emerald-500 to-teal-500', stateKey: 'homeQuickSale' },
-  { label: 'New Purchase', combo: 'Alt + 2', accent: 'from-blue-500 to-cyan-500', stateKey: 'homeQuickPurchase' },
-  { label: 'New Payment', combo: 'Alt + 3', accent: 'from-amber-500 to-orange-500', stateKey: 'homeQuickPayment' },
-  { label: 'New Receipt', combo: 'Alt + 4', accent: 'from-fuchsia-500 to-pink-500', stateKey: 'homeQuickReceipt' }
+  { label: 'New Sale', hint: '', combo: 'Alt + 1', accent: 'from-emerald-500 to-teal-500', stateKey: 'homeQuickSale' },
+  { label: 'New Purchase', hint: '', combo: 'Alt + 2', accent: 'from-blue-500 to-cyan-500', stateKey: 'homeQuickPurchase' },
+  { label: 'New Payment', hint: 'Money Paid', combo: 'Alt + 3', accent: 'from-amber-500 to-orange-500', stateKey: 'homeQuickPayment' },
+  { label: 'New Receipt', hint: 'Money Received', combo: 'Alt + 4', accent: 'from-fuchsia-500 to-pink-500', stateKey: 'homeQuickReceipt' }
 ];
 
 const getSectionItems = (sectionName) => {
@@ -500,6 +500,9 @@ export default function Home() {
                       <div className={`h-8 w-1.5 rounded-full bg-gradient-to-b ${shortcut.accent}`} />
                       <div className="min-w-0 flex-1">
                         <p className="text-[12px] font-semibold text-slate-800">{shortcut.label}</p>
+                        {shortcut.hint && (
+                          <p className="mt-0.5 text-[10px] font-medium text-slate-500">{shortcut.hint}</p>
+                        )}
                       </div>
                       <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-bold tracking-[0.14em] text-sky-700">
                         {shortcut.combo}
