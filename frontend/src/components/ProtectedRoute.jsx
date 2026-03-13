@@ -75,15 +75,22 @@ export default function ProtectedRoute({ children }) {
         if (event.defaultPrevented || isTypingTarget(event.target) || isPopupOpen()) return;
 
         event.preventDefault();
+        if (location.pathname === '/') {
+          navigate('/', {
+            replace: true,
+            state: {
+              ...(location.state || {}),
+              homeQuickSale: key === '1',
+              homeQuickPurchase: key === '2',
+              homeQuickPayment: key === '3',
+              homeQuickReceipt: key === '4'
+            }
+          });
+          return;
+        }
+
         navigate(shortcutTarget.path, {
-          state: location.pathname === '/'
-            ? {
-                backgroundLocation: location,
-                homeQuickSale: key === '1',
-                homeQuickPayment: key === '3',
-                homeQuickReceipt: key === '4'
-              }
-            : { openShortcut: shortcutTarget.openShortcut }
+          state: { openShortcut: shortcutTarget.openShortcut }
         });
         return;
       }
@@ -118,7 +125,7 @@ export default function ProtectedRoute({ children }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isAuthenticated, loading, location.pathname, navigate]);
+  }, [isAuthenticated, loading, location.pathname, location.state, navigate]);
 
   if (loading) {
     return (

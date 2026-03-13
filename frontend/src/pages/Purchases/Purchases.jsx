@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import AddPurchasePopup from './component/AddPurchasePopup';
 
-export default function Purchases() {
+export default function Purchases({ modalOnly = false, onModalFinish = null }) {
   const toastOptions = { autoClose: 1200 };
   const location = useLocation();
   const navigate = useNavigate();
@@ -143,6 +143,11 @@ export default function Purchases() {
     handleOpenForm();
     navigate(location.pathname, { replace: true, state: {} });
   }, [location.pathname, location.state, navigate, showForm]);
+
+  useEffect(() => {
+    if (!modalOnly || showForm) return;
+    handleOpenForm();
+  }, [modalOnly, showForm]);
 
   const getFromDateByFilter = () => {
     const now = new Date();
@@ -725,6 +730,10 @@ export default function Purchases() {
       setIsProductSectionActive(false);
       setShowForm(false);
       setError('');
+
+      if (modalOnly && typeof onModalFinish === 'function') {
+        onModalFinish();
+      }
     } catch (err) {
       setError(err.message || 'Error saving purchase');
     } finally {
@@ -785,6 +794,11 @@ export default function Purchases() {
   };
 
   const handleCancel = () => {
+    if (modalOnly && typeof onModalFinish === 'function') {
+      onModalFinish();
+      return;
+    }
+
     setShowForm(false);
     setEditingId(null);
     setFormData(getInitialFormData());
@@ -840,6 +854,60 @@ export default function Purchases() {
 
   const totalPurchases = purchases.length;
   const totalAmount = purchases.reduce((sum, purchase) => sum + Number(purchase.totalAmount || 0), 0);
+
+  if (modalOnly) {
+    return (
+      <>
+        {error && (
+          <div className="fixed left-4 right-4 top-4 z-[60] rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-lg md:left-auto md:right-4 md:w-[26rem]">
+            {error}
+          </div>
+        )}
+        <AddPurchasePopup
+          showForm={showForm}
+          editingId={editingId}
+          loading={loading}
+          formData={formData}
+          currentItem={currentItem}
+          products={products}
+          uploadingInvoice={uploadingInvoice}
+          leadgerSectionRef={leadgerSectionRef}
+          leadgerQuery={leadgerQuery}
+          leadgerListIndex={leadgerListIndex}
+          filteredLeadgers={filteredLeadgers}
+          isLeadgerSectionActive={isLeadgerSectionActive}
+          productSectionRef={productSectionRef}
+          productQuery={productQuery}
+          productListIndex={productListIndex}
+          filteredProducts={filteredProducts}
+          isProductSectionActive={isProductSectionActive}
+          getLeadgerDisplayName={getLeadgerDisplayName}
+          getProductDisplayName={getProductDisplayName}
+          setCurrentItem={setCurrentItem}
+          setIsLeadgerSectionActive={setIsLeadgerSectionActive}
+          setLeadgerListIndex={setLeadgerListIndex}
+          setIsProductSectionActive={setIsProductSectionActive}
+          setProductListIndex={setProductListIndex}
+          handleCancel={handleCancel}
+          handleSubmit={handleSubmit}
+          handleInputChange={handleInputChange}
+          handleLeadgerFocus={handleLeadgerFocus}
+          handleLeadgerInputChange={handleLeadgerInputChange}
+          handleLeadgerInputKeyDown={handleLeadgerInputKeyDown}
+          handleProductFocus={handleProductFocus}
+          handleProductInputChange={handleProductInputChange}
+          handleProductInputKeyDown={handleProductInputKeyDown}
+          handleSelectEnterMoveNext={handleSelectEnterMoveNext}
+          handleInvoiceUpload={handleInvoiceUpload}
+          handleAddItem={handleAddItem}
+          handleRemoveItem={handleRemoveItem}
+          selectLeadger={selectLeadger}
+          selectProduct={selectProduct}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
       <div className="w-full px-3 pb-8 pt-4 md:px-4 lg:px-6 lg:pt-4">

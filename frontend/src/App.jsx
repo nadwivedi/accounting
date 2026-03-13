@@ -6,7 +6,6 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import Masters from './pages/Masters';
 import Vouchers from './pages/Vouchers';
-import ExpenseHub from './pages/ExpenseHub';
 import Products from './pages/Products';
 import StockDetail from './pages/StockDetail';
 import StockGroups from './pages/StockGroups';
@@ -30,11 +29,27 @@ function App() {
   const { isAuthenticated } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
-  const backgroundLocation = location.state?.backgroundLocation;
+
+  const clearHomeQuickShortcutState = () => {
+    const currentState = location.state || {};
+    const {
+      homeQuickSale,
+      homeQuickPurchase,
+      homeQuickPayment,
+      homeQuickReceipt,
+      backgroundLocation,
+      ...restState
+    } = currentState;
+
+    navigate('/', {
+      replace: true,
+      state: Object.keys(restState).length > 0 ? restState : undefined
+    });
+  };
 
   return (
     <>
-      <Routes location={backgroundLocation || location}>
+      <Routes location={location}>
         {/* Public Routes */}
         <Route
           path="/login"
@@ -82,7 +97,7 @@ function App() {
           path="/expense-hub"
           element={
             <ProtectedRoute>
-              <ExpenseHub />
+              <Navigate to="/expenses" replace />
             </ProtectedRoute>
           }
         />
@@ -257,43 +272,28 @@ function App() {
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
 
-      {backgroundLocation && location.state?.homeQuickSale && location.pathname === '/sales' && (
-        <Routes>
-          <Route
-            path="/sales"
-            element={(
-              <ProtectedRoute>
-                <Sales modalOnly onModalFinish={() => navigate(-1)} />
-              </ProtectedRoute>
-            )}
-          />
-        </Routes>
+      {location.pathname === '/' && location.state?.homeQuickSale && (
+        <ProtectedRoute>
+          <Sales modalOnly onModalFinish={clearHomeQuickShortcutState} />
+        </ProtectedRoute>
       )}
 
-      {backgroundLocation && location.state?.homeQuickPayment && location.pathname === '/payments' && (
-        <Routes>
-          <Route
-            path="/payments"
-            element={(
-              <ProtectedRoute>
-                <Payments modalOnly onModalFinish={() => navigate(-1)} />
-              </ProtectedRoute>
-            )}
-          />
-        </Routes>
+      {location.pathname === '/' && location.state?.homeQuickPurchase && (
+        <ProtectedRoute>
+          <Purchases modalOnly onModalFinish={clearHomeQuickShortcutState} />
+        </ProtectedRoute>
       )}
 
-      {backgroundLocation && location.state?.homeQuickReceipt && location.pathname === '/receipts' && (
-        <Routes>
-          <Route
-            path="/receipts"
-            element={(
-              <ProtectedRoute>
-                <Receipts modalOnly onModalFinish={() => navigate(-1)} />
-              </ProtectedRoute>
-            )}
-          />
-        </Routes>
+      {location.pathname === '/' && location.state?.homeQuickPayment && (
+        <ProtectedRoute>
+          <Payments modalOnly onModalFinish={clearHomeQuickShortcutState} />
+        </ProtectedRoute>
+      )}
+
+      {location.pathname === '/' && location.state?.homeQuickReceipt && (
+        <ProtectedRoute>
+          <Receipts modalOnly onModalFinish={clearHomeQuickShortcutState} />
+        </ProtectedRoute>
       )}
 
       <ToastContainer position="top-right" newestOnTop closeOnClick pauseOnHover />

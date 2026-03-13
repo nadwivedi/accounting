@@ -211,7 +211,7 @@ const activateHomeSection = (sectionName, navigate, setExpandedSection, setActiv
   }
 
   if (sectionName === 'Expense') {
-    navigate('/expense-hub');
+    navigate('/expenses');
     return;
   }
 
