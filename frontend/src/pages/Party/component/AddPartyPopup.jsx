@@ -68,6 +68,14 @@ const focusNextField = (currentElement) => {
   }
 };
 
+const submitFormFromField = (currentElement) => {
+  if (!(currentElement instanceof HTMLElement)) return;
+
+  const form = currentElement.closest('form');
+  if (!(form instanceof HTMLFormElement)) return;
+  form.requestSubmit();
+};
+
 const getTypeLabel = (typeValue) => (
   TYPE_OPTIONS.find((option) => option.value === typeValue)?.label || ''
 );
@@ -488,9 +496,16 @@ export default function AddPartyPopup({
                       name="address"
                       value={formData.address}
                       onChange={handleChange}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' && !event.shiftKey) {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          submitFormFromField(event.currentTarget);
+                        }
+                      }}
                       className={getInlineTextareaClass('emerald')}
                       placeholder="Enter full address"
-                      rows={2}
+                      rows={1}
                     />
                   </div>
                 </div>
