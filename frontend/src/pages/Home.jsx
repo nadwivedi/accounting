@@ -176,6 +176,12 @@ const homeSectionHotkeys = {
 };
 
 const HOME_SECTION_ORDER = ['Masters', 'Vouchers', 'Expense', 'Reports'];
+const homeQuickShortcuts = [
+  { label: 'New Sale', combo: 'Alt + 1', accent: 'from-emerald-500 to-teal-500' },
+  { label: 'New Purchase', combo: 'Alt + 2', accent: 'from-blue-500 to-cyan-500' },
+  { label: 'New Payment', combo: 'Alt + 3', accent: 'from-amber-500 to-orange-500' },
+  { label: 'New Receipt', combo: 'Alt + 4', accent: 'from-fuchsia-500 to-pink-500' }
+];
 
 const getSectionItems = (sectionName) => {
   if (sectionName === 'Reports') {
@@ -327,7 +333,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-[#020617] px-4 py-6">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
-        <div className="flex w-full max-w-[32rem] items-center justify-center gap-4">
+        <div className="flex w-full max-w-5xl flex-col items-center justify-center gap-4 lg:flex-row lg:items-stretch">
           <div className="relative flex w-full max-w-[23rem] flex-col overflow-hidden rounded-[30px] border border-white/20 bg-gradient-to-br from-white/95 via-white/90 to-white/80 shadow-[0_32px_80px_rgba(0,0,0,0.5),0_0_60px_rgba(99,102,241,0.15),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-sm">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.12),transparent_40%),radial-gradient(circle_at_80%_20%,rgba(167,139,250,0.1),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.08),transparent_30%)]" />
           <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-white/40 to-transparent" />
@@ -459,6 +465,35 @@ export default function Home() {
             </nav>
           </div>
           </div>
+
+          <aside className="relative w-full max-w-[23rem] overflow-hidden rounded-[30px] border border-white/15 bg-[linear-gradient(165deg,rgba(15,23,42,0.95),rgba(30,41,59,0.92))] shadow-[0_28px_70px_rgba(0,0,0,0.45),0_0_50px_rgba(14,165,233,0.12)] lg:max-w-[18rem]">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.18),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.12),transparent_28%)]" />
+            <div className="relative z-10 flex h-full flex-col">
+              <div className="border-b border-white/10 px-5 py-5">
+                <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-300">Quick Keys</p>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-3 px-4 py-4">
+                {homeQuickShortcuts.map((shortcut) => (
+                  <div
+                    key={shortcut.combo}
+                    className="rounded-2xl border border-white/10 bg-white/5 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-sm"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-1.5 rounded-full bg-gradient-to-b ${shortcut.accent}`} />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-white">{shortcut.label}</p>
+                        <p className="mt-1 text-[11px] uppercase tracking-[0.2em] text-slate-400">Shortcut</p>
+                      </div>
+                      <span className="rounded-full border border-white/15 bg-slate-950/50 px-3 py-1 text-xs font-bold tracking-[0.18em] text-cyan-200">
+                        {shortcut.combo}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
