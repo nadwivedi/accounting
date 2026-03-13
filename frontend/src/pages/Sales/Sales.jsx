@@ -1,31 +1,9 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, IndianRupee, AlertCircle, Search } from 'lucide-react';
+import { ShoppingCart, IndianRupee, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import AddSalePopup from './component/AddSalePopup';
-
-const buildSaleReceiptMap = (receipts) => {
-  const map = new Map();
-
-  (receipts || [])
-    .filter((receipt) => receipt.refType === 'sale' && receipt.refId)
-    .forEach((receipt) => {
-      const key = String(receipt.refId);
-      map.set(key, (map.get(key) || 0) + Number(receipt.amount || 0));
-    });
-
-  return map;
-};
-
-const getSalePaymentStats = (sale, receiptMap) => {
-  const total = Number(sale?.totalAmount || 0);
-  const paid = Number(receiptMap.get(String(sale?._id || '')) || 0);
-  const due = Math.max(0, total - paid);
-  const status = due === 0 ? 'paid' : (paid > 0 ? 'partial' : 'unpaid');
-
-  return { paid, due, status };
-};
 
 const formatDateForInput = (value = new Date()) => {
   const date = value instanceof Date ? value : new Date(value);
@@ -91,7 +69,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   };
 
   const [sales, setSales] = useState([]);
-  const [allReceipts, setAllReceipts] = useState([]);
   const [leadgers, setLeadgers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -117,10 +94,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     fetchLeadgers();
     fetchProducts();
   }, [search, dateFilter]);
-
-  useEffect(() => {
-    fetchReceipts();
-  }, []);
 
   useEffect(() => {
     if (dateFilter !== 'monthwise') {
@@ -206,15 +179,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       setError(err.message || 'Error fetching sales');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchReceipts = async () => {
-    try {
-      const response = await apiClient.get('/receipts');
-      setAllReceipts(response.data || []);
-    } catch (err) {
-      console.error('Error fetching receipts:', err);
     }
   };
 
@@ -766,7 +730,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         toastOptions
       );
       fetchSales();
-      fetchReceipts();
       setFormData(getInitialFormData());
       setCurrentItem(initialCurrentItem);
       setEditingId(null);
@@ -819,7 +782,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         await apiClient.delete(`/sales/${id}`);
         toast.success('Sale deleted successfully', toastOptions);
         fetchSales();
-        fetchReceipts();
       } catch (err) {
         setError(err.message || 'Error deleting sale');
       }
@@ -857,8 +819,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     setShowForm(true);
   };
 
-  const saleReceiptMap = useMemo(() => buildSaleReceiptMap(allReceipts), [allReceipts]);
-
   const monthWiseSummary = useMemo(() => {
     const grouped = new Map();
 
@@ -872,24 +832,19 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
           key: monthKey,
           label: monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
           saleCount: 0,
-          totalAmount: 0,
-          paidAmount: 0,
-          dueAmount: 0
+          totalAmount: 0
         });
       }
 
       const bucket = grouped.get(monthKey);
       const total = Number(sale.totalAmount || 0);
-      const { paid, due } = getSalePaymentStats(sale, saleReceiptMap);
 
       bucket.saleCount += 1;
       bucket.totalAmount += total;
-      bucket.paidAmount += paid;
-      bucket.dueAmount += due;
     });
 
     return Array.from(grouped.values()).sort((a, b) => b.key.localeCompare(a.key));
-  }, [sales, saleReceiptMap]);
+  }, [sales]);
 
   const visibleSales = useMemo(() => {
     if (dateFilter !== 'monthwise' || !selectedMonthKey) return sales;
@@ -898,10 +853,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
 
   const totalSales = visibleSales.length;
   const totalAmount = visibleSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
-  const totalDue = visibleSales.reduce(
-    (sum, sale) => sum + getSalePaymentStats(sale, saleReceiptMap).due,
-    0
-  );
   const popupFieldClass = 'w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200';
   const popupLabelClass = 'mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600';
   const popupSectionClass = 'rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3 md:p-4';
@@ -969,7 +920,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         </div>
       )}
 
-      <div className="mb-5 mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+      <div className="mb-5 mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
         <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
@@ -996,21 +947,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
             </div>
           </div>
           <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80"></div>
-        </div>
-        <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Due</p>
-              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
-                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
-                {totalDue.toFixed(2)}
-              </p>
-            </div>
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600 transition-transform group-hover:scale-110">
-              <AlertCircle className="h-6 w-6" />
-            </div>
-          </div>
-          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-rose-500 to-orange-400 opacity-80"></div>
         </div>
       </div>
 
@@ -1128,14 +1064,12 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
           ) : (
             <div className="rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
               <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
+              <table className="w-full min-w-[560px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
                 <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                   <tr>
                     <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Month</th>
                     <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Invoices</th>
-                    <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Total Sale</th>
-                    <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Received</th>
-                    <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Due</th>
+                    <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Total Sale</th>
                   </tr>
                 </thead>
                 <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
@@ -1151,12 +1085,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                       <td className="border border-slate-400 px-4 py-3 text-center">{month.saleCount}</td>
                       <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-emerald-700">
                         Rs {month.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="border border-slate-400 px-4 py-3 text-center">
-                        Rs {month.paidAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-rose-700">
-                        Rs {month.dueAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                     </tr>
                   ))}
@@ -1180,7 +1108,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       ) : (
         <div className="rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[1100px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
+            <table className="w-full min-w-[880px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
               <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                 <tr>
                   <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Invoice</th>
@@ -1188,16 +1116,11 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold">Products</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Total</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Paid</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Due</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Status</th>
                   <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
                 {visibleSales.map((sale) => {
-                  const { paid, due, status } = getSalePaymentStats(sale, saleReceiptMap);
-
                   return (
                   <tr key={sale._id} className="transition-colors duration-150 hover:bg-slate-200/45">
                     <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{sale.invoiceNumber}</td>
@@ -1223,23 +1146,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                     <td className="border border-slate-400 px-4 py-3 text-center text-slate-600">{new Date(sale.saleDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                     <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-emerald-600">
                       Rs {Number(sale.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="border border-slate-400 px-4 py-3 text-center text-slate-600">
-                      Rs {paid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-rose-600">
-                      Rs {due.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    <td className="border border-slate-400 px-4 py-3 text-center">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        status === 'paid'
-                          ? 'bg-green-100 text-green-800'
-                          : status === 'partial'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {status}
-                      </span>
                     </td>
                     <td className="border border-slate-400 px-4 py-3">
                       <div className="flex items-center justify-center gap-2">
