@@ -26,8 +26,8 @@ const paymentSchema = new mongoose.Schema({
   },
   method: {
     type: String,
-    enum: ['cash', 'bank', 'upi', 'card', 'credit', 'other'],
-    default: 'cash'
+    trim: true,
+    default: 'Cash Account'
   },
   paymentDate: {
     type: Date,

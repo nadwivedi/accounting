@@ -3,18 +3,71 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Wallet, IndianRupee, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
+import { getBankDisplayName, normalizeBankName } from '../../utils/bankAccounts';
 import AddPaymentPopup from './component/AddPaymentPopup';
 
-const getInitialForm = () => ({
+const formatPaymentDateInput = (value = new Date()) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const parsePaymentDateInput = (value) => {
+  const normalized = String(value || '').trim();
+  if (!normalized) return null;
+
+  let year;
+  let month;
+  let day;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    [year, month, day] = normalized.split('-').map(Number);
+  } else if (/^\d{1,2}[/-]\d{1,2}[/-]\d{4}$/.test(normalized)) {
+    [day, month, year] = normalized.split(/[/-]/).map(Number);
+  } else {
+    return null;
+  }
+
+  const parsedDate = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(parsedDate.getTime())
+    || parsedDate.getFullYear() !== year
+    || parsedDate.getMonth() !== month - 1
+    || parsedDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsedDate;
+};
+
+const getInitialForm = (defaultMethod = 'Cash Account') => ({
   party: '',
   amount: '',
-  method: 'cash',
-  paymentDate: new Date().toISOString().split('T')[0],
+  method: defaultMethod,
+  paymentDate: formatPaymentDateInput(),
   notes: '',
   refType: 'none',
   refId: ''
 });
 const TOAST_OPTIONS = { autoClose: 1200 };
+
+const getPaymentAccountOptions = (banks = []) => {
+  const uniqueNames = banks
+    .map((bank) => getBankDisplayName(bank))
+    .filter((name, index, values) => name && values.indexOf(name) === index);
+
+  return uniqueNames.length > 0 ? uniqueNames : ['Cash Account'];
+};
+
+const getDefaultPaymentMethod = (banks = []) => {
+  const cashAccount = banks.find((bank) => normalizeBankName(bank?.name) === 'cash account');
+  return getBankDisplayName(cashAccount || banks[0]) || 'Cash Account';
+};
 
 const buildPurchasePaymentMap = (payments) => {
   const map = new Map();
@@ -42,6 +95,7 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
   const [payments, setPayments] = useState([]);
   const [parties, setParties] = useState([]);
   const [purchases, setPurchases] = useState([]);
+  const [banks, setBanks] = useState([]);
   const [formData, setFormData] = useState(getInitialForm());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -51,7 +105,11 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
   const [partyQuery, setPartyQuery] = useState('');
   const [partyListIndex, setPartyListIndex] = useState(-1);
   const [isPartySectionActive, setIsPartySectionActive] = useState(false);
+  const [paymentAccountQuery, setPaymentAccountQuery] = useState('');
+  const [paymentAccountListIndex, setPaymentAccountListIndex] = useState(-1);
+  const [isPaymentAccountSectionActive, setIsPaymentAccountSectionActive] = useState(false);
   const partySectionRef = useRef(null);
+  const paymentAccountSectionRef = useRef(null);
 
   useEffect(() => {
     fetchPayments();
@@ -60,6 +118,7 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
   useEffect(() => {
     fetchParties();
     fetchPurchases();
+    fetchBanks();
   }, []);
 
   useEffect(() => {
@@ -93,8 +152,36 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
   }, [modalOnly, showForm]);
 
   const purchasePaymentMap = useMemo(() => buildPurchasePaymentMap(payments), [payments]);
+  const paymentAccountOptions = useMemo(() => getPaymentAccountOptions(banks), [banks]);
+  const defaultPaymentMethod = useMemo(() => getDefaultPaymentMethod(banks), [banks]);
 
   const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+  useEffect(() => {
+    setFormData((prev) => {
+      const currentMethod = String(prev.method || '').trim();
+      const hasMatchingAccount = paymentAccountOptions.includes(currentMethod);
+      const isLegacyMethod = ['cash', 'bank', 'upi', 'card', 'credit', 'other'].includes(currentMethod.toLowerCase());
+
+      if (currentMethod && hasMatchingAccount && !isLegacyMethod) {
+        return prev;
+      }
+
+      if (currentMethod === defaultPaymentMethod) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        method: defaultPaymentMethod
+      };
+    });
+  }, [defaultPaymentMethod, paymentAccountOptions]);
+
+  useEffect(() => {
+    if (isPaymentAccountSectionActive) return;
+    setPaymentAccountQuery(formData.method || '');
+  }, [formData.method, isPaymentAccountSectionActive]);
 
   const getFromDateByFilter = () => {
     const now = new Date();
@@ -158,6 +245,15 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
     }
   };
 
+  const fetchBanks = async () => {
+    try {
+      const response = await apiClient.get('/banks');
+      setBanks(response.data || []);
+    } catch (err) {
+      console.error('Error fetching banks:', err);
+    }
+  };
+
   const getPartyDisplayName = (party) => {
     const partyName = String(party?.partyName || party?.name || '').trim();
     if (partyName) return partyName;
@@ -184,6 +280,19 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
     return [...startsWith, ...includes];
   };
 
+  const getMatchingPaymentAccounts = (queryValue) => {
+    const normalized = normalizeText(queryValue);
+    if (!normalized) return paymentAccountOptions;
+
+    const startsWith = paymentAccountOptions.filter((accountName) => normalizeText(accountName).startsWith(normalized));
+    const includes = paymentAccountOptions.filter((accountName) => (
+      !normalizeText(accountName).startsWith(normalized)
+      && normalizeText(accountName).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  };
+
   const selectedPartyName = useMemo(() => resolvePartyNameById(formData.party), [formData.party, parties]);
 
   const filteredParties = useMemo(() => {
@@ -200,6 +309,21 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
 
     return getMatchingParties(partyQuery);
   }, [parties, partyQuery, isPartySectionActive, selectedPartyName]);
+
+  const filteredPaymentAccounts = useMemo(() => {
+    const normalizedQuery = normalizeText(paymentAccountQuery);
+    const normalizedSelectedName = normalizeText(formData.method);
+
+    if (
+      isPaymentAccountSectionActive
+      && normalizedQuery
+      && normalizedQuery === normalizedSelectedName
+    ) {
+      return paymentAccountOptions;
+    }
+
+    return getMatchingPaymentAccounts(paymentAccountQuery);
+  }, [formData.method, isPaymentAccountSectionActive, paymentAccountOptions, paymentAccountQuery]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -229,8 +353,40 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
     });
   }, [showForm, filteredParties, isPartySectionActive, partyQuery, selectedPartyName, formData.party]);
 
+  useEffect(() => {
+    if (!showForm) return;
+
+    if (filteredPaymentAccounts.length === 0) {
+      setPaymentAccountListIndex(-1);
+      return;
+    }
+
+    const shouldHighlightSelectedAccount = (
+      isPaymentAccountSectionActive
+      && normalizeText(paymentAccountQuery)
+      && normalizeText(paymentAccountQuery) === normalizeText(formData.method)
+      && formData.method
+    );
+
+    if (shouldHighlightSelectedAccount) {
+      const selectedIndex = filteredPaymentAccounts.findIndex((item) => item === formData.method);
+      setPaymentAccountListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+      return;
+    }
+
+    setPaymentAccountListIndex((prev) => {
+      if (prev < 0) return 0;
+      if (prev >= filteredPaymentAccounts.length) return filteredPaymentAccounts.length - 1;
+      return prev;
+    });
+  }, [showForm, filteredPaymentAccounts, isPaymentAccountSectionActive, paymentAccountQuery, formData.method]);
+
   const handlePartyFocus = () => {
     setIsPartySectionActive(true);
+  };
+
+  const handlePaymentAccountFocus = () => {
+    setIsPaymentAccountSectionActive(true);
   };
 
   const findExactParty = (value) => {
@@ -244,6 +400,20 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
     if (!normalized) return null;
     return parties.find((party) => normalizeText(getPartyDisplayName(party)).startsWith(normalized))
       || parties.find((party) => normalizeText(getPartyDisplayName(party)).includes(normalized))
+      || null;
+  };
+
+  const findExactPaymentAccount = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return paymentAccountOptions.find((accountName) => normalizeText(accountName) === normalized) || null;
+  };
+
+  const findBestPaymentAccountMatch = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return paymentAccountOptions.find((accountName) => normalizeText(accountName).startsWith(normalized))
+      || paymentAccountOptions.find((accountName) => normalizeText(accountName).includes(normalized))
       || null;
   };
 
@@ -300,6 +470,56 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
       refId: prev.refType === 'purchase' ? '' : prev.refId
     }));
     setPartyListIndex(firstMatch ? 0 : -1);
+  };
+
+  const selectPaymentAccount = (accountName) => {
+    if (!accountName) {
+      setPaymentAccountQuery('');
+      setFormData((prev) => ({
+        ...prev,
+        method: ''
+      }));
+      setPaymentAccountListIndex(-1);
+      return;
+    }
+
+    setPaymentAccountQuery(accountName);
+    setFormData((prev) => ({
+      ...prev,
+      method: accountName
+    }));
+
+    const selectedIndex = filteredPaymentAccounts.findIndex((item) => item === accountName);
+    setPaymentAccountListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  };
+
+  const handlePaymentAccountInputChange = (e) => {
+    const value = e.target.value;
+    const matches = getMatchingPaymentAccounts(value);
+    setPaymentAccountQuery(value);
+
+    if (!normalizeText(value)) {
+      selectPaymentAccount(null);
+      return;
+    }
+
+    const exactAccount = findExactPaymentAccount(value);
+    if (exactAccount) {
+      setFormData((prev) => ({
+        ...prev,
+        method: exactAccount
+      }));
+      const exactIndex = matches.findIndex((item) => item === exactAccount);
+      setPaymentAccountListIndex(exactIndex >= 0 ? exactIndex : 0);
+      return;
+    }
+
+    const firstMatch = matches[0] || null;
+    setFormData((prev) => ({
+      ...prev,
+      method: firstMatch || ''
+    }));
+    setPaymentAccountListIndex(firstMatch ? 0 : -1);
   };
 
   const focusNextPopupField = (element) => {
@@ -366,6 +586,45 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
     }
   };
 
+  const handlePaymentAccountInputKeyDown = (e) => {
+    const key = e.key?.toLowerCase();
+
+    if (key === 'arrowdown') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredPaymentAccounts.length === 0) return;
+      setPaymentAccountListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredPaymentAccounts.length - 1);
+      });
+      return;
+    }
+
+    if (key === 'arrowup') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredPaymentAccounts.length === 0) return;
+      setPaymentAccountListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (key === 'enter') {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const activeAccount = paymentAccountListIndex >= 0 ? filteredPaymentAccounts[paymentAccountListIndex] : null;
+      const matchedAccount = activeAccount || findExactPaymentAccount(paymentAccountQuery) || findBestPaymentAccountMatch(paymentAccountQuery);
+      if (matchedAccount) {
+        selectPaymentAccount(matchedAccount);
+      }
+      setIsPaymentAccountSectionActive(false);
+      focusNextPopupField(e.currentTarget);
+    }
+  };
+
   const purchaseOptions = useMemo(() => {
     if (formData.refType !== 'purchase') return [];
 
@@ -383,11 +642,24 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handlePaymentDateBlur = (e) => {
+    const parsedDate = parsePaymentDateInput(e.target.value);
+    if (!parsedDate) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      paymentDate: formatPaymentDateInput(parsedDate)
+    }));
+  };
+
   const handleOpenForm = () => {
-    setFormData(getInitialForm());
+    setFormData(getInitialForm(defaultPaymentMethod));
     setPartyQuery('');
     setPartyListIndex(-1);
     setIsPartySectionActive(false);
+    setPaymentAccountQuery(defaultPaymentMethod);
+    setPaymentAccountListIndex(-1);
+    setIsPaymentAccountSectionActive(false);
     setError('');
     setShowForm(true);
   };
@@ -399,16 +671,30 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
     }
 
     setShowForm(false);
-    setFormData(getInitialForm());
+    setFormData(getInitialForm(defaultPaymentMethod));
     setPartyQuery('');
     setPartyListIndex(-1);
     setIsPartySectionActive(false);
+    setPaymentAccountQuery(defaultPaymentMethod);
+    setPaymentAccountListIndex(-1);
+    setIsPaymentAccountSectionActive(false);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.amount || Number(formData.amount) <= 0) {
       setError('Valid amount is required');
+      return;
+    }
+
+    if (!formData.method) {
+      setError('Select payment account');
+      return;
+    }
+
+    const parsedPaymentDate = parsePaymentDateInput(formData.paymentDate);
+    if (!parsedPaymentDate) {
+      setError('Enter payment date in DD/MM/YYYY format');
       return;
     }
 
@@ -423,7 +709,7 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
         party: formData.party || null,
         amount: Number(formData.amount),
         method: formData.method,
-        paymentDate: formData.paymentDate ? new Date(formData.paymentDate) : new Date(),
+        paymentDate: parsedPaymentDate,
         notes: formData.notes,
         refType: formData.refType,
         refId: formData.refType === 'purchase' ? formData.refId : null
@@ -461,23 +747,36 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
           loading={loading}
           formData={formData}
           parties={parties}
+          paymentAccountOptions={paymentAccountOptions}
+          paymentAccountSectionRef={paymentAccountSectionRef}
           partySectionRef={partySectionRef}
+          paymentAccountQuery={paymentAccountQuery}
           partyQuery={partyQuery}
+          paymentAccountListIndex={paymentAccountListIndex}
           partyListIndex={partyListIndex}
+          filteredPaymentAccounts={filteredPaymentAccounts}
           filteredParties={filteredParties}
+          isPaymentAccountSectionActive={isPaymentAccountSectionActive}
           isPartySectionActive={isPartySectionActive}
           purchaseOptions={purchaseOptions}
           purchasePaymentMap={purchasePaymentMap}
           setFormData={setFormData}
+          setPaymentAccountListIndex={setPaymentAccountListIndex}
           setPartyListIndex={setPartyListIndex}
+          setIsPaymentAccountSectionActive={setIsPaymentAccountSectionActive}
           setIsPartySectionActive={setIsPartySectionActive}
           getPartyDisplayName={getPartyDisplayName}
           handleCloseForm={handleCloseForm}
           handleSubmit={handleSubmit}
           handleChange={handleChange}
+          handlePaymentDateBlur={handlePaymentDateBlur}
+          handlePaymentAccountFocus={handlePaymentAccountFocus}
           handlePartyFocus={handlePartyFocus}
+          handlePaymentAccountInputChange={handlePaymentAccountInputChange}
           handlePartyInputChange={handlePartyInputChange}
+          handlePaymentAccountInputKeyDown={handlePaymentAccountInputKeyDown}
           handlePartyInputKeyDown={handlePartyInputKeyDown}
+          selectPaymentAccount={selectPaymentAccount}
           selectParty={selectParty}
         />
       </>
@@ -543,23 +842,36 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
           loading={loading}
           formData={formData}
           parties={parties}
+          paymentAccountOptions={paymentAccountOptions}
+          paymentAccountSectionRef={paymentAccountSectionRef}
           partySectionRef={partySectionRef}
+          paymentAccountQuery={paymentAccountQuery}
           partyQuery={partyQuery}
+          paymentAccountListIndex={paymentAccountListIndex}
           partyListIndex={partyListIndex}
+          filteredPaymentAccounts={filteredPaymentAccounts}
           filteredParties={filteredParties}
+          isPaymentAccountSectionActive={isPaymentAccountSectionActive}
           isPartySectionActive={isPartySectionActive}
           purchaseOptions={purchaseOptions}
           purchasePaymentMap={purchasePaymentMap}
           setFormData={setFormData}
+          setPaymentAccountListIndex={setPaymentAccountListIndex}
           setPartyListIndex={setPartyListIndex}
+          setIsPaymentAccountSectionActive={setIsPaymentAccountSectionActive}
           setIsPartySectionActive={setIsPartySectionActive}
           getPartyDisplayName={getPartyDisplayName}
           handleCloseForm={handleCloseForm}
           handleSubmit={handleSubmit}
           handleChange={handleChange}
+          handlePaymentDateBlur={handlePaymentDateBlur}
+          handlePaymentAccountFocus={handlePaymentAccountFocus}
           handlePartyFocus={handlePartyFocus}
+          handlePaymentAccountInputChange={handlePaymentAccountInputChange}
           handlePartyInputChange={handlePartyInputChange}
+          handlePaymentAccountInputKeyDown={handlePaymentAccountInputKeyDown}
           handlePartyInputKeyDown={handlePartyInputKeyDown}
+          selectPaymentAccount={selectPaymentAccount}
           selectParty={selectParty}
         />
 
@@ -627,7 +939,7 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
                     <div className="space-y-3 px-4 py-4 text-sm">
                       <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
                         <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Method</p>
-                        <p className="mt-1 break-words text-sm font-medium capitalize text-slate-700">{payment.method || '-'}</p>
+                        <p className="mt-1 break-words text-sm font-medium text-slate-700">{payment.method || '-'}</p>
                       </div>
 
                       <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
@@ -676,7 +988,7 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
                         <td className="border border-slate-400 px-4 py-3 font-semibold text-emerald-700">
                           Rs {Number(payment.amount || 0).toFixed(2)}
                         </td>
-                        <td className="border border-slate-400 px-4 py-3 capitalize text-slate-700">
+                        <td className="border border-slate-400 px-4 py-3 text-slate-700">
                           {payment.method || '-'}
                         </td>
                         <td className="border border-slate-400 px-4 py-3 text-slate-700">

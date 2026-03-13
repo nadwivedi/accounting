@@ -5,6 +5,7 @@ export default function AddReceiptPopup({
   loading,
   formData,
   parties,
+  receiptAccountOptions,
   saleOptions,
   saleReceiptMap,
   setFormData,
@@ -75,18 +76,18 @@ export default function AddReceiptPopup({
           </div>
 
           <div>
-            <label className="block text-sm text-slate-600 mb-1">Method</label>
+            <label className="block text-sm text-slate-600 mb-1">Receipt Account</label>
             <select
               name="method"
               value={formData.method}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg"
             >
-              <option value="cash">Cash</option>
-              <option value="bank">Bank</option>
-              <option value="upi">UPI</option>
-              <option value="card">Card</option>
-              <option value="other">Other</option>
+              {receiptAccountOptions.map((accountName) => (
+                <option key={accountName} value={accountName}>
+                  {accountName}
+                </option>
+              ))}
             </select>
           </div>
 

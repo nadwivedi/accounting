@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Receipt, IndianRupee } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
+import { getBankDisplayName, normalizeBankName } from '../../utils/bankAccounts';
 import AddReceiptPopup from './component/AddReceiptPopup';
 
 const buildSaleReceiptMap = (receipts) => {
@@ -18,16 +19,29 @@ const buildSaleReceiptMap = (receipts) => {
   return map;
 };
 
-const getInitialForm = () => ({
+const getInitialForm = (defaultMethod = 'Cash Account') => ({
   party: '',
   amount: '',
-  method: 'cash',
+  method: defaultMethod,
   receiptDate: new Date().toISOString().split('T')[0],
   notes: '',
   refType: 'none',
   refId: ''
 });
 const TOAST_OPTIONS = { autoClose: 1200 };
+
+const getReceiptAccountOptions = (banks = []) => {
+  const uniqueNames = banks
+    .map((bank) => getBankDisplayName(bank))
+    .filter((name, index, values) => name && values.indexOf(name) === index);
+
+  return uniqueNames.length > 0 ? uniqueNames : ['Cash Account'];
+};
+
+const getDefaultReceiptMethod = (banks = []) => {
+  const cashAccount = banks.find((bank) => normalizeBankName(bank?.name) === 'cash account');
+  return getBankDisplayName(cashAccount || banks[0]) || 'Cash Account';
+};
 
 export default function Receipts({ modalOnly = false, onModalFinish = null }) {
   const location = useLocation();
@@ -36,6 +50,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
   const [allReceipts, setAllReceipts] = useState([]);
   const [parties, setParties] = useState([]);
   const [sales, setSales] = useState([]);
+  const [banks, setBanks] = useState([]);
   const [formData, setFormData] = useState(getInitialForm());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -51,6 +66,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
     fetchParties();
     fetchAllReceipts();
     fetchSales();
+    fetchBanks();
   }, []);
 
   useEffect(() => {
@@ -154,7 +170,39 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
     }
   };
 
+  const fetchBanks = async () => {
+    try {
+      const response = await apiClient.get('/banks');
+      setBanks(response.data || []);
+    } catch (err) {
+      console.error('Error fetching banks:', err);
+    }
+  };
+
   const saleReceiptMap = useMemo(() => buildSaleReceiptMap(allReceipts), [allReceipts]);
+  const receiptAccountOptions = useMemo(() => getReceiptAccountOptions(banks), [banks]);
+  const defaultReceiptMethod = useMemo(() => getDefaultReceiptMethod(banks), [banks]);
+
+  useEffect(() => {
+    setFormData((prev) => {
+      const currentMethod = String(prev.method || '').trim();
+      const hasMatchingAccount = receiptAccountOptions.includes(currentMethod);
+      const isLegacyMethod = ['cash', 'bank', 'upi', 'card', 'credit', 'other'].includes(currentMethod.toLowerCase());
+
+      if (currentMethod && hasMatchingAccount && !isLegacyMethod) {
+        return prev;
+      }
+
+      if (currentMethod === defaultReceiptMethod) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        method: defaultReceiptMethod
+      };
+    });
+  }, [defaultReceiptMethod, receiptAccountOptions]);
 
   const saleOptions = useMemo(() => {
     if (formData.refType !== 'sale') return [];
@@ -172,7 +220,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
   };
 
   const handleOpenForm = () => {
-    setFormData(getInitialForm());
+    setFormData(getInitialForm(defaultReceiptMethod));
     setError('');
     setShowForm(true);
   };
@@ -184,7 +232,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
     }
 
     setShowForm(false);
-    setFormData(getInitialForm());
+    setFormData(getInitialForm(defaultReceiptMethod));
   };
 
   const handleSubmit = async (e) => {
@@ -242,6 +290,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
           loading={loading}
           formData={formData}
           parties={parties}
+          receiptAccountOptions={receiptAccountOptions}
           saleOptions={saleOptions}
           saleReceiptMap={saleReceiptMap}
           setFormData={setFormData}
@@ -325,6 +374,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
         loading={loading}
         formData={formData}
         parties={parties}
+        receiptAccountOptions={receiptAccountOptions}
         saleOptions={saleOptions}
         saleReceiptMap={saleReceiptMap}
         setFormData={setFormData}
@@ -353,7 +403,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                   <td className="px-6 py-4 font-semibold text-slate-800">{receipt.party?.partyName || '-'}</td>
                   <td className="px-6 py-4 text-emerald-600 font-semibold">Rs {Number(receipt.amount || 0).toFixed(2)}</td>
                   <td className="px-6 py-4">
-                    <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200 capitalize">
+                    <span className="bg-slate-100 text-slate-700 px-2.5 py-1 rounded-full text-xs font-medium border border-slate-200">
                       {receipt.method}
                     </span>
                   </td>

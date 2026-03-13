@@ -115,7 +115,7 @@ exports.createPayment = async (req, res) => {
       refType,
       refId: resolvedRefId,
       amount: amountNumber,
-      method: method || 'cash',
+      method: method || 'Cash Account',
       paymentDate: paymentDate || new Date(),
       notes
     });
