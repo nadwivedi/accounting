@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, Wallet } from 'lucide-react';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
+import { useFloatingDropdownPosition } from '../../../utils/useFloatingDropdownPosition';
 
 const TYPE_OPTIONS = [
   {
@@ -133,6 +134,8 @@ export default function AddPartyPopup({
       return prev;
     });
   }, [filteredTypeOptions]);
+
+  const typeDropdownStyle = useFloatingDropdownPosition(typeSectionRef, isTypeDropdownOpen, [filteredTypeOptions.length, typeListIndex]);
 
   if (!showForm) return null;
 
@@ -336,17 +339,21 @@ export default function AddPartyPopup({
                         <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-indigo-500 transition-transform ${isTypeDropdownOpen ? 'rotate-180' : ''}`} />
                       </div>
 
-                      {isTypeDropdownOpen && (
-                        <div className="mt-2 overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)] md:absolute md:left-0 md:right-0 md:top-[calc(100%+12px)] md:z-30">
+                      {isTypeDropdownOpen && typeDropdownStyle && (
+                        <div
+                          className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                          style={typeDropdownStyle}
+                          onClick={(event) => event.stopPropagation()}
+                        >
                           <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
                             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Type List</span>
                             <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
                               {(filteredTypeOptions.length > 0 ? filteredTypeOptions : TYPE_OPTIONS).length}
                             </span>
                           </div>
-                          <div className="max-h-64 overflow-y-auto py-1">
+                          <div className="overflow-y-auto py-1" style={{ maxHeight: typeDropdownStyle.maxHeight }}>
                             {(filteredTypeOptions.length > 0 ? filteredTypeOptions : TYPE_OPTIONS).length === 0 ? (
-                              <div className="px-3 py-3 text-center text-sm text-slate-500">
+                              <div className="px-3 py-3 text-center text-[13px] text-slate-500">
                                 No matching types found.
                               </div>
                             ) : (
@@ -361,7 +368,7 @@ export default function AddPartyPopup({
                                     onMouseDown={(event) => event.preventDefault()}
                                     onMouseEnter={() => setTypeListIndex(index)}
                                     onClick={() => selectType(option, true)}
-                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
+                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
                                       isActive
                                         ? 'bg-yellow-200 text-amber-950'
                                         : isSelected

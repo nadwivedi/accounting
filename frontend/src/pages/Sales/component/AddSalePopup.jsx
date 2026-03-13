@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Building2, CalendarDays, Package } from 'lucide-react';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
+import { useFloatingDropdownPosition } from '../../../utils/useFloatingDropdownPosition';
 
 export default function AddSalePopup({
   showForm,
@@ -43,14 +44,16 @@ export default function AddSalePopup({
   selectLeadger,
   selectProduct
 }) {
-  if (!showForm) return null;
-
   const productInputRef = useRef(null);
   const paidAmountInputRef = useRef(null);
   const [isItemEntryClosed, setIsItemEntryClosed] = useState(false);
   const inputClass = "w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] text-gray-800 transition placeholder:text-slate-400 focus:border-transparent focus:outline-none focus:ring-2";
   const labelClass = "mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs";
   const currentItemTotal = Math.max(0, Number(currentItem.quantity || 0) * Number(currentItem.unitPrice || 0));
+  const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
+  const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex]);
+
+  if (!showForm) return null;
 
   useEffect(() => {
     if (showForm) {
@@ -148,17 +151,21 @@ export default function AddSalePopup({
                         />
                       </div>
 
-                      {isLeadgerSectionActive && (
-                        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
+                      {isLeadgerSectionActive && leadgerDropdownStyle && (
+                        <div
+                          className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                          style={leadgerDropdownStyle}
+                          onClick={(event) => event.stopPropagation()}
+                        >
                           <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
                             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Party List</span>
                             <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
                               {filteredLeadgers.length}
                             </span>
                           </div>
-                          <div className="max-h-64 overflow-y-auto py-1">
+                          <div className="overflow-y-auto py-1" style={{ maxHeight: leadgerDropdownStyle.maxHeight }}>
                             {filteredLeadgers.length === 0 ? (
-                              <div className="px-3 py-3 text-center text-sm text-slate-500">
+                              <div className="px-3 py-3 text-center text-[13px] text-slate-500">
                                 No matching parties found.
                               </div>
                             ) : (
@@ -173,7 +180,7 @@ export default function AddSalePopup({
                                     onMouseDown={(event) => event.preventDefault()}
                                     onMouseEnter={() => setLeadgerListIndex(index)}
                                     onClick={() => selectLeadger(leadger)}
-                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
+                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
                                       isActive
                                         ? 'bg-yellow-200 text-amber-950'
                                         : isSelected
@@ -295,17 +302,21 @@ export default function AddSalePopup({
                                     />
                                   </div>
 
-                                  {isProductSectionActive && (
-                                    <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
+                                  {isProductSectionActive && productDropdownStyle && (
+                                    <div
+                                      className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                                      style={productDropdownStyle}
+                                      onClick={(event) => event.stopPropagation()}
+                                    >
                                       <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
                                         <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Product List</span>
                                         <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
                                           {filteredProducts.length}
                                         </span>
                                       </div>
-                                      <div className="max-h-64 overflow-y-auto py-1">
+                                      <div className="overflow-y-auto py-1" style={{ maxHeight: productDropdownStyle.maxHeight }}>
                                         {filteredProducts.length === 0 ? (
-                                          <div className="px-3 py-3 text-center text-sm text-slate-500">
+                                          <div className="px-3 py-3 text-center text-[13px] text-slate-500">
                                             No matching products found.
                                           </div>
                                         ) : (
@@ -320,7 +331,7 @@ export default function AddSalePopup({
                                                 onMouseDown={(event) => event.preventDefault()}
                                                 onMouseEnter={() => setProductListIndex(index)}
                                                 onClick={() => selectProduct(product)}
-                                                className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition ${
+                                                className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
                                                   isActive
                                                     ? 'bg-yellow-200 text-amber-950'
                                                     : isSelected
@@ -343,7 +354,7 @@ export default function AddSalePopup({
                                           onMouseDown={(event) => event.preventDefault()}
                                           onMouseEnter={() => setProductListIndex(filteredProducts.length)}
                                           onClick={closeItemEntryAndFocusPaidAmount}
-                                          className={`flex w-full items-center justify-between gap-3 border-t border-amber-100 px-3 py-2 text-left text-sm font-semibold transition ${
+                                          className={`flex w-full items-center justify-between gap-3 border-t border-amber-100 px-3 py-2 text-left text-[13px] font-semibold transition ${
                                             productListIndex === filteredProducts.length
                                               ? 'bg-yellow-200 text-amber-950'
                                               : 'text-amber-800 hover:bg-amber-50'
