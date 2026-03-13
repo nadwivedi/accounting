@@ -177,10 +177,10 @@ const homeSectionHotkeys = {
 
 const HOME_SECTION_ORDER = ['Masters', 'Vouchers', 'Expense', 'Reports'];
 const homeQuickShortcuts = [
-  { label: 'New Sale', combo: 'Alt + 1', accent: 'from-emerald-500 to-teal-500' },
-  { label: 'New Purchase', combo: 'Alt + 2', accent: 'from-blue-500 to-cyan-500' },
-  { label: 'New Payment', combo: 'Alt + 3', accent: 'from-amber-500 to-orange-500' },
-  { label: 'New Receipt', combo: 'Alt + 4', accent: 'from-fuchsia-500 to-pink-500' }
+  { label: 'New Sale', combo: 'Alt + 1', accent: 'from-emerald-500 to-teal-500', stateKey: 'homeQuickSale' },
+  { label: 'New Purchase', combo: 'Alt + 2', accent: 'from-blue-500 to-cyan-500', stateKey: 'homeQuickPurchase' },
+  { label: 'New Payment', combo: 'Alt + 3', accent: 'from-amber-500 to-orange-500', stateKey: 'homeQuickPayment' },
+  { label: 'New Receipt', combo: 'Alt + 4', accent: 'from-fuchsia-500 to-pink-500', stateKey: 'homeQuickReceipt' }
 ];
 
 const getSectionItems = (sectionName) => {
@@ -229,6 +229,21 @@ export default function Home() {
   const [activeHomePath, setActiveHomePath] = useState('/party');
   const location = useLocation();
   const navigate = useNavigate();
+
+  const handleQuickShortcutOpen = (stateKey) => {
+    const currentState = location.state || {};
+
+    navigate('/', {
+      replace: true,
+      state: {
+        ...currentState,
+        homeQuickSale: stateKey === 'homeQuickSale',
+        homeQuickPurchase: stateKey === 'homeQuickPurchase',
+        homeQuickPayment: stateKey === 'homeQuickPayment',
+        homeQuickReceipt: stateKey === 'homeQuickReceipt'
+      }
+    });
+  };
 
   useEffect(() => {
     const sectionItems = getSectionItems(expandedSection);
@@ -372,7 +387,7 @@ export default function Home() {
                         setExpandedSection(item.name);
                         setActiveHomePath(getSectionItems(item.name)[0]?.path || '');
                       }}
-                      className={`flex w-full items-center gap-3 border-y px-5 py-3 text-left text-slate-700 transition-all duration-200 ${isSelectedSection ? 'bg-yellow-200 ring-2 ring-yellow-300 shadow-sm' : sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''} hover:shadow-sm`}
+                      className={`flex w-full cursor-pointer items-center gap-3 border-y px-5 py-3 text-left text-slate-700 transition-all duration-200 ${isSelectedSection ? 'bg-yellow-200 ring-2 ring-yellow-300 shadow-sm' : sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''} hover:shadow-sm`}
                     >
                       <span className={`inline-flex ${index === 0 ? sectionStyle.accentTextClass : sectionStyle.accentDotClass}`}>
                         {index === 0 ? '+' : ''}
@@ -397,7 +412,7 @@ export default function Home() {
                               to={subItem.path}
                               onMouseEnter={() => setActiveHomePath(subItem.path)}
                               onClick={() => setActiveHomePath(subItem.path)}
-                              className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 last:border-b-0 ${subActive ? sectionStyle.activeClass : sectionStyle.hoverClass}`}
+                              className={`group relative flex cursor-pointer items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 last:border-b-0 ${subActive ? sectionStyle.activeClass : sectionStyle.hoverClass}`}
                             >
                               {subActive && <div className={`absolute inset-y-0 left-0 w-1 ${sectionStyle.barClass}`} />}
 
@@ -428,7 +443,7 @@ export default function Home() {
                     setExpandedSection('Reports');
                     setActiveHomePath(getSectionItems('Reports')[0]?.path || '');
                   }}
-                  className={`mt-3 flex w-full items-center gap-3 border-y border-slate-200/60 px-5 py-3 text-left text-slate-700 ${expandedSection === 'Reports' ? 'bg-yellow-200 ring-2 ring-yellow-300 shadow-sm' : 'bg-slate-50/80'}`}
+                  className={`mt-3 flex w-full cursor-pointer items-center gap-3 border-y border-slate-200/60 px-5 py-3 text-left text-slate-700 ${expandedSection === 'Reports' ? 'bg-yellow-200 ring-2 ring-yellow-300 shadow-sm' : 'bg-slate-50/80'}`}
                 >
                   <span className="h-2.5 w-2.5 rounded-full bg-indigo-500" />
                   <span className="text-[12px] font-bold tracking-[0.16em]">{renderSectionLabel('REPORTS')}</span>
@@ -447,7 +462,7 @@ export default function Home() {
                       to={item.path}
                       onMouseEnter={() => setActiveHomePath(item.path)}
                       onClick={() => setActiveHomePath(item.path)}
-                      className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 ${active ? 'bg-yellow-200 text-slate-900' : 'text-slate-700 hover:bg-indigo-50/90'}`}
+                      className={`group relative flex cursor-pointer items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 ${active ? 'bg-yellow-200 text-slate-900' : 'text-slate-700 hover:bg-indigo-50/90'}`}
                     >
                       {active && <div className="absolute inset-y-0 left-0 w-1 bg-indigo-500" />}
 
@@ -475,9 +490,11 @@ export default function Home() {
 
               <div className="flex flex-1 flex-col gap-2.5 px-3 py-3">
                 {homeQuickShortcuts.map((shortcut) => (
-                  <div
+                  <button
                     key={shortcut.combo}
-                    className="rounded-2xl border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.94))] p-2.5 shadow-[0_14px_30px_rgba(148,163,184,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-sm"
+                    type="button"
+                    onClick={() => handleQuickShortcutOpen(shortcut.stateKey)}
+                    className="cursor-pointer rounded-2xl border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.94))] p-2.5 text-left shadow-[0_14px_30px_rgba(148,163,184,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(148,163,184,0.22),inset_0_1px_0_rgba(255,255,255,0.95)]"
                   >
                     <div className="flex items-center gap-3">
                       <div className={`h-8 w-1.5 rounded-full bg-gradient-to-b ${shortcut.accent}`} />
@@ -488,7 +505,7 @@ export default function Home() {
                         {shortcut.combo}
                       </span>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
