@@ -13,7 +13,9 @@ export default function AddSalePopup({
   popupFieldClass,
   popupLabelClass,
   leadgerSectionRef,
+  leadgerInputRef,
   productSectionRef,
+  productInputRef,
   leadgerQuery,
   productQuery,
   leadgerListIndex,
@@ -35,21 +37,24 @@ export default function AddSalePopup({
   handleLeadgerFocus,
   handleLeadgerInputChange,
   handleLeadgerInputKeyDown,
+  onOpenNewParty,
   handleProductFocus,
   handleProductInputChange,
   handleProductInputKeyDown,
+  onOpenNewProduct,
   handleSelectEnterMoveNext,
   handleAddItem,
   handleRemoveItem,
   selectLeadger,
   selectProduct
 }) {
-  const productInputRef = useRef(null);
+  const localProductInputRef = useRef(null);
   const paidAmountInputRef = useRef(null);
   const [isItemEntryClosed, setIsItemEntryClosed] = useState(false);
   const inputClass = "w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] text-gray-800 transition placeholder:text-slate-400 focus:border-transparent focus:outline-none focus:ring-2";
   const labelClass = "mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs";
   const currentItemTotal = Math.max(0, Number(currentItem.quantity || 0) * Number(currentItem.unitPrice || 0));
+  const resolvedProductInputRef = productInputRef || localProductInputRef;
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
   const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex]);
   const resolveItemUnit = (item) => {
@@ -89,9 +94,9 @@ export default function AddSalePopup({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-start bg-black/60 p-2 md:p-4" onClick={handleCancel}>
-      <div className="flex h-[98vh] max-h-[99vh] w-full max-w-[84rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2.5 text-white md:px-4 md:py-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-1 md:p-4" onClick={handleCancel}>
+      <div className="flex h-[95dvh] max-h-[95dvh] w-[94vw] max-w-[68rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 py-2 text-white md:px-4 md:py-3">
           <div className="flex justify-between items-center">
             <h2 className="text-base font-bold md:text-xl">
               {editingId ? 'Edit Sale Entry' : 'Add New Sale'}
@@ -110,9 +115,9 @@ export default function AddSalePopup({
         </div>
 
         <form id="sales-form" onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex flex-1 flex-col overflow-hidden bg-white">
-          <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
-            <div className="flex h-full flex-col gap-3 md:gap-4">
-                <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
+          <div className="flex-1 overflow-y-auto p-2 md:p-4">
+            <div className="flex h-full flex-col gap-2.5 md:gap-4">
+                <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2 md:p-4">
                   <h3 className="mb-2.5 flex items-center gap-2 text-sm font-bold text-gray-800 md:mb-3 md:text-base">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">1</span>
                     Sale Details
@@ -135,8 +140,20 @@ export default function AddSalePopup({
                     </div>
                   </div>
 
-                  <div className="space-y-1 relative">
-                    <label className={labelClass}>Party Name</label>
+                  <div className="relative">
+                    <div className="relative mb-1 min-h-[16px]">
+                      <label className="block pr-24 text-[11px] font-semibold text-gray-700 md:text-xs">Party Name</label>
+                      {isLeadgerSectionActive && (
+                        <button
+                          type="button"
+                          onClick={onOpenNewParty}
+                          className="absolute right-0 -top-2 inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2 py-1 text-[10px] font-semibold text-indigo-700 transition hover:bg-indigo-50"
+                        >
+                          <span className="rounded bg-indigo-100 px-1.5 py-0.5 font-mono text-[9px] text-indigo-700">Ctrl</span>
+                          New Party
+                        </button>
+                      )}
+                    </div>
                     <div
                       ref={leadgerSectionRef}
                       className="relative"
@@ -150,12 +167,14 @@ export default function AddSalePopup({
                         <div className="relative">
                         <Building2 className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-indigo-400 pointer-events-none" />
                         <input
+                          ref={leadgerInputRef}
                           type="text"
                           value={leadgerQuery}
                           onChange={handleLeadgerInputChange}
                           onKeyDown={handleLeadgerInputKeyDown}
                           className={`${inputClass} pl-9 focus:ring-indigo-500`}
                           placeholder="Type to search party..."
+                          autoComplete="off"
                         />
                       </div>
 
@@ -174,7 +193,16 @@ export default function AddSalePopup({
                           <div className="overflow-y-auto py-1" style={{ maxHeight: leadgerDropdownStyle.maxHeight }}>
                             {filteredLeadgers.length === 0 ? (
                               <div className="px-3 py-3 text-center text-[13px] text-slate-500">
-                                No matching parties found.
+                                <p>No matching parties found.</p>
+                                <button
+                                  type="button"
+                                  onMouseDown={(event) => event.preventDefault()}
+                                  onClick={onOpenNewParty}
+                                  className="mt-2 inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                                >
+                                  Create New Party
+                                  <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-indigo-600">Ctrl</span>
+                                </button>
                               </div>
                             ) : (
                               filteredLeadgers.map((leadger, index) => {
@@ -301,7 +329,7 @@ export default function AddSalePopup({
                                   <div className="relative">
                                     <Package className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-500" />
                                     <input
-                                      ref={productInputRef}
+                                      ref={resolvedProductInputRef}
                                       type="text"
                                       value={productQuery}
                                       onChange={handleProductInputChange}
@@ -327,7 +355,16 @@ export default function AddSalePopup({
                                       <div className="overflow-y-auto py-1" style={{ maxHeight: productDropdownStyle.maxHeight }}>
                                         {filteredProducts.length === 0 ? (
                                           <div className="px-3 py-3 text-center text-[13px] text-slate-500">
-                                            No matching products found.
+                                            <p>No matching products found.</p>
+                                            <button
+                                              type="button"
+                                              onMouseDown={(event) => event.preventDefault()}
+                                              onClick={onOpenNewProduct}
+                                              className="mt-2 inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                            >
+                                              Create New Stock
+                                              <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-emerald-700">Ctrl</span>
+                                            </button>
                                           </div>
                                         ) : (
                                           filteredProducts.map((product, index) => {
@@ -409,8 +446,8 @@ export default function AddSalePopup({
                                       if (!didAddItem) return;
 
                                       requestAnimationFrame(() => {
-                                        productInputRef.current?.focus();
-                                        productInputRef.current?.select?.();
+                                        resolvedProductInputRef.current?.focus();
+                                        resolvedProductInputRef.current?.select?.();
                                       });
                                     }
                                   }}

@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, IndianRupee, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
+import AddPartyPopup from '../Party/component/AddPartyPopup';
+import AddProductPopup from '../Products/component/AddProductPopup';
 import AddSalePopup from './component/AddSalePopup';
 
 const formatDateForInput = (value = new Date()) => {
@@ -53,6 +55,20 @@ const getInitialFormData = () => ({
   notes: ''
 });
 
+const getInitialPartyFormData = (type = 'customer') => ({
+  type,
+  name: '',
+  mobile: '',
+  email: '',
+  address: '',
+  state: '',
+  pincode: ''
+});
+
+const toTitleCase = (value) => String(value || '')
+  .toLowerCase()
+  .replace(/\b[a-z]/g, (char) => char.toUpperCase());
+
 export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const toastOptions = { autoClose: 1200 };
   const location = useLocation();
@@ -78,6 +94,11 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const [selectedMonthKey, setSelectedMonthKey] = useState('');
   const [formData, setFormData] = useState(initialFormData);
   const [currentItem, setCurrentItem] = useState(initialCurrentItem);
+  const [showPartyForm, setShowPartyForm] = useState(false);
+  const [partyFormData, setPartyFormData] = useState(getInitialPartyFormData());
+  const [partyPopupLoading, setPartyPopupLoading] = useState(false);
+  const [partyPopupError, setPartyPopupError] = useState('');
+  const [showProductForm, setShowProductForm] = useState(false);
   const [leadgerQuery, setLeadgerQuery] = useState('');
   const [leadgerListIndex, setLeadgerListIndex] = useState(-1);
   const [isLeadgerSectionActive, setIsLeadgerSectionActive] = useState(false);
@@ -85,7 +106,9 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const [productListIndex, setProductListIndex] = useState(-1);
   const [isProductSectionActive, setIsProductSectionActive] = useState(false);
   const leadgerSectionRef = useRef(null);
+  const leadgerInputRef = useRef(null);
   const productSectionRef = useRef(null);
+  const productInputRef = useRef(null);
 
   useEffect(() => {
     fetchSales();
@@ -397,10 +420,79 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     focusNextPopupField(e.currentTarget);
   };
 
+  const openInlinePartyForm = () => {
+    setPartyFormData((prev) => ({
+      ...getInitialPartyFormData('customer'),
+      name: toTitleCase(leadgerQuery || prev.name || '')
+    }));
+    setPartyPopupError('');
+    setIsLeadgerSectionActive(false);
+    setShowPartyForm(true);
+  };
+
+  const closeInlinePartyForm = (shouldRefocusLeadger = true) => {
+    setShowPartyForm(false);
+    setPartyFormData(getInitialPartyFormData('customer'));
+    setPartyPopupError('');
+
+    if (!shouldRefocusLeadger) return;
+
+    requestAnimationFrame(() => {
+      leadgerInputRef.current?.focus();
+      leadgerInputRef.current?.select?.();
+    });
+  };
+
+  const handlePartyPopupChange = (e) => {
+    const { name, value } = e.target;
+
+    if (name === 'name') {
+      setPartyFormData((prev) => ({ ...prev, [name]: toTitleCase(value) }));
+      return;
+    }
+
+    if (name === 'mobile') {
+      const normalized = String(value || '').replace(/\D/g, '').slice(0, 10);
+      setPartyFormData((prev) => ({ ...prev, [name]: normalized }));
+      return;
+    }
+
+    if (name === 'pincode') {
+      const normalized = String(value || '').replace(/\D/g, '').slice(0, 6);
+      setPartyFormData((prev) => ({ ...prev, [name]: normalized }));
+      return;
+    }
+
+    setPartyFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const openInlineProductForm = () => {
+    setIsProductSectionActive(false);
+    setShowProductForm(true);
+  };
+
+  const closeInlineProductForm = (shouldRefocusProduct = true) => {
+    setShowProductForm(false);
+
+    if (!shouldRefocusProduct) return;
+
+    requestAnimationFrame(() => {
+      productInputRef.current?.focus();
+      productInputRef.current?.select?.();
+    });
+  };
+
   const handleLeadgerInputKeyDown = (e) => {
     const key = e.key?.toLowerCase();
     const isMoveDownKey = key === 'arrowdown';
     const isMoveUpKey = key === 'arrowup';
+
+    if (key === 'control' && !e.altKey && !e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      openInlinePartyForm();
+      return;
+    }
 
     if (isMoveDownKey) {
       e.preventDefault();
@@ -589,6 +681,13 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     const key = e.key?.toLowerCase();
     const lastOptionIndex = filteredProducts.length;
 
+    if (key === 'control' && !e.altKey && !e.metaKey) {
+      e.preventDefault();
+      e.stopPropagation();
+      openInlineProductForm();
+      return;
+    }
+
     if (key === 'arrowdown') {
       e.preventDefault();
       e.stopPropagation();
@@ -710,6 +809,77 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     setFormData({ ...formData, [name]: value });
   };
 
+  const handleProductCreated = (createdProduct) => {
+    if (!createdProduct?._id) return;
+
+    setProducts((prev) => [
+      createdProduct,
+      ...prev.filter((item) => String(item._id) !== String(createdProduct._id))
+    ]);
+    selectProduct(createdProduct);
+    setError('');
+    setShowProductForm(false);
+    toast.success('Stock item created successfully', toastOptions);
+
+    requestAnimationFrame(() => {
+      focusNextPopupField(productInputRef.current);
+    });
+  };
+
+  const handlePartyPopupSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!String(partyFormData.name || '').trim()) {
+      setPartyPopupError('Party name is required');
+      return;
+    }
+
+    if (!['supplier', 'customer'].includes(partyFormData.type)) {
+      setPartyPopupError('Party type is required');
+      return;
+    }
+
+    try {
+      setPartyPopupLoading(true);
+
+      const payload = {
+        type: String(partyFormData.type || '').trim(),
+        name: String(partyFormData.name || '').trim(),
+        mobile: String(partyFormData.mobile || '').trim(),
+        email: String(partyFormData.email || '').trim(),
+        address: String(partyFormData.address || '').trim(),
+        state: String(partyFormData.state || '').trim(),
+        pincode: String(partyFormData.pincode || '').trim()
+      };
+
+      const response = await apiClient.post('/parties', payload);
+      const createdParty = response?.data || null;
+
+      if (!createdParty?._id) {
+        throw new Error('Party created but response was incomplete');
+      }
+
+      setLeadgers((prev) => [
+        createdParty,
+        ...prev.filter((item) => String(item._id) !== String(createdParty._id))
+      ]);
+      selectLeadger(createdParty);
+      setError('');
+      setPartyPopupError('');
+      setShowPartyForm(false);
+      setPartyFormData(getInitialPartyFormData('customer'));
+      toast.success('Party created successfully', toastOptions);
+
+      requestAnimationFrame(() => {
+        focusNextPopupField(leadgerInputRef.current);
+      });
+    } catch (err) {
+      setPartyPopupError(err.message || 'Error creating party');
+    } finally {
+      setPartyPopupLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.party) {
@@ -748,6 +918,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       setFormData(getInitialFormData());
       setCurrentItem(initialCurrentItem);
       setEditingId(null);
+      setShowPartyForm(false);
+      setShowProductForm(false);
       setLeadgerQuery('');
       setLeadgerListIndex(-1);
       setIsLeadgerSectionActive(false);
@@ -804,11 +976,16 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   };
 
   const handleCancel = () => {
+    setShowPartyForm(false);
+    setShowProductForm(false);
+
     if (modalOnly && typeof onModalFinish === 'function') {
       onModalFinish();
       return;
     }
 
+    setPartyFormData(getInitialPartyFormData('customer'));
+    setPartyPopupError('');
     setShowForm(false);
     setEditingId(null);
     setFormData(getInitialFormData());
@@ -823,6 +1000,10 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
 
   const handleOpenForm = () => {
     setEditingId(null);
+    setShowPartyForm(false);
+    setShowProductForm(false);
+    setPartyFormData(getInitialPartyFormData('customer'));
+    setPartyPopupError('');
     setFormData(getInitialFormData());
     setCurrentItem(initialCurrentItem);
     setLeadgerQuery('');
@@ -890,7 +1071,9 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
           popupFieldClass={popupFieldClass}
           popupLabelClass={popupLabelClass}
           leadgerSectionRef={leadgerSectionRef}
+          leadgerInputRef={leadgerInputRef}
           productSectionRef={productSectionRef}
+          productInputRef={productInputRef}
           leadgerQuery={leadgerQuery}
           productQuery={productQuery}
           leadgerListIndex={leadgerListIndex}
@@ -912,14 +1095,32 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
           handleLeadgerFocus={handleLeadgerFocus}
           handleLeadgerInputChange={handleLeadgerInputChange}
           handleLeadgerInputKeyDown={handleLeadgerInputKeyDown}
+          onOpenNewParty={openInlinePartyForm}
           handleProductFocus={handleProductFocus}
           handleProductInputChange={handleProductInputChange}
           handleProductInputKeyDown={handleProductInputKeyDown}
+          onOpenNewProduct={openInlineProductForm}
           handleSelectEnterMoveNext={handleSelectEnterMoveNext}
           handleAddItem={handleAddItem}
           handleRemoveItem={handleRemoveItem}
           selectLeadger={selectLeadger}
           selectProduct={selectProduct}
+        />
+        <AddPartyPopup
+          showForm={showPartyForm}
+          editingId={null}
+          loading={partyPopupLoading}
+          formData={partyFormData}
+          error={partyPopupError}
+          handleCloseForm={() => closeInlinePartyForm(true)}
+          handleSubmit={handlePartyPopupSubmit}
+          handleChange={handlePartyPopupChange}
+        />
+        <AddProductPopup
+          showForm={showProductForm}
+          initialName={productQuery}
+          onClose={() => closeInlineProductForm(true)}
+          onProductCreated={handleProductCreated}
         />
       </>
     );
@@ -976,7 +1177,9 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         popupLabelClass={popupLabelClass}
         popupSectionClass={popupSectionClass}
         leadgerSectionRef={leadgerSectionRef}
+        leadgerInputRef={leadgerInputRef}
         productSectionRef={productSectionRef}
+        productInputRef={productInputRef}
         leadgerQuery={leadgerQuery}
         productQuery={productQuery}
         leadgerListIndex={leadgerListIndex}
@@ -998,14 +1201,32 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         handleLeadgerFocus={handleLeadgerFocus}
         handleLeadgerInputChange={handleLeadgerInputChange}
         handleLeadgerInputKeyDown={handleLeadgerInputKeyDown}
+        onOpenNewParty={openInlinePartyForm}
         handleProductFocus={handleProductFocus}
         handleProductInputChange={handleProductInputChange}
         handleProductInputKeyDown={handleProductInputKeyDown}
+        onOpenNewProduct={openInlineProductForm}
         handleSelectEnterMoveNext={handleSelectEnterMoveNext}
         handleAddItem={handleAddItem}
         handleRemoveItem={handleRemoveItem}
         selectLeadger={selectLeadger}
         selectProduct={selectProduct}
+      />
+      <AddPartyPopup
+        showForm={showPartyForm}
+        editingId={null}
+        loading={partyPopupLoading}
+        formData={partyFormData}
+        error={partyPopupError}
+        handleCloseForm={() => closeInlinePartyForm(true)}
+        handleSubmit={handlePartyPopupSubmit}
+        handleChange={handlePartyPopupChange}
+      />
+      <AddProductPopup
+        showForm={showProductForm}
+        initialName={productQuery}
+        onClose={() => closeInlineProductForm(true)}
+        onProductCreated={handleProductCreated}
       />
       <div className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
         <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 px-6 py-5">

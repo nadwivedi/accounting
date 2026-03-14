@@ -194,6 +194,7 @@ export default function Party() {
         editingId={editingId}
         loading={loading}
         formData={formData}
+        error={error}
         handleCloseForm={handleCloseForm}
         handleSubmit={handleSubmit}
         handleChange={handleChange}

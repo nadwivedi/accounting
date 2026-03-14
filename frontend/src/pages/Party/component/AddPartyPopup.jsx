@@ -86,6 +86,7 @@ export default function AddPartyPopup({
   editingId,
   loading,
   formData,
+  error = '',
   handleCloseForm,
   handleSubmit,
   handleChange
@@ -287,6 +288,12 @@ export default function AddPartyPopup({
         >
           <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
             <div className="flex flex-col gap-3 md:gap-4">
+              {error ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+                  {error}
+                </div>
+              ) : null}
+
               <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
                 <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
                   <span className="bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
@@ -294,8 +301,8 @@ export default function AddPartyPopup({
                 </h3>
 
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                  <div className="flex items-center gap-3">
-                    <label htmlFor="party-name-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                    <label htmlFor="party-name-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:w-28 sm:text-sm">
                       Party Name <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -311,13 +318,13 @@ export default function AddPartyPopup({
                     />
                   </div>
 
-                  <div className="flex items-start gap-3">
-                    <label htmlFor="party-type-input" className="w-28 shrink-0 pt-2 text-xs md:text-sm font-semibold text-gray-700 mb-0">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:gap-3">
+                    <label htmlFor="party-type-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:w-28 sm:pt-2 sm:text-sm">
                       Type <span className="text-red-500">*</span>
                     </label>
                     <div
                       ref={typeSectionRef}
-                      className="relative flex-1 min-w-0"
+                      className="relative min-w-0 flex-1"
                       onBlurCapture={(event) => {
                         const nextFocused = event.relatedTarget;
                         if (
@@ -417,8 +424,8 @@ export default function AddPartyPopup({
                 </h3>
 
                 <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="party-mobile-input" className="w-32 shrink-0 mb-0 text-xs md:text-sm font-semibold text-gray-700">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                    <label htmlFor="party-mobile-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:w-32 sm:text-sm">
                       Mobile Number
                     </label>
                     <input
@@ -435,8 +442,8 @@ export default function AddPartyPopup({
                     />
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="party-email-input" className="w-32 shrink-0 mb-0 text-xs md:text-sm font-semibold text-gray-700">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                    <label htmlFor="party-email-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:w-32 sm:text-sm">
                       Email Address
                     </label>
                     <input
@@ -450,8 +457,8 @@ export default function AddPartyPopup({
                     />
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="party-state-input" className="w-32 shrink-0 mb-0 text-xs md:text-sm font-semibold text-gray-700">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                    <label htmlFor="party-state-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:w-32 sm:text-sm">
                       State
                     </label>
                     <input
@@ -465,8 +472,8 @@ export default function AddPartyPopup({
                     />
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <label htmlFor="party-pincode-input" className="w-32 shrink-0 mb-0 text-xs md:text-sm font-semibold text-gray-700">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                    <label htmlFor="party-pincode-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:w-32 sm:text-sm">
                       Pincode
                     </label>
                     <input
@@ -483,8 +490,8 @@ export default function AddPartyPopup({
                     />
                   </div>
 
-                  <div className="flex items-start gap-2 md:col-span-2">
-                    <label htmlFor="party-address-input" className="w-32 shrink-0 mt-2 mb-0 text-xs md:text-sm font-semibold text-gray-700">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:gap-2 md:col-span-2">
+                    <label htmlFor="party-address-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:mt-2 sm:w-32 sm:text-sm">
                       Address
                     </label>
                     <textarea

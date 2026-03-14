@@ -80,9 +80,9 @@ export default function AddPurchasePopup({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-start bg-black/60 p-2 md:p-4" onClick={handleCancel}>
-      <div className="flex h-[98vh] max-h-[99vh] w-full max-w-[84rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2.5 text-white md:px-4 md:py-3">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-1 md:p-4" onClick={handleCancel}>
+      <div className="flex h-[95dvh] max-h-[95dvh] w-[94vw] max-w-[68rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 py-2 text-white md:px-4 md:py-3">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold md:text-xl">
@@ -103,9 +103,9 @@ export default function AddPurchasePopup({
         </div>
 
         <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
-            <div className="flex h-full flex-col gap-3 md:gap-4">
-                <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
+          <div className="flex-1 overflow-y-auto p-2 md:p-4">
+            <div className="flex h-full flex-col gap-2.5 md:gap-4">
+                <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2 md:p-4">
                   <h3 className="mb-2.5 flex items-center gap-2 text-sm font-bold text-gray-800 md:mb-3 md:text-base">
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">1</span>
                     Purchase Details

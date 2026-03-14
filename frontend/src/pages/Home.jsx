@@ -370,26 +370,26 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-[#020617] px-4 py-6">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center justify-center">
-        <div className="flex w-full max-w-5xl flex-col items-center justify-center gap-4 lg:flex-row lg:items-stretch">
-          <div className="relative flex w-full max-w-[23rem] flex-col overflow-hidden rounded-[30px] border border-white/20 bg-gradient-to-br from-white/95 via-white/90 to-white/80 shadow-[0_32px_80px_rgba(0,0,0,0.5),0_0_60px_rgba(99,102,241,0.15),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-sm">
+        <div className="flex w-full max-w-5xl flex-row items-stretch justify-center gap-2 sm:gap-4 lg:flex-row lg:items-stretch">
+          <div className="relative flex min-w-0 flex-1 basis-[54%] flex-col overflow-hidden rounded-[20px] border border-white/20 bg-gradient-to-br from-white/95 via-white/90 to-white/80 shadow-[0_32px_80px_rgba(0,0,0,0.5),0_0_60px_rgba(99,102,241,0.15),inset_0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-sm sm:max-w-[23rem] sm:rounded-[30px]">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.12),transparent_40%),radial-gradient(circle_at_80%_20%,rgba(167,139,250,0.1),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(56,189,248,0.08),transparent_30%)]" />
           <div className="pointer-events-none absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-white/40 to-transparent" />
 
-          <div className="relative z-10 border-b border-slate-200/60 bg-gradient-to-r from-white/60 to-transparent px-5 py-5">
+          <div className="relative z-10 border-b border-slate-200/60 bg-gradient-to-r from-white/60 to-transparent px-3 py-3 sm:px-5 sm:py-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30">
-                <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30 sm:h-9 sm:w-9">
+                <svg className="h-4 w-4 text-white sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
               <div>
-                <p className="text-[15px] font-bold tracking-[0.18em] text-slate-800">BILLHUB</p>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Business Console</p>
+                <p className="text-[12px] font-bold tracking-[0.16em] text-slate-800 sm:text-[15px] sm:tracking-[0.18em]">BILLHUB</p>
+                <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 sm:text-[10px] sm:tracking-[0.18em]">Business Console</p>
               </div>
             </div>
           </div>
 
-          <div className="sidebar-scrollbar relative z-10 flex-1 overflow-y-auto pb-8">
+          <div className="sidebar-scrollbar relative z-10 flex-1 overflow-y-auto pb-4 sm:pb-8">
             <nav className="flex flex-col">
               {menuItems.filter((item) => HOME_SECTION_ORDER.includes(item.name)).map((item, index) => {
                 const sectionStyle = sectionStyles[item.name] || sectionStyles.Masters;
@@ -409,12 +409,12 @@ export default function Home() {
                         setExpandedSection(item.name);
                         setActiveHomePath(getSectionItems(item.name)[0]?.path || '');
                       }}
-                      className={`flex w-full cursor-pointer items-center gap-3 border-y px-5 py-3 text-left text-slate-700 transition-all duration-200 ${isSelectedSection ? 'bg-yellow-200 ring-2 ring-yellow-300 shadow-sm' : sectionStyle.headerClass} ${index > 0 ? 'mt-3' : ''} hover:shadow-sm`}
+                      className={`flex w-full cursor-pointer items-center gap-2.5 border-y px-3 py-2.5 text-left text-slate-700 transition-all duration-200 sm:gap-3 sm:px-5 sm:py-3 ${isSelectedSection ? 'bg-yellow-200 ring-2 ring-yellow-300 shadow-sm' : sectionStyle.headerClass} ${index > 0 ? 'mt-2 sm:mt-3' : ''} hover:shadow-sm`}
                     >
                       <span className={`inline-flex ${index === 0 ? sectionStyle.accentTextClass : sectionStyle.accentDotClass}`}>
                         {index === 0 ? '+' : ''}
                       </span>
-                      <span className="text-[12px] font-bold tracking-[0.16em]">
+                      <span className="text-[10px] font-bold tracking-[0.12em] sm:text-[12px] sm:tracking-[0.16em]">
                         {renderSectionLabel(item.name.toUpperCase())}
                       </span>
                       <span className={`ml-auto text-lg text-slate-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
@@ -478,30 +478,30 @@ export default function Home() {
           </div>
           </div>
 
-          <aside className="relative w-full max-w-[19rem] overflow-hidden rounded-[30px] border border-slate-200/15 bg-[linear-gradient(165deg,rgba(30,41,59,0.92),rgba(51,65,85,0.9),rgba(71,85,105,0.88))] shadow-[0_24px_60px_rgba(15,23,42,0.34),0_0_42px_rgba(14,165,233,0.08)] lg:max-w-[14.75rem]">
+          <aside className="relative min-w-0 flex-1 basis-[46%] overflow-hidden rounded-[20px] border border-slate-200/15 bg-[linear-gradient(165deg,rgba(30,41,59,0.92),rgba(51,65,85,0.9),rgba(71,85,105,0.88))] shadow-[0_24px_60px_rgba(15,23,42,0.34),0_0_42px_rgba(14,165,233,0.08)] sm:max-w-[19rem] sm:rounded-[30px] lg:max-w-[14.75rem]">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.16),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.1),transparent_28%)]" />
             <div className="relative z-10 flex h-full flex-col">
-              <div className="border-b border-white/10 px-5 py-5">
-                <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-cyan-200">Quick Keys</p>
+              <div className="border-b border-white/10 px-3 py-3 sm:px-5 sm:py-5">
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-cyan-200 sm:text-[10px] sm:tracking-[0.24em]">Quick Keys</p>
               </div>
 
-              <div className="flex flex-1 flex-col gap-2.5 px-3 py-3">
+              <div className="flex flex-1 flex-col gap-2 px-2 py-2 sm:gap-2.5 sm:px-3 sm:py-3">
                 {homeQuickShortcuts.map((shortcut) => (
                   <button
                     key={shortcut.combo}
                     type="button"
                     onClick={() => handleQuickShortcutOpen(shortcut.stateKey)}
-                    className="cursor-pointer rounded-2xl border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.94))] p-2.5 text-left shadow-[0_14px_30px_rgba(148,163,184,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(148,163,184,0.22),inset_0_1px_0_rgba(255,255,255,0.95)]"
+                    className="cursor-pointer rounded-xl border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.94))] p-2 text-left shadow-[0_14px_30px_rgba(148,163,184,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(148,163,184,0.22),inset_0_1px_0_rgba(255,255,255,0.95)] sm:rounded-2xl sm:p-2.5"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`h-8 w-1.5 rounded-full bg-gradient-to-b ${shortcut.accent}`} />
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <div className={`h-7 w-1.5 rounded-full bg-gradient-to-b sm:h-8 ${shortcut.accent}`} />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[12px] font-semibold text-slate-800">{shortcut.label}</p>
+                        <p className="text-[11px] font-semibold leading-tight text-slate-800 sm:text-[12px]">{shortcut.label}</p>
                         {shortcut.hint && (
-                          <p className="mt-0.5 text-[10px] font-medium text-slate-500">{shortcut.hint}</p>
+                          <p className="mt-0.5 hidden text-[10px] font-medium text-slate-500 sm:block">{shortcut.hint}</p>
                         )}
                       </div>
-                      <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-bold tracking-[0.14em] text-sky-700">
+                      <span className="hidden rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-bold tracking-[0.14em] text-sky-700 sm:inline-flex">
                         {shortcut.combo}
                       </span>
                     </div>

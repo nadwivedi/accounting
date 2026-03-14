@@ -600,7 +600,7 @@ export default function SaleReturn() {
             onClick={handleCloseForm}
           >
             <div
-              className="flex max-h-[92vh] w-full max-w-[44rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl"
+              className="flex max-h-[92vh] w-full max-w-[36rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl"
               onClick={(event) => event.stopPropagation()}
             >
               <div className="flex-shrink-0 border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-1.5 text-white md:px-4 md:py-2">
