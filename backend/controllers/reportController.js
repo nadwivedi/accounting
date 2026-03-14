@@ -314,7 +314,7 @@ exports.getPartyLedger = async (req, res) => {
         impact: toNumber(sale.totalAmount),
         quantity: getTotalQuantity(sale.items),
         itemSummary: getItemSummary(sale.items),
-        method: sale.paymentMode || '',
+        method: '',
         note: sale.notes || ''
       });
     });

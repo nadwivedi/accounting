@@ -36,6 +36,10 @@ export default function StockAdjustment() {
       showMethod={false}
       showReferenceNo={false}
       staticPayload={{ adjustmentType: 'subtract' }}
+      popupVariant="stock"
+      pageVariant="party"
+      dateInputType="text"
+      datePlaceholder="DD-MM-YYYY"
       fieldDefinitions={[
         {
           name: 'stockItem',

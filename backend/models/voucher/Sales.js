@@ -65,22 +65,9 @@ const salesSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  discountAmount: {
-    type: Number,
-    default: 0
-  },
   taxAmount: {
     type: Number,
     default: 0
-  },
-  roundOff: {
-    type: Number,
-    default: 0
-  },
-  paymentMode: {
-    type: String,
-    enum: ['cash', 'bank', 'upi', 'card', 'credit', 'other'],
-    default: 'credit'
   },
   totalAmount: {
     type: Number,

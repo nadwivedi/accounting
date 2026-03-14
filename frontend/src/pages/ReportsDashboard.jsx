@@ -566,7 +566,6 @@ export default function ReportsDashboard({ initialReport = 'partyLedger' }) {
                   <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Party</th>
                   <th className="border-y-2 border-r border-black px-4 py-3 font-semibold">Items</th>
                   <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Qty</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Payment Mode</th>
                   <th className="border-y-2 border-r-2 border-black px-4 py-3 text-center font-semibold">Total</th>
                 </tr>
               </thead>
@@ -582,13 +581,12 @@ export default function ReportsDashboard({ initialReport = 'partyLedger' }) {
                     <td className="border border-slate-300 px-4 py-3 text-center">
                       {formatNumber((sale.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0))}
                     </td>
-                    <td className="border border-slate-300 px-4 py-3 text-center capitalize">{sale.paymentMode || '-'}</td>
                     <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-emerald-700">{formatCurrency(sale.totalAmount)}</td>
                   </tr>
                 ))}
                 {sortedSales.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="border border-slate-300 px-4 py-10 text-center text-slate-500">
+                    <td colSpan="6" className="border border-slate-300 px-4 py-10 text-center text-slate-500">
                       No sale report data found.
                     </td>
                   </tr>

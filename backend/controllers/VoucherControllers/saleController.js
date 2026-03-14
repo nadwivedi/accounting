@@ -54,9 +54,7 @@ const calculateTotals = (payload = {}) => {
     return sum + toNumber(item.taxAmount);
   }, 0));
 
-  const discountAmount = toNumber(payload.discountAmount);
-  const roundOff = toNumber(payload.roundOff);
-  const computedTotal = subtotal + taxAmount - discountAmount + roundOff;
+  const computedTotal = subtotal + taxAmount;
   const totalAmount = toNumber(payload.totalAmount, computedTotal);
   const paidAmount = Math.max(0, toNumber(payload.paidAmount));
   const initialReceiptAmount = Math.min(paidAmount, totalAmount);
@@ -64,8 +62,6 @@ const calculateTotals = (payload = {}) => {
   return {
     subtotal,
     taxAmount,
-    discountAmount,
-    roundOff,
     totalAmount,
     initialReceiptAmount
   };
@@ -83,12 +79,9 @@ exports.createSale = async (req, res) => {
       saleDate,
       dueDate,
       subtotal,
-      discountAmount,
       taxAmount,
-      roundOff,
       totalAmount,
       paidAmount,
-      paymentMode,
       notes,
       invoiceNumber
     } = req.body;
@@ -115,9 +108,7 @@ exports.createSale = async (req, res) => {
     const totals = calculateTotals({
       items,
       subtotal,
-      discountAmount,
       taxAmount,
-      roundOff,
       totalAmount,
       paidAmount
     });
@@ -133,11 +124,8 @@ exports.createSale = async (req, res) => {
       saleDate: saleDate || new Date(),
       dueDate: dueDate || null,
       subtotal: totals.subtotal,
-      discountAmount: totals.discountAmount,
       taxAmount: totals.taxAmount,
-      roundOff: totals.roundOff,
       totalAmount: totals.totalAmount,
-      paymentMode: paymentMode || 'credit',
       notes
     });
 
@@ -155,7 +143,7 @@ exports.createSale = async (req, res) => {
         refType: 'sale',
         refId: sale._id,
         amount: totals.initialReceiptAmount,
-        method: paymentMode || 'cash',
+        method: 'cash',
         receiptDate: saleDate || new Date(),
         notes: notes || 'Auto receipt from sale'
       });

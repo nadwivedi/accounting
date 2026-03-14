@@ -47,12 +47,9 @@ const getInitialFormData = () => ({
   saleDate: formatDateForInput(),
   dueDate: '',
   subtotal: 0,
-  discountAmount: 0,
   taxAmount: 0,
-  roundOff: 0,
   totalAmount: 0,
   paidAmount: 0,
-  paymentMode: 'cash',
   notes: ''
 });
 
@@ -671,7 +668,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       totalTax += item.taxAmount || 0;
     });
 
-    const total = subtotal + totalTax - (formData.discountAmount || 0);
+    const total = subtotal + totalTax;
 
     setFormData(prev => ({
       ...prev,
