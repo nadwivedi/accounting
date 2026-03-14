@@ -16,8 +16,7 @@ exports.createParty = async (req, res) => {
       email,
       address,
       state,
-      pincode,
-      notes
+      pincode
     } = req.body;
     const userId = req.userId;
 
@@ -44,8 +43,7 @@ exports.createParty = async (req, res) => {
       email: String(email || '').trim(),
       address: String(address || '').trim(),
       state: String(state || '').trim(),
-      pincode: String(pincode || '').trim(),
-      notes: String(notes || '').trim()
+      pincode: String(pincode || '').trim()
     });
 
     return res.status(201).json({
@@ -87,8 +85,7 @@ exports.getAllParties = async (req, res) => {
         { email: searchRegex },
         { address: searchRegex },
         { state: searchRegex },
-        { pincode: searchRegex },
-        { notes: searchRegex }
+        { pincode: searchRegex }
       ];
     }
 
@@ -118,8 +115,7 @@ exports.updateParty = async (req, res) => {
       email,
       address,
       state,
-      pincode,
-      notes
+      pincode
     } = req.body;
     const userId = req.userId;
 
@@ -154,8 +150,7 @@ exports.updateParty = async (req, res) => {
         email: String(email || '').trim(),
         address: String(address || '').trim(),
         state: String(state || '').trim(),
-        pincode: String(pincode || '').trim(),
-        notes: String(notes || '').trim()
+        pincode: String(pincode || '').trim()
       },
       { new: true, runValidators: true }
     );

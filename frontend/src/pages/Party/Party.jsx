@@ -12,8 +12,7 @@ const getInitialForm = () => ({
   email: '',
   address: '',
   state: '',
-  pincode: '',
-  notes: ''
+  pincode: ''
 });
 
 const TOAST_OPTIONS = { autoClose: 1200 };
@@ -110,8 +109,7 @@ export default function Party() {
       email: String(party.email || ''),
       address: String(party.address || ''),
       state: String(party.state || ''),
-      pincode: String(party.pincode || '').replace(/\D/g, '').slice(0, 6),
-      notes: String(party.notes || '')
+      pincode: String(party.pincode || '').replace(/\D/g, '').slice(0, 6)
     });
     setError('');
     setShowForm(true);
@@ -144,8 +142,7 @@ export default function Party() {
         email: String(formData.email || '').trim(),
         address: String(formData.address || '').trim(),
         state: String(formData.state || '').trim(),
-        pincode: String(formData.pincode || '').trim(),
-        notes: String(formData.notes || '').trim()
+        pincode: String(formData.pincode || '').trim()
       };
 
       if (editingId) {
@@ -266,11 +263,6 @@ export default function Party() {
                       <span className="text-xs font-medium uppercase tracking-[0.18em] text-sky-700">Mobile</span>
                       <span className="text-right font-semibold text-slate-800">{item.mobile || '-'}</span>
                     </div>
-
-                    <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
-                      <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Notes</p>
-                      <p className="mt-1 text-sm text-slate-700 break-words">{item.notes || '-'}</p>
-                    </div>
                   </div>
                 </article>
               ))}
@@ -289,7 +281,6 @@ export default function Party() {
                     <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party Name</th>
                     <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Type</th>
                     <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Mobile Number</th>
-                    <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
                     <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Actions</th>
                   </tr>
                 </thead>
@@ -307,9 +298,6 @@ export default function Party() {
                         </span>
                       </td>
                       <td className="border border-slate-400 px-4 py-3 text-center">{item.mobile || '-'}</td>
-                      <td className="border border-slate-400 px-4 py-3">
-                        <div className="max-w-[20rem] truncate">{item.notes || '-'}</div>
-                      </td>
                       <td className="border border-slate-400 px-4 py-3">
                         <div className="flex items-center justify-center">
                           <button
@@ -329,7 +317,7 @@ export default function Party() {
                   ))}
                   {parties.length === 0 && (
                     <tr>
-                      <td colSpan="5" className="border border-slate-400 px-6 py-10 text-center text-slate-500">
+                      <td colSpan="4" className="border border-slate-400 px-6 py-10 text-center text-slate-500">
                         No parties found
                       </td>
                     </tr>

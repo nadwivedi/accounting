@@ -27,7 +27,7 @@ const getInlineFieldClass = (tone = 'indigo') => {
     ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
     : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
 
-  return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm font-bold text-gray-900 transition-all focus:outline-none focus:bg-white placeholder:font-normal placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
+  return `flex-1 min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 transition-all placeholder:font-normal placeholder:text-gray-400 focus:outline-none ${focusTone}`;
 };
 
 const getInlineTextareaClass = (tone = 'emerald') => {
@@ -35,7 +35,7 @@ const getInlineTextareaClass = (tone = 'emerald') => {
     ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
     : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
 
-  return `flex-1 min-w-0 px-3 py-2 border border-transparent rounded-lg bg-transparent text-sm font-bold text-gray-900 transition-all resize-none focus:outline-none focus:bg-white placeholder:font-normal placeholder:text-transparent focus:placeholder:text-gray-400 ${focusTone}`;
+  return `flex-1 min-w-0 resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 transition-all placeholder:font-normal placeholder:text-gray-400 focus:outline-none ${focusTone}`;
 };
 
 const isVisibleField = (element) => {
@@ -250,20 +250,20 @@ export default function AddPartyPopup({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-[1.5px] z-50 flex items-stretch justify-start p-1.5 sm:p-2" onClick={handleCloseForm}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 backdrop-blur-[1.5px] md:p-4" onClick={handleCloseForm}>
       <div
-        className="bg-white h-full w-full md:w-[75vw] overflow-hidden flex flex-col shadow-2xl ring-1 ring-slate-200/80 rounded-xl md:rounded-2xl"
+        className="flex max-h-[92vh] w-full max-w-[58rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-2 md:px-4 md:py-2.5 text-white flex-shrink-0 border-b border-white/15">
+        <div className="flex-shrink-0 border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-1.5 text-white md:px-4 md:py-2">
           <div className="flex justify-between items-center">
             <div className="flex items-start gap-3">
-              <div className="h-8 w-8 rounded-md bg-white/20 ring-1 ring-white/30 flex items-center justify-center text-white">
-                <Wallet className="h-5 w-5" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20 text-white ring-1 ring-white/30 md:h-8 md:w-8">
+                <Wallet className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h2 className="text-lg md:text-2xl font-bold">{editingId ? 'Edit Party' : 'Add New Party'}</h2>
-                <p className="text-cyan-100 text-xs md:text-sm mt-1">Create or update party details in a simple format.</p>
+                <h2 className="text-base font-bold md:text-xl">{editingId ? 'Edit Party' : 'Add New Party'}</h2>
+                <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">Create or update party details in a simple format.</p>
               </div>
             </div>
             <button
@@ -286,14 +286,14 @@ export default function AddPartyPopup({
           className="flex flex-col flex-1 overflow-hidden"
         >
           <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
-            <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,1.2fr)] gap-2.5 md:gap-4 items-stretch">
-              <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-2.5 md:p-4">
+            <div className="flex flex-col gap-3 md:gap-4">
+              <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
                 <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
                   <span className="bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">1</span>
                   Party Details
                 </h3>
 
-                <div className="grid grid-cols-1 gap-3 md:gap-4">
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
                   <div className="flex items-center gap-3">
                     <label htmlFor="party-name-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
                       Party Name <span className="text-red-500">*</span>
@@ -407,36 +407,19 @@ export default function AddPartyPopup({
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <label htmlFor="party-notes-input" className="w-28 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">
-                      Notes
-                    </label>
-                    <input
-                      id="party-notes-input"
-                      type="text"
-                      name="notes"
-                      value={formData.notes}
-                      onChange={handleChange}
-                      className={getInlineFieldClass('indigo')}
-                      placeholder="Optional remarks"
-                    />
-                  </div>
                 </div>
               </div>
 
-              <div className="hidden lg:block h-full w-px bg-slate-300" aria-hidden="true"></div>
-
-              <div className="h-full min-h-[320px] lg:min-h-[calc(100vh-205px)] bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-2.5 md:p-4">
+              <div className="rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-green-50 to-emerald-50 p-2.5 md:p-4">
                 <h3 className="text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2">
                   <span className="bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm">2</span>
                   Contact Details
                 </h3>
 
-                <div className="space-y-3 md:space-y-4">
-                  <div className="flex items-center gap-3">
-                    <label htmlFor="party-mobile-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span>Mobile Number</span>
-                      <span className="ml-2">:</span>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="party-mobile-input" className="w-32 shrink-0 mb-0 text-xs md:text-sm font-semibold text-gray-700">
+                      Mobile Number
                     </label>
                     <input
                       id="party-mobile-input"
@@ -452,10 +435,9 @@ export default function AddPartyPopup({
                     />
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <label htmlFor="party-email-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span>Email Address</span>
-                      <span className="ml-2">:</span>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="party-email-input" className="w-32 shrink-0 mb-0 text-xs md:text-sm font-semibold text-gray-700">
+                      Email Address
                     </label>
                     <input
                       id="party-email-input"
@@ -468,10 +450,9 @@ export default function AddPartyPopup({
                     />
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <label htmlFor="party-state-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span>State</span>
-                      <span className="ml-2">:</span>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="party-state-input" className="w-32 shrink-0 mb-0 text-xs md:text-sm font-semibold text-gray-700">
+                      State
                     </label>
                     <input
                       id="party-state-input"
@@ -484,10 +465,9 @@ export default function AddPartyPopup({
                     />
                   </div>
 
-                  <div className="flex items-center gap-3">
-                    <label htmlFor="party-pincode-input" className="w-52 shrink-0 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span>Pincode</span>
-                      <span className="ml-2">:</span>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="party-pincode-input" className="w-32 shrink-0 mb-0 text-xs md:text-sm font-semibold text-gray-700">
+                      Pincode
                     </label>
                     <input
                       id="party-pincode-input"
@@ -503,10 +483,9 @@ export default function AddPartyPopup({
                     />
                   </div>
 
-                  <div className="flex items-start gap-3">
-                    <label htmlFor="party-address-input" className="w-52 shrink-0 mt-2 mb-0 flex items-baseline justify-between text-xs md:text-sm font-semibold text-gray-700">
-                      <span>Address</span>
-                      <span className="ml-2">:</span>
+                  <div className="flex items-start gap-2 md:col-span-2">
+                    <label htmlFor="party-address-input" className="w-32 shrink-0 mt-2 mb-0 text-xs md:text-sm font-semibold text-gray-700">
+                      Address
                     </label>
                     <textarea
                       id="party-address-input"
@@ -530,16 +509,16 @@ export default function AddPartyPopup({
             </div>
           </div>
 
-          <div className="border-t border-gray-200 px-3 py-2.5 md:px-4 md:py-3 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0">
-            <div className="text-xs md:text-sm text-gray-600">
+          <div className="flex shrink-0 flex-col items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2 md:flex-row md:px-4">
+            <div className="text-[11px] text-gray-600 md:text-xs">
               <kbd className="px-2 py-1 bg-gray-200 rounded text-xs font-mono">Esc</kbd> to close
             </div>
 
-            <div className="flex gap-2 md:gap-3 w-full md:w-auto">
+            <div className="flex w-full gap-2 md:w-auto">
               <button
                 type="button"
                 onClick={handleCloseForm}
-                className="flex-1 md:flex-none px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-semibold transition"
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5"
               >
                 Cancel
               </button>
@@ -548,7 +527,7 @@ export default function AddPartyPopup({
                 type="submit"
                 form="party-form"
                 disabled={loading}
-                className="flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-1.5 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
               >
                 {loading ? 'Saving...' : editingId ? 'Update Party' : 'Save Party'}
               </button>

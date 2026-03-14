@@ -40,10 +40,6 @@ const partySchema = new mongoose.Schema({
     type: String,
     trim: true,
     default: ''
-  },
-  notes: {
-    type: String,
-    trim: true,
   }
 }, { timestamps: true });
 
