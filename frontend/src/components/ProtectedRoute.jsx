@@ -35,6 +35,13 @@ const voucherShortcutRoutes = {
   '4': { path: '/receipts', openShortcut: 'receipt' }
 };
 
+const sectionHubPaths = {
+  Masters: '/masters',
+  Vouchers: '/vouchers',
+  Expense: '/expense-hub',
+  Reports: '/reports'
+};
+
 const getHomeNavigationState = (pathname) => {
   if (!pathname) return null;
 
@@ -112,8 +119,14 @@ export default function ProtectedRoute({ children }) {
       }
 
       const homeNavigationState = getHomeNavigationState(location.pathname);
+      const sectionHubPath = homeNavigationState ? sectionHubPaths[homeNavigationState.section] : null;
 
       event.preventDefault();
+      if (sectionHubPath && location.pathname !== sectionHubPath) {
+        navigate(sectionHubPath, { replace: true });
+        return;
+      }
+
       navigate('/', {
         replace: true,
         state: homeNavigationState
