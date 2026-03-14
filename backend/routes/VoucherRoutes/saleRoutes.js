@@ -4,6 +4,7 @@ const {
   createSale,
   getAllSales,
   getSaleById,
+  getSaleInvoicePdf,
   updateSale,
   deleteSale,
   updatePaymentStatus
@@ -15,6 +16,7 @@ router.use(auth);
 
 router.post('/', createSale);
 router.get('/', getAllSales);
+router.get('/:id/invoice-pdf', getSaleInvoicePdf);
 router.get('/:id', getSaleById);
 router.put('/:id', updateSale);
 router.delete('/:id', deleteSale);

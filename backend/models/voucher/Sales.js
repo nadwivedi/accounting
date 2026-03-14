@@ -78,6 +78,11 @@ const salesSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  invoicePdfPath: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   notes: {
     type: String,
     trim: true

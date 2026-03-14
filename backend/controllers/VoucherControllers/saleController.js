@@ -2,6 +2,8 @@
 const Product = require('../../models/master/Stock');
 const Receipt = require('../../models/voucher/Receipt');
 const mongoose = require('mongoose');
+const fs = require('fs');
+const { createSaleInvoicePdf, getSaleInvoiceAbsolutePath } = require('../../utils/saleInvoicePdf');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -54,6 +56,36 @@ const getLinkedSaleReceiptTotal = async ({ saleId, userId }) => {
   ]);
 
   return toNumber(result[0]?.total);
+};
+
+const deleteSaleInvoicePdf = (relativePath = '') => {
+  if (!relativePath) return;
+
+  const absolutePath = getSaleInvoiceAbsolutePath(relativePath);
+  if (!fs.existsSync(absolutePath)) return;
+
+  try {
+    fs.unlinkSync(absolutePath);
+  } catch (error) {
+    console.error('Delete sale invoice PDF error:', error);
+  }
+};
+
+const ensureSaleInvoicePdf = async (sale) => {
+  if (!sale) {
+    throw new Error('Sale is required to generate invoice PDF');
+  }
+
+  const generatedPdf = await createSaleInvoicePdf(sale);
+
+  if (sale.invoicePdfPath && sale.invoicePdfPath !== generatedPdf.relativePath) {
+    deleteSaleInvoicePdf(sale.invoicePdfPath);
+  }
+
+  sale.invoicePdfPath = generatedPdf.relativePath;
+  await sale.save();
+
+  return generatedPdf;
 };
 
 const calculateTotals = (payload = {}) => {
@@ -145,6 +177,17 @@ exports.createSale = async (req, res) => {
       notes
     });
 
+    let populatedSale = await Sale.findById(sale._id)
+      .populate('items.product', 'name unit')
+      .populate('userId', 'companyName email phone address gstNumber bankDetails');
+
+    try {
+      await ensureSaleInvoicePdf(populatedSale);
+    } catch (pdfError) {
+      await Sale.findByIdAndDelete(sale._id);
+      throw pdfError;
+    }
+
     for (const item of items) {
       await Product.findByIdAndUpdate(
         item.product,
@@ -164,9 +207,6 @@ exports.createSale = async (req, res) => {
         notes: notes || 'Auto receipt from sale'
       });
     }
-
-    const populatedSale = await Sale.findById(sale._id)
-      .populate('items.product', 'name unit');
 
     res.status(201).json({
       success: true,
@@ -238,7 +278,8 @@ exports.getSaleById = async (req, res) => {
     const userId = req.userId;
 
     const sale = await Sale.findOne({ _id: id, userId })
-      .populate('items.product', 'name unit');
+      .populate('items.product', 'name unit')
+      .populate('userId', 'companyName email phone address gstNumber bankDetails');
 
     if (!sale) {
       return res.status(404).json({
@@ -246,6 +287,8 @@ exports.getSaleById = async (req, res) => {
         message: 'Sale not found'
       });
     }
+
+    await ensureSaleInvoicePdf(sale);
 
     res.status(200).json({
       success: true,
@@ -278,7 +321,8 @@ exports.updateSale = async (req, res) => {
       { customerName, customerPhone, customerAddress, dueDate, notes },
       { new: true, runValidators: true }
     )
-      .populate('items.product', 'name unit');
+      .populate('items.product', 'name unit')
+      .populate('userId', 'companyName email phone address gstNumber bankDetails');
 
     if (!sale) {
       return res.status(404).json({
@@ -316,6 +360,10 @@ exports.deleteSale = async (req, res) => {
       });
     }
 
+    await ensureSaleInvoicePdf(sale);
+
+    deleteSaleInvoicePdf(sale.invoicePdfPath);
+
     for (const item of sale.items) {
       await Product.findByIdAndUpdate(
         item.product,
@@ -338,6 +386,38 @@ exports.deleteSale = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error deleting sale'
+    });
+  }
+};
+
+// Open sale invoice PDF
+exports.getSaleInvoicePdf = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+
+    const sale = await Sale.findOne({ _id: id, userId })
+      .populate('items.product', 'name unit')
+      .populate('userId', 'companyName email phone address gstNumber bankDetails');
+
+    if (!sale) {
+      return res.status(404).json({
+        success: false,
+        message: 'Sale not found'
+      });
+    }
+
+    const generatedPdf = await ensureSaleInvoicePdf(sale);
+    const absolutePath = generatedPdf.absolutePath || getSaleInvoiceAbsolutePath(sale.invoicePdfPath);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="sale-invoice-${sale.invoiceNumber || sale._id}.pdf"`);
+    res.sendFile(absolutePath);
+  } catch (error) {
+    console.error('Get sale invoice PDF error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error opening sale invoice PDF'
     });
   }
 };

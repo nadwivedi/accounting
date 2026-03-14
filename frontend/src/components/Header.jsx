@@ -4,6 +4,13 @@ import { useNavigate } from 'react-router-dom';
 export default function Header() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const displayName = String(user?.companyName || `${user?.firstName || ''} ${user?.lastName || ''}`).trim() || 'User';
+  const avatarText = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('') || 'U';
 
   const handleLogout = () => {
     logout();
@@ -22,14 +29,14 @@ export default function Header() {
           {/* User Info */}
           <div className="text-right">
             <p className="text-gray-800 font-medium">
-              {user?.firstName} {user?.lastName}
+              {displayName}
             </p>
             <p className="text-gray-600 text-sm capitalize">{user?.role}</p>
           </div>
 
           {/* User Avatar */}
           <div className="w-10 h-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-semibold">
-            {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+            {avatarText}
           </div>
 
           {/* Logout Button */}

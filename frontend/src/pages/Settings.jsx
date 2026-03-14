@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 export default function Settings() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const displayName = String(user?.companyName || `${user?.firstName || ''} ${user?.lastName || ''}`).trim() || '-';
 
   const handleLogout = () => {
     logout();
@@ -20,9 +21,17 @@ export default function Settings() {
       <div className="max-w-xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-800">User Account</h2>
         <div className="mt-4 space-y-2 text-sm text-slate-600">
-          <p><span className="font-medium text-slate-700">Name:</span> {user?.firstName} {user?.lastName}</p>
+          <p><span className="font-medium text-slate-700">Company:</span> {displayName}</p>
           <p><span className="font-medium text-slate-700">Email:</span> {user?.email || '-'}</p>
           <p><span className="font-medium text-slate-700">Phone:</span> {user?.phone || '-'}</p>
+          <p><span className="font-medium text-slate-700">State:</span> {user?.address?.state || '-'}</p>
+          <p><span className="font-medium text-slate-700">Pincode:</span> {user?.address?.pincode || '-'}</p>
+          <p><span className="font-medium text-slate-700">GST Number:</span> {user?.gstNumber || '-'}</p>
+          <p><span className="font-medium text-slate-700">Bank:</span> {user?.bankDetails?.bankName || '-'}</p>
+          <p><span className="font-medium text-slate-700">Account Number:</span> {user?.bankDetails?.accountNumber || '-'}</p>
+          <p><span className="font-medium text-slate-700">IFSC:</span> {user?.bankDetails?.ifscCode || '-'}</p>
+          <p><span className="font-medium text-slate-700">Account Holder:</span> {user?.bankDetails?.accountHolderName || '-'}</p>
+          <p><span className="font-medium text-slate-700">UPI ID:</span> {user?.bankDetails?.upiId || '-'}</p>
         </div>
 
         <div className="mt-6 border-t border-slate-200 pt-4">

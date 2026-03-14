@@ -8,10 +8,17 @@ export default function Login() {
   const [error, setError] = useState('');
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    companyName: '',
     email: '',
-    phone: ''
+    phone: '',
+    state: '',
+    pincode: '',
+    gstNumber: '',
+    bankName: '',
+    accountNumber: '',
+    ifscCode: '',
+    accountHolderName: '',
+    upiId: ''
   });
 
   const { login, register, loading } = useAuth();
@@ -38,7 +45,19 @@ export default function Login() {
     e.preventDefault();
     setError('');
 
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !password) {
+    if (
+      !formData.companyName
+      || !formData.email
+      || !formData.phone
+      || !formData.state
+      || !formData.pincode
+      || !formData.bankName
+      || !formData.accountNumber
+      || !formData.ifscCode
+      || !formData.accountHolderName
+      || !formData.upiId
+      || !password
+    ) {
       setError('Please fill all fields');
       return;
     }
@@ -57,13 +76,16 @@ export default function Login() {
       return;
     }
 
-    const result = await register(
-      formData.firstName,
-      formData.lastName,
-      formData.email,
-      formData.phone,
+    const pincodeRegex = /^\d{6}$/;
+    if (!pincodeRegex.test(formData.pincode)) {
+      setError('Please enter a valid 6-digit pincode');
+      return;
+    }
+
+    const result = await register({
+      ...formData,
       password
-    );
+    });
 
     if (result.success) {
       navigate('/stock');
@@ -164,31 +186,17 @@ export default function Login() {
           ) : (
             /* Register Form */
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">First Name *</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="John"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-gray-700 font-medium mb-2">Last Name *</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
-                    placeholder="Doe"
-                    required
-                  />
-                </div>
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Company Name *</label>
+                <input
+                  type="text"
+                  name="companyName"
+                  value={formData.companyName}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="ABC Traders"
+                  required
+                />
               </div>
 
               <div>
@@ -217,6 +225,112 @@ export default function Login() {
                   required
                 />
                 <p className="text-xs text-gray-500 mt-1">Enter 10-digit mobile number</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">State *</label>
+                  <input
+                    type="text"
+                    name="state"
+                    value={formData.state}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="Maharashtra"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 font-medium mb-2">Pincode *</label>
+                  <input
+                    type="text"
+                    name="pincode"
+                    value={formData.pincode}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                    placeholder="400001"
+                    maxLength="6"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">GST Number</label>
+                <input
+                  type="text"
+                  name="gstNumber"
+                  value={formData.gstNumber}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="Optional"
+                />
+                <p className="text-xs text-gray-500 mt-1">Optional</p>
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Bank Name *</label>
+                <input
+                  type="text"
+                  name="bankName"
+                  value={formData.bankName}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="State Bank of India"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Account Number *</label>
+                <input
+                  type="text"
+                  name="accountNumber"
+                  value={formData.accountNumber}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="Enter account number"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">IFSC Code *</label>
+                <input
+                  type="text"
+                  name="ifscCode"
+                  value={formData.ifscCode}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="SBIN0000001"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">Account Holder Name *</label>
+                <input
+                  type="text"
+                  name="accountHolderName"
+                  value={formData.accountHolderName}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="Account holder name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-gray-700 font-medium mb-2">UPI ID *</label>
+                <input
+                  type="text"
+                  name="upiId"
+                  value={formData.upiId}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  placeholder="name@bank"
+                  required
+                />
               </div>
 
               <div>

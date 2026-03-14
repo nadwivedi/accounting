@@ -161,6 +161,16 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
   };
 
+  const getSaleInvoicePdfUrl = (saleId) => {
+    const baseUrl = String(apiClient.defaults.baseURL || '/api').replace(/\/+$/, '');
+    return `${baseUrl}/sales/${saleId}/invoice-pdf`;
+  };
+
+  const handleOpenInvoicePdf = (saleId) => {
+    if (!saleId) return;
+    window.open(getSaleInvoicePdfUrl(saleId), '_blank', 'noopener,noreferrer');
+  };
+
   const fetchSales = async () => {
     try {
       setLoading(true);
@@ -1128,7 +1138,15 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                 {visibleSales.map((sale) => {
                   return (
                   <tr key={sale._id} className="transition-colors duration-150 hover:bg-slate-200/45">
-                    <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{sale.invoiceNumber}</td>
+                    <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenInvoicePdf(sale._id)}
+                        className="text-blue-700 underline underline-offset-2 transition hover:text-blue-900"
+                      >
+                        {sale.invoiceNumber}
+                      </button>
+                    </td>
                     <td className="border border-slate-400 px-4 py-3 text-center font-medium text-slate-700">{resolveLeadgerNameById(sale.party) || sale.customerName || '-'}</td>
                     <td className="border border-slate-400 px-4 py-3 text-slate-600">
                       {sale.items?.length

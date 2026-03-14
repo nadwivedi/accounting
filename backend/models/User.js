@@ -3,12 +3,17 @@ const mongoose = require('mongoose');
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
-    required: [true, 'First name is required'],
+    default: '',
     trim: true
   },
   lastName: {
     type: String,
-    required: [true, 'Last name is required'],
+    default: '',
+    trim: true
+  },
+  companyName: {
+    type: String,
+    required: [true, 'Company name is required'],
     trim: true
   },
   email: {
@@ -36,6 +41,18 @@ const userSchema = new mongoose.Schema({
     city: { type: String, trim: true },
     state: { type: String, trim: true },
     pincode: { type: String, trim: true }
+  },
+  gstNumber: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  bankDetails: {
+    bankName: { type: String, trim: true, default: '' },
+    accountNumber: { type: String, trim: true, default: '' },
+    ifscCode: { type: String, trim: true, uppercase: true, default: '' },
+    accountHolderName: { type: String, trim: true, default: '' },
+    upiId: { type: String, trim: true, default: '' }
   },
   isActive: {
     type: Boolean,

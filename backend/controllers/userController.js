@@ -38,12 +38,41 @@ const clearAuthCookie = (res) => {
 // User Register
 exports.register = async (req, res) => {
   try {
-    const { firstName, lastName, email, phone, password, role, department } = req.body;
+    const {
+      firstName,
+      lastName,
+      companyName,
+      email,
+      phone,
+      password,
+      state,
+      pincode,
+      gstNumber,
+      bankName,
+      accountNumber,
+      ifscCode,
+      accountHolderName,
+      upiId,
+      role,
+      department
+    } = req.body;
 
-    if (!firstName || !lastName || !email || !password) {
+    if (
+      !companyName
+      || !email
+      || !phone
+      || !password
+      || !state
+      || !pincode
+      || !bankName
+      || !accountNumber
+      || !ifscCode
+      || !accountHolderName
+      || !upiId
+    ) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide firstName, lastName, email and password'
+        message: 'Please provide all required signup details'
       });
     }
 
@@ -58,11 +87,24 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      firstName,
-      lastName,
-      email,
-      phone,
+      firstName: String(firstName || '').trim(),
+      lastName: String(lastName || '').trim(),
+      companyName: String(companyName || '').trim(),
+      email: String(email || '').trim().toLowerCase(),
+      phone: String(phone || '').trim(),
       password: hashedPassword,
+      address: {
+        state: String(state || '').trim(),
+        pincode: String(pincode || '').trim()
+      },
+      gstNumber: String(gstNumber || '').trim(),
+      bankDetails: {
+        bankName: String(bankName || '').trim(),
+        accountNumber: String(accountNumber || '').trim(),
+        ifscCode: String(ifscCode || '').trim().toUpperCase(),
+        accountHolderName: String(accountHolderName || '').trim(),
+        upiId: String(upiId || '').trim()
+      },
       role: role || 'employee',
       department,
       isActive: true
@@ -90,7 +132,9 @@ exports.register = async (req, res) => {
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
+        companyName: user.companyName,
         email: user.email,
+        phone: user.phone,
         role: user.role
       }
     });
@@ -159,6 +203,7 @@ exports.login = async (req, res) => {
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
+        companyName: user.companyName,
         email: user.email,
         phone: user.phone,
         role: user.role,
@@ -271,11 +316,21 @@ exports.getUserById = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { firstName, lastName, phone, department, address, isActive } = req.body;
+    const {
+      firstName,
+      lastName,
+      companyName,
+      phone,
+      department,
+      address,
+      gstNumber,
+      bankDetails,
+      isActive
+    } = req.body;
 
     const user = await User.findByIdAndUpdate(
       id,
-      { firstName, lastName, phone, department, address, isActive },
+      { firstName, lastName, companyName, phone, department, address, gstNumber, bankDetails, isActive },
       { new: true, runValidators: true }
     );
 
