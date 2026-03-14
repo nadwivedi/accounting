@@ -1,12 +1,19 @@
-import { useEffect, useMemo, useState } from 'react';
-import { IndianRupee, RotateCcw, Search } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, IndianRupee, RotateCcw, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import { handlePopupFormKeyDown } from '../../utils/popupFormKeyboard';
+import { useFloatingDropdownPosition } from '../../utils/useFloatingDropdownPosition';
 
 const TOAST_OPTIONS = { autoClose: 1200 };
 
-const PAYMENT_METHODS = ['cash', 'bank', 'upi', 'card', 'other'];
+const PAYMENT_METHOD_OPTIONS = [
+  { value: 'cash', label: 'Cash' },
+  { value: 'bank', label: 'Bank' },
+  { value: 'upi', label: 'UPI' },
+  { value: 'card', label: 'Card' },
+  { value: 'other', label: 'Other' }
+];
 
 const getInitialForm = () => ({
   party: '',
@@ -43,6 +50,23 @@ export default function SaleReturn() {
   const [search, setSearch] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState(getInitialForm());
+  const partyInputRef = useRef(null);
+  const methodInputRef = useRef(null);
+  const partySectionRef = useRef(null);
+  const methodSectionRef = useRef(null);
+  const [partyQuery, setPartyQuery] = useState('');
+  const [methodQuery, setMethodQuery] = useState(PAYMENT_METHOD_OPTIONS[0].label);
+  const [partyListIndex, setPartyListIndex] = useState(-1);
+  const [methodListIndex, setMethodListIndex] = useState(0);
+  const [isPartySectionActive, setIsPartySectionActive] = useState(false);
+  const [isMethodSectionActive, setIsMethodSectionActive] = useState(false);
+  const getInlineFieldClass = (tone = 'indigo') => {
+    const focusTone = tone === 'emerald'
+      ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
+      : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
+    return `flex-1 min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 transition-all placeholder:font-normal placeholder:text-gray-400 focus:outline-none ${focusTone}`;
+  };
+  const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
   useEffect(() => {
     fetchEntries();
@@ -64,6 +88,16 @@ export default function SaleReturn() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!showForm) return;
+
+    const timer = setTimeout(() => {
+      partyInputRef.current?.focus();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [showForm]);
 
   const fetchEntries = async () => {
     try {
@@ -92,13 +126,305 @@ export default function SaleReturn() {
     [entries]
   );
 
+  const selectedPartyName = useMemo(() => {
+    const selectedParty = parties.find(
+      (party) => String(party._id || '') === String(formData.party || '')
+    );
+    return selectedParty?.name || selectedParty?.partyName || '';
+  }, [formData.party, parties]);
+
+  const selectedMethodLabel = useMemo(() => {
+    const selectedOption = PAYMENT_METHOD_OPTIONS.find(
+      (option) => option.value === String(formData.method || 'cash').trim().toLowerCase()
+    );
+    return selectedOption?.label || PAYMENT_METHOD_OPTIONS[0].label;
+  }, [formData.method]);
+
+  const getMatchingParties = (queryValue) => {
+    const normalized = normalizeText(queryValue);
+    if (!normalized) return parties;
+
+    const startsWith = parties.filter((party) => normalizeText(party.name || party.partyName).startsWith(normalized));
+    const includes = parties.filter((party) => (
+      !normalizeText(party.name || party.partyName).startsWith(normalized)
+      && normalizeText(party.name || party.partyName).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  };
+
+  const filteredParties = useMemo(
+    () => getMatchingParties(partyQuery),
+    [parties, partyQuery]
+  );
+
+  const partyOptions = useMemo(() => {
+    const normalizedQuery = normalizeText(partyQuery);
+    const normalizedSelectedName = normalizeText(selectedPartyName);
+
+    if (
+      isPartySectionActive
+      && normalizedQuery
+      && normalizedQuery === normalizedSelectedName
+    ) {
+      return parties;
+    }
+
+    return filteredParties;
+  }, [filteredParties, isPartySectionActive, parties, partyQuery, selectedPartyName]);
+
+  const filteredMethodOptions = useMemo(() => {
+    const normalized = normalizeText(methodQuery);
+    const normalizedSelectedMethod = normalizeText(selectedMethodLabel);
+
+    if (
+      isMethodSectionActive
+      && normalized
+      && normalized === normalizedSelectedMethod
+    ) {
+      return PAYMENT_METHOD_OPTIONS;
+    }
+
+    if (!normalized) return PAYMENT_METHOD_OPTIONS;
+
+    const startsWith = PAYMENT_METHOD_OPTIONS.filter((option) => normalizeText(option.label).startsWith(normalized));
+    const includes = PAYMENT_METHOD_OPTIONS.filter((option) => (
+      !normalizeText(option.label).startsWith(normalized)
+      && normalizeText(option.label).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  }, [isMethodSectionActive, methodQuery, selectedMethodLabel]);
+
+  const partyDropdownStyle = useFloatingDropdownPosition(
+    partySectionRef,
+    isPartySectionActive,
+    [partyOptions.length, partyListIndex]
+  );
+
+  const methodDropdownStyle = useFloatingDropdownPosition(
+    methodSectionRef,
+    isMethodSectionActive,
+    [filteredMethodOptions.length, methodListIndex],
+    'down',
+    'viewport'
+  );
+
+  useEffect(() => {
+    if (!showForm) return;
+
+    if (partyOptions.length === 0) {
+      setPartyListIndex(-1);
+      return;
+    }
+
+    setPartyListIndex((prev) => {
+      if (prev < 0) return isPartySectionActive ? 0 : -1;
+      if (prev >= partyOptions.length) return partyOptions.length - 1;
+      return prev;
+    });
+  }, [isPartySectionActive, partyOptions, showForm]);
+
+  useEffect(() => {
+    if (!showForm) {
+      setMethodQuery(selectedMethodLabel);
+      setMethodListIndex(0);
+      setIsMethodSectionActive(false);
+      return;
+    }
+
+    const selectedIndex = filteredMethodOptions.findIndex(
+      (option) => option.label === selectedMethodLabel
+    );
+    setMethodListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  }, [filteredMethodOptions, selectedMethodLabel, showForm]);
+
+  const findExactParty = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return parties.find((party) => normalizeText(party.name || party.partyName) === normalized) || null;
+  };
+
+  const findBestPartyMatch = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return parties.find((party) => normalizeText(party.name || party.partyName).startsWith(normalized))
+      || parties.find((party) => normalizeText(party.name || party.partyName).includes(normalized))
+      || null;
+  };
+
+  const findExactMethod = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return PAYMENT_METHOD_OPTIONS.find((option) => normalizeText(option.label) === normalized) || null;
+  };
+
+  const selectParty = (party) => {
+    if (!party) {
+      setPartyQuery('');
+      setFormData((prev) => ({ ...prev, party: '' }));
+      setPartyListIndex(-1);
+      return;
+    }
+
+    const partyName = party.name || party.partyName || 'Party';
+    setPartyQuery(partyName);
+    setFormData((prev) => ({ ...prev, party: party._id }));
+    const selectedIndex = getMatchingParties(partyName).findIndex((item) => String(item._id) === String(party._id));
+    setPartyListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  };
+
+  const selectMethod = (option) => {
+    if (!option) return;
+
+    setMethodQuery(option.label);
+    setFormData((prev) => ({ ...prev, method: option.value }));
+    setMethodListIndex(
+      Math.max(filteredMethodOptions.findIndex((item) => item.value === option.value), 0)
+    );
+    setIsMethodSectionActive(false);
+  };
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handlePartyInputChange = (event) => {
+    const value = event.target.value;
+    setPartyQuery(value);
+
+    if (!normalizeText(value)) {
+      selectParty(null);
+      return;
+    }
+
+    const exactParty = findExactParty(value);
+    if (exactParty) {
+      setFormData((prev) => ({ ...prev, party: exactParty._id }));
+      const exactIndex = getMatchingParties(value).findIndex((item) => String(item._id) === String(exactParty._id));
+      setPartyListIndex(exactIndex >= 0 ? exactIndex : 0);
+      return;
+    }
+
+    const matches = getMatchingParties(value);
+    const firstMatch = matches[0] || null;
+    setFormData((prev) => ({ ...prev, party: firstMatch?._id || '' }));
+    setPartyListIndex(firstMatch ? 0 : -1);
+  };
+
+  const handleMethodInputChange = (event) => {
+    const value = event.target.value;
+    setMethodQuery(value);
+    setIsMethodSectionActive(true);
+
+    const exactMatch = findExactMethod(value);
+    if (exactMatch) {
+      setFormData((prev) => ({ ...prev, method: exactMatch.value }));
+    }
+  };
+
+  const handlePartyInputKeyDown = (event) => {
+    const key = event.key?.toLowerCase();
+
+    if (key === 'arrowdown') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsPartySectionActive(true);
+      if (partyOptions.length === 0) return;
+      setPartyListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, partyOptions.length - 1);
+      });
+      return;
+    }
+
+    if (key === 'arrowup') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsPartySectionActive(true);
+      if (partyOptions.length === 0) return;
+      setPartyListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (key === 'enter') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const activeParty = partyListIndex >= 0 ? partyOptions[partyListIndex] : null;
+      const matchedParty = activeParty || findExactParty(partyQuery) || findBestPartyMatch(partyQuery);
+      if (matchedParty) {
+        selectParty(matchedParty);
+      }
+      setIsPartySectionActive(false);
+    }
+  };
+
+  const handleMethodInputKeyDown = (event) => {
+    const key = event.key?.toLowerCase();
+
+    if (key === 'arrowdown') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsMethodSectionActive(true);
+      if (filteredMethodOptions.length === 0) return;
+      setMethodListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredMethodOptions.length - 1);
+      });
+      return;
+    }
+
+    if (key === 'arrowup') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsMethodSectionActive(true);
+      if (filteredMethodOptions.length === 0) return;
+      setMethodListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (key === 'escape' && isMethodSectionActive) {
+      event.preventDefault();
+      event.stopPropagation();
+      setMethodQuery(selectedMethodLabel);
+      setIsMethodSectionActive(false);
+      return;
+    }
+
+    if (key === 'enter') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!isMethodSectionActive) {
+        setIsMethodSectionActive(true);
+        return;
+      }
+
+      const activeOption = methodListIndex >= 0 ? filteredMethodOptions[methodListIndex] : null;
+      const exactMatch = findExactMethod(methodQuery);
+      const matchedOption = activeOption || exactMatch || filteredMethodOptions[0] || PAYMENT_METHOD_OPTIONS[0];
+      if (matchedOption) {
+        selectMethod(matchedOption);
+      }
+    }
+  };
+
   const handleOpenForm = () => {
     setFormData(getInitialForm());
+    setPartyQuery('');
+    setPartyListIndex(-1);
+    setIsPartySectionActive(false);
+    setMethodQuery(PAYMENT_METHOD_OPTIONS[0].label);
+    setMethodListIndex(0);
+    setIsMethodSectionActive(false);
     setError('');
     setShowForm(true);
   };
@@ -106,6 +432,12 @@ export default function SaleReturn() {
   const handleCloseForm = () => {
     setShowForm(false);
     setFormData(getInitialForm());
+    setPartyQuery('');
+    setPartyListIndex(-1);
+    setIsPartySectionActive(false);
+    setMethodQuery(PAYMENT_METHOD_OPTIONS[0].label);
+    setMethodListIndex(0);
+    setIsMethodSectionActive(false);
   };
 
   const handleSubmit = async (event) => {
@@ -264,28 +596,37 @@ export default function SaleReturn() {
 
         {showForm && (
           <div
-            className="fixed inset-0 z-50 flex items-stretch justify-start bg-black/60 p-1.5 backdrop-blur-[1.5px] sm:p-2"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 backdrop-blur-[1.5px] md:p-4"
             onClick={handleCloseForm}
           >
             <div
-              className="flex h-full w-full flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:w-[78vw] md:rounded-2xl"
+              className="flex max-h-[92vh] w-full max-w-[44rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl"
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="flex shrink-0 items-center justify-between border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-2 text-white md:px-4 md:py-2.5">
-                <div>
-                  <h2 className="text-lg font-bold md:text-2xl">Sale Return Voucher</h2>
-                  <p className="mt-1 text-xs text-cyan-100 md:text-sm">
-                    Select the party, enter return accounts, and save the sale return voucher.
-                  </p>
+              <div className="flex-shrink-0 border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-1.5 text-white md:px-4 md:py-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20 text-white ring-1 ring-white/30 md:h-8 md:w-8">
+                      <RotateCcw className="h-4 w-4 md:h-5 md:w-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold md:text-xl">Sale Return Voucher</h2>
+                      <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">
+                        Create sale return entries in the same popup style as stock items.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCloseForm}
+                    className="rounded-lg p-1.5 text-white transition hover:bg-white/25 md:p-2"
+                    aria-label="Close popup"
+                  >
+                    <svg className="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCloseForm}
-                  className="rounded-lg p-1.5 text-white transition hover:bg-white/25 md:p-2"
-                  aria-label="Close popup"
-                >
-                  &times;
-                </button>
               </div>
 
               <form
@@ -294,124 +635,284 @@ export default function SaleReturn() {
                 className="flex flex-1 flex-col overflow-hidden"
               >
                 <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
-                  <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-[minmax(0,0.95fr)_1px_minmax(0,1.35fr)]">
+                  <div className="flex flex-col gap-3 md:gap-4">
                     <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
-                      <h3 className="mb-4 text-base font-bold text-gray-800 md:text-lg">Voucher Details</h3>
+                      <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs text-white md:h-8 md:w-8 md:text-sm">1</span>
+                        Voucher Details
+                      </h3>
                       <div className="space-y-4">
-                        <div>
-                          <label className="mb-1 block text-sm font-semibold text-slate-700">Party *</label>
-                          <select
-                            name="party"
-                            value={formData.party}
-                            onChange={handleChange}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                          <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Party *</label>
+                          <div
+                            ref={partySectionRef}
+                            className="relative flex-1 min-w-0"
+                            onFocusCapture={() => {
+                              const selectedIndex = partyOptions.findIndex(
+                                (party) => String(party?._id || '') === String(formData.party || '')
+                              );
+                              setIsMethodSectionActive(false);
+                              setIsPartySectionActive(true);
+                              setPartyListIndex(selectedIndex >= 0 ? selectedIndex : (partyOptions.length > 0 ? 0 : -1));
+                            }}
+                            onBlurCapture={(event) => {
+                              const nextFocused = event.relatedTarget;
+                              if (
+                                partySectionRef.current
+                                && nextFocused instanceof Node
+                                && partySectionRef.current.contains(nextFocused)
+                              ) {
+                                return;
+                              }
+                              setIsPartySectionActive(false);
+                            }}
                           >
-                            <option value="">Select party</option>
-                            {parties.map((party) => (
-                              <option key={party._id} value={party._id}>
-                                {party.name || party.partyName || 'Party'}
-                              </option>
-                            ))}
-                          </select>
+                            <div className="relative">
+                              <input
+                                ref={partyInputRef}
+                                type="text"
+                                value={partyQuery}
+                                onChange={handlePartyInputChange}
+                                onKeyDown={handlePartyInputKeyDown}
+                                className={`${getInlineFieldClass('indigo')} pr-10`}
+                                placeholder="Type party..."
+                                autoComplete="off"
+                              />
+                              <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-indigo-500 transition-transform ${isPartySectionActive ? 'rotate-180' : ''}`} />
+                            </div>
+
+                            {isPartySectionActive && partyDropdownStyle && (
+                              <div
+                                className="fixed z-[90] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                                style={partyDropdownStyle}
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Party List</span>
+                                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                    {partyOptions.length}
+                                  </span>
+                                </div>
+                                <div className="overflow-y-auto py-1" style={{ maxHeight: partyDropdownStyle.maxHeight }}>
+                                  {partyOptions.length === 0 ? (
+                                    <div className="px-3 py-3 text-center text-[13px] text-slate-500">
+                                      No parties found.
+                                    </div>
+                                  ) : (
+                                    partyOptions.map((party, index) => {
+                                      const isActive = index === partyListIndex;
+                                      const isSelected = String(formData.party || '') === String(party._id);
+                                      const partyName = party.name || party.partyName || 'Party';
+
+                                      return (
+                                        <button
+                                          key={party._id}
+                                          type="button"
+                                          onMouseDown={(event) => event.preventDefault()}
+                                          onMouseEnter={() => setPartyListIndex(index)}
+                                          onClick={() => {
+                                            selectParty(party);
+                                            setIsPartySectionActive(false);
+                                          }}
+                                          className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                            isActive
+                                              ? 'bg-yellow-200 text-amber-950'
+                                              : isSelected
+                                              ? 'bg-yellow-50 text-amber-800'
+                                              : 'text-slate-700 hover:bg-amber-50'
+                                          }`}
+                                        >
+                                          <span className="truncate font-medium">{partyName}</span>
+                                          {isSelected && (
+                                            <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                              Selected
+                                            </span>
+                                          )}
+                                        </button>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="mb-1 block text-sm font-semibold text-slate-700">Voucher Date</label>
+                        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                          <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Voucher Date</label>
                           <input
                             type="date"
                             name="voucherDate"
                             value={formData.voucherDate}
                             onChange={handleChange}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                            className={getInlineFieldClass('indigo')}
                           />
                         </div>
 
-                        <div>
-                          <label className="mb-1 block text-sm font-semibold text-slate-700">Amount *</label>
+                        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                          <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Amount *</label>
                           <input
                             type="number"
                             name="amount"
                             value={formData.amount}
                             onChange={handleChange}
                             step="0.01"
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                            className={getInlineFieldClass('indigo')}
                             placeholder="Enter return amount"
                           />
                         </div>
 
-                        <div>
-                          <label className="mb-1 block text-sm font-semibold text-slate-700">Reference No</label>
+                        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                          <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Reference No</label>
                           <input
                             type="text"
                             name="referenceNo"
                             value={formData.referenceNo}
                             onChange={handleChange}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+                            className={getInlineFieldClass('indigo')}
                             placeholder="Optional reference number"
                           />
                         </div>
                       </div>
                     </div>
 
-                    <div className="hidden w-px bg-slate-300 lg:block" aria-hidden="true"></div>
-
                     <div className="rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-green-50 to-emerald-50 p-2.5 md:p-4">
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <h3 className="text-base font-bold text-gray-800 md:text-lg">Return Posting</h3>
+                      <div className="mb-3 flex items-center justify-between gap-3 md:mb-4">
+                        <h3 className="flex items-center gap-2 text-base font-bold text-gray-800 md:text-lg">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs text-white md:h-8 md:w-8 md:text-sm">2</span>
+                          Return Posting
+                        </h3>
                         <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
                           Amount: {formatCurrency(formData.amount || 0)}
                         </div>
                       </div>
 
                       <div className="space-y-4">
-                        <div>
-                          <label className="mb-1 block text-sm font-semibold text-slate-700">Debit Account *</label>
+                        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                          <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Debit Account *</label>
                           <input
                             type="text"
                             name="debitAccount"
                             value={formData.debitAccount}
                             onChange={handleChange}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                            className={getInlineFieldClass('emerald')}
                             placeholder="Enter debit account"
                           />
                         </div>
 
-                        <div>
-                          <label className="mb-1 block text-sm font-semibold text-slate-700">Credit Account *</label>
+                        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                          <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Credit Account *</label>
                           <input
                             type="text"
                             name="creditAccount"
                             value={formData.creditAccount}
                             onChange={handleChange}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                            className={getInlineFieldClass('emerald')}
                             placeholder="Enter credit account"
                           />
                         </div>
 
-                        <div>
-                          <label className="mb-1 block text-sm font-semibold text-slate-700">Method</label>
-                          <select
-                            name="method"
-                            value={formData.method}
-                            onChange={handleChange}
-                            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                        <div className="flex flex-col gap-2 md:flex-row md:items-center">
+                          <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Method</label>
+                          <div
+                            ref={methodSectionRef}
+                            className="relative flex-1 min-w-0"
+                            onBlurCapture={(event) => {
+                              const nextFocused = event.relatedTarget;
+                              if (
+                                methodSectionRef.current
+                                && nextFocused instanceof Node
+                                && methodSectionRef.current.contains(nextFocused)
+                              ) {
+                                return;
+                              }
+                              setMethodQuery(selectedMethodLabel);
+                              setIsMethodSectionActive(false);
+                            }}
                           >
-                            {PAYMENT_METHODS.map((method) => (
-                              <option key={method} value={method}>
-                                {method.toUpperCase()}
-                              </option>
-                            ))}
-                          </select>
+                            <div className="relative">
+                              <input
+                                ref={methodInputRef}
+                                type="text"
+                                value={methodQuery}
+                                onChange={handleMethodInputChange}
+                                onFocus={() => {
+                                  const selectedIndex = filteredMethodOptions.findIndex(
+                                    (option) => option.value === String(formData.method || 'cash').trim().toLowerCase()
+                                  );
+                                  setIsPartySectionActive(false);
+                                  setIsMethodSectionActive(true);
+                                  setMethodListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+                                }}
+                                onKeyDown={handleMethodInputKeyDown}
+                                className={`${getInlineFieldClass('emerald')} pr-10`}
+                                placeholder="Select method..."
+                                autoComplete="off"
+                              />
+                              <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500 transition-transform ${isMethodSectionActive ? 'rotate-180' : ''}`} />
+                            </div>
+
+                            {isMethodSectionActive && methodDropdownStyle && (
+                              <div
+                                className="fixed z-[90] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                                style={methodDropdownStyle}
+                                onClick={(event) => event.stopPropagation()}
+                              >
+                                <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                                  <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Method List</span>
+                                  <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                    {filteredMethodOptions.length}
+                                  </span>
+                                </div>
+                                <div className="overflow-y-auto py-1" style={{ maxHeight: methodDropdownStyle.maxHeight }}>
+                                  {filteredMethodOptions.length === 0 ? (
+                                    <div className="px-3 py-3 text-center text-[13px] text-slate-500">
+                                      No matching methods found.
+                                    </div>
+                                  ) : (
+                                    filteredMethodOptions.map((option, index) => {
+                                      const isActive = index === methodListIndex;
+                                      const isSelected = String(formData.method || 'cash') === String(option.value);
+
+                                      return (
+                                        <button
+                                          key={option.value}
+                                          type="button"
+                                          onMouseDown={(event) => event.preventDefault()}
+                                          onMouseEnter={() => setMethodListIndex(index)}
+                                          onClick={() => selectMethod(option)}
+                                          className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                            isActive
+                                              ? 'bg-yellow-200 text-amber-950'
+                                              : isSelected
+                                              ? 'bg-yellow-50 text-amber-800'
+                                              : 'text-slate-700 hover:bg-amber-50'
+                                          }`}
+                                        >
+                                          <span className="truncate font-medium">{option.label}</span>
+                                          {isSelected && (
+                                            <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                              Selected
+                                            </span>
+                                          )}
+                                        </button>
+                                      );
+                                    })
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
-                        <div>
-                          <label className="mb-1 block text-sm font-semibold text-slate-700">Notes</label>
+                        <div className="flex flex-col gap-2 md:flex-row md:items-start">
+                          <label className="w-32 shrink-0 pt-2 text-xs font-semibold text-gray-700 md:text-sm">Notes</label>
                           <textarea
                             name="notes"
                             value={formData.notes}
                             onChange={handleChange}
                             rows="4"
-                            className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                            className={`${getInlineFieldClass('emerald')} resize-none py-2.5 font-medium text-slate-700`}
                             placeholder="Reason for sale return or additional note"
                           />
                         </div>
@@ -420,24 +921,35 @@ export default function SaleReturn() {
                   </div>
                 </div>
 
-                <div className="flex shrink-0 flex-col items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-3 py-2.5 md:flex-row md:px-4 md:py-3">
-                  <div className="text-sm font-semibold text-slate-700">
-                    Return Total: <span className="text-emerald-700">{formatCurrency(formData.amount || 0)}</span>
+                <div className="flex shrink-0 flex-col items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2 md:flex-row md:px-4">
+                  <div className="text-[11px] text-gray-600 md:text-xs">
+                    <kbd className="rounded bg-gray-200 px-2 py-1 text-xs font-mono">Esc</kbd> to close
+                    <span className="ml-3 text-sm font-semibold text-slate-700">
+                      Return Total: <span className="text-emerald-700">{formatCurrency(formData.amount || 0)}</span>
+                    </span>
                   </div>
-                  <div className="flex w-full gap-2 md:w-auto md:gap-3">
+                  <div className="flex w-full gap-2 md:w-auto">
                     <button
                       type="button"
                       onClick={handleCloseForm}
-                      className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-6"
+                      className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={saving}
-                      className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2 font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-8"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-1.5 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
                     >
-                      {saving ? 'Saving...' : 'Save Sale Return'}
+                      {saving ? (
+                        <>
+                          <svg className="h-5 w-5 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Saving...
+                        </>
+                      ) : 'Save Sale Return'}
                     </button>
                   </div>
                 </div>

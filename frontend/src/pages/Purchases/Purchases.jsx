@@ -923,34 +923,36 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         </div>
       )}
 
-      <div className="mb-5 mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
-        <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
-          <div className="flex items-start justify-between gap-2">
+      <div className="mb-4 mt-1 grid grid-cols-2 gap-2.5">
+        <div className="group relative overflow-hidden rounded-xl bg-white p-3 shadow-lg shadow-blue-500/10 ring-1 ring-slate-200/60 transition-all hover:shadow-xl hover:shadow-blue-500/20 sm:rounded-2xl sm:p-4">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 opacity-60"></div>
+          <div className="relative flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Purchases</p>
-              <p className="mt-1 sm:mt-2 text-base sm:text-2xl font-bold text-slate-800 leading-tight">{totalPurchases}</p>
+              <p className="text-[9px] sm:text-xs font-semibold text-slate-500 leading-tight">Total Purchases</p>
+              <p className="mt-1 sm:mt-2 text-sm sm:text-2xl font-bold text-slate-800 leading-tight">{totalPurchases}</p>
             </div>
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform group-hover:scale-110">
-              <ShoppingCart className="h-6 w-6" />
+            <div className="flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/30 transition-transform group-hover:scale-110">
+              <ShoppingCart className="h-4 w-4 sm:h-6 sm:w-6" />
             </div>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-80"></div>
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500"></div>
         </div>
 
-        <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
-          <div className="flex items-start justify-between gap-2">
+        <div className="group relative overflow-hidden rounded-xl bg-white p-3 shadow-lg shadow-emerald-500/10 ring-1 ring-slate-200/60 transition-all hover:shadow-xl hover:shadow-emerald-500/20 sm:rounded-2xl sm:p-4">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 opacity-60"></div>
+          <div className="relative flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Amount</p>
-              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
-                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
+              <p className="text-[9px] sm:text-xs font-semibold text-slate-500 leading-tight">Total Amount</p>
+              <p className="mt-1 sm:mt-2 text-[10px] sm:text-2xl font-bold text-slate-800 leading-tight">
+                <span className="text-[9px] sm:text-base text-slate-400 font-semibold mr-0.5">Rs</span>
                 {totalAmount.toFixed(2)}
               </p>
             </div>
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
-              <IndianRupee className="h-6 w-6" />
+            <div className="flex h-9 w-9 sm:h-12 sm:w-12 items-center justify-center rounded-lg sm:rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/30 transition-transform group-hover:scale-110">
+              <IndianRupee className="h-4 w-4 sm:h-6 sm:w-6" />
             </div>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80"></div>
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500"></div>
         </div>
 
       </div>
@@ -1038,8 +1040,109 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
           No purchases found. Create your first purchase!
         </div>
       ) : (
-        <div className="rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
-          <div className="overflow-x-auto">
+          <div className="rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
+          <div className="space-y-2.5 md:hidden">
+            {purchases.map((purchase) => (
+              <article
+                key={purchase._id}
+                className="overflow-hidden rounded-xl border border-slate-200/60 bg-white shadow-lg shadow-slate-200/40"
+              >
+                <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-3.5 py-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/80">
+                        PUR #{formatPurchaseNumber(purchase.purchaseNumber)}
+                      </p>
+                      <p className="mt-0.5 truncate text-xs font-semibold text-white">
+                        {purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || 'No supplier invoice'}
+                      </p>
+                    </div>
+                    <div className="rounded-lg bg-white/20 backdrop-blur-sm px-2.5 py-1.5 text-right">
+                      <p className="text-[8px] font-semibold uppercase tracking-[0.1em] text-white/90">Total</p>
+                      <p className="text-xs font-bold text-white">
+                        Rs {Number(purchase.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 px-3.5 py-2.5">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 px-2.5 py-1.5 border border-slate-200/50">
+                      <p className="text-[8px] font-semibold uppercase tracking-[0.1em] text-slate-500">Party</p>
+                      <p className="mt-0.5 truncate text-xs font-medium text-slate-800">{resolveLeadgerNameById(purchase.party)}</p>
+                    </div>
+                    <div className="rounded-lg bg-gradient-to-br from-slate-50 to-slate-100 px-2.5 py-1.5 border border-slate-200/50">
+                      <p className="text-[8px] font-semibold uppercase tracking-[0.1em] text-slate-500">Date</p>
+                      <p className="mt-0.5 text-xs font-medium text-slate-800">
+                        {new Date(purchase.purchaseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 px-2.5 py-2 border border-blue-100/50">
+                    <p className="text-[8px] font-semibold uppercase tracking-[0.1em] text-slate-500">Items</p>
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {purchase.items?.length ? (
+                        <>
+                          {purchase.items.slice(0, 2).map((item, index) => (
+                            <span
+                              key={`${purchase._id}-item-${index}`}
+                              className="rounded-full border border-blue-200 bg-white px-2 py-0.5 text-[10px] font-medium text-blue-700"
+                            >
+                              {item.productName}
+                            </span>
+                          ))}
+                          {purchase.items.length > 2 && (
+                            <span className="self-center text-[9px] font-medium text-slate-500">
+                              +{purchase.items.length - 2} more
+                            </span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-[10px] italic text-slate-400">No items</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    {purchase.invoiceLink ? (
+                      <a
+                        href={purchase.invoiceLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[10px] font-semibold text-blue-700 transition hover:bg-blue-100"
+                      >
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        Invoice
+                      </a>
+                    ) : (
+                      <span className="text-[10px] text-slate-400">No invoice</span>
+                    )}
+
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => handleEdit(purchase)}
+                        className="inline-flex items-center justify-center rounded-lg border border-blue-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(purchase._id)}
+                        className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
               <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                 <tr>
