@@ -113,9 +113,16 @@ export default function Vouchers() {
                       <ItemIcon />
                     </div>
 
-                    <span className={isActive ? 'font-semibold text-slate-800' : 'font-medium text-slate-700 group-hover:text-slate-900'}>
-                      {item.name}
-                    </span>
+                    <div className="min-w-0">
+                      <p className={isActive ? 'font-semibold text-slate-800' : 'font-medium text-slate-700 group-hover:text-slate-900'}>
+                        {item.name}
+                      </p>
+                      {item.hint && (
+                        <p className={isActive ? 'text-[10px] font-medium text-slate-500' : 'text-[10px] font-medium text-slate-400 group-hover:text-slate-500'}>
+                          {item.hint}
+                        </p>
+                      )}
+                    </div>
                   </Link>
                 );
               })}
