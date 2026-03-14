@@ -9,8 +9,7 @@ export default function Unit() {
 
   const initialFormData = {
     name: '',
-    description: '',
-    isActive: true
+    description: ''
   };
 
   const [units, setUnits] = useState([]);
@@ -63,12 +62,25 @@ export default function Unit() {
     }
   };
 
+  const getInlineFieldClass = (tone = 'indigo') => {
+    const focusTone = tone === 'emerald'
+      ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
+      : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
+    return `flex-1 min-w-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 transition-all placeholder:font-normal placeholder:text-gray-400 focus:outline-none ${focusTone}`;
+  };
+
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
+  };
+
+  const handleDescriptionKeyDown = (event) => {
+    if (event.key !== 'Enter' || event.shiftKey || loading) return;
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
   };
 
   const handleSubmit = async (e) => {
@@ -102,8 +114,7 @@ export default function Unit() {
   const handleEdit = (unit) => {
     setFormData({
       name: unit.name || '',
-      description: unit.description || '',
-      isActive: Boolean(unit.isActive)
+      description: unit.description || ''
     });
     setEditingId(unit._id);
     setShowForm(true);
@@ -189,31 +200,33 @@ export default function Unit() {
         </div>
 
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-stretch justify-start bg-black/60 p-1.5 backdrop-blur-[1.5px] sm:p-2" onClick={handleCancel}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 backdrop-blur-[1.5px] md:p-4" onClick={handleCancel}>
             <div
-              className="flex h-full w-full flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:w-[68vw] md:rounded-2xl"
+              className="flex max-h-[92vh] w-full max-w-[35rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex shrink-0 items-center justify-between border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-2 text-white md:px-4 md:py-2.5">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white/20 text-white ring-1 ring-white/30">
-                    <Boxes className="h-5 w-5" />
+              <div className="flex-shrink-0 border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-1.5 text-white md:px-4 md:py-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20 text-white ring-1 ring-white/30 md:h-8 md:w-8">
+                      <Boxes className="h-4 w-4 md:h-5 md:w-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-base font-bold md:text-xl">{editingId ? 'Edit Unit' : 'Add New Unit'}</h2>
+                      <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">Create or update unit details in a clean accounting format.</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-lg font-bold md:text-2xl">{editingId ? 'Edit Unit' : 'Add New Unit'}</h2>
-                    <p className="mt-1 text-xs text-cyan-100 md:text-sm">Manage unit name, description, and active status in the same entry flow.</p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="rounded-lg p-1.5 text-white transition hover:bg-white/25 md:p-2"
+                    aria-label="Close popup"
+                  >
+                    <svg className="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={handleCancel}
-                  className="rounded-lg p-1.5 text-white transition hover:bg-white/25 md:p-2"
-                  aria-label="Close popup"
-                >
-                  <svg className="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
               </div>
 
               <form
@@ -223,16 +236,16 @@ export default function Unit() {
                 className="flex flex-1 flex-col overflow-hidden"
               >
                 <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
-                  <div className="grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-[minmax(0,1fr)_1px_minmax(0,0.9fr)]">
+                  <div className="flex flex-col gap-3 md:gap-4">
                     <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
                       <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs text-white md:h-8 md:w-8 md:text-sm">1</span>
                         Unit Details
                       </h3>
 
-                      <div className="grid grid-cols-1 gap-3 md:gap-4">
-                        <div className="flex flex-col gap-2 md:flex-row md:items-center md:gap-3">
-                          <label htmlFor="unit-name" className="shrink-0 text-xs font-semibold text-gray-700 md:w-36 md:text-sm">
+                      <div className="space-y-3 md:space-y-4">
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="unit-name" className="mb-0 w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">
                             Unit Name <span className="text-red-500">*</span>
                           </label>
                           <input
@@ -242,15 +255,15 @@ export default function Unit() {
                             value={formData.name}
                             onChange={handleInputChange}
                             ref={nameInputRef}
-                            className="min-w-0 flex-1 rounded-lg border border-transparent bg-transparent px-3 py-2 text-sm font-bold text-gray-900 transition-all placeholder:font-normal placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                            className={getInlineFieldClass('indigo')}
                             placeholder="Enter unit name (e.g. pcs, kg)"
                             autoFocus
                             required
                           />
                         </div>
 
-                        <div className="flex flex-col gap-2 md:flex-row md:items-start md:gap-3">
-                          <label htmlFor="unit-description" className="shrink-0 pt-0.5 text-xs font-semibold text-gray-700 md:w-36 md:text-sm">
+                        <div className="flex items-start gap-2">
+                          <label htmlFor="unit-description" className="mb-0 w-32 shrink-0 pt-2 text-xs font-semibold text-gray-700 md:text-sm">
                             Description
                           </label>
                           <textarea
@@ -258,51 +271,27 @@ export default function Unit() {
                             name="description"
                             value={formData.description}
                             onChange={handleInputChange}
-                            className="min-w-0 flex-1 resize-none rounded-lg border border-transparent bg-transparent px-3 py-2 text-sm font-bold text-gray-900 transition-all placeholder:font-normal placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                            onKeyDown={handleDescriptionKeyDown}
+                            className={`${getInlineFieldClass('emerald')} min-h-0 resize-none`}
                             placeholder="Enter description"
-                            rows="4"
+                            rows="1"
                           />
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="hidden w-px bg-slate-300 lg:block" aria-hidden="true"></div>
-
-                    <div className="rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-green-50 to-emerald-50 p-2.5 md:p-4">
-                      <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs text-white md:h-8 md:w-8 md:text-sm">2</span>
-                        Status
-                      </h3>
-
-                      <div className="rounded-2xl border border-emerald-200 bg-white/80 p-4 shadow-sm">
-                        <label className="flex items-center justify-between gap-4">
-                          <div>
-                            <p className="text-sm font-semibold text-slate-800">Active Unit</p>
-                            <p className="mt-1 text-xs text-slate-500">Disable this only when the unit should no longer appear in active records.</p>
-                          </div>
-                          <input
-                            type="checkbox"
-                            name="isActive"
-                            checked={Boolean(formData.isActive)}
-                            onChange={handleInputChange}
-                            className="h-5 w-5 rounded text-blue-600 focus:ring-2 focus:ring-emerald-200"
-                          />
-                        </label>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex shrink-0 flex-col items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-3 py-2.5 md:flex-row md:px-4 md:py-3">
-                  <div className="text-xs text-gray-600 md:text-sm">
+                <div className="flex shrink-0 flex-col items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2 md:flex-row md:px-4">
+                  <div className="text-[11px] text-gray-600 md:text-xs">
                     <kbd className="rounded bg-gray-200 px-2 py-1 font-mono text-xs">Esc</kbd> to close
                   </div>
 
-                  <div className="flex w-full gap-2 md:w-auto md:gap-3">
+                  <div className="flex w-full gap-2 md:w-auto">
                     <button
                       type="button"
                       onClick={handleCancel}
-                      className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-6"
+                      className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5"
                     >
                       Cancel
                     </button>
@@ -311,7 +300,7 @@ export default function Unit() {
                       type="submit"
                       form="unit-form"
                       disabled={loading}
-                      className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-2 font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-8"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-1.5 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
                     >
                       {loading ? 'Saving...' : editingId ? 'Update Unit' : 'Save Unit'}
                     </button>

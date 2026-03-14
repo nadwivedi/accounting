@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 
-export const useFloatingDropdownPosition = (anchorRef, isOpen, dependencyValues = []) => {
+export const useFloatingDropdownPosition = (
+  anchorRef,
+  isOpen,
+  dependencyValues = [],
+  preferredDirection = 'auto',
+  heightMode = 'compact'
+) => {
   const [style, setStyle] = useState(null);
 
   useEffect(() => {
@@ -22,11 +28,15 @@ export const useFloatingDropdownPosition = (anchorRef, isOpen, dependencyValues 
       );
       const spaceBelow = window.innerHeight - rect.bottom - viewportPadding;
       const spaceAbove = rect.top - viewportPadding;
-      const shouldOpenUp = spaceBelow < 240 && spaceAbove > spaceBelow;
-      const maxHeight = Math.max(
-        180,
-        Math.min(estimatedHeight, shouldOpenUp ? spaceAbove - 8 : spaceBelow - 8)
-      );
+      const shouldOpenUp = preferredDirection === 'up'
+        ? true
+        : preferredDirection === 'down'
+        ? false
+        : spaceBelow < 240 && spaceAbove > spaceBelow;
+      const availableHeight = Math.max(96, (shouldOpenUp ? spaceAbove : spaceBelow) - 8);
+      const maxHeight = heightMode === 'viewport'
+        ? availableHeight
+        : Math.min(estimatedHeight, availableHeight);
 
       setStyle({
         left: clampedLeft,
@@ -45,7 +55,7 @@ export const useFloatingDropdownPosition = (anchorRef, isOpen, dependencyValues 
       window.removeEventListener('resize', updatePosition);
       window.removeEventListener('scroll', updatePosition, true);
     };
-  }, [anchorRef, isOpen, ...dependencyValues]);
+  }, [anchorRef, isOpen, preferredDirection, heightMode, ...dependencyValues]);
 
   return style;
 };

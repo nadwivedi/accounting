@@ -129,10 +129,15 @@ exports.updateUnit = async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
     const { name, description, isActive } = req.body;
+    const updateData = { name, description };
+
+    if (isActive !== undefined) {
+      updateData.isActive = isActive;
+    }
 
     const unit = await Unit.findOneAndUpdate(
       { _id: id, userId },
-      { name, description, isActive },
+      updateData,
       { new: true, runValidators: true }
     );
 
