@@ -1,12 +1,24 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getSectionConfig } from '../navigation/sectionMenu';
 
 export default function Vouchers() {
+  const location = useLocation();
   const navigate = useNavigate();
   const config = getSectionConfig('Vouchers');
   const items = useMemo(() => config?.items || [], [config]);
   const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const activePath = location.state?.activePath;
+    if (!activePath || items.length === 0) {
+      setActiveIndex(0);
+      return;
+    }
+
+    const nextIndex = items.findIndex((item) => item.path === activePath);
+    setActiveIndex(nextIndex >= 0 ? nextIndex : 0);
+  }, [items, location.state]);
 
   useEffect(() => {
     const isTypingTarget = (target) => {

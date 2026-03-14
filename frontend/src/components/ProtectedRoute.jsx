@@ -123,7 +123,12 @@ export default function ProtectedRoute({ children }) {
 
       event.preventDefault();
       if (sectionHubPath && location.pathname !== sectionHubPath) {
-        navigate(sectionHubPath, { replace: true });
+        navigate(sectionHubPath, {
+          replace: true,
+          state: {
+            activePath: homeNavigationState.path
+          }
+        });
         return;
       }
 
