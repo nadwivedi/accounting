@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const StockGroup = require('../models/master/StockGroup');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -66,6 +67,17 @@ exports.register = async (req, res) => {
       department,
       isActive: true
     });
+
+    try {
+      await StockGroup.create({
+        userId: user._id,
+        name: 'Primary',
+        description: 'Default stock group'
+      });
+    } catch (stockGroupError) {
+      await User.findByIdAndDelete(user._id);
+      throw stockGroupError;
+    }
 
     const token = generateToken(user._id);
 

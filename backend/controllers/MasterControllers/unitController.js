@@ -1,7 +1,7 @@
 ﻿const Unit = require('../../models/master/Unit');
 const Product = require('../../models/master/Stock');
 
-const DEFAULT_UNITS = ['pcs', 'kg', 'g', 'ltr', 'ml', 'box', 'hrs', 'minutes'];
+const DEFAULT_UNITS = ['pcs', 'kg', 'g', 'ltr', 'ml', 'ton', 'hrs', 'minutes'];
 
 const isDuplicateUnitNameError = (error) => (
   error?.code === 11000 && (

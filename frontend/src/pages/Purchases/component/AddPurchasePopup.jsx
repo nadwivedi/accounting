@@ -52,13 +52,13 @@ export default function AddPurchasePopup({
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
   const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex]);
 
-  if (!showForm) return null;
-
   useEffect(() => {
     if (showForm) {
       setIsItemEntryClosed(false);
     }
   }, [showForm, editingId]);
+
+  if (!showForm) return null;
 
   const closeItemEntryRow = () => {
     selectProduct(null);

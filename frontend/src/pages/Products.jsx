@@ -1,9 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Package, PackageX, Pencil, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, Package, PackageX, Pencil, Search, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
+import { useFloatingDropdownPosition } from '../utils/useFloatingDropdownPosition';
+
+const TYPE_OF_SUPPLY_OPTIONS = [
+  { value: 'goods', label: 'Goods' },
+  { value: 'services', label: 'Services' }
+];
 
 export default function Products() {
   const toastOptions = { autoClose: 1200 };
@@ -33,11 +39,14 @@ export default function Products() {
   const [unitQuery, setUnitQuery] = useState(initialFormData.unit);
   const [unitListIndex, setUnitListIndex] = useState(-1);
   const [isUnitSectionActive, setIsUnitSectionActive] = useState(false);
+  const [typeOfSupplyQuery, setTypeOfSupplyQuery] = useState('Goods');
+  const [typeOfSupplyListIndex, setTypeOfSupplyListIndex] = useState(0);
   const [isTypeOfSupplyOpen, setIsTypeOfSupplyOpen] = useState(false);
   const nameInputRef = useRef(null);
   const unitInputRef = useRef(null);
   const minStockInputRef = useRef(null);
   const typeOfSupplyRef = useRef(null);
+  const typeOfSupplySectionRef = useRef(null);
   const stockGroupSectionRef = useRef(null);
   const unitSectionRef = useRef(null);
   const getInlineFieldClass = (tone = 'indigo') => {
@@ -142,18 +151,93 @@ export default function Products() {
     () => getMatchingStockGroups(stockGroupQuery),
     [availableStockGroups, stockGroupQuery]
   );
+  const selectedStockGroupName = useMemo(() => {
+    const selectedGroup = availableStockGroups.find(
+      (group) => String(group._id) === String(formData.stockGroup || '')
+    );
+    return selectedGroup?.name || '';
+  }, [availableStockGroups, formData.stockGroup]);
   const stockGroupOptions = useMemo(
-    () => (isStockGroupSectionActive ? availableStockGroups : filteredStockGroups),
-    [isStockGroupSectionActive, availableStockGroups, filteredStockGroups]
+    () => {
+      const normalizedQuery = normalizeText(stockGroupQuery);
+      const normalizedSelectedStockGroup = normalizeText(selectedStockGroupName);
+
+      if (
+        isStockGroupSectionActive
+        && normalizedQuery
+        && normalizedQuery === normalizedSelectedStockGroup
+      ) {
+        return availableStockGroups;
+      }
+
+      return filteredStockGroups;
+    },
+    [availableStockGroups, filteredStockGroups, isStockGroupSectionActive, selectedStockGroupName, stockGroupQuery]
   );
 
   const filteredUnits = useMemo(
     () => getMatchingUnits(unitQuery),
     [unitOptions, unitQuery]
   );
+  const selectedTypeOfSupplyLabel = useMemo(() => {
+    const selectedOption = TYPE_OF_SUPPLY_OPTIONS.find(
+      (option) => option.value === String(formData.typeOfSupply || 'goods').trim().toLowerCase()
+    );
+    return selectedOption?.label || TYPE_OF_SUPPLY_OPTIONS[0].label;
+  }, [formData.typeOfSupply]);
   const unitPanelOptions = useMemo(
-    () => (isUnitSectionActive ? unitOptions : filteredUnits),
-    [isUnitSectionActive, unitOptions, filteredUnits]
+    () => {
+      const normalizedQuery = normalizeText(unitQuery);
+      const normalizedSelectedUnit = normalizeText(formData.unit);
+
+      if (
+        isUnitSectionActive
+        && normalizedQuery
+        && normalizedQuery === normalizedSelectedUnit
+      ) {
+        return unitOptions;
+      }
+
+      return filteredUnits;
+    },
+    [filteredUnits, formData.unit, isUnitSectionActive, unitOptions]
+  );
+  const filteredTypeOfSupplyOptions = useMemo(() => {
+    const normalized = normalizeText(typeOfSupplyQuery);
+    const normalizedSelectedType = normalizeText(selectedTypeOfSupplyLabel);
+
+    if (
+      isTypeOfSupplyOpen
+      && normalized
+      && normalized === normalizedSelectedType
+    ) {
+      return TYPE_OF_SUPPLY_OPTIONS;
+    }
+
+    if (!normalized) return TYPE_OF_SUPPLY_OPTIONS;
+
+    const startsWith = TYPE_OF_SUPPLY_OPTIONS.filter((option) => normalizeText(option.label).startsWith(normalized));
+    const includes = TYPE_OF_SUPPLY_OPTIONS.filter((option) => (
+      !normalizeText(option.label).startsWith(normalized)
+      && normalizeText(option.label).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  }, [isTypeOfSupplyOpen, selectedTypeOfSupplyLabel, typeOfSupplyQuery]);
+  const stockGroupDropdownStyle = useFloatingDropdownPosition(
+    stockGroupSectionRef,
+    isStockGroupSectionActive,
+    [stockGroupOptions.length, stockGroupListIndex]
+  );
+  const typeOfSupplyDropdownStyle = useFloatingDropdownPosition(
+    typeOfSupplySectionRef,
+    isTypeOfSupplyOpen,
+    [filteredTypeOfSupplyOptions.length, typeOfSupplyListIndex]
+  );
+  const unitDropdownStyle = useFloatingDropdownPosition(
+    unitSectionRef,
+    isUnitSectionActive,
+    [unitPanelOptions.length, unitListIndex]
   );
 
   useEffect(() => {
@@ -187,6 +271,21 @@ export default function Products() {
   }, [showForm, unitPanelOptions, isUnitSectionActive]);
 
   useEffect(() => {
+    setTypeOfSupplyQuery(selectedTypeOfSupplyLabel);
+
+    if (!showForm) {
+      setTypeOfSupplyListIndex(0);
+      setIsTypeOfSupplyOpen(false);
+      return;
+    }
+
+    const selectedIndex = filteredTypeOfSupplyOptions.findIndex(
+      (option) => option.label === selectedTypeOfSupplyLabel
+    );
+    setTypeOfSupplyListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  }, [filteredTypeOfSupplyOptions, selectedTypeOfSupplyLabel, showForm]);
+
+  useEffect(() => {
     if (!showForm || editingId) return;
 
     const timer = setTimeout(() => {
@@ -204,20 +303,102 @@ export default function Products() {
     }));
   };
 
+  const selectTypeOfSupply = (option, moveNext = false) => {
+    if (!option) return;
+
+    setFormData((prev) => ({ ...prev, typeOfSupply: option.value }));
+    setTypeOfSupplyQuery(option.label);
+    setTypeOfSupplyListIndex(
+      Math.max(filteredTypeOfSupplyOptions.findIndex((item) => item.value === option.value), 0)
+    );
+    setIsTypeOfSupplyOpen(false);
+
+    if (moveNext) {
+      const form = typeOfSupplyRef.current?.form;
+      if (!(form instanceof HTMLFormElement)) return;
+
+      const fields = Array.from(form.querySelectorAll(
+        'input:not([type="hidden"]):not([disabled]):not([readonly]), select:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly])'
+      )).filter((field) => field instanceof HTMLElement && field.tabIndex !== -1);
+      const currentIndex = fields.indexOf(typeOfSupplyRef.current);
+      const nextField = currentIndex >= 0 ? fields[currentIndex + 1] : null;
+
+      if (nextField instanceof HTMLElement) {
+        nextField.focus();
+        if (nextField instanceof HTMLInputElement && typeof nextField.select === 'function') {
+          nextField.select();
+        }
+      }
+    }
+  };
+
+  const handleTypeOfSupplyInputChange = (e) => {
+    const value = e.target.value;
+    setTypeOfSupplyQuery(value);
+    setIsTypeOfSupplyOpen(true);
+
+    const exactMatch = TYPE_OF_SUPPLY_OPTIONS.find(
+      (option) => normalizeText(option.label) === normalizeText(value)
+    );
+
+    if (exactMatch) {
+      setFormData((prev) => ({ ...prev, typeOfSupply: exactMatch.value }));
+    }
+  };
+
   const handleTypeOfSupplyKeyDown = (e) => {
-    if (e.key === 'Escape') {
+    const key = e.key?.toLowerCase();
+
+    if (key === 'arrowdown') {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsTypeOfSupplyOpen(true);
+      if (filteredTypeOfSupplyOptions.length === 0) return;
+      setTypeOfSupplyListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredTypeOfSupplyOptions.length - 1);
+      });
+      return;
+    }
+
+    if (key === 'arrowup') {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsTypeOfSupplyOpen(true);
+      if (filteredTypeOfSupplyOptions.length === 0) return;
+      setTypeOfSupplyListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (key === 'escape' && isTypeOfSupplyOpen) {
+      e.preventDefault();
+      e.stopPropagation();
+      const selectedOption = TYPE_OF_SUPPLY_OPTIONS.find(
+        (option) => option.value === String(formData.typeOfSupply || 'goods').trim().toLowerCase()
+      ) || TYPE_OF_SUPPLY_OPTIONS[0];
+      setTypeOfSupplyQuery(selectedOption.label);
       setIsTypeOfSupplyOpen(false);
       return;
     }
-    if (e.key !== 'Enter') return;
-    const selected = String(e.target.value || 'goods').trim().toLowerCase() === 'services' ? 'services' : 'goods';
-    setFormData((prev) => ({ ...prev, typeOfSupply: selected }));
-    setIsTypeOfSupplyOpen(false);
-    e.preventDefault();
-    e.stopPropagation();
-    const form = e.currentTarget.form;
-    if (form && typeof form.requestSubmit === 'function') {
-      form.requestSubmit();
+
+    if (key === 'enter') {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!isTypeOfSupplyOpen) {
+        setIsTypeOfSupplyOpen(true);
+        return;
+      }
+
+      const activeOption = typeOfSupplyListIndex >= 0 ? filteredTypeOfSupplyOptions[typeOfSupplyListIndex] : null;
+      const exactMatch = TYPE_OF_SUPPLY_OPTIONS.find(
+        (option) => normalizeText(option.label) === normalizeText(typeOfSupplyQuery)
+      );
+      const matchedOption = activeOption || exactMatch || filteredTypeOfSupplyOptions[0] || TYPE_OF_SUPPLY_OPTIONS[0];
+      selectTypeOfSupply(matchedOption, true);
     }
   };
 
@@ -269,7 +450,7 @@ export default function Products() {
 
     setStockGroupQuery(group.name);
     setFormData((prev) => ({ ...prev, stockGroup: group._id }));
-    const selectedIndex = availableStockGroups.findIndex((item) => String(item._id) === String(group._id));
+    const selectedIndex = getMatchingStockGroups(group.name).findIndex((item) => String(item._id) === String(group._id));
     setStockGroupListIndex(selectedIndex >= 0 ? selectedIndex : -1);
 
     if (focusUnit && unitInputRef.current) {
@@ -281,7 +462,7 @@ export default function Products() {
     if (!unitName) return;
     setUnitQuery(unitName);
     setFormData((prev) => ({ ...prev, unit: unitName }));
-    const selectedIndex = unitOptions.findIndex((item) => normalizeText(item) === normalizeText(unitName));
+    const selectedIndex = getMatchingUnits(unitName).findIndex((item) => normalizeText(item) === normalizeText(unitName));
     setUnitListIndex(selectedIndex >= 0 ? selectedIndex : -1);
     if (focusMinStock && minStockInputRef.current) {
       minStockInputRef.current.focus();
@@ -301,14 +482,15 @@ export default function Products() {
     const exactGroup = findExactStockGroup(value);
     if (exactGroup) {
       setFormData((prev) => ({ ...prev, stockGroup: exactGroup._id }));
-      setStockGroupListIndex(availableStockGroups.length > 0 ? 0 : -1);
+      const exactIndex = getMatchingStockGroups(value).findIndex((item) => String(item._id) === String(exactGroup._id));
+      setStockGroupListIndex(exactIndex >= 0 ? exactIndex : 0);
       return;
     }
 
     const matches = getMatchingStockGroups(value);
     const firstMatch = matches[0] || null;
     setFormData((prev) => ({ ...prev, stockGroup: firstMatch?._id || '' }));
-    setStockGroupListIndex(availableStockGroups.length > 0 ? 0 : -1);
+    setStockGroupListIndex(firstMatch ? 0 : -1);
   };
 
   const handleStockGroupInputKeyDown = (e) => {
@@ -358,14 +540,15 @@ export default function Products() {
     const exactUnit = findExactUnit(value);
     if (exactUnit) {
       setFormData((prev) => ({ ...prev, unit: exactUnit }));
-      setUnitListIndex(unitOptions.length > 0 ? 0 : -1);
+      const exactIndex = getMatchingUnits(value).findIndex((item) => normalizeText(item) === normalizeText(exactUnit));
+      setUnitListIndex(exactIndex >= 0 ? exactIndex : 0);
       return;
     }
 
     const matches = getMatchingUnits(value);
     const firstMatch = matches[0] || '';
     setFormData((prev) => ({ ...prev, unit: firstMatch }));
-    setUnitListIndex(unitOptions.length > 0 ? 0 : -1);
+    setUnitListIndex(firstMatch ? 0 : -1);
   };
 
   const handleUnitInputKeyDown = (e) => {
@@ -643,12 +826,12 @@ export default function Products() {
                           ref={stockGroupSectionRef}
                           className="relative flex-1 min-w-0"
                           onFocusCapture={() => {
-                            const selectedIndex = availableStockGroups.findIndex(
+                            const selectedIndex = stockGroupOptions.findIndex(
                               (group) => String(group?._id || '') === String(formData.stockGroup || '')
                             );
                             setIsUnitSectionActive(false);
                             setIsStockGroupSectionActive(true);
-                            setStockGroupListIndex(selectedIndex >= 0 ? selectedIndex : (availableStockGroups.length > 0 ? 0 : -1));
+                            setStockGroupListIndex(selectedIndex >= 0 ? selectedIndex : (stockGroupOptions.length > 0 ? 0 : -1));
                           }}
                           onBlurCapture={(event) => {
                             const nextFocused = event.relatedTarget;
@@ -671,37 +854,53 @@ export default function Products() {
                             placeholder="Select or type stock group..."
                           />
 
-                          {isStockGroupSectionActive && (
-                            <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
-                              <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
-                                <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
-                                  Stock Group List
-                                </div>
-                                <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
-                                  {stockGroupOptions.length === 0 ? (
-                                    <div className="px-3 py-2 text-sm text-slate-500">No stock groups found</div>
-                                  ) : (
-                                    stockGroupOptions.map((group, index) => {
-                                      const isActive = index === stockGroupListIndex;
-                                      return (
-                                        <button
-                                          key={group._id}
-                                          type="button"
-                                          onMouseDown={(event) => event.preventDefault()}
-                                          onMouseEnter={() => setStockGroupListIndex(index)}
-                                          onClick={() => selectStockGroup(group, true)}
-                                          className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
-                                            isActive
-                                              ? 'bg-yellow-300 text-black font-semibold'
-                                              : 'bg-transparent text-slate-700 hover:bg-slate-50'
-                                          }`}
-                                        >
-                                          {group.name}
-                                        </button>
-                                      );
-                                    })
-                                  )}
-                                </div>
+                          {isStockGroupSectionActive && stockGroupDropdownStyle && (
+                            <div
+                              className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                              style={stockGroupDropdownStyle}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Stock Group List</span>
+                                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                  {stockGroupOptions.length}
+                                </span>
+                              </div>
+                              <div className="overflow-y-auto py-1" style={{ maxHeight: stockGroupDropdownStyle.maxHeight }}>
+                                {stockGroupOptions.length === 0 ? (
+                                  <div className="px-3 py-3 text-center text-[13px] text-slate-500">
+                                    No stock groups found.
+                                  </div>
+                                ) : (
+                                  stockGroupOptions.map((group, index) => {
+                                    const isActive = index === stockGroupListIndex;
+                                    const isSelected = String(formData.stockGroup || '') === String(group._id);
+
+                                    return (
+                                      <button
+                                        key={group._id}
+                                        type="button"
+                                        onMouseDown={(event) => event.preventDefault()}
+                                        onMouseEnter={() => setStockGroupListIndex(index)}
+                                        onClick={() => selectStockGroup(group, true)}
+                                        className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                          isActive
+                                            ? 'bg-yellow-200 text-amber-950'
+                                            : isSelected
+                                            ? 'bg-yellow-50 text-amber-800'
+                                            : 'text-slate-700 hover:bg-amber-50'
+                                        }`}
+                                      >
+                                        <span className="truncate font-medium">{group.name}</span>
+                                        {isSelected && (
+                                          <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                            Selected
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  })
+                                )}
                               </div>
                             </div>
                           )}
@@ -714,12 +913,13 @@ export default function Products() {
                           ref={unitSectionRef}
                           className="relative flex-1 min-w-0"
                           onFocusCapture={() => {
-                            const selectedIndex = unitOptions.findIndex(
+                            const selectedIndex = unitPanelOptions.findIndex(
                               (unitName) => normalizeText(unitName) === normalizeText(formData.unit)
                             );
                             setIsStockGroupSectionActive(false);
+                            setIsTypeOfSupplyOpen(false);
                             setIsUnitSectionActive(true);
-                            setUnitListIndex(selectedIndex >= 0 ? selectedIndex : (unitOptions.length > 0 ? 0 : -1));
+                            setUnitListIndex(selectedIndex >= 0 ? selectedIndex : (unitPanelOptions.length > 0 ? 0 : -1));
                           }}
                           onBlurCapture={(event) => {
                             const nextFocused = event.relatedTarget;
@@ -739,23 +939,34 @@ export default function Products() {
                             value={unitQuery}
                             onChange={handleUnitInputChange}
                             onKeyDown={handleUnitInputKeyDown}
-                            className={getInlineFieldClass('indigo')}
+                            className={`${getInlineFieldClass('indigo')} pr-10`}
                             placeholder="Type unit, use Up/Down, press Enter"
                             required
                           />
+                          <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-indigo-500 transition-transform ${isUnitSectionActive ? 'rotate-180' : ''}`} />
 
-                          {isUnitSectionActive && (
-                            <div className="mt-2 md:mt-0 md:fixed md:right-4 md:top-20 md:bottom-6 w-full md:w-80 z-30">
-                              <div className="rounded-xl border border-indigo-200 bg-gradient-to-b from-indigo-50 via-sky-50 to-white shadow-xl overflow-hidden md:h-full md:flex md:flex-col">
-                                <div className="px-3 py-2 text-xs font-semibold tracking-wide uppercase text-white border-b border-indigo-500 bg-gradient-to-r from-indigo-600 to-blue-600">
-                                  Unit List
-                                </div>
-                                <div className="max-h-60 md:max-h-none md:flex-1 overflow-y-auto bg-white/80">
-                                  {unitPanelOptions.length === 0 ? (
-                                    <div className="px-3 py-2 text-sm text-slate-500">No units found</div>
+                          {isUnitSectionActive && unitDropdownStyle && (
+                            <div
+                              className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                              style={unitDropdownStyle}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Unit List</span>
+                                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                  {unitPanelOptions.length}
+                                </span>
+                              </div>
+                              <div className="overflow-y-auto py-1" style={{ maxHeight: unitDropdownStyle.maxHeight }}>
+                                {unitPanelOptions.length === 0 ? (
+                                  <div className="px-3 py-3 text-center text-[13px] text-slate-500">
+                                    No units found.
+                                  </div>
                                 ) : (
                                   unitPanelOptions.map((unitName, index) => {
                                     const isActive = index === unitListIndex;
+                                    const isSelected = normalizeText(formData.unit) === normalizeText(unitName);
+
                                     return (
                                       <button
                                         key={unitName}
@@ -763,18 +974,24 @@ export default function Products() {
                                         onMouseDown={(event) => event.preventDefault()}
                                         onMouseEnter={() => setUnitListIndex(index)}
                                         onClick={() => selectUnit(unitName, true)}
-                                        className={`w-full border-b border-slate-100 last:border-b-0 px-3 py-2 text-left text-sm transition-colors ${
+                                        className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
                                           isActive
-                                            ? 'bg-yellow-300 text-black font-semibold'
-                                            : 'bg-transparent text-slate-700 hover:bg-slate-50'
+                                            ? 'bg-yellow-200 text-amber-950'
+                                            : isSelected
+                                            ? 'bg-yellow-50 text-amber-800'
+                                            : 'text-slate-700 hover:bg-amber-50'
                                         }`}
                                       >
-                                        {unitName}
+                                        <span className="truncate font-medium">{unitName}</span>
+                                        {isSelected && (
+                                          <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                            Selected
+                                          </span>
+                                        )}
                                       </button>
                                     );
                                   })
                                 )}
-                                </div>
                               </div>
                             </div>
                           )}
@@ -830,20 +1047,98 @@ export default function Products() {
                           <span className="inline-flex items-baseline gap-1 whitespace-nowrap">Type Of Supply</span>
                           <span className="ml-2">:</span>
                         </label>
-                        <select
-                          ref={typeOfSupplyRef}
-                          name="typeOfSupply"
-                          value={formData.typeOfSupply || 'goods'}
-                          onChange={handleInputChange}
-                          onKeyDown={handleTypeOfSupplyKeyDown}
-                          onFocus={() => setIsTypeOfSupplyOpen(true)}
-                          onBlur={() => setIsTypeOfSupplyOpen(false)}
-                          size={isTypeOfSupplyOpen ? 2 : 1}
-                          className="flex-1 min-w-0 px-3 py-2 border border-emerald-200 rounded-lg bg-white text-sm font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                        <div
+                          ref={typeOfSupplySectionRef}
+                          className="relative flex-1 min-w-0"
+                          onBlurCapture={(event) => {
+                            const nextFocused = event.relatedTarget;
+                            if (
+                              typeOfSupplySectionRef.current
+                              && nextFocused instanceof Node
+                              && typeOfSupplySectionRef.current.contains(nextFocused)
+                            ) {
+                              return;
+                            }
+
+                            const selectedOption = TYPE_OF_SUPPLY_OPTIONS.find(
+                              (option) => option.value === String(formData.typeOfSupply || 'goods').trim().toLowerCase()
+                            ) || TYPE_OF_SUPPLY_OPTIONS[0];
+                            setTypeOfSupplyQuery(selectedOption.label);
+                            setIsTypeOfSupplyOpen(false);
+                          }}
                         >
-                          <option value="goods">Goods</option>
-                          <option value="services">Services</option>
-                        </select>
+                          <div className="relative">
+                            <input
+                              ref={typeOfSupplyRef}
+                              type="text"
+                              value={typeOfSupplyQuery}
+                              onChange={handleTypeOfSupplyInputChange}
+                              onFocus={() => {
+                                const selectedIndex = filteredTypeOfSupplyOptions.findIndex(
+                                  (option) => option.value === String(formData.typeOfSupply || 'goods').trim().toLowerCase()
+                                );
+                                setIsTypeOfSupplyOpen(true);
+                                setTypeOfSupplyListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+                              }}
+                              onKeyDown={handleTypeOfSupplyKeyDown}
+                              className={`${getInlineFieldClass('emerald')} pr-10`}
+                              placeholder="Select type of supply..."
+                              autoComplete="off"
+                            />
+                            <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500 transition-transform ${isTypeOfSupplyOpen ? 'rotate-180' : ''}`} />
+                          </div>
+
+                          {isTypeOfSupplyOpen && typeOfSupplyDropdownStyle && (
+                            <div
+                              className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                              style={typeOfSupplyDropdownStyle}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                                <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Type List</span>
+                                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                  {filteredTypeOfSupplyOptions.length}
+                                </span>
+                              </div>
+                              <div className="overflow-y-auto py-1" style={{ maxHeight: typeOfSupplyDropdownStyle.maxHeight }}>
+                                {filteredTypeOfSupplyOptions.length === 0 ? (
+                                  <div className="px-3 py-3 text-center text-[13px] text-slate-500">
+                                    No matching types found.
+                                  </div>
+                                ) : (
+                                  filteredTypeOfSupplyOptions.map((option, index) => {
+                                    const isActive = index === typeOfSupplyListIndex;
+                                    const isSelected = String(formData.typeOfSupply || 'goods') === String(option.value);
+
+                                    return (
+                                      <button
+                                        key={option.value}
+                                        type="button"
+                                        onMouseDown={(event) => event.preventDefault()}
+                                        onMouseEnter={() => setTypeOfSupplyListIndex(index)}
+                                        onClick={() => selectTypeOfSupply(option, true)}
+                                        className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                          isActive
+                                            ? 'bg-yellow-200 text-amber-950'
+                                            : isSelected
+                                            ? 'bg-yellow-50 text-amber-800'
+                                            : 'text-slate-700 hover:bg-amber-50'
+                                        }`}
+                                      >
+                                        <span className="truncate font-medium">{option.label}</span>
+                                        {isSelected && (
+                                          <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                            Selected
+                                          </span>
+                                        )}
+                                      </button>
+                                    );
+                                  })
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                     </div>

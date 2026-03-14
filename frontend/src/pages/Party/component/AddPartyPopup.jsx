@@ -98,6 +98,16 @@ export default function AddPartyPopup({
 
   const filteredTypeOptions = useMemo(() => {
     const normalized = String(typeQuery || '').trim().toLowerCase();
+    const normalizedSelectedType = String(getTypeLabel(formData.type) || '').trim().toLowerCase();
+
+    if (
+      isTypeDropdownOpen
+      && normalized
+      && normalized === normalizedSelectedType
+    ) {
+      return TYPE_OPTIONS;
+    }
+
     if (!normalized) return TYPE_OPTIONS;
 
     const startsWith = TYPE_OPTIONS.filter((option) => option.label.toLowerCase().startsWith(normalized));
@@ -107,7 +117,7 @@ export default function AddPartyPopup({
     ));
 
     return [...startsWith, ...includes];
-  }, [typeQuery]);
+  }, [formData.type, isTypeDropdownOpen, typeQuery]);
 
   useEffect(() => {
     if (!showForm) {
