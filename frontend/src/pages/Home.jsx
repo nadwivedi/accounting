@@ -177,6 +177,14 @@ const sectionStyles = {
     activeClass: 'bg-yellow-200 text-slate-900',
     hoverClass: 'text-slate-700 hover:bg-teal-50/90',
     barClass: 'bg-teal-500'
+  },
+  Reports: {
+    headerClass: 'border-amber-200/70 bg-amber-50/95',
+    accentTextClass: 'text-[28px] leading-none text-amber-600',
+    accentDotClass: 'h-2.5 w-2.5 rounded-full bg-amber-500',
+    activeClass: 'bg-yellow-200 text-slate-900',
+    hoverClass: 'text-slate-700 hover:bg-amber-50/90',
+    barClass: 'bg-amber-500'
   }
 };
 
@@ -328,7 +336,7 @@ export default function Home() {
           return;
         }
 
-        if ((expandedSection === 'Masters' || expandedSection === 'Vouchers' || expandedSection === 'Expense') && key === 'enter') {
+        if (HOME_SECTION_ORDER.includes(expandedSection) && key === 'enter') {
           event.preventDefault();
           activateHomeSection(expandedSection, navigate, setExpandedSection, setActiveHomePath);
           return;
@@ -383,9 +391,9 @@ export default function Home() {
 
           <div className="sidebar-scrollbar relative z-10 flex-1 overflow-y-auto pb-8">
             <nav className="flex flex-col">
-              {menuItems.filter((item) => item.subItems?.length).map((item, index) => {
+              {menuItems.filter((item) => HOME_SECTION_ORDER.includes(item.name)).map((item, index) => {
                 const sectionStyle = sectionStyles[item.name] || sectionStyles.Masters;
-                const isExpanded = !['Masters', 'Vouchers', 'Expense'].includes(item.name) && expandedSection === item.name;
+                const isExpanded = false;
                 const isSelectedSection = expandedSection === item.name;
 
                 return (
@@ -393,7 +401,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (item.name === 'Masters' || item.name === 'Vouchers' || item.name === 'Expense') {
+                        if (HOME_SECTION_ORDER.includes(item.name)) {
                           activateHomeSection(item.name, navigate, setExpandedSection, setActiveHomePath);
                           return;
                         }
@@ -450,7 +458,7 @@ export default function Home() {
                 );
               })}
 
-              <div className="flex flex-col">
+              <div className="hidden">
                 <button
                   type="button"
                   onClick={() => activateHomeSection('Reports', navigate, setExpandedSection, setActiveHomePath)}

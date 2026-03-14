@@ -72,6 +72,12 @@ export default function StockGroups() {
     });
   };
 
+  const handleDescriptionKeyDown = (event) => {
+    if (event.key !== 'Enter' || event.shiftKey || loading) return;
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name) {
@@ -228,9 +234,10 @@ export default function StockGroups() {
                           name="description"
                           value={formData.description}
                           onChange={handleInputChange}
+                          onKeyDown={handleDescriptionKeyDown}
                           className="min-w-0 flex-1 resize-none rounded-lg border border-transparent bg-transparent px-3 py-2 text-sm font-bold text-gray-900 transition-all placeholder:font-normal placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-200"
                           placeholder="Enter description"
-                          rows="4"
+                          rows="1"
                         />
                       </div>
                     </div>

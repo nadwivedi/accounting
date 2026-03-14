@@ -45,6 +45,12 @@ export default function ExpenseGroups() {
     }));
   };
 
+  const handleDescriptionKeyDown = (event) => {
+    if (event.key !== 'Enter' || event.shiftKey || loading) return;
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  };
+
   const handleOpenForm = () => {
     setFormData(getInitialForm());
     setEditingId(null);
@@ -196,7 +202,8 @@ export default function ExpenseGroups() {
                   name="description"
                   value={formData.description}
                   onChange={handleChange}
-                  rows="3"
+                  onKeyDown={handleDescriptionKeyDown}
+                  rows="1"
                   className="w-full rounded-2xl border border-slate-300 px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-200"
                   placeholder="Optional description"
                 />
