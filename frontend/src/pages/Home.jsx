@@ -188,13 +188,6 @@ const sectionStyles = {
   }
 };
 
-const homeSectionHotkeys = {
-  m: 'Masters',
-  v: 'Vouchers',
-  e: 'Expense',
-  r: 'Reports'
-};
-
 const HOME_SECTION_ORDER = ['Masters', 'Vouchers', 'Expense', 'Reports'];
 const homeQuickShortcuts = [
   { label: 'New Sale', hint: '', combo: 'Alt + 1', accent: 'from-emerald-500 to-teal-500', stateKey: 'homeQuickSale' },
@@ -209,18 +202,6 @@ const getSectionItems = (sectionName) => {
   }
 
   return menuItems.find((item) => item.name === sectionName)?.subItems || [];
-};
-
-const renderSectionLabel = (label) => {
-  const firstChar = String(label || '').charAt(0);
-  const remainder = String(label || '').slice(1);
-
-  return (
-    <>
-      <span className="text-[14px] font-extrabold text-slate-900">{firstChar}</span>
-      <span>{remainder}</span>
-    </>
-  );
 };
 
 const activateHomeSection = (sectionName, navigate, setExpandedSection, setActiveHomePath) => {
@@ -312,12 +293,6 @@ export default function Home() {
       const isMoveUpKey = key === 'arrowup' && !event.altKey && !event.metaKey;
 
       if (event.defaultPrevented || event.metaKey) return;
-
-      if (homeSectionHotkeys[key]) {
-        event.preventDefault();
-        activateHomeSection(homeSectionHotkeys[key], navigate, setExpandedSection, setActiveHomePath);
-        return;
-      }
 
       if (isMoveDownKey || isMoveUpKey || key === 'enter') {
         if (isTypingTarget(event.target) || isPopupOpen()) return;
@@ -415,7 +390,7 @@ export default function Home() {
                         {index === 0 ? '+' : ''}
                       </span>
                       <span className="text-[10px] font-bold tracking-[0.12em] sm:text-[12px] sm:tracking-[0.16em]">
-                        {renderSectionLabel(item.name.toUpperCase())}
+                        {item.name.toUpperCase()}
                       </span>
                       <span className={`ml-auto text-lg text-slate-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
                         ›
@@ -467,7 +442,7 @@ export default function Home() {
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center text-slate-700">
                     <ReportIcon />
                   </div>
-                  <span className="text-[12px] font-bold tracking-[0.16em]">{renderSectionLabel('REPORTS')}</span>
+                  <span className="text-[12px] font-bold tracking-[0.16em]">REPORTS</span>
                   <span className="ml-auto hidden">
                     ›
                   </span>
