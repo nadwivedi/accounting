@@ -52,6 +52,14 @@ export default function AddSalePopup({
   const currentItemTotal = Math.max(0, Number(currentItem.quantity || 0) * Number(currentItem.unitPrice || 0));
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
   const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex]);
+  const resolveItemUnit = (item) => {
+    const itemUnit = String(item?.unit || '').trim();
+    if (itemUnit) return itemUnit;
+
+    const matchingProduct = products.find((product) => String(product?._id) === String(item?.product || ''));
+    return String(matchingProduct?.unit || '').trim() || '-';
+  };
+  const currentItemUnit = String(currentItem.unit || '').trim() || '-';
 
   useEffect(() => {
     if (showForm) {
@@ -228,11 +236,12 @@ export default function AddSalePopup({
                       <p className="text-xs font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
                     </div>
                     <div className="flex-1 overflow-auto">
-                      <table className="w-full min-w-[620px] text-[13px]">
+                      <table className="w-full min-w-[720px] text-[13px]">
                         <thead className="bg-white text-gray-600">
                           <tr>
                             <th className="border-b border-emerald-100 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider">Product</th>
                             <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Qty</th>
+                            <th className="border-b border-emerald-100 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider">Per</th>
                             <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Price</th>
                             <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Total</th>
                           </tr>
@@ -242,6 +251,7 @@ export default function AddSalePopup({
                             <tr key={index} className="hover:bg-emerald-50/40">
                               <td className="px-3 py-2.5 font-medium text-gray-800">{item.productName}</td>
                               <td className="px-3 py-2.5 text-right text-gray-600">{item.quantity}</td>
+                              <td className="px-3 py-2.5 text-center text-gray-600">{resolveItemUnit(item)}</td>
                               <td className="px-3 py-2.5 text-right text-gray-600">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
                               <td className="px-3 py-2.5 text-right font-semibold text-gray-800">Rs {Number(item.total || 0).toFixed(2)}</td>
                             </tr>
@@ -249,7 +259,7 @@ export default function AddSalePopup({
                           {isItemEntryClosed ? (
                             <>
                               <tr className="bg-emerald-50/40">
-                                <td colSpan={3} className="border-t border-emerald-200 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-emerald-800">
+                                <td colSpan={4} className="border-t border-emerald-200 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-emerald-800">
                                   Total Amount
                                 </td>
                                 <td className="border-t border-emerald-200 px-3 py-3 text-right text-sm font-bold text-emerald-900">
@@ -257,7 +267,7 @@ export default function AddSalePopup({
                                 </td>
                               </tr>
                               <tr className="bg-white">
-                                <td colSpan={3} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
+                                <td colSpan={4} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
                                   Paid Amount
                                 </td>
                                 <td className="border-t border-emerald-100 px-3 py-2">
@@ -380,6 +390,11 @@ export default function AddSalePopup({
                                 className={`${inputClass} ml-auto w-[30%] min-w-[56px] text-right focus:ring-emerald-500`}
                               />
                             </td>
+                              <td className="px-3 py-2.5 text-center">
+                                <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-medium text-gray-700">
+                                  {currentItemUnit}
+                                </div>
+                              </td>
                               <td className="px-3 py-2.5">
                                 <input
                                   type="number"
@@ -390,9 +405,12 @@ export default function AddSalePopup({
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                       e.preventDefault();
                                       e.stopPropagation();
-                                      handleAddItem();
+                                      const didAddItem = handleAddItem();
+                                      if (!didAddItem) return;
+
                                       requestAnimationFrame(() => {
                                         productInputRef.current?.focus();
+                                        productInputRef.current?.select?.();
                                       });
                                     }
                                   }}

@@ -8,11 +8,25 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const generateInvoiceNumber = () => {
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const stamp = Date.now().toString().slice(-6);
-  const rand = Math.floor(Math.random() * 90 + 10);
-  return `SAL-${date}-${stamp}${rand}`;
+const generateInvoiceNumber = async (userId) => {
+  const [latestSale] = await Sale.aggregate([
+    {
+      $match: {
+        userId: new mongoose.Types.ObjectId(userId),
+        invoiceNumber: { $regex: '^[0-9]+$' }
+      }
+    },
+    {
+      $project: {
+        numericInvoiceNumber: { $toInt: '$invoiceNumber' }
+      }
+    },
+    { $sort: { numericInvoiceNumber: -1 } },
+    { $limit: 1 }
+  ]);
+
+  const nextInvoiceNumber = Number(latestSale?.numericInvoiceNumber || 0) + 1;
+  return String(nextInvoiceNumber).padStart(2, '0');
 };
 
 const isDuplicateSaleInvoiceError = (error) => (
@@ -113,9 +127,11 @@ exports.createSale = async (req, res) => {
       paidAmount
     });
 
+    const resolvedInvoiceNumber = String(invoiceNumber || '').trim() || await generateInvoiceNumber(userId);
+
     const sale = await Sale.create({
       userId,
-      invoiceNumber: invoiceNumber || generateInvoiceNumber(),
+      invoiceNumber: resolvedInvoiceNumber,
       party: party || null,
       customerName,
       customerPhone,
@@ -150,7 +166,7 @@ exports.createSale = async (req, res) => {
     }
 
     const populatedSale = await Sale.findById(sale._id)
-      .populate('items.product', 'name');
+      .populate('items.product', 'name unit');
 
     res.status(201).json({
       success: true,
@@ -188,7 +204,7 @@ exports.getAllSales = async (req, res) => {
     }
 
     let query = Sale.find(filter)
-      .populate('items.product', 'name');
+      .populate('items.product', 'name unit');
 
     if (search) {
       query = query.where({
@@ -222,7 +238,7 @@ exports.getSaleById = async (req, res) => {
     const userId = req.userId;
 
     const sale = await Sale.findOne({ _id: id, userId })
-      .populate('items.product', 'name');
+      .populate('items.product', 'name unit');
 
     if (!sale) {
       return res.status(404).json({
@@ -262,7 +278,7 @@ exports.updateSale = async (req, res) => {
       { customerName, customerPhone, customerAddress, dueDate, notes },
       { new: true, runValidators: true }
     )
-      .populate('items.product', 'name');
+      .populate('items.product', 'name unit');
 
     if (!sale) {
       return res.status(404).json({
@@ -374,7 +390,7 @@ exports.updatePaymentStatus = async (req, res) => {
     });
 
     const updatedSale = await Sale.findById(id)
-      .populate('items.product', 'name');
+      .populate('items.product', 'name unit');
 
     res.status(200).json({
       success: true,

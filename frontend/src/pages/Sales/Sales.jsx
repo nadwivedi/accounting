@@ -61,6 +61,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const initialCurrentItem = {
     product: '',
     productName: '',
+    unit: '',
     quantity: '',
     unitPrice: ''
   };
@@ -517,7 +518,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       setCurrentItem((prev) => ({
         ...prev,
         product: '',
-        productName: ''
+        productName: '',
+        unit: ''
       }));
       setProductListIndex(-1);
       return;
@@ -528,7 +530,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     setCurrentItem((prev) => ({
       ...prev,
       product: product._id,
-      productName
+      productName,
+      unit: String(product.unit || '').trim()
     }));
 
     const selectedIndex = filteredProducts.findIndex((item) => String(item._id) === String(product._id));
@@ -553,7 +556,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       setCurrentItem((prev) => ({
         ...prev,
         product: exactProduct._id,
-        productName: getProductDisplayName(exactProduct)
+        productName: getProductDisplayName(exactProduct),
+        unit: String(exactProduct.unit || '').trim()
       }));
       const exactIndex = getMatchingProducts(value).findIndex((item) => String(item._id) === String(exactProduct._id));
       setProductListIndex(exactIndex >= 0 ? exactIndex : 0);
@@ -565,7 +569,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     setCurrentItem((prev) => ({
       ...prev,
       product: firstMatch?._id || '',
-      productName: firstMatch ? getProductDisplayName(firstMatch) : ''
+      productName: firstMatch ? getProductDisplayName(firstMatch) : '',
+      unit: firstMatch ? String(firstMatch.unit || '').trim() : ''
     }));
     setProductListIndex(firstMatch ? 0 : -1);
   };
@@ -618,13 +623,13 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const handleAddItem = () => {
     if (!currentItem.product || !currentItem.quantity || !currentItem.unitPrice) {
       setError('Product, quantity and price are required');
-      return;
+      return false;
     }
 
     const product = products.find(p => p._id === currentItem.product);
     if (!product || product.currentStock < currentItem.quantity) {
       setError(`Insufficient stock for ${product?.name}`);
-      return;
+      return false;
     }
 
     const taxAmount = 0;
@@ -633,6 +638,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     const newItem = {
       ...currentItem,
       productName: product?.name,
+      unit: String(product?.unit || currentItem.unit || '').trim(),
       quantity: parseFloat(currentItem.quantity),
       unitPrice: parseFloat(currentItem.unitPrice),
       taxAmount,
@@ -651,6 +657,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     setIsProductSectionActive(false);
 
     calculateTotals([...formData.items, newItem]);
+    setError('');
+    return true;
   };
 
   const handleRemoveItem = (index) => {

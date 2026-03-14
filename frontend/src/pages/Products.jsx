@@ -307,9 +307,10 @@ export default function Products() {
     }));
   };
 
-  const selectTypeOfSupply = (option, moveNext = false) => {
+  const selectTypeOfSupply = (option, moveNext = false, submitAfterSelect = false) => {
     if (!option) return;
 
+    const parentForm = typeOfSupplyRef.current?.form;
     setFormData((prev) => ({ ...prev, typeOfSupply: option.value }));
     setTypeOfSupplyQuery(option.label);
     setTypeOfSupplyListIndex(
@@ -317,11 +318,17 @@ export default function Products() {
     );
     setIsTypeOfSupplyOpen(false);
 
-    if (moveNext) {
-      const form = typeOfSupplyRef.current?.form;
-      if (!(form instanceof HTMLFormElement)) return;
+    if (submitAfterSelect && parentForm instanceof HTMLFormElement) {
+      requestAnimationFrame(() => {
+        parentForm.requestSubmit();
+      });
+      return;
+    }
 
-      const fields = Array.from(form.querySelectorAll(
+    if (moveNext) {
+      if (!(parentForm instanceof HTMLFormElement)) return;
+
+      const fields = Array.from(parentForm.querySelectorAll(
         'input:not([type="hidden"]):not([disabled]):not([readonly]), select:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly])'
       )).filter((field) => field instanceof HTMLElement && field.tabIndex !== -1);
       const currentIndex = fields.indexOf(typeOfSupplyRef.current);
@@ -402,7 +409,7 @@ export default function Products() {
         (option) => normalizeText(option.label) === normalizeText(typeOfSupplyQuery)
       );
       const matchedOption = activeOption || exactMatch || filteredTypeOfSupplyOptions[0] || TYPE_OF_SUPPLY_OPTIONS[0];
-      selectTypeOfSupply(matchedOption, true);
+      selectTypeOfSupply(matchedOption, false, true);
     }
   };
 
