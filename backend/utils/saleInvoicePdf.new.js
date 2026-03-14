@@ -26,7 +26,6 @@ const BRAND = {
   blue: '#144b96',
   blueDark: '#103f82',
   blueSoft: '#e8eff9',
-  invoiceTitle: '#7c8ca3',
   slate: '#334155',
   muted: '#64748b',
   line: '#d9e2ec',
@@ -181,12 +180,28 @@ const drawTopRule = (doc, y) => {
     .stroke();
 };
 
+const drawLogoMark = (doc, x, y) => {
+  doc.save();
+  doc.circle(x + 18, y + 18, 18).fill('#4b8ed5');
+  doc.circle(x + 34, y + 28, 12).fill('#b6d2f2');
+  doc
+    .moveTo(x + 2, y + 28)
+    .lineTo(x + 48, y + 18)
+    .lineWidth(7)
+    .lineCap('round')
+    .strokeColor(BRAND.blue)
+    .stroke();
+  doc.restore();
+};
+
 const drawHeader = (doc, sale, profile) => {
+  drawLogoMark(doc, PAGE.marginX + 8, PAGE.marginY + 4);
+
   doc
     .fillColor(BRAND.blue)
     .font('Helvetica-Bold')
-    .fontSize(18)
-    .text(String(profile.companyName || '').toUpperCase(), PAGE.marginX, 58, { width: 210 });
+    .fontSize(14)
+    .text(profile.companyName, PAGE.marginX, 76, { width: 220 });
 
   const companyLines = [
     joinTextParts(profile.state, profile.pincode) || '-',
@@ -194,28 +209,28 @@ const drawHeader = (doc, sale, profile) => {
     `Phone: ${profile.phone}${profile.gstNumber ? ` | GST: ${profile.gstNumber}` : ''}`
   ];
 
-  let companyY = 80;
+  let companyY = 96;
   companyLines.forEach((line) => {
     doc
       .fillColor(BRAND.slate)
       .font('Helvetica')
       .fontSize(9.5)
-      .text(line, PAGE.marginX, companyY, { width: 220 });
+      .text(line, PAGE.marginX, companyY, { width: 250 });
     companyY += 15;
   });
 
   doc
-    .fillColor(BRAND.invoiceTitle)
+    .fillColor(BRAND.blue)
     .font('Helvetica-Bold')
-    .fontSize(20)
+    .fontSize(42)
     .text('INVOICE', PAGE.width - PAGE.marginX - 210, 40, { width: 210, align: 'right' });
 
-  drawTopRule(doc, 138);
+  drawTopRule(doc, 128);
 
   const customerName = getCustomerLabel(sale);
   const leftX = PAGE.marginX;
   const rightX = 330;
-  let leftY = 154;
+  let leftY = 144;
 
   doc
     .fillColor(BRAND.blue)
@@ -227,19 +242,20 @@ const drawHeader = (doc, sale, profile) => {
 
   [
     customerName,
-    String(sale?.customerPhone || '-').trim() || '-'
+    String(sale?.customerAddress || '-').trim() || '-',
+    joinTextParts(sale?.customerEmail, sale?.customerPhone) || (String(sale?.customerPhone || '-').trim() || '-')
   ].forEach((line, index) => {
     doc
       .fillColor(BRAND.slate)
       .font(index === 0 ? 'Helvetica-Bold' : 'Helvetica')
       .fontSize(10)
       .text(line, leftX, leftY, { width: 240 });
-    leftY += 18;
+    leftY += index === 1 ? 28 : 16;
   });
 
   const rightLabelX = rightX;
   const rightValueX = rightX + 120;
-  let rightY = 154;
+  let rightY = 144;
 
   const invoiceMeta = [
     ['Invoice Number:', String(sale?.invoiceNumber || '-')],
@@ -258,8 +274,8 @@ const drawHeader = (doc, sale, profile) => {
     rightY += 20;
   });
 
-  drawTopRule(doc, 246);
-  return 264;
+  drawTopRule(doc, 236);
+  return 252;
 };
 
 const drawTableHeader = (doc, y) => {
@@ -272,7 +288,7 @@ const drawTableHeader = (doc, y) => {
     .fillColor('#ffffff')
     .font('Helvetica-Bold')
     .fontSize(10)
-    .text('STOCK ITEM', x + 8, y + 9, { width: 210 })
+    .text('DESCRIPTION', x + 8, y + 9, { width: 210 })
     .text('QUANTITY', x + 218, y + 9, { width: 72, align: 'center' })
     .text('UNIT PRICE', x + 300, y + 9, { width: 94, align: 'center' })
     .text('TOTAL', x + 412, y + 9, { width: 110, align: 'center' });
@@ -401,7 +417,7 @@ const drawBankAndQr = (doc, profile, qrBuffer, y) => {
     ['SWIFT / IFSC Code:', profile.ifscCode]
   ];
 
-  let rowY = y + 42;
+  let rowY = y + 44;
   bankRows.forEach(([label, value]) => {
     doc
       .fillColor(BRAND.slate)
@@ -410,12 +426,12 @@ const drawBankAndQr = (doc, profile, qrBuffer, y) => {
       .text(label, leftX, rowY, { width: 120 })
       .font('Helvetica')
       .text(value || '-', leftX + 122, rowY, { width: 230 });
-    rowY += 22;
+    rowY += 24;
   });
 
   doc
-    .moveTo(leftX, y + 134)
-    .lineTo(390, y + 134)
+    .moveTo(leftX, y + 150)
+    .lineTo(390, y + 150)
     .lineWidth(1)
     .strokeColor(BRAND.line)
     .stroke();
@@ -552,4 +568,3 @@ module.exports = {
   createSaleInvoicePdf,
   getSaleInvoiceAbsolutePath
 };
-
