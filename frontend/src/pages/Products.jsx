@@ -920,18 +920,20 @@ export default function Products() {
 
                       <div className="flex items-center gap-2">
                         <label className="w-32 shrink-0 text-xs md:text-sm font-semibold text-gray-700 mb-0">Unit *</label>
-                        <div
-                          ref={unitSectionRef}
-                          className="relative flex-1 min-w-0"
-                          onFocusCapture={() => {
-                            const selectedIndex = unitPanelOptions.findIndex(
-                              (unitName) => normalizeText(unitName) === normalizeText(formData.unit)
-                            );
-                            setIsStockGroupSectionActive(false);
-                            setIsTypeOfSupplyOpen(false);
-                            setIsUnitSectionActive(true);
-                            setUnitListIndex(selectedIndex >= 0 ? selectedIndex : (unitPanelOptions.length > 0 ? 0 : -1));
-                          }}
+                      <div
+                        ref={unitSectionRef}
+                        className="relative flex-1 min-w-0"
+                        onFocusCapture={() => {
+                          const selectedUnit = String(formData.unit || initialFormData.unit).trim() || initialFormData.unit;
+                          const selectedIndex = unitOptions.findIndex(
+                            (unitName) => normalizeText(unitName) === normalizeText(selectedUnit)
+                          );
+                          setIsStockGroupSectionActive(false);
+                          setIsTypeOfSupplyOpen(false);
+                          setUnitQuery(selectedUnit);
+                          setIsUnitSectionActive(true);
+                          setUnitListIndex(selectedIndex >= 0 ? selectedIndex : (unitOptions.length > 0 ? 0 : -1));
+                        }}
                           onBlurCapture={(event) => {
                             const nextFocused = event.relatedTarget;
                             if (
