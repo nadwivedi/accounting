@@ -45,11 +45,16 @@ export default function AddProductPopup({
   const [unitQuery, setUnitQuery] = useState('pcs');
   const [unitListIndex, setUnitListIndex] = useState(-1);
   const [isUnitSectionActive, setIsUnitSectionActive] = useState(false);
+  const [typeOfSupplyQuery, setTypeOfSupplyQuery] = useState('Goods');
+  const [typeOfSupplyListIndex, setTypeOfSupplyListIndex] = useState(0);
+  const [isTypeOfSupplyOpen, setIsTypeOfSupplyOpen] = useState(false);
   const nameInputRef = useRef(null);
   const stockGroupSectionRef = useRef(null);
   const unitSectionRef = useRef(null);
   const unitInputRef = useRef(null);
   const minStockInputRef = useRef(null);
+  const typeOfSupplyRef = useRef(null);
+  const typeOfSupplySectionRef = useRef(null);
 
   const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
@@ -140,6 +145,36 @@ export default function AddProductPopup({
     return filteredUnits;
   }, [filteredUnits, formData.unit, isUnitSectionActive, unitOptions, unitQuery]);
 
+  const selectedTypeOfSupplyLabel = useMemo(() => {
+    const selectedOption = TYPE_OF_SUPPLY_OPTIONS.find(
+      (option) => option.value === String(formData.typeOfSupply || 'goods').trim().toLowerCase()
+    );
+    return selectedOption?.label || TYPE_OF_SUPPLY_OPTIONS[0].label;
+  }, [formData.typeOfSupply]);
+
+  const filteredTypeOfSupplyOptions = useMemo(() => {
+    const normalized = normalizeText(typeOfSupplyQuery);
+    const normalizedSelected = normalizeText(selectedTypeOfSupplyLabel);
+
+    if (
+      isTypeOfSupplyOpen
+      && normalized
+      && normalized === normalizedSelected
+    ) {
+      return TYPE_OF_SUPPLY_OPTIONS;
+    }
+
+    if (!normalized) return TYPE_OF_SUPPLY_OPTIONS;
+
+    const startsWith = TYPE_OF_SUPPLY_OPTIONS.filter((option) => normalizeText(option.label).startsWith(normalized));
+    const includes = TYPE_OF_SUPPLY_OPTIONS.filter((option) => (
+      !normalizeText(option.label).startsWith(normalized)
+      && normalizeText(option.label).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  }, [isTypeOfSupplyOpen, selectedTypeOfSupplyLabel, typeOfSupplyQuery]);
+
   const stockGroupDropdownStyle = useFloatingDropdownPosition(
     stockGroupSectionRef,
     isStockGroupSectionActive,
@@ -154,6 +189,14 @@ export default function AddProductPopup({
     'viewport'
   );
 
+  const typeOfSupplyDropdownStyle = useFloatingDropdownPosition(
+    typeOfSupplySectionRef,
+    isTypeOfSupplyOpen,
+    [filteredTypeOfSupplyOptions.length, typeOfSupplyListIndex],
+    'down',
+    'viewport'
+  );
+
   useEffect(() => {
     if (!showForm) {
       setFormData(getInitialFormData(initialName));
@@ -164,6 +207,9 @@ export default function AddProductPopup({
       setUnitQuery(getInitialFormData(initialName).unit);
       setUnitListIndex(-1);
       setIsUnitSectionActive(false);
+      setTypeOfSupplyQuery('Goods');
+      setTypeOfSupplyListIndex(0);
+      setIsTypeOfSupplyOpen(false);
       return;
     }
 
@@ -176,6 +222,11 @@ export default function AddProductPopup({
     setUnitQuery(nextFormData.unit);
     setUnitListIndex(-1);
     setIsUnitSectionActive(false);
+    setTypeOfSupplyQuery(
+      TYPE_OF_SUPPLY_OPTIONS.find((option) => option.value === nextFormData.typeOfSupply)?.label || 'Goods'
+    );
+    setTypeOfSupplyListIndex(0);
+    setIsTypeOfSupplyOpen(false);
 
     const loadOptions = async () => {
       try {
@@ -235,6 +286,21 @@ export default function AddProductPopup({
       return prev;
     });
   }, [showForm, unitPanelOptions, isUnitSectionActive]);
+
+  useEffect(() => {
+    setTypeOfSupplyQuery(selectedTypeOfSupplyLabel);
+
+    if (!showForm) {
+      setTypeOfSupplyListIndex(0);
+      setIsTypeOfSupplyOpen(false);
+      return;
+    }
+
+    const selectedIndex = filteredTypeOfSupplyOptions.findIndex(
+      (option) => option.label === selectedTypeOfSupplyLabel
+    );
+    setTypeOfSupplyListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  }, [filteredTypeOfSupplyOptions, selectedTypeOfSupplyLabel, showForm]);
 
   if (!showForm) return null;
 
@@ -426,6 +492,100 @@ export default function AddProductPopup({
       if (matchedUnit) {
         selectUnit(matchedUnit, true);
       }
+    }
+  };
+
+  const selectTypeOfSupply = (option, moveNext = false) => {
+    if (!option) return;
+
+    const parentForm = typeOfSupplyRef.current?.form;
+    setFormData((prev) => ({ ...prev, typeOfSupply: option.value }));
+    setTypeOfSupplyQuery(option.label);
+    setTypeOfSupplyListIndex(
+      Math.max(filteredTypeOfSupplyOptions.findIndex((item) => item.value === option.value), 0)
+    );
+    setIsTypeOfSupplyOpen(false);
+
+    if (!moveNext || !(parentForm instanceof HTMLFormElement)) return;
+
+    const fields = Array.from(parentForm.querySelectorAll(
+      'input:not([type="hidden"]):not([disabled]):not([readonly]), select:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly])'
+    )).filter((field) => field instanceof HTMLElement && field.tabIndex !== -1);
+    const currentIndex = fields.indexOf(typeOfSupplyRef.current);
+    const nextField = currentIndex >= 0 ? fields[currentIndex + 1] : null;
+
+    if (nextField instanceof HTMLElement) {
+      nextField.focus();
+      if (nextField instanceof HTMLInputElement && typeof nextField.select === 'function') {
+        nextField.select();
+      }
+    }
+  };
+
+  const handleTypeOfSupplyInputChange = (event) => {
+    const value = event.target.value;
+    setTypeOfSupplyQuery(value);
+    setIsTypeOfSupplyOpen(true);
+
+    const exactMatch = TYPE_OF_SUPPLY_OPTIONS.find(
+      (option) => normalizeText(option.label) === normalizeText(value)
+    );
+
+    if (exactMatch) {
+      setFormData((prev) => ({ ...prev, typeOfSupply: exactMatch.value }));
+    }
+  };
+
+  const handleTypeOfSupplyKeyDown = (event) => {
+    const key = event.key?.toLowerCase();
+
+    if (key === 'arrowdown') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsTypeOfSupplyOpen(true);
+      if (filteredTypeOfSupplyOptions.length === 0) return;
+      setTypeOfSupplyListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredTypeOfSupplyOptions.length - 1);
+      });
+      return;
+    }
+
+    if (key === 'arrowup') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsTypeOfSupplyOpen(true);
+      if (filteredTypeOfSupplyOptions.length === 0) return;
+      setTypeOfSupplyListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (key === 'escape' && isTypeOfSupplyOpen) {
+      event.preventDefault();
+      event.stopPropagation();
+      setTypeOfSupplyQuery(selectedTypeOfSupplyLabel);
+      setIsTypeOfSupplyOpen(false);
+      return;
+    }
+
+    if (key === 'enter') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!isTypeOfSupplyOpen) {
+        setIsTypeOfSupplyOpen(true);
+        return;
+      }
+
+      const activeOption = typeOfSupplyListIndex >= 0 ? filteredTypeOfSupplyOptions[typeOfSupplyListIndex] : null;
+      const exactMatch = TYPE_OF_SUPPLY_OPTIONS.find(
+        (option) => normalizeText(option.label) === normalizeText(typeOfSupplyQuery)
+      );
+      const matchedOption = activeOption || exactMatch || filteredTypeOfSupplyOptions[0] || TYPE_OF_SUPPLY_OPTIONS[0];
+      selectTypeOfSupply(matchedOption, true);
     }
   };
 
@@ -629,12 +789,14 @@ export default function AddProductPopup({
                       ref={unitSectionRef}
                       className="relative min-w-0 flex-1"
                       onFocusCapture={() => {
-                        const selectedIndex = unitPanelOptions.findIndex(
-                          (unitName) => normalizeText(unitName) === normalizeText(formData.unit)
+                        const selectedUnit = String(formData.unit || getInitialFormData().unit).trim() || getInitialFormData().unit;
+                        const selectedIndex = unitOptions.findIndex(
+                          (unitName) => normalizeText(unitName) === normalizeText(selectedUnit)
                         );
                         setIsStockGroupSectionActive(false);
+                        setUnitQuery(selectedUnit);
                         setIsUnitSectionActive(true);
-                        setUnitListIndex(selectedIndex >= 0 ? selectedIndex : (unitPanelOptions.length > 0 ? 0 : -1));
+                        setUnitListIndex(selectedIndex >= 0 ? selectedIndex : (unitOptions.length > 0 ? 0 : -1));
                       }}
                       onBlurCapture={(event) => {
                         const nextFocused = event.relatedTarget;
@@ -714,20 +876,89 @@ export default function AddProductPopup({
                   </div>
 
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                    <div>
+                    <div
+                      ref={typeOfSupplySectionRef}
+                      onBlurCapture={(event) => {
+                        const nextFocused = event.relatedTarget;
+                        if (
+                          typeOfSupplySectionRef.current
+                          && nextFocused instanceof Node
+                          && typeOfSupplySectionRef.current.contains(nextFocused)
+                        ) {
+                          return;
+                        }
+                        setTypeOfSupplyQuery(selectedTypeOfSupplyLabel);
+                        setIsTypeOfSupplyOpen(false);
+                      }}
+                    >
                       <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Type Of Supply</label>
-                      <select
-                        name="typeOfSupply"
-                        value={formData.typeOfSupply}
-                        onChange={handleChange}
-                        className={getInlineFieldClass('emerald')}
-                      >
-                        {TYPE_OF_SUPPLY_OPTIONS.map((option) => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </select>
+                      <div className="relative">
+                        <input
+                          ref={typeOfSupplyRef}
+                          type="text"
+                          value={typeOfSupplyQuery}
+                          onChange={handleTypeOfSupplyInputChange}
+                          onFocus={() => {
+                            const selectedOption = TYPE_OF_SUPPLY_OPTIONS.find(
+                              (option) => option.value === String(formData.typeOfSupply || 'goods').trim().toLowerCase()
+                            ) || TYPE_OF_SUPPLY_OPTIONS[0];
+                            setTypeOfSupplyQuery(selectedOption.label);
+                            setIsTypeOfSupplyOpen(true);
+                            setTypeOfSupplyListIndex(
+                              Math.max(filteredTypeOfSupplyOptions.findIndex((option) => option.value === selectedOption.value), 0)
+                            );
+                          }}
+                          onKeyDown={handleTypeOfSupplyKeyDown}
+                          className={`${getInlineFieldClass('emerald')} pr-10`}
+                          placeholder="Select type of supply"
+                        />
+                        <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500 transition-transform ${isTypeOfSupplyOpen ? 'rotate-180' : ''}`} />
+                      </div>
+
+                      {isTypeOfSupplyOpen && typeOfSupplyDropdownStyle && (
+                        <div
+                          className="fixed z-[90] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                          style={typeOfSupplyDropdownStyle}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Type Of Supply</span>
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                              {filteredTypeOfSupplyOptions.length}
+                            </span>
+                          </div>
+                          <div className="overflow-y-auto py-1" style={{ maxHeight: typeOfSupplyDropdownStyle.maxHeight }}>
+                            {filteredTypeOfSupplyOptions.map((option, index) => {
+                              const isActive = index === typeOfSupplyListIndex;
+                              const isSelected = String(formData.typeOfSupply || 'goods') === String(option.value);
+
+                              return (
+                                <button
+                                  key={option.value}
+                                  type="button"
+                                  onMouseDown={(event) => event.preventDefault()}
+                                  onMouseEnter={() => setTypeOfSupplyListIndex(index)}
+                                  onClick={() => selectTypeOfSupply(option, true)}
+                                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                    isActive
+                                      ? 'bg-yellow-200 text-amber-950'
+                                      : isSelected
+                                      ? 'bg-yellow-50 text-amber-800'
+                                      : 'text-slate-700 hover:bg-amber-50'
+                                  }`}
+                                >
+                                  <span className="truncate font-medium">{option.label}</span>
+                                  {isSelected && (
+                                    <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                      Selected
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div>
