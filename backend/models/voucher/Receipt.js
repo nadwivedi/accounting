@@ -24,6 +24,11 @@ const receiptSchema = new mongoose.Schema({
     required: true,
     min: 0.01
   },
+  receiptNumber: {
+    type: Number,
+    min: 1,
+    default: undefined
+  },
   method: {
     type: String,
     trim: true,

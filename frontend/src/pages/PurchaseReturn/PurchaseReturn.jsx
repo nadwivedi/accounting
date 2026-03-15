@@ -15,7 +15,7 @@ const getInitialForm = () => ({
 const formatPurchaseNumber = (value) => {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isInteger(parsed) || parsed <= 0) return '-';
-  return String(parsed).padStart(2, '0');
+  return `Pur-${String(parsed).padStart(2, '0')}`;
 };
 
 const getPurchaseLabel = (purchase) => {

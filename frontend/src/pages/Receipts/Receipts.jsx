@@ -76,6 +76,12 @@ const formatDisplayDate = (value) => {
   return parsedDate.toLocaleDateString('en-GB');
 };
 
+const formatReceiptNumber = (value) => {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) return '-';
+  return `Rec-${String(parsed).padStart(2, '0')}`;
+};
+
 export default function Receipts({ modalOnly = false, onModalFinish = null }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -886,6 +892,9 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                   >
                     <div className="flex items-start justify-between gap-3 border-b border-cyan-900/20 bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] px-4 py-3 text-white">
                       <div className="min-w-0">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
+                          {formatReceiptNumber(receipt.receiptNumber)}
+                        </p>
                         <p className="truncate text-sm font-bold text-white">{receipt.party?.partyName || 'Walk-in / Unassigned'}</p>
                         <p className="mt-1 text-xs text-cyan-100">
                           {formatDisplayDate(receipt.receiptDate)}
@@ -929,7 +938,8 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                 <table className="w-full min-w-[920px] overflow-hidden whitespace-nowrap border-separate border-spacing-0 text-left text-sm">
                   <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                     <tr>
-                      <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Date</th>
+                      <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">No.</th>
+                      <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Date</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Party</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Amount</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Receipt Account</th>
@@ -940,6 +950,9 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                   <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
                     {receipts.map((receipt) => (
                       <tr key={receipt._id} className="transition-colors duration-150 hover:bg-slate-200/45">
+                        <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">
+                          {formatReceiptNumber(receipt.receiptNumber)}
+                        </td>
                         <td className="border border-slate-400 px-4 py-3 text-center font-medium text-slate-700">
                           {formatDisplayDate(receipt.receiptDate)}
                         </td>

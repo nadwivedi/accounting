@@ -4,6 +4,7 @@ const Receipt = require('../../models/voucher/Receipt');
 const mongoose = require('mongoose');
 const fs = require('fs');
 const { createSaleInvoicePdf, getSaleInvoiceAbsolutePath } = require('../../utils/saleInvoicePdf');
+const { ensureSequentialNumbersForUser } = require('../../utils/voucherNumbers');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -57,6 +58,12 @@ const getLinkedSaleReceiptTotal = async ({ saleId, userId }) => {
 
   return toNumber(result[0]?.total);
 };
+
+const ensureReceiptNumbersForUser = async (userId) => ensureSequentialNumbersForUser({
+  Model: Receipt,
+  userId,
+  fieldName: 'receiptNumber'
+});
 
 const deleteSaleInvoicePdf = (relativePath = '') => {
   if (!relativePath) return;
@@ -196,8 +203,10 @@ exports.createSale = async (req, res) => {
     }
 
     if (totals.initialReceiptAmount > 0) {
+      const nextReceiptNumber = await ensureReceiptNumbersForUser(userId);
       await Receipt.create({
         userId,
+        receiptNumber: nextReceiptNumber,
         party: sale.party || null,
         refType: 'sale',
         refId: sale._id,
@@ -458,8 +467,11 @@ exports.updatePaymentStatus = async (req, res) => {
       });
     }
 
+    const nextReceiptNumber = await ensureReceiptNumbersForUser(userId);
+
     await Receipt.create({
       userId,
+      receiptNumber: nextReceiptNumber,
       party: sale.party || null,
       refType: 'sale',
       refId: sale._id,

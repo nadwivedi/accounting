@@ -75,7 +75,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
   const formatPurchaseNumber = (value) => {
     const parsed = Number.parseInt(value, 10);
     if (!Number.isInteger(parsed) || parsed <= 0) return '-';
-    return String(parsed).padStart(2, '0');
+    return `Pur-${String(parsed).padStart(2, '0')}`;
   };
 
   const getInitialFormData = () => ({
@@ -1279,7 +1279,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/80">
-                        PUR #{formatPurchaseNumber(purchase.purchaseNumber)}
+                        {formatPurchaseNumber(purchase.purchaseNumber)}
                       </p>
                       <p className="mt-0.5 truncate text-xs font-semibold text-white">
                         {purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || 'No supplier invoice'}

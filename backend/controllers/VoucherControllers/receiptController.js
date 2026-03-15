@@ -1,6 +1,10 @@
 ﻿const mongoose = require('mongoose');
 const Receipt = require('../../models/voucher/Receipt');
 const Sale = require('../../models/voucher/Sales');
+const {
+  ensureSequentialNumbersForUser,
+  parsePrefixedNumberSearch
+} = require('../../utils/voucherNumbers');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -26,6 +30,12 @@ const getLinkedSaleReceiptTotal = async ({ saleId, userId }) => {
 
   return toNumber(result[0]?.total);
 };
+
+const ensureReceiptNumbersForUser = async (userId) => ensureSequentialNumbersForUser({
+  Model: Receipt,
+  userId,
+  fieldName: 'receiptNumber'
+});
 
 const applySaleReceipt = async ({ refId, userId, amount }) => {
   const sale = await Sale.findOne({ _id: refId, userId });
@@ -82,6 +92,7 @@ exports.createReceipt = async (req, res) => {
     let resolvedParty = party || null;
     let resolvedRefId = null;
     let linkedSale = null;
+    const nextReceiptNumber = await ensureReceiptNumbersForUser(userId);
 
     if (refType === 'sale') {
       if (!refId || !mongoose.isValidObjectId(refId)) {
@@ -111,6 +122,7 @@ exports.createReceipt = async (req, res) => {
 
     const receipt = await Receipt.create({
       userId,
+      receiptNumber: nextReceiptNumber,
       party: resolvedParty,
       refType,
       refId: resolvedRefId,
@@ -145,6 +157,8 @@ exports.getAllReceipts = async (req, res) => {
     const userId = req.userId;
     const filter = { userId };
 
+    await ensureReceiptNumbersForUser(userId);
+
     if (refType && ['sale', 'none'].includes(refType)) {
       filter.refType = refType;
     }
@@ -158,7 +172,11 @@ exports.getAllReceipts = async (req, res) => {
     }
 
     if (search) {
-      filter.notes = { $regex: search, $options: 'i' };
+      const receiptNumberSearch = parsePrefixedNumberSearch(search, 'rec');
+      filter.$or = [
+        ...(receiptNumberSearch ? [{ receiptNumber: receiptNumberSearch }] : []),
+        { notes: { $regex: search, $options: 'i' } }
+      ];
     }
 
     if (fromDate) {

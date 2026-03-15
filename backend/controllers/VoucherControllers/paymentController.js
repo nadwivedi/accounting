@@ -1,6 +1,10 @@
 ﻿const mongoose = require('mongoose');
 const Payment = require('../../models/voucher/Payment');
 const Purchase = require('../../models/voucher/Purchase');
+const {
+  ensureSequentialNumbersForUser,
+  parsePrefixedNumberSearch
+} = require('../../utils/voucherNumbers');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -26,6 +30,12 @@ const getPurchaseLinkedPaymentTotal = async ({ purchaseId, userId }) => {
 
   return toNumber(result[0]?.total);
 };
+
+const ensurePaymentNumbersForUser = async (userId) => ensureSequentialNumbersForUser({
+  Model: Payment,
+  userId,
+  fieldName: 'paymentNumber'
+});
 
 const applyPurchasePayment = async ({ refId, userId, amount }) => {
   const purchase = await Purchase.findOne({ _id: refId, userId });
@@ -82,6 +92,7 @@ exports.createPayment = async (req, res) => {
     let resolvedParty = party || null;
     let resolvedRefId = null;
     let linkedPurchase = null;
+    const nextPaymentNumber = await ensurePaymentNumbersForUser(userId);
 
     if (refType === 'purchase') {
       if (!refId || !mongoose.isValidObjectId(refId)) {
@@ -111,6 +122,7 @@ exports.createPayment = async (req, res) => {
 
     const payment = await Payment.create({
       userId,
+      paymentNumber: nextPaymentNumber,
       party: resolvedParty,
       refType,
       refId: resolvedRefId,
@@ -146,6 +158,8 @@ exports.getAllPayments = async (req, res) => {
     const userId = req.userId;
     const filter = { userId };
 
+    await ensurePaymentNumbersForUser(userId);
+
     if (refType && ['purchase', 'none'].includes(refType)) {
       filter.refType = refType;
     }
@@ -159,7 +173,11 @@ exports.getAllPayments = async (req, res) => {
     }
 
     if (search) {
-      filter.notes = { $regex: search, $options: 'i' };
+      const paymentNumberSearch = parsePrefixedNumberSearch(search, 'pay');
+      filter.$or = [
+        ...(paymentNumberSearch ? [{ paymentNumber: paymentNumberSearch }] : []),
+        { notes: { $regex: search, $options: 'i' } }
+      ];
     }
 
     if (fromDate) {

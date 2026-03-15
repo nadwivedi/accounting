@@ -2,16 +2,17 @@
 const Product = require('../../models/master/Stock');
 const Payment = require('../../models/voucher/Payment');
 const mongoose = require('mongoose');
+const {
+  ensureSequentialNumbersForUser,
+  parsePrefixedNumberSearch
+} = require('../../utils/voucherNumbers');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const toPurchaseNumber = (value) => {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
-};
+const toPurchaseNumber = (value) => parsePrefixedNumberSearch(value, 'pur');
 
 const isDuplicatePurchaseInvoiceError = (error) => (
   error?.code === 11000 && (
@@ -81,30 +82,18 @@ const getLinkedPurchasePaymentTotal = async ({ purchaseId, userId }) => {
 };
 
 const ensurePurchaseNumbersForUser = async (userId) => {
-  const purchases = await Purchase.find({ userId })
-    .select('_id purchaseNumber createdAt')
-    .sort({ createdAt: 1, _id: 1 })
-    .lean();
-
-  let nextPurchaseNumber = purchases.reduce((max, purchase) => {
-    return Math.max(max, toPurchaseNumber(purchase.purchaseNumber) || 0);
-  }, 0) + 1;
-
-  const updates = purchases
-    .filter((purchase) => toPurchaseNumber(purchase.purchaseNumber) === null)
-    .map((purchase) => ({
-      updateOne: {
-        filter: { _id: purchase._id },
-        update: { $set: { purchaseNumber: nextPurchaseNumber++ } }
-      }
-    }));
-
-  if (updates.length > 0) {
-    await Purchase.bulkWrite(updates);
-  }
-
-  return nextPurchaseNumber;
+  return ensureSequentialNumbersForUser({
+    Model: Purchase,
+    userId,
+    fieldName: 'purchaseNumber'
+  });
 };
+
+const ensurePaymentNumbersForUser = async (userId) => ensureSequentialNumbersForUser({
+  Model: Payment,
+  userId,
+  fieldName: 'paymentNumber'
+});
 
 // Create purchase
 exports.createPurchase = async (req, res) => {
@@ -172,8 +161,10 @@ exports.createPurchase = async (req, res) => {
     }
 
     if (resolvedPaymentAmount > 0) {
+      const nextPaymentNumber = await ensurePaymentNumbersForUser(userId);
       await Payment.create({
         userId,
+        paymentNumber: nextPaymentNumber,
         party: party || null,
         refType: resolvedBillWiseFlag ? 'purchase' : 'none',
         refId: resolvedBillWiseFlag ? purchase._id : null,
