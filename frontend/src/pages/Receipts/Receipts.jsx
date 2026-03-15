@@ -895,7 +895,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
                           {formatReceiptNumber(receipt.receiptNumber)}
                         </p>
-                        <p className="truncate text-sm font-bold text-white">{receipt.party?.partyName || 'Walk-in / Unassigned'}</p>
+                        <p className="truncate text-sm font-bold text-white">{getPartyDisplayName(receipt.party) || 'Walk-in / Unassigned'}</p>
                         <p className="mt-1 text-xs text-cyan-100">
                           {formatDisplayDate(receipt.receiptDate)}
                         </p>
@@ -957,7 +957,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                           {formatDisplayDate(receipt.receiptDate)}
                         </td>
                         <td className="border border-slate-400 px-4 py-3 font-semibold text-slate-800">
-                          {receipt.party?.partyName || '-'}
+                          {getPartyDisplayName(receipt.party) || '-'}
                         </td>
                         <td className="border border-slate-400 px-4 py-3 font-semibold text-emerald-700">
                           Rs {Number(receipt.amount || 0).toFixed(2)}

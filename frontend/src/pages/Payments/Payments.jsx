@@ -236,7 +236,7 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
   const fetchParties = async () => {
     try {
       const response = await apiClient.get('/parties');
-      setParties((response.data || []).filter((p) => p.type === 'supplier' || p.type === 'both'));
+      setParties(response.data || []);
     } catch (err) {
       console.error('Error fetching parties:', err);
     }
@@ -934,7 +934,7 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
                         <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-100">
                           {formatPaymentNumber(payment.paymentNumber)}
                         </p>
-                        <p className="truncate text-sm font-bold text-white">{payment.party?.partyName || 'Walk-in / Unassigned'}</p>
+                        <p className="truncate text-sm font-bold text-white">{getPartyDisplayName(payment.party) || 'Walk-in / Unassigned'}</p>
                         <p className="mt-1 text-xs text-cyan-100">
                           {formatDisplayDate(payment.paymentDate)}
                         </p>
@@ -996,7 +996,7 @@ export default function Payments({ modalOnly = false, onModalFinish = null }) {
                           {formatDisplayDate(payment.paymentDate)}
                         </td>
                         <td className="border border-slate-400 px-4 py-3 font-semibold text-slate-800">
-                          {payment.party?.partyName || '-'}
+                          {getPartyDisplayName(payment.party) || '-'}
                         </td>
                         <td className="border border-slate-400 px-4 py-3 font-semibold text-emerald-700">
                           Rs {Number(payment.amount || 0).toFixed(2)}
