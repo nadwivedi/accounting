@@ -94,6 +94,16 @@ export default function AddPurchasePopup({
     });
   };
 
+  const reopenItemEntryFromPaidAmount = () => {
+    setIsItemEntryClosed(false);
+    setIsProductSectionActive(true);
+    setProductListIndex(filteredProducts.length > 0 ? 0 : -1);
+    requestAnimationFrame(() => {
+      resolvedProductInputRef.current?.focus();
+      resolvedProductInputRef.current?.select?.();
+    });
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-1 md:p-4" onClick={handleCancel}>
       <div className="flex h-[95dvh] max-h-[95dvh] w-[94vw] max-w-[68rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
@@ -359,6 +369,13 @@ export default function AddPurchasePopup({
                                     name="paymentAmount"
                                     value={formData.paymentAmount}
                                     onChange={handleInputChange}
+                                    onKeyDown={(event) => {
+                                      if (event.key === 'Backspace' && !String(formData.paymentAmount || '').trim()) {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        reopenItemEntryFromPaidAmount();
+                                      }
+                                    }}
                                     step="0.01"
                                     min="0"
                                     disabled={Boolean(editingId)}
@@ -370,7 +387,7 @@ export default function AddPurchasePopup({
                             </>
                           ) : (
                             <tr className="bg-emerald-50/50 align-top">
-                              <td className="border-r border-slate-400 px-3 py-2.5">
+                              <td className="px-3 py-2.5">
                                 <div
                                   ref={productSectionRef}
                                   className="relative"
@@ -472,7 +489,7 @@ export default function AddPurchasePopup({
                                   )}
                                 </div>
                               </td>
-                              <td className="border-r border-slate-400 px-3 py-2.5">
+                              <td className="px-3 py-2.5">
                                 <input
                                   type="number"
                                   placeholder="0"
@@ -482,12 +499,12 @@ export default function AddPurchasePopup({
                                   className={`${inputClass} ml-auto w-[22%] min-w-[44px] text-right focus:ring-emerald-500`}
                                 />
                               </td>
-                              <td className="border-r border-slate-400 px-3 py-2.5 text-center">
+                              <td className="px-3 py-2.5 text-center">
                                 <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-medium text-gray-700">
                                   {currentItemUnit}
                                 </div>
                               </td>
-                              <td className="border-r border-slate-400 px-3 py-2.5">
+                              <td className="px-3 py-2.5">
                                 <input
                                   type="number"
                                   placeholder="0.00"
@@ -509,7 +526,7 @@ export default function AddPurchasePopup({
                                   step="0.01"
                                 />
                               </td>
-                              <td className="border-r border-slate-400 px-3 py-2.5 text-right">
+                              <td className="px-3 py-2.5 text-right">
                                 <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-semibold text-gray-800">
                                   Rs {currentItemTotal.toFixed(2)}
                                 </div>
