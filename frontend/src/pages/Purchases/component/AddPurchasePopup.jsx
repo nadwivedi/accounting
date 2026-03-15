@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2, CalendarDays, Package, Upload, X, ChevronRight, Hash } from 'lucide-react';
+import { Building2, CalendarDays, Package, Upload } from 'lucide-react';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
 import { useFloatingDropdownPosition } from '../../../utils/useFloatingDropdownPosition';
 
@@ -52,33 +52,36 @@ export default function AddPurchasePopup({
   const localProductInputRef = useRef(null);
   const paidAmountInputRef = useRef(null);
   const [isItemEntryClosed, setIsItemEntryClosed] = useState(false);
-
-  const inputClass =
-    'w-full rounded-lg border border-stone-200 bg-white px-3 py-2 text-[13px] text-stone-800 placeholder-stone-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all duration-150';
-
+  const inputClass = 'w-full rounded-lg border border-slate-400 bg-white px-2.5 py-1.5 text-[13px] text-gray-800 focus:border-transparent focus:outline-none focus:ring-2';
   const currentItemTotal = Math.max(0, Number(currentItem.quantity || 0) * Number(currentItem.unitPrice || 0));
   const resolvedLeadgerInputRef = leadgerInputRef || localLeadgerInputRef;
   const resolvedProductInputRef = productInputRef || localProductInputRef;
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
   const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex]);
-
   const resolveItemUnit = (item) => {
     const itemUnit = String(item?.unit || '').trim();
     if (itemUnit) return itemUnit;
-    const matchingProduct = products.find((p) => String(p?._id) === String(item?.product || ''));
-    return String(matchingProduct?.unit || '').trim() || '—';
+
+    const matchingProduct = products.find((product) => String(product?._id) === String(item?.product || ''));
+    return String(matchingProduct?.unit || '').trim() || '-';
   };
-  const currentItemUnit = String(currentItem.unit || '').trim() || '—';
+  const currentItemUnit = String(currentItem.unit || '').trim() || '-';
 
   useEffect(() => {
-    if (showForm) setIsItemEntryClosed(false);
+    if (showForm) {
+      setIsItemEntryClosed(false);
+    }
   }, [showForm, editingId]);
 
   if (!showForm) return null;
 
   const closeItemEntryRow = () => {
     selectProduct(null);
-    setCurrentItem((prev) => ({ ...prev, quantity: '', unitPrice: '' }));
+    setCurrentItem((prev) => ({
+      ...prev,
+      quantity: '',
+      unitPrice: ''
+    }));
     setIsProductSectionActive(false);
     setIsItemEntryClosed(true);
   };
@@ -91,448 +94,455 @@ export default function AddPurchasePopup({
     });
   };
 
-  const FieldLabel = ({ children }) => (
-    <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-stone-400">{children}</p>
-  );
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/75 p-2 backdrop-blur-sm md:p-6"
-      onClick={handleCancel}
-    >
-      {/* max-w-5xl = 64rem wide popup */}
-      <div
-        className="flex h-[96dvh] max-h-[96dvh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl bg-stone-50 shadow-[0_32px_80px_rgba(0,0,0,0.35)] ring-1 ring-white/10"
-        onClick={(e) => e.stopPropagation()}
-      >
-
-        {/* ── HEADER ── */}
-        <div className="flex shrink-0 items-center justify-between bg-stone-900 px-6 py-4">
-          <div className="flex items-center gap-3.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500/15 ring-1 ring-teal-400/25">
-              <Package className="h-[18px] w-[18px] text-teal-400" strokeWidth={1.75} />
-            </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-1 md:p-4" onClick={handleCancel}>
+      <div className="flex h-[95dvh] max-h-[95dvh] w-[94vw] max-w-[68rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 py-2 text-white md:px-4 md:py-3">
+          <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-[15px] font-bold tracking-tight text-white">
-                {editingId ? 'Edit Purchase' : 'New Purchase Entry'}
+              <h2 className="text-base font-bold md:text-xl">
+                {editingId ? 'Edit Purchase Entry' : 'Add New Purchase'}
               </h2>
-              <p className="mt-0.5 text-[11px] text-stone-500">
-                {editingId ? 'Update an existing purchase record' : 'Record incoming stock & payment'}
-              </p>
             </div>
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="rounded-lg p-1.5 text-white transition hover:bg-white/20"
+              aria-label="Close popup"
+            >
+              <svg className="h-5 w-5 md:h-6 md:w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={handleCancel}
-            className="rounded-lg p-1.5 text-stone-500 transition hover:bg-white/10 hover:text-white"
-            aria-label="Close"
-          >
-            <X className="h-5 w-5" />
-          </button>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)}
-          className="flex flex-1 flex-col overflow-hidden"
-        >
-          <div className="flex-1 overflow-y-auto">
+        <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, handleCancel)} className="flex flex-1 flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-2 md:p-4">
+            <div className="flex h-full flex-col gap-2.5 md:gap-4">
+                <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2 md:p-4">
+                  <h3 className="mb-2.5 flex items-center gap-2 text-sm font-bold text-gray-800 md:mb-3 md:text-base">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">1</span>
+                    Purchase Details
+                  </h3>
 
-            {/* ── SECTION 1: Purchase Details ── */}
-            <div className="border-b border-stone-200 bg-white px-6 py-5">
-              <div className="mb-4 flex items-center gap-2.5">
-                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-teal-600 text-[11px] font-bold text-white">1</span>
-                <h3 className="text-sm font-bold text-stone-700">Purchase Details</h3>
-                <div className="h-px flex-1 bg-stone-100" />
-              </div>
-
-              {/* Row 1: Date | Party (2 cols) | Due Date */}
-              <div className="mb-3 grid grid-cols-2 gap-4 md:grid-cols-4">
-
-                {/* Purchase Date */}
-                <div>
-                  <FieldLabel>Purchase Date</FieldLabel>
-                  <div className="relative">
-                    <CalendarDays className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-teal-500" />
-                    <input
-                      type="text"
-                      name="purchaseDate"
-                      value={formData.purchaseDate}
-                      onChange={handleInputChange}
-                      onKeyDown={handleSelectEnterMoveNext}
-                      className={`${inputClass} pl-9`}
-                      placeholder="DD-MM-YYYY"
-                      inputMode="numeric"
-                      autoFocus
-                    />
-                  </div>
-                </div>
-
-                {/* Party Name — 2 cols */}
-                <div className="relative md:col-span-2">
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <FieldLabel>Party Name <span className="text-rose-400">*</span></FieldLabel>
-                    {isLeadgerSectionActive && (
-                      <button
-                        type="button"
-                        onClick={onOpenNewParty}
-                        className="inline-flex items-center gap-1 rounded-md border border-teal-200 bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-700 transition hover:bg-teal-100"
-                      >
-                        <kbd className="font-mono text-[9px]">Ctrl</kbd> New Party
-                      </button>
-                    )}
-                  </div>
-                  <div
-                    ref={leadgerSectionRef}
-                    className="relative"
-                    onFocusCapture={handleLeadgerFocus}
-                    onBlurCapture={(event) => {
-                      const nf = event.relatedTarget;
-                      if (leadgerSectionRef.current && nf instanceof Node && leadgerSectionRef.current.contains(nf)) return;
-                      setIsLeadgerSectionActive(false);
-                    }}
-                  >
-                    <div className="relative">
-                      <Building2 className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-teal-500" />
-                      <input
-                        ref={resolvedLeadgerInputRef}
-                        type="text"
-                        value={leadgerQuery}
-                        onChange={handleLeadgerInputChange}
-                        onKeyDown={handleLeadgerInputKeyDown}
-                        className={`${inputClass} pl-9`}
-                        placeholder="Search or type party name…"
-                        autoComplete="off"
-                        required
-                      />
-                    </div>
-                    {isLeadgerSectionActive && leadgerDropdownStyle && (
-                      <div
-                        className="fixed z-[80] overflow-hidden rounded-xl border border-stone-200 bg-white shadow-2xl"
-                        style={leadgerDropdownStyle}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <div className="flex items-center justify-between border-b border-stone-100 bg-stone-50 px-3.5 py-2.5">
-                          <span className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Party List</span>
-                          <span className="rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-bold text-teal-600">{filteredLeadgers.length}</span>
-                        </div>
-                        <div className="overflow-y-auto py-1" style={{ maxHeight: leadgerDropdownStyle.maxHeight }}>
-                          {filteredLeadgers.length === 0 ? (
-                            <div className="px-4 py-5 text-center">
-                              <p className="text-[13px] text-stone-500">No matching parties.</p>
-                              <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onOpenNewParty}
-                                className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg border border-teal-200 bg-teal-50 px-3 py-1.5 text-[12px] font-semibold text-teal-700 hover:bg-teal-100 transition">
-                                Create New Party <ChevronRight className="h-3 w-3" />
-                              </button>
-                            </div>
-                          ) : filteredLeadgers.map((l, i) => {
-                            const isActive = i === leadgerListIndex;
-                            const isSel = String(formData.party || '') === String(l._id);
-                            return (
-                              <button key={l._id} type="button" onMouseDown={(e) => e.preventDefault()}
-                                onMouseEnter={() => setLeadgerListIndex(i)} onClick={() => selectLeadger(l)}
-                                className={`flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left text-[13px] transition ${isActive ? 'bg-teal-50 text-teal-900' : isSel ? 'bg-teal-50/50 text-teal-800' : 'text-stone-700 hover:bg-stone-50'}`}>
-                                <span className="truncate font-medium">{getLeadgerDisplayName(l)}</span>
-                                {isSel && <span className="shrink-0 rounded-full border border-teal-200 bg-white px-2 py-0.5 text-[10px] font-bold text-teal-600">✓</span>}
-                              </button>
-                            );
-                          })}
-                        </div>
+                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-3">
+                    <div>
+                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Purchase Date</label>
+                      <div className="relative">
+                        <CalendarDays className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-indigo-400" />
+                        <input
+                          type="text"
+                          name="purchaseDate"
+                          value={formData.purchaseDate}
+                          onChange={handleInputChange}
+                          onKeyDown={handleSelectEnterMoveNext}
+                          className={`${inputClass} pl-10 focus:ring-indigo-500`}
+                          placeholder="DD-MM-YYYY"
+                          inputMode="numeric"
+                          autoFocus
+                        />
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Due Date */}
-                <div>
-                  <FieldLabel>Due Date</FieldLabel>
-                  <input
-                    type="date"
-                    name="dueDate"
-                    value={formData.dueDate || ''}
-                    onChange={handleInputChange}
-                    onKeyDown={handleSelectEnterMoveNext}
-                    className={inputClass}
-                  />
-                </div>
-              </div>
+                    <div className="relative">
+                      <div className="relative mb-1 min-h-[16px]">
+                        <label className="block pr-24 text-[11px] font-semibold text-gray-700 md:text-xs">
+                          Party Name <span className="text-red-500">*</span>
+                        </label>
+                        {isLeadgerSectionActive && (
+                          <button
+                            type="button"
+                            onClick={onOpenNewParty}
+                            className="absolute right-0 -top-2 inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2 py-1 text-[10px] font-semibold text-indigo-700 transition hover:bg-indigo-50"
+                          >
+                            <span className="rounded bg-indigo-100 px-1.5 py-0.5 font-mono text-[9px] text-indigo-700">Ctrl</span>
+                            New Party
+                          </button>
+                        )}
+                      </div>
+                      <div
+                        ref={leadgerSectionRef}
+                        className="relative"
+                        onFocusCapture={handleLeadgerFocus}
+                        onBlurCapture={(event) => {
+                          const nextFocused = event.relatedTarget;
+                          if (leadgerSectionRef.current && nextFocused instanceof Node && leadgerSectionRef.current.contains(nextFocused)) return;
+                          setIsLeadgerSectionActive(false);
+                        }}
+                      >
+                        <div className="relative">
+                          <Building2 className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-indigo-400" />
+                          <input
+                            ref={resolvedLeadgerInputRef}
+                            type="text"
+                            value={leadgerQuery}
+                            onChange={handleLeadgerInputChange}
+                            onKeyDown={handleLeadgerInputKeyDown}
+                            className={`${inputClass} pl-9 focus:ring-indigo-500`}
+                            placeholder="Type to search party..."
+                            autoComplete="off"
+                            required
+                          />
+                        </div>
 
-              {/* Row 2: Supplier Invoice | Invoice Upload (wider) */}
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <div>
-                  <FieldLabel>Supplier Invoice <span className="normal-case font-normal text-stone-300">(optional)</span></FieldLabel>
-                  <div className="relative">
-                    <Hash className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-stone-400" />
-                    <input
-                      type="text"
-                      name="supplierInvoice"
-                      value={formData.supplierInvoice || ''}
-                      onChange={handleInputChange}
-                      onKeyDown={handleSelectEnterMoveNext}
-                      className={`${inputClass} pl-9`}
-                      placeholder="INV-0001"
-                    />
-                  </div>
-                </div>
-
-                <div className="md:col-span-3">
-                  <FieldLabel>Invoice File</FieldLabel>
-                  <input
-                    id="purchase-invoice-upload"
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
-                    onChange={handleInvoiceUpload}
-                    disabled={uploadingInvoice}
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor="purchase-invoice-upload"
-                    className={`flex h-[38px] cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed text-[13px] font-semibold transition-all duration-150 ${
-                      uploadingInvoice
-                        ? 'border-stone-200 bg-stone-50 text-stone-400 opacity-60'
-                        : formData.invoiceLink
-                        ? 'border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-100'
-                        : 'border-stone-300 bg-stone-50 text-stone-500 hover:border-teal-300 hover:bg-teal-50 hover:text-teal-700'
-                    }`}
-                  >
-                    <Upload className="h-3.5 w-3.5" />
-                    {uploadingInvoice ? 'Uploading…' : formData.invoiceLink ? '✓ Invoice Attached' : 'Click to upload invoice (JPG, PNG, PDF)'}
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* ── SECTION 2: Items Table ── */}
-            <div className="px-6 py-5">
-              <div className="mb-4 flex items-center gap-2.5">
-                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-amber-500 text-[11px] font-bold text-white">2</span>
-                <h3 className="text-sm font-bold text-stone-700">Purchase Items</h3>
-                <span className="rounded-full border border-stone-200 bg-white px-2.5 py-0.5 text-[11px] font-semibold text-stone-500 shadow-sm">
-                  {formData.items.length} item{formData.items.length !== 1 ? 's' : ''}
-                </span>
-                <div className="h-px flex-1 bg-stone-100" />
-              </div>
-
-              <div className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-[13px]" style={{ minWidth: '680px' }}>
-                    <colgroup>
-                      <col style={{ width: '38%' }} />
-                      <col style={{ width: '13%' }} />
-                      <col style={{ width: '10%' }} />
-                      <col style={{ width: '19%' }} />
-                      <col style={{ width: '20%' }} />
-                    </colgroup>
-                    <thead>
-                      <tr className="border-b border-stone-200 bg-stone-50">
-                        <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-widest text-stone-400">Product</th>
-                        <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-stone-400">Qty</th>
-                        <th className="px-4 py-3 text-center text-[10px] font-bold uppercase tracking-widest text-stone-400">Unit</th>
-                        <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-stone-400">Unit Price</th>
-                        <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-stone-400">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-stone-100">
-
-                      {/* Saved rows */}
-                      {formData.items.map((item, index) => (
-                        <tr key={index} className="transition-colors hover:bg-stone-50/80">
-                          <td className="px-4 py-3 font-medium text-stone-800">{item.productName}</td>
-                          <td className="px-4 py-3 text-right tabular-nums text-stone-600">{item.quantity}</td>
-                          <td className="px-4 py-3 text-center text-stone-500">{resolveItemUnit(item)}</td>
-                          <td className="px-4 py-3 text-right tabular-nums text-stone-600">₹{Number(item.unitPrice || 0).toFixed(2)}</td>
-                          <td className="px-4 py-3 text-right tabular-nums font-semibold text-stone-800">₹{Number(item.total || 0).toFixed(2)}</td>
-                        </tr>
-                      ))}
-
-                      {isItemEntryClosed ? (
-                        <>
-                          <tr className="bg-teal-50/70">
-                            <td colSpan={4} className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-teal-700">
-                              Total Amount
-                            </td>
-                            <td className="px-4 py-3 text-right text-[15px] font-bold tabular-nums text-teal-800">
-                              ₹{Number(formData.totalAmount || 0).toFixed(2)}
-                            </td>
-                          </tr>
-                          <tr className="bg-white">
-                            <td colSpan={4} className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-widest text-stone-400">
-                              Paid Amount
-                            </td>
-                            <td className="px-4 py-2.5">
-                              <input
-                                ref={paidAmountInputRef}
-                                type="number"
-                                name="paymentAmount"
-                                value={formData.paymentAmount}
-                                onChange={handleInputChange}
-                                step="0.01"
-                                min="0"
-                                disabled={Boolean(editingId)}
-                                className={`${inputClass} text-right tabular-nums ${Boolean(editingId) ? 'bg-stone-100 text-stone-400' : ''}`}
-                                placeholder="0.00"
-                              />
-                            </td>
-                          </tr>
-                        </>
-                      ) : (
-                        /* Entry row */
-                        <tr className="bg-amber-50/50 align-middle">
-
-                          {/* Product search */}
-                          <td className="px-3 py-3">
-                            <div
-                              ref={productSectionRef}
-                              className="relative"
-                              onFocusCapture={handleProductFocus}
-                              onBlurCapture={(event) => {
-                                const nf = event.relatedTarget;
-                                if (productSectionRef.current && nf instanceof Node && productSectionRef.current.contains(nf)) return;
-                                setIsProductSectionActive(false);
-                              }}
-                            >
-                              <div className="relative">
-                                <Package className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-amber-500" />
-                                <input
-                                  ref={resolvedProductInputRef}
-                                  type="text"
-                                  value={productQuery}
-                                  onChange={handleProductInputChange}
-                                  onKeyDown={(e) => handleProductInputKeyDown(e, closeItemEntryAndFocusPaidAmount)}
-                                  className={`${inputClass} border-amber-200 pl-9 focus:ring-amber-400`}
-                                  placeholder="Search product…"
-                                  autoComplete="off"
-                                />
-                              </div>
-
-                              {isProductSectionActive && productDropdownStyle && (
-                                <div
-                                  className="fixed z-[80] overflow-hidden rounded-xl border border-stone-200 bg-white shadow-2xl"
-                                  style={productDropdownStyle}
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <div className="flex items-center justify-between border-b border-stone-100 bg-stone-50 px-3.5 py-2.5">
-                                    <span className="text-[10px] font-bold uppercase tracking-widest text-stone-500">Products</span>
-                                    <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-600">{filteredProducts.length}</span>
-                                  </div>
-                                  <div className="overflow-y-auto py-1" style={{ maxHeight: productDropdownStyle.maxHeight }}>
-                                    {filteredProducts.length === 0 ? (
-                                      <div className="px-4 py-5 text-center">
-                                        <p className="text-[13px] text-stone-500">No matching products.</p>
-                                        <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={onOpenNewProduct}
-                                          className="mt-2.5 inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-[12px] font-semibold text-amber-700 hover:bg-amber-100 transition">
-                                          Create New Stock <ChevronRight className="h-3 w-3" />
-                                        </button>
-                                      </div>
-                                    ) : filteredProducts.map((p, i) => {
-                                      const isActive = i === productListIndex;
-                                      const isSel = String(currentItem.product || '') === String(p._id);
-                                      return (
-                                        <button key={p._id} type="button" onMouseDown={(e) => e.preventDefault()}
-                                          onMouseEnter={() => setProductListIndex(i)} onClick={() => selectProduct(p)}
-                                          className={`flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left text-[13px] transition ${isActive ? 'bg-amber-50 text-amber-900' : isSel ? 'bg-amber-50/50' : 'text-stone-700 hover:bg-stone-50'}`}>
-                                          <span className="truncate font-medium">{getProductDisplayName(p)}</span>
-                                          {isSel && <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-bold text-amber-600">✓</span>}
-                                        </button>
-                                      );
-                                    })}
-                                    <button
-                                      type="button"
-                                      onMouseDown={(e) => e.preventDefault()}
-                                      onMouseEnter={() => setProductListIndex(filteredProducts.length)}
-                                      onClick={closeItemEntryAndFocusPaidAmount}
-                                      className={`flex w-full items-center justify-between gap-3 border-t border-stone-100 px-3.5 py-2.5 text-[12px] font-bold transition ${productListIndex === filteredProducts.length ? 'bg-stone-100 text-stone-800' : 'text-stone-400 hover:bg-stone-50'}`}
-                                    >
-                                      <span>End Item Entry</span>
-                                      <span className="rounded-full border border-stone-200 bg-white px-2 py-0.5 text-[10px] text-stone-500">↵ Done</span>
-                                    </button>
-                                  </div>
+                        {isLeadgerSectionActive && leadgerDropdownStyle && (
+                          <div
+                            className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                            style={leadgerDropdownStyle}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Party List</span>
+                              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                {filteredLeadgers.length}
+                              </span>
+                            </div>
+                            <div className="overflow-y-auto py-1" style={{ maxHeight: leadgerDropdownStyle.maxHeight }}>
+                              {filteredLeadgers.length === 0 ? (
+                                <div className="px-3 py-3 text-center text-[13px] text-slate-500">
+                                  <p>No matching parties found.</p>
+                                  <button
+                                    type="button"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onClick={onOpenNewParty}
+                                    className="mt-2 inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                                  >
+                                    Create New Party
+                                    <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-indigo-600">Ctrl</span>
+                                  </button>
                                 </div>
+                              ) : (
+                                filteredLeadgers.map((leadger, index) => {
+                                  const isActive = index === leadgerListIndex;
+                                  const isSelected = String(formData.party || '') === String(leadger._id);
+
+                                  return (
+                                    <button
+                                      key={leadger._id}
+                                      type="button"
+                                      onMouseDown={(event) => event.preventDefault()}
+                                      onMouseEnter={() => setLeadgerListIndex(index)}
+                                      onClick={() => selectLeadger(leadger)}
+                                      className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                        isActive
+                                          ? 'bg-yellow-200 text-amber-950'
+                                          : isSelected
+                                          ? 'bg-yellow-50 text-amber-800'
+                                          : 'text-slate-700 hover:bg-amber-50'
+                                      }`}
+                                    >
+                                      <span className="truncate font-medium">{getLeadgerDisplayName(leadger)}</span>
+                                      {isSelected && (
+                                        <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                          Selected
+                                        </span>
+                                      )}
+                                    </button>
+                                  );
+                                })
                               )}
                             </div>
-                          </td>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                          {/* Quantity — full column width, no truncation */}
-                          <td className="px-3 py-3">
-                            <input
-                              type="number"
-                              placeholder="0"
-                              value={currentItem.quantity}
-                              onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
-                              onKeyDown={handleSelectEnterMoveNext}
-                              className={`${inputClass} border-amber-200 text-right tabular-nums focus:ring-amber-400`}
-                            />
-                          </td>
+                    <div>
+                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">
+                        Supplier Invoice No. <span className="text-xs text-gray-500">(Optional)</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="supplierInvoice"
+                        value={formData.supplierInvoice || ''}
+                        onChange={handleInputChange}
+                        onKeyDown={handleSelectEnterMoveNext}
+                        className={`${inputClass} focus:ring-indigo-500`}
+                        placeholder="Enter supplier invoice no."
+                      />
+                    </div>
 
-                          {/* Unit chip */}
-                          <td className="px-3 py-3">
-                            <div className="flex items-center justify-center rounded-lg border border-stone-200 bg-stone-50 py-2 text-[13px] font-medium text-stone-600">
-                              {currentItemUnit}
-                            </div>
-                          </td>
+                    <div>
+                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Due Date</label>
+                      <input
+                        type="date"
+                        name="dueDate"
+                        value={formData.dueDate || ''}
+                        onChange={handleInputChange}
+                        onKeyDown={handleSelectEnterMoveNext}
+                        className={`${inputClass} focus:ring-indigo-500`}
+                      />
+                    </div>
 
-                          {/* Unit Price */}
-                          <td className="px-3 py-3">
-                            <input
-                              type="number"
-                              placeholder="0.00"
-                              value={currentItem.unitPrice}
-                              onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  const added = handleAddItem();
-                                  if (!added) return;
-                                  requestAnimationFrame(() => {
-                                    resolvedProductInputRef.current?.focus();
-                                    resolvedProductInputRef.current?.select?.();
-                                  });
-                                }
-                              }}
-                              className={`${inputClass} border-amber-200 text-right tabular-nums focus:ring-amber-400`}
-                              step="0.01"
-                            />
-                          </td>
-
-                          {/* Row total */}
-                          <td className="px-3 py-3">
-                            <div className="flex items-center justify-end rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-right text-[13px] font-bold tabular-nums text-amber-800">
-                              ₹{currentItemTotal.toFixed(2)}
-                            </div>
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                    <div className="md:col-span-2">
+                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Invoice File</label>
+                      <input
+                        id="purchase-invoice-upload"
+                        type="file"
+                        accept=".jpg,.jpeg,.png,.pdf,image/jpeg,image/png,application/pdf"
+                        onChange={handleInvoiceUpload}
+                        disabled={uploadingInvoice}
+                        className="hidden"
+                      />
+                      <label
+                        htmlFor="purchase-invoice-upload"
+                        className={`flex min-h-[36px] cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed px-2.5 py-1.5 text-center text-[13px] font-semibold transition ${
+                          uploadingInvoice
+                            ? 'border-indigo-200 bg-indigo-50 text-indigo-500 opacity-75'
+                            : 'border-indigo-300 bg-white text-indigo-700 hover:bg-indigo-50'
+                        }`}
+                      >
+                        <Upload className="h-3.5 w-3.5" />
+                        <span>{uploadingInvoice ? 'Uploading...' : formData.invoiceLink ? 'Invoice Uploaded' : 'Upload Invoice'}</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
+                <div className="flex flex-1 flex-col rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-green-50 to-emerald-50 p-2.5 md:p-4">
+                  <h3 className="mb-2.5 flex items-center gap-2 text-sm font-bold text-gray-800 md:mb-3 md:text-base">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">2</span>
+                    Purchase Items
+                  </h3>
+
+                  <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
+                    <div className="border-b border-emerald-100 bg-emerald-50 px-3 py-2">
+                      <p className="text-xs font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
+                    </div>
+                    <div className="flex-1 overflow-auto">
+                      <table className="w-full min-w-[720px] table-fixed text-[13px]">
+                        <colgroup>
+                          <col className="w-[34%]" />
+                          <col className="w-[10%]" />
+                          <col className="w-[10%]" />
+                          <col className="w-[21%]" />
+                          <col className="w-[25%]" />
+                        </colgroup>
+                        <thead className="bg-white text-gray-600">
+                          <tr>
+                            <th className="border-b border-r border-slate-400 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider">Product</th>
+                            <th className="border-b border-r border-slate-400 px-3 py-2 pr-12 text-right text-[11px] font-semibold uppercase tracking-wider">Qty</th>
+                            <th className="border-b border-r border-slate-400 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider">Per</th>
+                            <th className="border-b border-r border-slate-400 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Price</th>
+                            <th className="border-b border-r border-slate-400 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-emerald-50">
+                          {formData.items.map((item, index) => (
+                            <tr key={index} className="hover:bg-emerald-50/40">
+                              <td className="border-r border-slate-400 px-3 py-2.5 font-medium text-gray-800">{item.productName}</td>
+                              <td className="border-r border-slate-400 px-3 py-2.5 pr-12 text-right text-gray-600">{item.quantity}</td>
+                              <td className="border-r border-slate-400 px-3 py-2.5 text-center text-gray-600">{resolveItemUnit(item)}</td>
+                              <td className="border-r border-slate-400 px-3 py-2.5 text-right text-gray-600">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
+                              <td className="border-r border-slate-400 px-3 py-2.5 text-right font-semibold text-gray-800">Rs {Number(item.total || 0).toFixed(2)}</td>
+                            </tr>
+                          ))}
+                          {isItemEntryClosed ? (
+                            <>
+                              <tr className="bg-emerald-50/40">
+                                <td colSpan={4} className="border-t border-emerald-200 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-emerald-800">
+                                  Total Amount
+                                </td>
+                                <td className="border-t border-emerald-200 px-3 py-3 text-right text-sm font-bold text-emerald-900">
+                                  Rs {Number(formData.totalAmount || 0).toFixed(2)}
+                                </td>
+                              </tr>
+                              <tr className="bg-white">
+                                <td colSpan={4} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
+                                  Paid Amount
+                                </td>
+                                <td className="border-t border-emerald-100 px-3 py-2">
+                                  <input
+                                    ref={paidAmountInputRef}
+                                    type="number"
+                                    name="paymentAmount"
+                                    value={formData.paymentAmount}
+                                    onChange={handleInputChange}
+                                    step="0.01"
+                                    min="0"
+                                    disabled={Boolean(editingId)}
+                                    className={`${inputClass} text-right ${Boolean(editingId) ? 'bg-gray-100 text-gray-500' : 'bg-white'} focus:ring-emerald-500`}
+                                    placeholder="0.00"
+                                  />
+                                </td>
+                              </tr>
+                            </>
+                          ) : (
+                            <tr className="bg-emerald-50/50 align-top">
+                              <td className="border-r border-slate-400 px-3 py-2.5">
+                                <div
+                                  ref={productSectionRef}
+                                  className="relative"
+                                  onFocusCapture={handleProductFocus}
+                                  onBlurCapture={(event) => {
+                                    const nextFocused = event.relatedTarget;
+                                    if (productSectionRef.current && nextFocused instanceof Node && productSectionRef.current.contains(nextFocused)) return;
+                                    setIsProductSectionActive(false);
+                                  }}
+                                >
+                                  <div className="relative">
+                                    <Package className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-500" />
+                                    <input
+                                      ref={resolvedProductInputRef}
+                                      type="text"
+                                      value={productQuery}
+                                      onChange={handleProductInputChange}
+                                      onKeyDown={(e) => handleProductInputKeyDown(e, closeItemEntryAndFocusPaidAmount)}
+                                      className={`${inputClass} pl-9 focus:ring-emerald-500`}
+                                      placeholder="Type to search product..."
+                                      autoComplete="off"
+                                    />
+                                  </div>
+
+                                  {isProductSectionActive && productDropdownStyle && (
+                                    <div
+                                      className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                                      style={productDropdownStyle}
+                                      onClick={(event) => event.stopPropagation()}
+                                    >
+                                      <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Product List</span>
+                                        <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                          {filteredProducts.length}
+                                        </span>
+                                      </div>
+                                      <div className="overflow-y-auto py-1" style={{ maxHeight: productDropdownStyle.maxHeight }}>
+                                        {filteredProducts.length === 0 ? (
+                                          <div className="px-3 py-3 text-center text-[13px] text-slate-500">
+                                            <p>No matching products found.</p>
+                                            <button
+                                              type="button"
+                                              onMouseDown={(event) => event.preventDefault()}
+                                              onClick={onOpenNewProduct}
+                                              className="mt-2 inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                            >
+                                              Create New Stock
+                                              <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-emerald-700">Ctrl</span>
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          filteredProducts.map((product, index) => {
+                                            const isActive = index === productListIndex;
+                                            const isSelected = String(currentItem.product || '') === String(product._id);
+
+                                            return (
+                                              <button
+                                                key={product._id}
+                                                type="button"
+                                                onMouseDown={(event) => event.preventDefault()}
+                                                onMouseEnter={() => setProductListIndex(index)}
+                                                onClick={() => selectProduct(product)}
+                                                className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                                  isActive
+                                                    ? 'bg-yellow-200 text-amber-950'
+                                                    : isSelected
+                                                    ? 'bg-yellow-50 text-amber-800'
+                                                    : 'text-slate-700 hover:bg-amber-50'
+                                                }`}
+                                              >
+                                                <span className="truncate font-medium">{getProductDisplayName(product)}</span>
+                                                {isSelected && (
+                                                  <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                                    Selected
+                                                  </span>
+                                                )}
+                                              </button>
+                                            );
+                                          })
+                                        )}
+                                        <button
+                                          type="button"
+                                          onMouseDown={(event) => event.preventDefault()}
+                                          onMouseEnter={() => setProductListIndex(filteredProducts.length)}
+                                          onClick={closeItemEntryAndFocusPaidAmount}
+                                          className={`flex w-full items-center justify-between gap-3 border-t border-amber-100 px-3 py-2 text-left text-[13px] font-semibold transition ${
+                                            productListIndex === filteredProducts.length
+                                              ? 'bg-yellow-200 text-amber-950'
+                                              : 'text-amber-800 hover:bg-amber-50'
+                                          }`}
+                                        >
+                                          <span>End Item List</span>
+                                          <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                            End
+                                          </span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="border-r border-slate-400 px-3 py-2.5">
+                                <input
+                                  type="number"
+                                  placeholder="0"
+                                  value={currentItem.quantity}
+                                  onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
+                                  onKeyDown={handleSelectEnterMoveNext}
+                                  className={`${inputClass} ml-auto w-[22%] min-w-[44px] text-right focus:ring-emerald-500`}
+                                />
+                              </td>
+                              <td className="border-r border-slate-400 px-3 py-2.5 text-center">
+                                <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-medium text-gray-700">
+                                  {currentItemUnit}
+                                </div>
+                              </td>
+                              <td className="border-r border-slate-400 px-3 py-2.5">
+                                <input
+                                  type="number"
+                                  placeholder="0.00"
+                                  value={currentItem.unitPrice}
+                                  onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      const didAddItem = handleAddItem();
+                                      if (!didAddItem) return;
+                                      requestAnimationFrame(() => {
+                                        resolvedProductInputRef.current?.focus();
+                                        resolvedProductInputRef.current?.select?.();
+                                      });
+                                    }
+                                  }}
+                                  className={`${inputClass} text-right focus:ring-emerald-500`}
+                                  step="0.01"
+                                />
+                              </td>
+                              <td className="border-r border-slate-400 px-3 py-2.5 text-right">
+                                <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-semibold text-gray-800">
+                                  Rs {currentItemTotal.toFixed(2)}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+            </div>
           </div>
 
-          {/* ── FOOTER ── */}
-          <div className="flex shrink-0 items-center justify-between border-t border-stone-200 bg-white px-6 py-3.5">
-            <p className="hidden text-[11px] text-stone-400 md:block">
-              <kbd className="rounded border border-stone-200 bg-stone-100 px-1.5 py-0.5 font-mono text-[10px] text-stone-500">Esc</kbd>
-              {' '}close &nbsp;·&nbsp;
-              <kbd className="rounded border border-stone-200 bg-stone-100 px-1.5 py-0.5 font-mono text-[10px] text-stone-500">Enter</kbd>
-              {' '}next field
-            </p>
-            <div className="flex w-full items-center justify-end gap-3 md:w-auto">
+          <div className="flex flex-col items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2.5 md:flex-row md:px-4 md:py-3">
+            <div className="text-[11px] text-gray-600 md:text-xs">
+              <kbd className="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-[10px]">Esc</kbd> to close
+            </div>
+
+            <div className="flex w-full gap-2 md:w-auto">
               <button
                 type="button"
                 onClick={handleCancel}
-                className="rounded-lg border border-stone-200 bg-white px-5 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 hover:border-stone-300"
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="rounded-lg bg-stone-900 px-6 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-teal-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
               >
-                {loading ? 'Saving…' : editingId ? '↑ Update Purchase' : '✓ Save Purchase'}
+                {loading ? 'Saving...' : editingId ? 'Update Purchase' : 'Save Purchase'}
               </button>
             </div>
           </div>
