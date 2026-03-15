@@ -7,6 +7,7 @@ export default function AddSalePopup({
   showForm,
   editingId,
   loading,
+  isCashParty,
   formData,
   currentItem,
   products,
@@ -88,6 +89,13 @@ export default function AddSalePopup({
   const closeItemEntryAndFocusPaidAmount = () => {
     closeItemEntryRow();
     requestAnimationFrame(() => {
+      if (isCashParty) {
+        const submitButton = resolvedProductInputRef.current
+          ?.closest('form')
+          ?.querySelector('button[type="submit"]:not([disabled])');
+        submitButton?.focus();
+        return;
+      }
       paidAmountInputRef.current?.focus();
       paidAmountInputRef.current?.select?.();
     });
@@ -311,31 +319,33 @@ export default function AddSalePopup({
                                   Rs {Number(formData.totalAmount || 0).toFixed(2)}
                                 </td>
                               </tr>
-                              <tr className="bg-white">
-                                <td colSpan={4} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
-                                  Paid Amount
-                                </td>
-                                <td className="border-t border-emerald-100 px-3 py-2">
-                                  <input
-                                    ref={paidAmountInputRef}
-                                    type="number"
-                                    name="paidAmount"
-                                    value={formData.paidAmount}
-                                    onChange={handleInputChange}
-                                    onKeyDown={(event) => {
-                                      if (event.key === 'Backspace' && !String(formData.paidAmount || '').trim()) {
-                                        event.preventDefault();
-                                        event.stopPropagation();
-                                        reopenItemEntryFromPaidAmount();
-                                      }
-                                    }}
-                                    step="0.01"
-                                    min="0"
-                                    className={`${inputClass} text-right bg-white focus:ring-emerald-500`}
-                                    placeholder="0.00"
-                                  />
-                                </td>
-                              </tr>
+                              {!isCashParty && (
+                                <tr className="bg-white">
+                                  <td colSpan={4} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
+                                    Paid Amount
+                                  </td>
+                                  <td className="border-t border-emerald-100 px-3 py-2">
+                                    <input
+                                      ref={paidAmountInputRef}
+                                      type="number"
+                                      name="paidAmount"
+                                      value={formData.paidAmount}
+                                      onChange={handleInputChange}
+                                      onKeyDown={(event) => {
+                                        if (event.key === 'Backspace' && !String(formData.paidAmount || '').trim()) {
+                                          event.preventDefault();
+                                          event.stopPropagation();
+                                          reopenItemEntryFromPaidAmount();
+                                        }
+                                      }}
+                                      step="0.01"
+                                      min="0"
+                                      className={`${inputClass} text-right bg-white focus:ring-emerald-500`}
+                                      placeholder="0.00"
+                                    />
+                                  </td>
+                                </tr>
+                              )}
                             </>
                           ) : (
                             <tr className="bg-emerald-50/50 align-top">

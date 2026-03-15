@@ -27,6 +27,7 @@ import PurchaseReturn from './pages/PurchaseReturn/PurchaseReturn';
 import ReportsHub from './pages/ReportsHub';
 import ReportsDashboard from './pages/ReportsDashboard';
 import ReportsPlaceholder from './pages/ReportsPlaceholder';
+import DayBookReport from './pages/Reports/DayBookReport';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 import SectionHubPage from './components/SectionHubPage';
@@ -224,10 +225,7 @@ function App() {
           path="/reports/day-book-report"
           element={
             <ProtectedRoute>
-              <ReportsPlaceholder
-                title="Day Book Report"
-                description="Daily voucher-wise business movement will be shown here."
-              />
+              <DayBookReport />
             </ProtectedRoute>
           }
         />

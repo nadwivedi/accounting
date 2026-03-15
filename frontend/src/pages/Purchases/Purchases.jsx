@@ -283,6 +283,12 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     return getMatchingLeadgers(leadgerQuery);
   }, [leadgers, leadgerQuery, isLeadgerSectionActive, selectedLeadgerName]);
 
+  const selectedLeadger = useMemo(
+    () => leadgers.find((leadger) => String(leadger._id) === String(formData.party || '')) || null,
+    [leadgers, formData.party]
+  );
+  const isCashParty = String(selectedLeadger?.type || '').trim().toLowerCase() === 'cash-in-hand';
+
   useEffect(() => {
     if (!showForm) return;
 
@@ -314,6 +320,28 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
   const handleLeadgerFocus = () => {
     setIsLeadgerSectionActive(true);
   };
+
+  useEffect(() => {
+    if (!showForm || editingId || !isCashParty) return;
+
+    setFormData((prev) => {
+      const nextPaymentAmount = String(Number(prev.totalAmount || 0));
+      if (
+        String(prev.paymentAmount || '') === nextPaymentAmount
+        && prev.paymentMethod === 'cash'
+        && prev.dueDate === ''
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        paymentAmount: nextPaymentAmount,
+        paymentMethod: 'cash',
+        dueDate: ''
+      };
+    });
+  }, [showForm, editingId, isCashParty, formData.totalAmount]);
 
   const findExactLeadger = (value) => {
     const normalized = normalizeText(value);
@@ -876,7 +904,9 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       return;
     }
 
-    const entryPaymentAmount = Math.max(0, Number(formData.paymentAmount || 0));
+    const entryPaymentAmount = isCashParty
+      ? Math.max(0, Number(formData.totalAmount || 0))
+      : Math.max(0, Number(formData.paymentAmount || 0));
     if (entryPaymentAmount > Number(formData.totalAmount || 0)) {
       setError('Entry payment amount cannot exceed total purchase amount');
       return;
@@ -1077,6 +1107,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
           showForm={showForm}
           editingId={editingId}
           loading={loading}
+          isCashParty={isCashParty}
           formData={formData}
           currentItem={currentItem}
           products={products}
@@ -1185,6 +1216,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         showForm={showForm}
         editingId={editingId}
         loading={loading}
+        isCashParty={isCashParty}
         formData={formData}
         currentItem={currentItem}
         products={products}

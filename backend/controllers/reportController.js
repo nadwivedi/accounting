@@ -5,6 +5,7 @@ const PurchaseReturn = require('../models/voucher/PurchaseReturn');
 const SaleReturn = require('../models/voucher/SaleReturn');
 const Payment = require('../models/voucher/Payment');
 const Receipt = require('../models/voucher/Receipt');
+const Expense = require('../models/voucher/Expense');
 const Product = require('../models/master/Stock');
 const Party = require('../models/master/Party');
 
@@ -13,11 +14,34 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const parseBoundaryDate = (value, boundary = 'start') => {
+  if (!value) return null;
+
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) return null;
+
+  const normalizedValue = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalizedValue)) {
+    if (boundary === 'end') {
+      parsedDate.setHours(23, 59, 59, 999);
+    } else {
+      parsedDate.setHours(0, 0, 0, 0);
+    }
+  }
+
+  return parsedDate;
+};
+
 const withDateFilters = (filter, dateField, fromDate, toDate) => {
   if (!fromDate && !toDate) return;
   filter[dateField] = {};
-  if (fromDate) filter[dateField].$gte = new Date(fromDate);
-  if (toDate) filter[dateField].$lte = new Date(toDate);
+  const parsedFromDate = parseBoundaryDate(fromDate, 'start');
+  const parsedToDate = parseBoundaryDate(toDate, 'end');
+  if (parsedFromDate) filter[dateField].$gte = parsedFromDate;
+  if (parsedToDate) filter[dateField].$lte = parsedToDate;
+  if (Object.keys(filter[dateField]).length === 0) {
+    delete filter[dateField];
+  }
 };
 
 const getRawPartyId = (party) => {
@@ -443,6 +467,280 @@ exports.getPartyLedger = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error fetching party ledger'
+    });
+  }
+};
+
+const formatPrefixedNumber = (prefix, value) => {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) return '-';
+  return `${prefix}-${String(parsed).padStart(2, '0')}`;
+};
+
+exports.getDayBookReport = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { fromDate, toDate } = req.query;
+
+    const saleFilter = { userId };
+    const purchaseFilter = { userId };
+    const purchaseReturnFilter = { userId };
+    const saleReturnFilter = { userId };
+    const paymentFilter = { userId };
+    const receiptFilter = { userId };
+    const expenseFilter = { userId };
+
+    withDateFilters(saleFilter, 'saleDate', fromDate, toDate);
+    withDateFilters(purchaseFilter, 'purchaseDate', fromDate, toDate);
+    withDateFilters(purchaseReturnFilter, 'voucherDate', fromDate, toDate);
+    withDateFilters(saleReturnFilter, 'voucherDate', fromDate, toDate);
+    withDateFilters(paymentFilter, 'paymentDate', fromDate, toDate);
+    withDateFilters(receiptFilter, 'receiptDate', fromDate, toDate);
+    withDateFilters(expenseFilter, 'expenseDate', fromDate, toDate);
+
+    const [sales, purchases, purchaseReturns, saleReturns, payments, receipts, expenses] = await Promise.all([
+      Sale.find(saleFilter),
+      Purchase.find(purchaseFilter),
+      PurchaseReturn.find(purchaseReturnFilter),
+      SaleReturn.find(saleReturnFilter),
+      Payment.find(paymentFilter),
+      Receipt.find(receiptFilter),
+      Expense.find(expenseFilter)
+        .populate('expenseGroup', 'name')
+        .populate('party', 'name')
+    ]);
+
+    const partyNameMap = await getPartyNameMap(userId, [
+      ...sales.map((sale) => getRawPartyId(sale.party)),
+      ...purchases.map((purchase) => getRawPartyId(purchase.party)),
+      ...purchaseReturns.map((purchaseReturn) => getRawPartyId(purchaseReturn.party)),
+      ...saleReturns.map((saleReturn) => getRawPartyId(saleReturn.party)),
+      ...payments.map((payment) => getRawPartyId(payment.party)),
+      ...receipts.map((receipt) => getRawPartyId(receipt.party)),
+      ...expenses.map((expense) => getRawPartyId(expense.party))
+    ]);
+
+    const resolvePartyName = (rawPartyId, fallback = '-') => {
+      if (!rawPartyId) return fallback;
+      return partyNameMap.get(String(rawPartyId)) || getPartyLabel(rawPartyId, 'Account');
+    };
+
+    const entries = [];
+
+    sales.forEach((sale) => {
+      const salePartyId = getRawPartyId(sale.party);
+      const amount = toNumber(sale.totalAmount);
+      entries.push({
+        date: sale.saleDate,
+        entryCreatedAt: sale.createdAt || sale.saleDate,
+        type: 'sale',
+        label: 'Sale',
+        refId: sale._id,
+        voucherNumber: String(sale.invoiceNumber || '-').trim() || '-',
+        partyId: salePartyId || null,
+        partyName: sale.customerName || resolvePartyName(salePartyId, 'Walk-in'),
+        accountName: 'Sales',
+        particulars: getItemSummary(sale.items),
+        quantity: getTotalQuantity(sale.items),
+        method: '',
+        note: sale.notes || '',
+        amount,
+        inAmount: amount,
+        outAmount: 0
+      });
+    });
+
+    purchases.forEach((purchase) => {
+      const purchasePartyId = getRawPartyId(purchase.party);
+      const amount = toNumber(purchase.totalAmount);
+      const supplierInvoice = String(purchase.supplierInvoice || '').trim();
+      entries.push({
+        date: purchase.purchaseDate,
+        entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
+        type: 'purchase',
+        label: 'Purchase',
+        refId: purchase._id,
+        voucherNumber: formatPrefixedNumber('Pur', purchase.purchaseNumber),
+        partyId: purchasePartyId || null,
+        partyName: resolvePartyName(purchasePartyId),
+        accountName: 'Purchase',
+        particulars: supplierInvoice
+          ? `${getItemSummary(purchase.items)} | Supplier Bill: ${supplierInvoice}`
+          : getItemSummary(purchase.items),
+        quantity: getTotalQuantity(purchase.items),
+        method: '',
+        note: purchase.notes || '',
+        amount,
+        inAmount: 0,
+        outAmount: amount
+      });
+    });
+
+    receipts.forEach((receipt) => {
+      const receiptPartyId = getRawPartyId(receipt.party);
+      const amount = toNumber(receipt.amount);
+      entries.push({
+        date: receipt.receiptDate,
+        entryCreatedAt: receipt.createdAt || receipt.receiptDate,
+        type: 'receipt',
+        label: 'Receipt',
+        refId: receipt._id,
+        voucherNumber: formatPrefixedNumber('Rec', receipt.receiptNumber),
+        partyId: receiptPartyId || null,
+        partyName: resolvePartyName(receiptPartyId),
+        accountName: receipt.refType === 'sale' ? 'Against Sale' : 'On Account',
+        particulars: receipt.notes || (receipt.refType === 'sale' ? 'Receipt against sale invoice' : 'On-account receipt'),
+        quantity: 0,
+        method: receipt.method || '',
+        note: receipt.notes || '',
+        amount,
+        inAmount: amount,
+        outAmount: 0
+      });
+    });
+
+    payments.forEach((payment) => {
+      const paymentPartyId = getRawPartyId(payment.party);
+      const amount = toNumber(payment.amount);
+      entries.push({
+        date: payment.paymentDate,
+        entryCreatedAt: payment.createdAt || payment.paymentDate,
+        type: 'payment',
+        label: 'Payment',
+        refId: payment._id,
+        voucherNumber: formatPrefixedNumber('Pay', payment.paymentNumber),
+        partyId: paymentPartyId || null,
+        partyName: resolvePartyName(paymentPartyId),
+        accountName: payment.refType === 'purchase' ? 'Against Purchase' : 'On Account',
+        particulars: payment.notes || (payment.refType === 'purchase' ? 'Payment against purchase bill' : 'On-account payment'),
+        quantity: 0,
+        method: payment.method || '',
+        note: payment.notes || '',
+        amount,
+        inAmount: 0,
+        outAmount: amount
+      });
+    });
+
+    expenses.forEach((expense) => {
+      const expensePartyId = getRawPartyId(expense.party);
+      const amount = toNumber(expense.amount);
+      entries.push({
+        date: expense.expenseDate,
+        entryCreatedAt: expense.createdAt || expense.expenseDate,
+        type: 'expense',
+        label: 'Expense',
+        refId: expense._id,
+        voucherNumber: '-',
+        partyId: expensePartyId || null,
+        partyName: resolvePartyName(expensePartyId),
+        accountName: String(expense.expenseGroup?.name || 'Expense').trim() || 'Expense',
+        particulars: expense.notes || String(expense.expenseGroup?.name || 'Expense').trim() || 'Expense entry',
+        quantity: 0,
+        method: expense.method || '',
+        note: expense.notes || '',
+        amount,
+        inAmount: 0,
+        outAmount: amount
+      });
+    });
+
+    purchaseReturns.forEach((purchaseReturn) => {
+      const purchaseReturnPartyId = getRawPartyId(purchaseReturn.party);
+      const amount = toNumber(purchaseReturn.totalAmount);
+      entries.push({
+        date: purchaseReturn.voucherDate,
+        entryCreatedAt: purchaseReturn.createdAt || purchaseReturn.voucherDate,
+        type: 'purchaseReturn',
+        label: 'Purchase Return',
+        refId: purchaseReturn._id,
+        voucherNumber: String(purchaseReturn.voucherNumber || '-').trim() || '-',
+        partyId: purchaseReturnPartyId || null,
+        partyName: resolvePartyName(purchaseReturnPartyId),
+        accountName: 'Purchase Return',
+        particulars: getItemSummary(purchaseReturn.items),
+        quantity: getTotalQuantity(purchaseReturn.items),
+        method: '',
+        note: purchaseReturn.notes || '',
+        amount,
+        inAmount: amount,
+        outAmount: 0
+      });
+    });
+
+    saleReturns.forEach((saleReturn) => {
+      const saleReturnPartyId = getRawPartyId(saleReturn.party);
+      const amount = toNumber(saleReturn.amount);
+      entries.push({
+        date: saleReturn.voucherDate,
+        entryCreatedAt: saleReturn.createdAt || saleReturn.voucherDate,
+        type: 'saleReturn',
+        label: 'Sale Return',
+        refId: saleReturn._id,
+        voucherNumber: String(saleReturn.voucherNumber || '-').trim() || '-',
+        partyId: saleReturnPartyId || null,
+        partyName: resolvePartyName(saleReturnPartyId),
+        accountName: 'Sale Return',
+        particulars: saleReturn.notes || 'Sale return voucher',
+        quantity: 0,
+        method: saleReturn.method || '',
+        note: saleReturn.notes || '',
+        amount,
+        inAmount: 0,
+        outAmount: amount
+      });
+    });
+
+    entries.sort((a, b) => {
+      const aDate = new Date(a.date).getTime() || 0;
+      const bDate = new Date(b.date).getTime() || 0;
+      if (aDate !== bDate) return aDate - bDate;
+
+      const aCreated = new Date(a.entryCreatedAt).getTime() || 0;
+      const bCreated = new Date(b.entryCreatedAt).getTime() || 0;
+      return aCreated - bCreated;
+    });
+
+    const summary = entries.reduce((acc, entry) => {
+      acc.entryCount += 1;
+      acc.totalInward += toNumber(entry.inAmount);
+      acc.totalOutward += toNumber(entry.outAmount);
+
+      if (entry.type === 'sale') acc.sales += entry.amount;
+      if (entry.type === 'purchase') acc.purchases += entry.amount;
+      if (entry.type === 'receipt') acc.receipts += entry.amount;
+      if (entry.type === 'payment') acc.payments += entry.amount;
+      if (entry.type === 'expense') acc.expenses += entry.amount;
+      if (entry.type === 'purchaseReturn') acc.purchaseReturns += entry.amount;
+      if (entry.type === 'saleReturn') acc.saleReturns += entry.amount;
+
+      return acc;
+    }, {
+      entryCount: 0,
+      totalInward: 0,
+      totalOutward: 0,
+      sales: 0,
+      purchases: 0,
+      receipts: 0,
+      payments: 0,
+      expenses: 0,
+      purchaseReturns: 0,
+      saleReturns: 0
+    });
+
+    res.status(200).json({
+      success: true,
+      count: entries.length,
+      data: {
+        summary,
+        entries
+      }
+    });
+  } catch (error) {
+    console.error('Day book report error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching day book report'
     });
   }
 };

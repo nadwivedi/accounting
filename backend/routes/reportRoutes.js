@@ -3,7 +3,8 @@ const router = express.Router();
 const {
   getOutstandingReport,
   getPartyLedger,
-  getStockLedger
+  getStockLedger,
+  getDayBookReport
 } = require('../controllers/reportController');
 const auth = require('../middleware/auth');
 
@@ -12,5 +13,6 @@ router.use(auth);
 router.get('/outstanding', getOutstandingReport);
 router.get('/party-ledger', getPartyLedger);
 router.get('/stock-ledger', getStockLedger);
+router.get('/day-book', getDayBookReport);
 
 module.exports = router;

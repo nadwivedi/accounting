@@ -283,6 +283,12 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     return getMatchingLeadgers(leadgerQuery);
   }, [leadgers, leadgerQuery, isLeadgerSectionActive, selectedLeadgerName]);
 
+  const selectedLeadger = useMemo(
+    () => leadgers.find((leadger) => String(leadger._id) === String(formData.party || '')) || null,
+    [leadgers, formData.party]
+  );
+  const isCashParty = String(selectedLeadger?.type || '').trim().toLowerCase() === 'cash-in-hand';
+
   useEffect(() => {
     if (!showForm) return;
 
@@ -314,6 +320,26 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const handleLeadgerFocus = () => {
     setIsLeadgerSectionActive(true);
   };
+
+  useEffect(() => {
+    if (!showForm || editingId || !isCashParty) return;
+
+    setFormData((prev) => {
+      const nextPaidAmount = Number(prev.totalAmount || 0);
+      if (
+        Number(prev.paidAmount || 0) === nextPaidAmount
+        && prev.dueDate === ''
+      ) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        paidAmount: nextPaidAmount,
+        dueDate: ''
+      };
+    });
+  }, [showForm, editingId, isCashParty, formData.totalAmount]);
 
   const findExactLeadger = (value) => {
     const normalized = normalizeText(value);
@@ -923,6 +949,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       const isEditMode = Boolean(editingId);
       const submitData = {
         ...formData,
+        paidAmount: !isEditMode && isCashParty ? Number(formData.totalAmount || 0) : formData.paidAmount,
         saleDate: parsedSaleDate,
         dueDate: formData.dueDate ? new Date(formData.dueDate) : null
       };
@@ -1087,6 +1114,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
           showForm={showForm}
           editingId={editingId}
           loading={loading}
+          isCashParty={isCashParty}
           formData={formData}
           currentItem={currentItem}
           products={products}
@@ -1192,6 +1220,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         showForm={showForm}
         editingId={editingId}
         loading={loading}
+        isCashParty={isCashParty}
         formData={formData}
         currentItem={currentItem}
         products={products}
