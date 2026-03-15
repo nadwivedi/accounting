@@ -13,12 +13,12 @@ const TYPE_OPTIONS = [
     value: 'customer',
     label: 'Customer',
     description: 'Use for sales parties and receivable accounts.'
-  },
-  {
-    value: 'cash-in-hand',
-    label: 'Cash In Hand',
-    description: 'Use for the default cash ledger and cash balance parties.'
   }
+];
+
+const OPENING_BALANCE_OPTIONS = [
+  { value: 'receivable', label: 'Receivable (Dr)' },
+  { value: 'payable', label: 'Payable (Cr)' }
 ];
 
 const FIELD_SELECTOR = [
@@ -86,6 +86,10 @@ const getTypeLabel = (typeValue) => (
   TYPE_OPTIONS.find((option) => option.value === typeValue)?.label || ''
 );
 
+const getOpeningBalanceTypeLabel = (typeValue) => (
+  OPENING_BALANCE_OPTIONS.find((option) => option.value === typeValue)?.label || ''
+);
+
 export default function AddPartyPopup({
   showForm,
   editingId,
@@ -99,8 +103,14 @@ export default function AddPartyPopup({
   const [typeQuery, setTypeQuery] = useState('');
   const [typeListIndex, setTypeListIndex] = useState(0);
   const [isTypeDropdownOpen, setIsTypeDropdownOpen] = useState(false);
+  const [openingBalanceTypeQuery, setOpeningBalanceTypeQuery] = useState('');
+  const [openingBalanceTypeListIndex, setOpeningBalanceTypeListIndex] = useState(0);
+  const [isOpeningBalanceTypeDropdownOpen, setIsOpeningBalanceTypeDropdownOpen] = useState(false);
   const typeSectionRef = useRef(null);
   const typeInputRef = useRef(null);
+  const openingBalanceTypeSectionRef = useRef(null);
+  const openingBalanceTypeInputRef = useRef(null);
+  const hasOpeningBalanceValue = String(formData.openingBalance ?? '').trim() !== '';
 
   const filteredTypeOptions = useMemo(() => {
     const normalized = String(typeQuery || '').trim().toLowerCase();
@@ -125,18 +135,47 @@ export default function AddPartyPopup({
     return [...startsWith, ...includes];
   }, [formData.type, isTypeDropdownOpen, typeQuery]);
 
+  const filteredOpeningBalanceTypeOptions = useMemo(() => {
+    const normalized = String(openingBalanceTypeQuery || '').trim().toLowerCase();
+    const normalizedSelectedType = String(getOpeningBalanceTypeLabel(formData.openingBalanceType) || '').trim().toLowerCase();
+
+    if (
+      isOpeningBalanceTypeDropdownOpen
+      && normalized
+      && normalized === normalizedSelectedType
+    ) {
+      return OPENING_BALANCE_OPTIONS;
+    }
+
+    if (!normalized) return OPENING_BALANCE_OPTIONS;
+
+    const startsWith = OPENING_BALANCE_OPTIONS.filter((option) => option.label.toLowerCase().startsWith(normalized));
+    const includes = OPENING_BALANCE_OPTIONS.filter((option) => (
+      !option.label.toLowerCase().startsWith(normalized)
+      && option.label.toLowerCase().includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  }, [formData.openingBalanceType, isOpeningBalanceTypeDropdownOpen, openingBalanceTypeQuery]);
+
   useEffect(() => {
     if (!showForm) {
       setTypeQuery('');
       setTypeListIndex(-1);
       setIsTypeDropdownOpen(false);
+      setOpeningBalanceTypeQuery('');
+      setOpeningBalanceTypeListIndex(-1);
+      setIsOpeningBalanceTypeDropdownOpen(false);
       return;
     }
 
     const nextLabel = getTypeLabel(formData.type);
     setTypeQuery(nextLabel);
     setTypeListIndex(TYPE_OPTIONS.findIndex((option) => option.value === formData.type));
-  }, [showForm, formData.type]);
+    const nextOpeningBalanceTypeLabel = getOpeningBalanceTypeLabel(formData.openingBalanceType);
+    setOpeningBalanceTypeQuery(nextOpeningBalanceTypeLabel);
+    setOpeningBalanceTypeListIndex(OPENING_BALANCE_OPTIONS.findIndex((option) => option.value === formData.openingBalanceType));
+  }, [showForm, formData.type, formData.openingBalanceType]);
 
   useEffect(() => {
     if (filteredTypeOptions.length === 0) {
@@ -151,14 +190,40 @@ export default function AddPartyPopup({
     });
   }, [filteredTypeOptions]);
 
-  const typeDropdownStyle = useFloatingDropdownPosition(typeSectionRef, isTypeDropdownOpen, [filteredTypeOptions.length, typeListIndex]);
+  useEffect(() => {
+    if (filteredOpeningBalanceTypeOptions.length === 0) {
+      setOpeningBalanceTypeListIndex(-1);
+      return;
+    }
 
+    setOpeningBalanceTypeListIndex((prev) => {
+      if (prev < 0) return 0;
+      if (prev >= filteredOpeningBalanceTypeOptions.length) return filteredOpeningBalanceTypeOptions.length - 1;
+      return prev;
+    });
+  }, [filteredOpeningBalanceTypeOptions]);
+
+  useEffect(() => {
+    if (hasOpeningBalanceValue) return;
+    setIsOpeningBalanceTypeDropdownOpen(false);
+  }, [hasOpeningBalanceValue]);
+
+  const typeDropdownStyle = useFloatingDropdownPosition(typeSectionRef, isTypeDropdownOpen, [filteredTypeOptions.length, typeListIndex]);
   if (!showForm) return null;
 
   const setTypeValue = (value) => {
     handleChange({
       target: {
         name: 'type',
+        value
+      }
+    });
+  };
+
+  const setOpeningBalanceTypeValue = (value) => {
+    handleChange({
+      target: {
+        name: 'openingBalanceType',
         value
       }
     });
@@ -255,10 +320,101 @@ export default function AddPartyPopup({
     }
   };
 
+  const selectOpeningBalanceType = (option, moveNext = false) => {
+    if (!option) return;
+
+    setOpeningBalanceTypeValue(option.value);
+    setOpeningBalanceTypeQuery(option.label);
+    setOpeningBalanceTypeListIndex(Math.max(
+      OPENING_BALANCE_OPTIONS.findIndex((item) => item.value === option.value),
+      0
+    ));
+    setIsOpeningBalanceTypeDropdownOpen(false);
+
+    if (moveNext) {
+      focusNextField(openingBalanceTypeInputRef.current);
+    }
+  };
+
+  const handleOpeningBalanceTypeFocus = () => {
+    setIsOpeningBalanceTypeDropdownOpen(true);
+    setOpeningBalanceTypeQuery(getOpeningBalanceTypeLabel(formData.openingBalanceType));
+    const selectedIndex = OPENING_BALANCE_OPTIONS.findIndex((option) => option.value === formData.openingBalanceType);
+    setOpeningBalanceTypeListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  };
+
+  const handleOpeningBalanceTypeInputChange = (event) => {
+    const nextValue = event.target.value;
+    setOpeningBalanceTypeQuery(nextValue);
+    setIsOpeningBalanceTypeDropdownOpen(true);
+
+    const exactMatch = OPENING_BALANCE_OPTIONS.find(
+      (option) => option.label.toLowerCase() === nextValue.trim().toLowerCase()
+    );
+
+    if (exactMatch) {
+      setOpeningBalanceTypeValue(exactMatch.value);
+    }
+  };
+
+  const handleOpeningBalanceTypeInputKeyDown = (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsOpeningBalanceTypeDropdownOpen(true);
+      if (filteredOpeningBalanceTypeOptions.length === 0) return;
+      setOpeningBalanceTypeListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredOpeningBalanceTypeOptions.length - 1);
+      });
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsOpeningBalanceTypeDropdownOpen(true);
+      if (filteredOpeningBalanceTypeOptions.length === 0) return;
+      setOpeningBalanceTypeListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!isOpeningBalanceTypeDropdownOpen) {
+        setIsOpeningBalanceTypeDropdownOpen(true);
+        return;
+      }
+
+      const activeOption = openingBalanceTypeListIndex >= 0 ? filteredOpeningBalanceTypeOptions[openingBalanceTypeListIndex] : null;
+      const exactMatch = OPENING_BALANCE_OPTIONS.find(
+        (option) => option.label.toLowerCase() === openingBalanceTypeQuery.trim().toLowerCase()
+      );
+      const matchedOption = activeOption || exactMatch || filteredOpeningBalanceTypeOptions[0] || null;
+
+      if (matchedOption) {
+        selectOpeningBalanceType(matchedOption, true);
+      }
+      return;
+    }
+
+    if (event.key === 'Escape' && isOpeningBalanceTypeDropdownOpen) {
+      event.preventDefault();
+      event.stopPropagation();
+      setOpeningBalanceTypeQuery(getOpeningBalanceTypeLabel(formData.openingBalanceType));
+      setIsOpeningBalanceTypeDropdownOpen(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 backdrop-blur-[1.5px] md:p-4" onClick={handleCloseForm}>
       <div
-        className="flex max-h-[92vh] w-full max-w-[58rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl"
+        className="flex max-h-[92vh] w-full max-w-[42rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex-shrink-0 border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-1.5 text-white md:px-4 md:py-2">
@@ -305,7 +461,7 @@ export default function AddPartyPopup({
                   Party Details
                 </h3>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                <div className="flex flex-col gap-3 md:gap-4">
                   <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                     <label htmlFor="party-name-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:w-28 sm:text-sm">
                       Party Name <span className="text-red-500">*</span>
@@ -428,7 +584,7 @@ export default function AddPartyPopup({
                   Contact Details
                 </h3>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                <div className="flex flex-col gap-3 md:gap-4">
                   <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                     <label htmlFor="party-mobile-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:w-32 sm:text-sm">
                       Mobile Number
@@ -495,7 +651,111 @@ export default function AddPartyPopup({
                     />
                   </div>
 
-                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:gap-2 md:col-span-2">
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                    <label htmlFor="party-opening-balance-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:w-32 sm:text-sm">
+                      Opening Balance
+                    </label>
+                    <div className="flex min-w-0 flex-1 flex-row gap-2">
+                      <div className="min-w-0 basis-[46%]">
+                        <input
+                          id="party-opening-balance-input"
+                          type="number"
+                          name="openingBalance"
+                          value={formData.openingBalance ?? ''}
+                          onChange={handleChange}
+                          min="0"
+                          step="0.01"
+                          className={getInlineFieldClass('emerald')}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div
+                        ref={openingBalanceTypeSectionRef}
+                        className="relative min-w-0 basis-[54%]"
+                        onBlurCapture={(event) => {
+                          const nextFocused = event.relatedTarget;
+                          if (
+                            openingBalanceTypeSectionRef.current
+                            && nextFocused instanceof Node
+                            && openingBalanceTypeSectionRef.current.contains(nextFocused)
+                          ) {
+                            return;
+                          }
+
+                          setOpeningBalanceTypeQuery(getOpeningBalanceTypeLabel(formData.openingBalanceType));
+                          setIsOpeningBalanceTypeDropdownOpen(false);
+                        }}
+                      >
+                        <div className="relative">
+                          <input
+                            ref={openingBalanceTypeInputRef}
+                            type="text"
+                            value={openingBalanceTypeQuery}
+                            onChange={handleOpeningBalanceTypeInputChange}
+                            onFocus={(event) => {
+                              if (!hasOpeningBalanceValue) {
+                                event.target.blur();
+                                return;
+                              }
+                              handleOpeningBalanceTypeFocus();
+                            }}
+                            onKeyDown={handleOpeningBalanceTypeInputKeyDown}
+                            className={`${getInlineFieldClass('emerald')} pr-10 text-xs ${!hasOpeningBalanceValue ? 'cursor-not-allowed bg-gray-100 text-gray-400' : ''}`}
+                            placeholder="Choose balance type"
+                            autoComplete="off"
+                            disabled={!hasOpeningBalanceValue}
+                          />
+                          <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 transition-transform ${!hasOpeningBalanceValue ? 'text-gray-400' : 'text-emerald-500'} ${isOpeningBalanceTypeDropdownOpen ? 'rotate-180' : ''}`} />
+                        </div>
+
+                        {hasOpeningBalanceValue && isOpeningBalanceTypeDropdownOpen && (
+                          <div
+                            className="absolute left-0 right-0 top-[calc(100%+6px)] z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Balance Type</span>
+                              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                {(filteredOpeningBalanceTypeOptions.length > 0 ? filteredOpeningBalanceTypeOptions : OPENING_BALANCE_OPTIONS).length}
+                              </span>
+                            </div>
+                            <div className="max-h-64 overflow-y-auto py-1">
+                              {(filteredOpeningBalanceTypeOptions.length > 0 ? filteredOpeningBalanceTypeOptions : OPENING_BALANCE_OPTIONS).map((option, index) => {
+                                const isActive = index === openingBalanceTypeListIndex;
+                                const isSelected = String(formData.openingBalanceType || '') === String(option.value);
+
+                                return (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onMouseEnter={() => setOpeningBalanceTypeListIndex(index)}
+                                    onClick={() => selectOpeningBalanceType(option, true)}
+                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                      isActive
+                                        ? 'bg-yellow-200 text-amber-950'
+                                        : isSelected
+                                        ? 'bg-yellow-50 text-amber-800'
+                                        : 'text-slate-700 hover:bg-amber-50'
+                                    }`}
+                                  >
+                                    <span className="truncate font-medium">{option.label}</span>
+                                    {isSelected && (
+                                      <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                        Selected
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:gap-2">
                     <label htmlFor="party-address-input" className="shrink-0 text-xs font-semibold text-gray-700 sm:mt-2 sm:w-32 sm:text-sm">
                       Address
                     </label>

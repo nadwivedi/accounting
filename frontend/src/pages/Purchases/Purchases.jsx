@@ -101,7 +101,9 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     email: '',
     address: '',
     state: '',
-    pincode: ''
+    pincode: '',
+    openingBalance: '',
+    openingBalanceType: type === 'supplier' ? 'payable' : 'receivable'
   });
 
   const toTitleCase = (value) => String(value || '')
@@ -438,6 +440,18 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     if (name === 'pincode') {
       const normalized = String(value || '').replace(/\D/g, '').slice(0, 6);
       setPartyFormData((prev) => ({ ...prev, [name]: normalized }));
+      return;
+    }
+    if (name === 'openingBalance') {
+      setPartyFormData((prev) => ({ ...prev, [name]: value }));
+      return;
+    }
+    if (name === 'type') {
+      setPartyFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        openingBalanceType: prev.openingBalance ? prev.openingBalanceType : (value === 'supplier' ? 'payable' : 'receivable')
+      }));
       return;
     }
 
@@ -821,7 +835,9 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         email: String(partyFormData.email || '').trim(),
         address: String(partyFormData.address || '').trim(),
         state: String(partyFormData.state || '').trim(),
-        pincode: String(partyFormData.pincode || '').trim()
+        pincode: String(partyFormData.pincode || '').trim(),
+        openingBalance: Number(partyFormData.openingBalance || 0),
+        openingBalanceType: String(partyFormData.openingBalanceType || 'payable')
       };
 
       const response = await apiClient.post('/parties', payload);

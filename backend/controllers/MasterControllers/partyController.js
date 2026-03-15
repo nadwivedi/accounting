@@ -3,6 +3,26 @@ const Party = require('../../models/master/Party');
 const { PARTY_TYPES } = require('../../utils/defaultParties');
 
 const normalizeType = (value) => String(value || '').trim().toLowerCase();
+const normalizeOpeningBalance = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
+};
+const normalizeOpeningBalanceType = (partyType, openingBalanceType, openingBalance) => {
+  const normalizedExplicitType = String(openingBalanceType || '').trim().toLowerCase();
+  if (normalizedExplicitType === 'receivable' || normalizedExplicitType === 'payable') {
+    return normalizedExplicitType;
+  }
+
+  const numericBalance = Number(openingBalance);
+  if (Number.isFinite(numericBalance) && numericBalance !== 0) {
+    if (partyType === PARTY_TYPES.SUPPLIER) {
+      return numericBalance >= 0 ? 'payable' : 'receivable';
+    }
+    return numericBalance >= 0 ? 'receivable' : 'payable';
+  }
+
+  return partyType === PARTY_TYPES.SUPPLIER ? 'payable' : 'receivable';
+};
 
 const isValidPartyType = (value) => (
   value === PARTY_TYPES.SUPPLIER
@@ -19,7 +39,9 @@ exports.createParty = async (req, res) => {
       email,
       address,
       state,
-      pincode
+      pincode,
+      openingBalance,
+      openingBalanceType
     } = req.body;
     const userId = req.userId;
 
@@ -38,6 +60,13 @@ exports.createParty = async (req, res) => {
       });
     }
 
+    const normalizedOpeningBalance = normalizeOpeningBalance(openingBalance);
+    const normalizedOpeningBalanceType = normalizeOpeningBalanceType(
+      normalizedType,
+      openingBalanceType,
+      openingBalance
+    );
+
     const party = await Party.create({
       userId,
       type: normalizedType,
@@ -46,7 +75,9 @@ exports.createParty = async (req, res) => {
       email: String(email || '').trim(),
       address: String(address || '').trim(),
       state: String(state || '').trim(),
-      pincode: String(pincode || '').trim()
+      pincode: String(pincode || '').trim(),
+      openingBalance: normalizedOpeningBalance,
+      openingBalanceType: normalizedOpeningBalanceType
     });
 
     return res.status(201).json({
@@ -118,7 +149,9 @@ exports.updateParty = async (req, res) => {
       email,
       address,
       state,
-      pincode
+      pincode,
+      openingBalance,
+      openingBalanceType
     } = req.body;
     const userId = req.userId;
 
@@ -144,6 +177,13 @@ exports.updateParty = async (req, res) => {
       });
     }
 
+    const normalizedOpeningBalance = normalizeOpeningBalance(openingBalance);
+    const normalizedOpeningBalanceType = normalizeOpeningBalanceType(
+      normalizedType,
+      openingBalanceType,
+      openingBalance
+    );
+
     const party = await Party.findOneAndUpdate(
       { _id: id, userId },
       {
@@ -153,7 +193,9 @@ exports.updateParty = async (req, res) => {
         email: String(email || '').trim(),
         address: String(address || '').trim(),
         state: String(state || '').trim(),
-        pincode: String(pincode || '').trim()
+        pincode: String(pincode || '').trim(),
+        openingBalance: normalizedOpeningBalance,
+        openingBalanceType: normalizedOpeningBalanceType
       },
       { new: true, runValidators: true }
     );

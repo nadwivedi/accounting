@@ -12,7 +12,9 @@ const getInitialForm = () => ({
   email: '',
   address: '',
   state: '',
-  pincode: ''
+  pincode: '',
+  openingBalance: '',
+  openingBalanceType: 'receivable'
 });
 
 const TOAST_OPTIONS = { autoClose: 1200 };
@@ -40,6 +42,22 @@ const getTypeBadgeClass = (type) => {
 };
 
 const getTypeLabel = (type) => PARTY_TYPE_LABELS[type] || 'Supplier';
+const getDefaultOpeningBalanceType = (partyType) => (partyType === 'supplier' ? 'payable' : 'receivable');
+const resolveOpeningBalanceType = (party) => {
+  const explicitType = String(party?.openingBalanceType || '').trim().toLowerCase();
+  if (explicitType === 'receivable' || explicitType === 'payable') return explicitType;
+
+  const balance = Number(party?.openingBalance || 0);
+  if (!Number.isFinite(balance) || balance === 0) {
+    return getDefaultOpeningBalanceType(party?.type);
+  }
+
+  if (party?.type === 'supplier') {
+    return balance >= 0 ? 'payable' : 'receivable';
+  }
+
+  return balance >= 0 ? 'receivable' : 'payable';
+};
 
 export default function Party() {
   const navigate = useNavigate();
@@ -98,6 +116,18 @@ export default function Party() {
       setFormData((prev) => ({ ...prev, [name]: normalized }));
       return;
     }
+    if (name === 'openingBalance') {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      return;
+    }
+    if (name === 'type') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+        openingBalanceType: prev.openingBalance ? prev.openingBalanceType : getDefaultOpeningBalanceType(value)
+      }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -123,7 +153,9 @@ export default function Party() {
       email: String(party.email || ''),
       address: String(party.address || ''),
       state: String(party.state || ''),
-      pincode: String(party.pincode || '').replace(/\D/g, '').slice(0, 6)
+      pincode: String(party.pincode || '').replace(/\D/g, '').slice(0, 6),
+      openingBalance: Math.abs(Number(party.openingBalance || 0)) || '',
+      openingBalanceType: resolveOpeningBalanceType(party)
     });
     setError('');
     setShowForm(true);
@@ -156,7 +188,9 @@ export default function Party() {
         email: String(formData.email || '').trim(),
         address: String(formData.address || '').trim(),
         state: String(formData.state || '').trim(),
-        pincode: String(formData.pincode || '').trim()
+        pincode: String(formData.pincode || '').trim(),
+        openingBalance: Number(formData.openingBalance || 0),
+        openingBalanceType: String(formData.openingBalanceType || getDefaultOpeningBalanceType(formData.type))
       };
 
       if (editingId) {
