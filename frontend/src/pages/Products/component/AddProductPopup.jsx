@@ -35,6 +35,7 @@ const getPopupInitialState = (initialName = '', product = null) => {
       unit: resolvedUnit,
       typeOfSupply: resolvedTypeOfSupply,
       minStockLevel: product?.minStockLevel ?? '',
+      salePrice: product?.salePrice ?? '',
       taxRate: product?.taxRate ?? 0
     },
     stockGroupQuery: resolvedStockGroupName,
@@ -403,7 +404,7 @@ export default function AddProductPopup({
   const handleChange = (event) => {
     const { name, value } = event.target;
 
-    if (name === 'minStockLevel' || name === 'taxRate') {
+    if (name === 'minStockLevel' || name === 'salePrice' || name === 'taxRate') {
       setFormData((prev) => ({ ...prev, [name]: value }));
       return;
     }
@@ -664,6 +665,7 @@ export default function AddProductPopup({
         unit: String(matchedUnit || '').trim(),
         typeOfSupply: getNormalizedTypeOfSupply(formData.typeOfSupply),
         minStockLevel: Number(formData.minStockLevel || 0),
+        salePrice: Number(formData.salePrice || 0),
         taxRate: Number(formData.taxRate || 0)
       };
 
@@ -973,6 +975,20 @@ export default function AddProductPopup({
                         step="0.01"
                         className={getInlineFieldClass('emerald')}
                         placeholder="0"
+                      />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Selling Price</label>
+                      <input
+                        type="number"
+                        name="salePrice"
+                        value={formData.salePrice}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className={getInlineFieldClass('emerald')}
+                        placeholder="0.00"
                       />
                     </div>
 

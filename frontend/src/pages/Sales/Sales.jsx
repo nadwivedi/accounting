@@ -69,6 +69,8 @@ const toTitleCase = (value) => String(value || '')
   .toLowerCase()
   .replace(/\b[a-z]/g, (char) => char.toUpperCase());
 
+const getSalePriceInputValue = (product) => String(Number(product?.salePrice || 0));
+
 export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const toastOptions = { autoClose: 1200 };
   const location = useLocation();
@@ -621,7 +623,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         ...prev,
         product: '',
         productName: '',
-        unit: ''
+        unit: '',
+        unitPrice: ''
       }));
       setProductListIndex(-1);
       return;
@@ -633,7 +636,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       ...prev,
       product: product._id,
       productName,
-      unit: String(product.unit || '').trim()
+      unit: String(product.unit || '').trim(),
+      unitPrice: getSalePriceInputValue(product)
     }));
 
     const selectedIndex = filteredProducts.findIndex((item) => String(item._id) === String(product._id));
@@ -659,7 +663,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         ...prev,
         product: exactProduct._id,
         productName: getProductDisplayName(exactProduct),
-        unit: String(exactProduct.unit || '').trim()
+        unit: String(exactProduct.unit || '').trim(),
+        unitPrice: getSalePriceInputValue(exactProduct)
       }));
       const exactIndex = getMatchingProducts(value).findIndex((item) => String(item._id) === String(exactProduct._id));
       setProductListIndex(exactIndex >= 0 ? exactIndex : 0);
@@ -672,7 +677,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       ...prev,
       product: firstMatch?._id || '',
       productName: firstMatch ? getProductDisplayName(firstMatch) : '',
-      unit: firstMatch ? String(firstMatch.unit || '').trim() : ''
+      unit: firstMatch ? String(firstMatch.unit || '').trim() : '',
+      unitPrice: firstMatch ? getSalePriceInputValue(firstMatch) : ''
     }));
     setProductListIndex(firstMatch ? 0 : -1);
   };
