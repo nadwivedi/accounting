@@ -13,6 +13,11 @@ const TYPE_OPTIONS = [
     value: 'customer',
     label: 'Customer',
     description: 'Use for sales parties and receivable accounts.'
+  },
+  {
+    value: 'cash-in-hand',
+    label: 'Cash In Hand',
+    description: 'Use for the default cash ledger and cash balance parties.'
   }
 ];
 

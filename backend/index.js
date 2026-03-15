@@ -4,6 +4,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const path = require('path');
 const connectDB = require('./utils/mongodb');
+const { ensureCashInHandPartyForAllUsers } = require('./utils/defaultParties');
 
 // Routes
 const userRoutes = require('./routes/userRoutes');
@@ -65,6 +66,7 @@ app.use('/api/uploads', uploadRoutes);
 const PORT = process.env.PORT || 5000;
 const startServer = async () => {
   await connectDB();
+  await ensureCashInHandPartyForAllUsers();
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });

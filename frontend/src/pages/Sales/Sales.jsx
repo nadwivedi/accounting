@@ -834,7 +834,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       return;
     }
 
-    if (!['supplier', 'customer'].includes(partyFormData.type)) {
+    if (!['supplier', 'customer', 'cash-in-hand'].includes(partyFormData.type)) {
       setPartyPopupError('Party type is required');
       return;
     }

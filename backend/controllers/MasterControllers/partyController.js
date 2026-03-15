@@ -1,10 +1,13 @@
 const mongoose = require('mongoose');
 const Party = require('../../models/master/Party');
+const { PARTY_TYPES } = require('../../utils/defaultParties');
 
 const normalizeType = (value) => String(value || '').trim().toLowerCase();
 
 const isValidPartyType = (value) => (
-  value === 'supplier' || value === 'customer'
+  value === PARTY_TYPES.SUPPLIER
+  || value === PARTY_TYPES.CUSTOMER
+  || value === PARTY_TYPES.CASH_IN_HAND
 );
 
 exports.createParty = async (req, res) => {
@@ -24,7 +27,7 @@ exports.createParty = async (req, res) => {
     if (!isValidPartyType(normalizedType)) {
       return res.status(400).json({
         success: false,
-        message: 'Valid party type is required (supplier or customer)'
+        message: 'Valid party type is required (supplier, customer, or cash in hand)'
       });
     }
 
@@ -130,7 +133,7 @@ exports.updateParty = async (req, res) => {
     if (!isValidPartyType(normalizedType)) {
       return res.status(400).json({
         success: false,
-        message: 'Valid party type is required (supplier or customer)'
+        message: 'Valid party type is required (supplier, customer, or cash in hand)'
       });
     }
 

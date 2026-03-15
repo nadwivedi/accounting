@@ -1,7 +1,9 @@
 const User = require('../models/User');
 const StockGroup = require('../models/master/StockGroup');
+const Party = require('../models/master/Party');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const { ensureCashInHandPartyForUser } = require('../utils/defaultParties');
 
 const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'auth_token';
 
@@ -116,8 +118,13 @@ exports.register = async (req, res) => {
         name: 'Primary',
         description: 'Default stock group'
       });
+      await ensureCashInHandPartyForUser(user._id);
     } catch (stockGroupError) {
-      await User.findByIdAndDelete(user._id);
+      await Promise.allSettled([
+        StockGroup.deleteMany({ userId: user._id }),
+        Party.deleteMany({ userId: user._id }),
+        User.findByIdAndDelete(user._id)
+      ]);
       throw stockGroupError;
     }
 

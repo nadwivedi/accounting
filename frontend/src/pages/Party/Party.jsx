@@ -21,11 +21,25 @@ const toTitleCase = (value) => String(value || '')
   .toLowerCase()
   .replace(/\b[a-z]/g, (char) => char.toUpperCase());
 
-const getTypeBadgeClass = (type) => (
-  type === 'customer'
-    ? 'border border-amber-200 bg-amber-50 text-amber-700'
-    : 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-);
+const PARTY_TYPE_LABELS = {
+  supplier: 'Supplier',
+  customer: 'Customer',
+  'cash-in-hand': 'Cash In Hand'
+};
+
+const getTypeBadgeClass = (type) => {
+  if (type === 'customer') {
+    return 'border border-amber-200 bg-amber-50 text-amber-700';
+  }
+
+  if (type === 'cash-in-hand') {
+    return 'border border-cyan-200 bg-cyan-50 text-cyan-700';
+  }
+
+  return 'border border-emerald-200 bg-emerald-50 text-emerald-700';
+};
+
+const getTypeLabel = (type) => PARTY_TYPE_LABELS[type] || 'Supplier';
 
 export default function Party() {
   const navigate = useNavigate();
@@ -103,7 +117,7 @@ export default function Party() {
   const handleEdit = (party) => {
     setEditingId(party._id);
     setFormData({
-      type: party.type === 'customer' ? 'customer' : 'supplier',
+      type: ['supplier', 'customer', 'cash-in-hand'].includes(party.type) ? party.type : 'supplier',
       name: String(party.name || ''),
       mobile: String(party.mobile || '').replace(/\D/g, '').slice(0, 10),
       email: String(party.email || ''),
@@ -128,7 +142,7 @@ export default function Party() {
       return;
     }
 
-    if (!['supplier', 'customer'].includes(formData.type)) {
+    if (!['supplier', 'customer', 'cash-in-hand'].includes(formData.type)) {
       setError('Party type is required');
       return;
     }
@@ -256,7 +270,7 @@ export default function Party() {
                     <div className="flex items-center justify-between gap-3 rounded-xl bg-cyan-50 px-3 py-2.5">
                       <span className="text-xs font-medium uppercase tracking-[0.18em] text-cyan-700">Type</span>
                       <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getTypeBadgeClass(item.type)}`}>
-                        {item.type || '-'}
+                        {getTypeLabel(item.type)}
                       </span>
                     </div>
 
@@ -295,7 +309,7 @@ export default function Party() {
                       <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{item.name || '-'}</td>
                       <td className="border border-slate-400 px-4 py-3 text-center">
                         <span className={`inline-flex rounded-md px-2.5 py-1 text-xs font-semibold capitalize ${getTypeBadgeClass(item.type)}`}>
-                          {item.type || '-'}
+                          {getTypeLabel(item.type)}
                         </span>
                       </td>
                       <td className="border border-slate-400 px-4 py-3 text-center">{item.mobile || '-'}</td>
