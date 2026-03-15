@@ -11,14 +11,41 @@ const TYPE_OF_SUPPLY_OPTIONS = [
 
 const DEFAULT_UNIT_OPTIONS = ['pcs', 'kg', 'g', 'ltr', 'ml', 'box', 'hrs', 'minutes'];
 
-const getInitialFormData = (initialName = '') => ({
-  name: String(initialName || '').trim(),
-  stockGroup: '',
-  unit: 'pcs',
-  typeOfSupply: 'goods',
-  minStockLevel: '',
-  taxRate: 0
-});
+const getNormalizedTypeOfSupply = (value) => (
+  String(value || '').trim().toLowerCase() === 'services' ? 'services' : 'goods'
+);
+
+const getPopupInitialState = (initialName = '', product = null) => {
+  const normalizedStockGroupId = product
+    ? (typeof product.stockGroup === 'object' ? product.stockGroup?._id || '' : product.stockGroup || '')
+    : '';
+  const resolvedStockGroupName = product
+    ? (typeof product.stockGroup === 'object' ? product.stockGroup?.name || '' : '')
+    : '';
+  const resolvedUnit = String(product?.unit || 'pcs').trim() || 'pcs';
+  const resolvedTypeOfSupply = getNormalizedTypeOfSupply(product?.typeOfSupply);
+  const typeOfSupplyQuery = TYPE_OF_SUPPLY_OPTIONS.find(
+    (option) => option.value === resolvedTypeOfSupply
+  )?.label || TYPE_OF_SUPPLY_OPTIONS[0].label;
+
+  return {
+    formData: {
+      name: product ? String(product.name || '').trim() : String(initialName || '').trim(),
+      stockGroup: normalizedStockGroupId,
+      unit: resolvedUnit,
+      typeOfSupply: resolvedTypeOfSupply,
+      minStockLevel: product?.minStockLevel ?? '',
+      taxRate: product?.taxRate ?? 0
+    },
+    stockGroupQuery: resolvedStockGroupName,
+    unitQuery: resolvedUnit,
+    typeOfSupplyQuery,
+    typeOfSupplyListIndex: Math.max(
+      TYPE_OF_SUPPLY_OPTIONS.findIndex((option) => option.value === resolvedTypeOfSupply),
+      0
+    )
+  };
+};
 
 const getInlineFieldClass = (tone = 'indigo') => {
   const focusTone = tone === 'emerald'
@@ -31,22 +58,25 @@ const getInlineFieldClass = (tone = 'indigo') => {
 export default function AddProductPopup({
   showForm,
   initialName = '',
+  product = null,
   onClose,
-  onProductCreated
+  onProductCreated,
+  onProductSaved
 }) {
-  const [formData, setFormData] = useState(getInitialFormData(initialName));
+  const initialPopupState = getPopupInitialState(initialName, product);
+  const [formData, setFormData] = useState(initialPopupState.formData);
   const [stockGroups, setStockGroups] = useState([]);
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [stockGroupQuery, setStockGroupQuery] = useState('');
+  const [stockGroupQuery, setStockGroupQuery] = useState(initialPopupState.stockGroupQuery);
   const [stockGroupListIndex, setStockGroupListIndex] = useState(-1);
   const [isStockGroupSectionActive, setIsStockGroupSectionActive] = useState(false);
-  const [unitQuery, setUnitQuery] = useState('pcs');
+  const [unitQuery, setUnitQuery] = useState(initialPopupState.unitQuery);
   const [unitListIndex, setUnitListIndex] = useState(-1);
   const [isUnitSectionActive, setIsUnitSectionActive] = useState(false);
-  const [typeOfSupplyQuery, setTypeOfSupplyQuery] = useState('Goods');
-  const [typeOfSupplyListIndex, setTypeOfSupplyListIndex] = useState(0);
+  const [typeOfSupplyQuery, setTypeOfSupplyQuery] = useState(initialPopupState.typeOfSupplyQuery);
+  const [typeOfSupplyListIndex, setTypeOfSupplyListIndex] = useState(initialPopupState.typeOfSupplyListIndex);
   const [isTypeOfSupplyOpen, setIsTypeOfSupplyOpen] = useState(false);
   const nameInputRef = useRef(null);
   const stockGroupSectionRef = useRef(null);
@@ -55,6 +85,8 @@ export default function AddProductPopup({
   const minStockInputRef = useRef(null);
   const typeOfSupplyRef = useRef(null);
   const typeOfSupplySectionRef = useRef(null);
+  const editingId = product?._id || null;
+  const isEditMode = Boolean(editingId);
 
   const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
@@ -199,33 +231,32 @@ export default function AddProductPopup({
 
   useEffect(() => {
     if (!showForm) {
-      setFormData(getInitialFormData(initialName));
+      const nextState = getPopupInitialState(initialName, product);
+      setFormData(nextState.formData);
       setError('');
-      setStockGroupQuery('');
+      setStockGroupQuery(nextState.stockGroupQuery);
       setStockGroupListIndex(-1);
       setIsStockGroupSectionActive(false);
-      setUnitQuery(getInitialFormData(initialName).unit);
+      setUnitQuery(nextState.unitQuery);
       setUnitListIndex(-1);
       setIsUnitSectionActive(false);
-      setTypeOfSupplyQuery('Goods');
-      setTypeOfSupplyListIndex(0);
+      setTypeOfSupplyQuery(nextState.typeOfSupplyQuery);
+      setTypeOfSupplyListIndex(nextState.typeOfSupplyListIndex);
       setIsTypeOfSupplyOpen(false);
       return;
     }
 
-    const nextFormData = getInitialFormData(initialName);
-    setFormData(nextFormData);
+    const nextState = getPopupInitialState(initialName, product);
+    setFormData(nextState.formData);
     setError('');
-    setStockGroupQuery('');
+    setStockGroupQuery(nextState.stockGroupQuery);
     setStockGroupListIndex(-1);
     setIsStockGroupSectionActive(false);
-    setUnitQuery(nextFormData.unit);
+    setUnitQuery(nextState.unitQuery);
     setUnitListIndex(-1);
     setIsUnitSectionActive(false);
-    setTypeOfSupplyQuery(
-      TYPE_OF_SUPPLY_OPTIONS.find((option) => option.value === nextFormData.typeOfSupply)?.label || 'Goods'
-    );
-    setTypeOfSupplyListIndex(0);
+    setTypeOfSupplyQuery(nextState.typeOfSupplyQuery);
+    setTypeOfSupplyListIndex(nextState.typeOfSupplyListIndex);
     setIsTypeOfSupplyOpen(false);
 
     const loadOptions = async () => {
@@ -245,7 +276,7 @@ export default function AddProductPopup({
     };
 
     loadOptions();
-  }, [initialName, showForm]);
+  }, [initialName, product, showForm]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -495,7 +526,7 @@ export default function AddProductPopup({
     }
   };
 
-  const selectTypeOfSupply = (option, moveNext = false) => {
+  const selectTypeOfSupply = (option, moveNext = false, submitAfterSelect = false) => {
     if (!option) return;
 
     const parentForm = typeOfSupplyRef.current?.form;
@@ -505,6 +536,13 @@ export default function AddProductPopup({
       Math.max(filteredTypeOfSupplyOptions.findIndex((item) => item.value === option.value), 0)
     );
     setIsTypeOfSupplyOpen(false);
+
+    if (submitAfterSelect && parentForm instanceof HTMLFormElement) {
+      requestAnimationFrame(() => {
+        parentForm.requestSubmit();
+      });
+      return;
+    }
 
     if (!moveNext || !(parentForm instanceof HTMLFormElement)) return;
 
@@ -585,7 +623,7 @@ export default function AddProductPopup({
         (option) => normalizeText(option.label) === normalizeText(typeOfSupplyQuery)
       );
       const matchedOption = activeOption || exactMatch || filteredTypeOfSupplyOptions[0] || TYPE_OF_SUPPLY_OPTIONS[0];
-      selectTypeOfSupply(matchedOption, true);
+      selectTypeOfSupply(matchedOption, false, true);
     }
   };
 
@@ -624,22 +662,44 @@ export default function AddProductPopup({
         name: String(formData.name || '').trim(),
         stockGroup: selectedStockGroupId || null,
         unit: String(matchedUnit || '').trim(),
-        typeOfSupply: String(formData.typeOfSupply || 'goods').trim().toLowerCase() === 'services' ? 'services' : 'goods',
+        typeOfSupply: getNormalizedTypeOfSupply(formData.typeOfSupply),
         minStockLevel: Number(formData.minStockLevel || 0),
         taxRate: Number(formData.taxRate || 0)
       };
 
-      const response = await apiClient.post('/products', payload);
-      const createdProduct = response?.data || null;
+      const response = isEditMode
+        ? await apiClient.put(`/products/${editingId}`, payload)
+        : await apiClient.post('/products', payload);
+      const savedProduct = response?.data || null;
 
-      if (!createdProduct?._id) {
-        throw new Error('Stock item created but response was incomplete');
+      if (!savedProduct?._id) {
+        throw new Error(
+          isEditMode
+            ? 'Stock item updated but response was incomplete'
+            : 'Stock item created but response was incomplete'
+        );
       }
 
-      onProductCreated?.(createdProduct);
-      setFormData(getInitialFormData(''));
+      if (!isEditMode) {
+        onProductCreated?.(savedProduct);
+      }
+      onProductSaved?.(savedProduct, { isEditMode });
+
+      if (!onProductSaved && !isEditMode) {
+        const resetState = getPopupInitialState('', null);
+        setFormData(resetState.formData);
+        setStockGroupQuery(resetState.stockGroupQuery);
+        setStockGroupListIndex(-1);
+        setIsStockGroupSectionActive(false);
+        setUnitQuery(resetState.unitQuery);
+        setUnitListIndex(-1);
+        setIsUnitSectionActive(false);
+        setTypeOfSupplyQuery(resetState.typeOfSupplyQuery);
+        setTypeOfSupplyListIndex(resetState.typeOfSupplyListIndex);
+        setIsTypeOfSupplyOpen(false);
+      }
     } catch (err) {
-      setError(err.message || 'Error creating stock item');
+      setError(err.message || (isEditMode ? 'Error updating stock item' : 'Error creating stock item'));
     } finally {
       setLoading(false);
     }
@@ -658,7 +718,7 @@ export default function AddProductPopup({
                 <Package className="h-4 w-4 md:h-5 md:w-5" />
               </div>
               <div>
-                <h2 className="text-base font-bold md:text-xl">Add New Stock Item</h2>
+                <h2 className="text-base font-bold md:text-xl">{isEditMode ? 'Edit Stock Item' : 'Add New Stock Item'}</h2>
                 <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">Create or update stock details in a clean accounting format.</p>
               </div>
             </div>
@@ -799,7 +859,8 @@ export default function AddProductPopup({
                       ref={unitSectionRef}
                       className="relative min-w-0 flex-1"
                       onFocusCapture={() => {
-                        const selectedUnit = String(formData.unit || getInitialFormData().unit).trim() || getInitialFormData().unit;
+                        const defaultUnit = getPopupInitialState('', null).formData.unit;
+                        const selectedUnit = String(formData.unit || defaultUnit).trim() || defaultUnit;
                         const selectedIndex = unitOptions.findIndex(
                           (unitName) => normalizeText(unitName) === normalizeText(selectedUnit)
                         );
@@ -1027,7 +1088,7 @@ export default function AddProductPopup({
                 disabled={loading}
                 className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-1.5 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
               >
-                {loading ? 'Saving...' : 'Save Stock'}
+                {loading ? 'Saving...' : isEditMode ? 'Update Stock Item' : 'Save Stock'}
               </button>
             </div>
           </div>
