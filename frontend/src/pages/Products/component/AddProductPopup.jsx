@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Package } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronDown, Package } from 'lucide-react';
 import apiClient from '../../../utils/api';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
+import { useFloatingDropdownPosition } from '../../../utils/useFloatingDropdownPosition';
 
 const TYPE_OF_SUPPLY_OPTIONS = [
   { value: 'goods', label: 'Goods' },
@@ -38,6 +39,19 @@ export default function AddProductPopup({
   const [units, setUnits] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [stockGroupQuery, setStockGroupQuery] = useState('');
+  const [stockGroupListIndex, setStockGroupListIndex] = useState(-1);
+  const [isStockGroupSectionActive, setIsStockGroupSectionActive] = useState(false);
+  const [unitQuery, setUnitQuery] = useState('pcs');
+  const [unitListIndex, setUnitListIndex] = useState(-1);
+  const [isUnitSectionActive, setIsUnitSectionActive] = useState(false);
+  const nameInputRef = useRef(null);
+  const stockGroupSectionRef = useRef(null);
+  const unitSectionRef = useRef(null);
+  const unitInputRef = useRef(null);
+  const minStockInputRef = useRef(null);
+
+  const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
   const unitOptions = useMemo(() => {
     const fetchedUnits = units
@@ -53,15 +67,115 @@ export default function AddProductPopup({
     return unique;
   }, [formData.unit, units]);
 
+  const getMatchingStockGroups = (queryValue) => {
+    const normalized = normalizeText(queryValue);
+    if (!normalized) return stockGroups;
+
+    const startsWith = stockGroups.filter((group) => normalizeText(group?.name).startsWith(normalized));
+    const includes = stockGroups.filter((group) => (
+      !normalizeText(group?.name).startsWith(normalized)
+      && normalizeText(group?.name).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  };
+
+  const getMatchingUnits = (queryValue) => {
+    const normalized = normalizeText(queryValue);
+    if (!normalized) return unitOptions;
+
+    const startsWith = unitOptions.filter((unitName) => normalizeText(unitName).startsWith(normalized));
+    const includes = unitOptions.filter((unitName) => (
+      !normalizeText(unitName).startsWith(normalized)
+      && normalizeText(unitName).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  };
+
+  const selectedStockGroupName = useMemo(() => {
+    const selectedGroup = stockGroups.find(
+      (group) => String(group?._id || '') === String(formData.stockGroup || '')
+    );
+    return selectedGroup?.name || '';
+  }, [formData.stockGroup, stockGroups]);
+
+  const filteredStockGroups = useMemo(
+    () => getMatchingStockGroups(stockGroupQuery),
+    [stockGroups, stockGroupQuery]
+  );
+
+  const stockGroupOptions = useMemo(() => {
+    const normalizedQuery = normalizeText(stockGroupQuery);
+    const normalizedSelected = normalizeText(selectedStockGroupName);
+
+    if (
+      isStockGroupSectionActive
+      && normalizedQuery
+      && normalizedQuery === normalizedSelected
+    ) {
+      return stockGroups;
+    }
+
+    return filteredStockGroups;
+  }, [filteredStockGroups, isStockGroupSectionActive, selectedStockGroupName, stockGroupQuery, stockGroups]);
+
+  const filteredUnits = useMemo(
+    () => getMatchingUnits(unitQuery),
+    [unitOptions, unitQuery]
+  );
+
+  const unitPanelOptions = useMemo(() => {
+    const normalizedQuery = normalizeText(unitQuery);
+    const normalizedSelected = normalizeText(formData.unit);
+
+    if (
+      isUnitSectionActive
+      && normalizedQuery
+      && normalizedQuery === normalizedSelected
+    ) {
+      return unitOptions;
+    }
+
+    return filteredUnits;
+  }, [filteredUnits, formData.unit, isUnitSectionActive, unitOptions, unitQuery]);
+
+  const stockGroupDropdownStyle = useFloatingDropdownPosition(
+    stockGroupSectionRef,
+    isStockGroupSectionActive,
+    [stockGroupOptions.length, stockGroupListIndex]
+  );
+
+  const unitDropdownStyle = useFloatingDropdownPosition(
+    unitSectionRef,
+    isUnitSectionActive,
+    [unitPanelOptions.length, unitListIndex],
+    'auto',
+    'viewport'
+  );
+
   useEffect(() => {
     if (!showForm) {
       setFormData(getInitialFormData(initialName));
       setError('');
+      setStockGroupQuery('');
+      setStockGroupListIndex(-1);
+      setIsStockGroupSectionActive(false);
+      setUnitQuery(getInitialFormData(initialName).unit);
+      setUnitListIndex(-1);
+      setIsUnitSectionActive(false);
       return;
     }
 
-    setFormData(getInitialFormData(initialName));
+    const nextFormData = getInitialFormData(initialName);
+    setFormData(nextFormData);
     setError('');
+    setStockGroupQuery('');
+    setStockGroupListIndex(-1);
+    setIsStockGroupSectionActive(false);
+    setUnitQuery(nextFormData.unit);
+    setUnitListIndex(-1);
+    setIsUnitSectionActive(false);
 
     const loadOptions = async () => {
       try {
@@ -82,7 +196,112 @@ export default function AddProductPopup({
     loadOptions();
   }, [initialName, showForm]);
 
+  useEffect(() => {
+    if (!showForm) return;
+
+    const timer = setTimeout(() => {
+      nameInputRef.current?.focus();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [showForm]);
+
+  useEffect(() => {
+    if (!showForm) return;
+
+    if (stockGroupOptions.length === 0) {
+      setStockGroupListIndex(-1);
+      return;
+    }
+
+    setStockGroupListIndex((prev) => {
+      if (prev < 0) return isStockGroupSectionActive ? 0 : -1;
+      if (prev >= stockGroupOptions.length) return stockGroupOptions.length - 1;
+      return prev;
+    });
+  }, [showForm, stockGroupOptions, isStockGroupSectionActive]);
+
+  useEffect(() => {
+    if (!showForm) return;
+
+    if (unitPanelOptions.length === 0) {
+      setUnitListIndex(-1);
+      return;
+    }
+
+    setUnitListIndex((prev) => {
+      if (prev < 0) return isUnitSectionActive ? 0 : -1;
+      if (prev >= unitPanelOptions.length) return unitPanelOptions.length - 1;
+      return prev;
+    });
+  }, [showForm, unitPanelOptions, isUnitSectionActive]);
+
   if (!showForm) return null;
+
+  const findExactStockGroup = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return stockGroups.find((group) => normalizeText(group?.name) === normalized) || null;
+  };
+
+  const findBestStockGroupMatch = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return stockGroups.find((group) => normalizeText(group?.name).startsWith(normalized))
+      || stockGroups.find((group) => normalizeText(group?.name).includes(normalized))
+      || null;
+  };
+
+  const findExactUnit = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return '';
+    return unitOptions.find((unitName) => normalizeText(unitName) === normalized) || '';
+  };
+
+  const findBestUnitMatch = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return '';
+    return unitOptions.find((unitName) => normalizeText(unitName).startsWith(normalized))
+      || unitOptions.find((unitName) => normalizeText(unitName).includes(normalized))
+      || '';
+  };
+
+  const selectStockGroup = (group, focusUnit = true) => {
+    if (!group) {
+      setStockGroupQuery('');
+      setFormData((prev) => ({ ...prev, stockGroup: '' }));
+      setStockGroupListIndex(-1);
+      return;
+    }
+
+    setStockGroupQuery(group.name);
+    setFormData((prev) => ({ ...prev, stockGroup: group._id }));
+    const selectedIndex = getMatchingStockGroups(group.name).findIndex((item) => String(item._id) === String(group._id));
+    setStockGroupListIndex(selectedIndex >= 0 ? selectedIndex : -1);
+    setIsStockGroupSectionActive(false);
+
+    if (focusUnit) {
+      requestAnimationFrame(() => {
+        unitInputRef.current?.focus();
+      });
+    }
+  };
+
+  const selectUnit = (unitName, focusMinStock = false) => {
+    if (!unitName) return;
+
+    setUnitQuery(unitName);
+    setFormData((prev) => ({ ...prev, unit: unitName }));
+    const selectedIndex = getMatchingUnits(unitName).findIndex((item) => normalizeText(item) === normalizeText(unitName));
+    setUnitListIndex(selectedIndex >= 0 ? selectedIndex : -1);
+    setIsUnitSectionActive(false);
+
+    if (focusMinStock) {
+      requestAnimationFrame(() => {
+        minStockInputRef.current?.focus();
+      });
+    }
+  };
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -95,6 +314,121 @@ export default function AddProductPopup({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleStockGroupInputChange = (event) => {
+    const value = event.target.value;
+    setStockGroupQuery(value);
+
+    if (!normalizeText(value)) {
+      setFormData((prev) => ({ ...prev, stockGroup: '' }));
+      setStockGroupListIndex(-1);
+      return;
+    }
+
+    const exactGroup = findExactStockGroup(value);
+    if (exactGroup) {
+      setFormData((prev) => ({ ...prev, stockGroup: exactGroup._id }));
+      const exactIndex = getMatchingStockGroups(value).findIndex((item) => String(item._id) === String(exactGroup._id));
+      setStockGroupListIndex(exactIndex >= 0 ? exactIndex : 0);
+      return;
+    }
+
+    const matches = getMatchingStockGroups(value);
+    const firstMatch = matches[0] || null;
+    setFormData((prev) => ({ ...prev, stockGroup: firstMatch?._id || '' }));
+    setStockGroupListIndex(firstMatch ? 0 : -1);
+  };
+
+  const handleStockGroupInputKeyDown = (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      event.stopPropagation();
+      if (stockGroupOptions.length === 0) return;
+      setStockGroupListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, stockGroupOptions.length - 1);
+      });
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      event.stopPropagation();
+      if (stockGroupOptions.length === 0) return;
+      setStockGroupListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const activeGroup = stockGroupListIndex >= 0 ? stockGroupOptions[stockGroupListIndex] : null;
+      const matchedGroup = activeGroup || findExactStockGroup(stockGroupQuery) || findBestStockGroupMatch(stockGroupQuery);
+      if (matchedGroup) {
+        selectStockGroup(matchedGroup, true);
+        return;
+      }
+
+      unitInputRef.current?.focus();
+    }
+  };
+
+  const handleUnitInputChange = (event) => {
+    const value = event.target.value;
+    setUnitQuery(value);
+
+    const exactUnit = findExactUnit(value);
+    if (exactUnit) {
+      setFormData((prev) => ({ ...prev, unit: exactUnit }));
+      const exactIndex = getMatchingUnits(value).findIndex((item) => normalizeText(item) === normalizeText(exactUnit));
+      setUnitListIndex(exactIndex >= 0 ? exactIndex : 0);
+      return;
+    }
+
+    const matches = getMatchingUnits(value);
+    const firstMatch = matches[0] || '';
+    setFormData((prev) => ({ ...prev, unit: firstMatch }));
+    setUnitListIndex(firstMatch ? 0 : -1);
+  };
+
+  const handleUnitInputKeyDown = (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      event.stopPropagation();
+      if (unitPanelOptions.length === 0) return;
+      setUnitListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, unitPanelOptions.length - 1);
+      });
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      event.stopPropagation();
+      if (unitPanelOptions.length === 0) return;
+      setUnitListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const activeUnit = unitListIndex >= 0 ? unitPanelOptions[unitListIndex] : '';
+      const matchedUnit = activeUnit || findExactUnit(unitQuery) || findBestUnitMatch(unitQuery);
+      if (matchedUnit) {
+        selectUnit(matchedUnit, true);
+      }
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -103,7 +437,11 @@ export default function AddProductPopup({
       return;
     }
 
-    if (!String(formData.unit || '').trim()) {
+    const matchedStockGroup = findExactStockGroup(stockGroupQuery) || findBestStockGroupMatch(stockGroupQuery);
+    const selectedStockGroupId = formData.stockGroup || matchedStockGroup?._id || '';
+    const matchedUnit = findExactUnit(unitQuery) || findBestUnitMatch(unitQuery) || formData.unit;
+
+    if (!String(matchedUnit || '').trim()) {
       setError('Unit is required');
       return;
     }
@@ -114,8 +452,8 @@ export default function AddProductPopup({
 
       const payload = {
         name: String(formData.name || '').trim(),
-        stockGroup: formData.stockGroup || null,
-        unit: String(formData.unit || '').trim(),
+        stockGroup: selectedStockGroupId || null,
+        unit: String(matchedUnit || '').trim(),
         typeOfSupply: String(formData.typeOfSupply || 'goods').trim().toLowerCase() === 'services' ? 'services' : 'goods',
         minStockLevel: Number(formData.minStockLevel || 0),
         taxRate: Number(formData.taxRate || 0)
@@ -151,7 +489,7 @@ export default function AddProductPopup({
               </div>
               <div>
                 <h2 className="text-base font-bold md:text-xl">Add New Stock Item</h2>
-                <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">Create a stock item without leaving this popup.</p>
+                <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">Create or update stock details in a clean accounting format.</p>
               </div>
             </div>
             <button
@@ -182,10 +520,11 @@ export default function AddProductPopup({
                   Basic Details
                 </h3>
 
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                  <div className="md:col-span-2">
-                    <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Item Name *</label>
+                <div className="space-y-3 md:space-y-4">
+                  <div className="flex items-center gap-2">
+                    <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Item Name *</label>
                     <input
+                      ref={nameInputRef}
                       type="text"
                       name="name"
                       value={formData.name}
@@ -197,81 +536,227 @@ export default function AddProductPopup({
                     />
                   </div>
 
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Stock Group</label>
-                    <select
-                      name="stockGroup"
-                      value={formData.stockGroup}
-                      onChange={handleChange}
-                      className={getInlineFieldClass('indigo')}
+                  <div className="flex items-center gap-2">
+                    <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Stock Group</label>
+                    <div
+                      ref={stockGroupSectionRef}
+                      className="relative min-w-0 flex-1"
+                      onFocusCapture={() => {
+                        const selectedIndex = stockGroupOptions.findIndex(
+                          (group) => String(group?._id || '') === String(formData.stockGroup || '')
+                        );
+                        setIsUnitSectionActive(false);
+                        setIsStockGroupSectionActive(true);
+                        setStockGroupListIndex(selectedIndex >= 0 ? selectedIndex : (stockGroupOptions.length > 0 ? 0 : -1));
+                      }}
+                      onBlurCapture={(event) => {
+                        const nextFocused = event.relatedTarget;
+                        if (
+                          stockGroupSectionRef.current
+                          && nextFocused instanceof Node
+                          && stockGroupSectionRef.current.contains(nextFocused)
+                        ) {
+                          return;
+                        }
+                        setIsStockGroupSectionActive(false);
+                      }}
                     >
-                      <option value="">Select stock group</option>
-                      {stockGroups.map((group) => (
-                        <option key={group._id} value={group._id}>
-                          {group.name}
-                        </option>
-                      ))}
-                    </select>
+                      <input
+                        type="text"
+                        value={stockGroupQuery}
+                        onChange={handleStockGroupInputChange}
+                        onKeyDown={handleStockGroupInputKeyDown}
+                        className={getInlineFieldClass('indigo')}
+                        placeholder="Select or type stock group..."
+                      />
+
+                      {isStockGroupSectionActive && stockGroupDropdownStyle && (
+                        <div
+                          className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                          style={stockGroupDropdownStyle}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Stock Group List</span>
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                              {stockGroupOptions.length}
+                            </span>
+                          </div>
+                          <div className="overflow-y-auto py-1" style={{ maxHeight: stockGroupDropdownStyle.maxHeight }}>
+                            {stockGroupOptions.length === 0 ? (
+                              <div className="px-3 py-3 text-center text-[13px] text-slate-500">
+                                No stock groups found.
+                              </div>
+                            ) : (
+                              stockGroupOptions.map((group, index) => {
+                                const isActive = index === stockGroupListIndex;
+                                const isSelected = String(formData.stockGroup || '') === String(group._id);
+
+                                return (
+                                  <button
+                                    key={group._id}
+                                    type="button"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onMouseEnter={() => setStockGroupListIndex(index)}
+                                    onClick={() => selectStockGroup(group, true)}
+                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                      isActive
+                                        ? 'bg-yellow-200 text-amber-950'
+                                        : isSelected
+                                        ? 'bg-yellow-50 text-amber-800'
+                                        : 'text-slate-700 hover:bg-amber-50'
+                                    }`}
+                                  >
+                                    <span className="truncate font-medium">{group.name}</span>
+                                    {isSelected && (
+                                      <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                        Selected
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Unit *</label>
-                    <select
-                      name="unit"
-                      value={formData.unit}
-                      onChange={handleChange}
-                      className={getInlineFieldClass('indigo')}
-                      required
+                  <div className="flex items-center gap-2">
+                    <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Unit *</label>
+                    <div
+                      ref={unitSectionRef}
+                      className="relative min-w-0 flex-1"
+                      onFocusCapture={() => {
+                        const selectedIndex = unitPanelOptions.findIndex(
+                          (unitName) => normalizeText(unitName) === normalizeText(formData.unit)
+                        );
+                        setIsStockGroupSectionActive(false);
+                        setIsUnitSectionActive(true);
+                        setUnitListIndex(selectedIndex >= 0 ? selectedIndex : (unitPanelOptions.length > 0 ? 0 : -1));
+                      }}
+                      onBlurCapture={(event) => {
+                        const nextFocused = event.relatedTarget;
+                        if (
+                          unitSectionRef.current
+                          && nextFocused instanceof Node
+                          && unitSectionRef.current.contains(nextFocused)
+                        ) {
+                          return;
+                        }
+                        setIsUnitSectionActive(false);
+                      }}
                     >
-                      {unitOptions.map((unitName) => (
-                        <option key={unitName} value={unitName}>
-                          {unitName}
-                        </option>
-                      ))}
-                    </select>
+                      <input
+                        ref={unitInputRef}
+                        type="text"
+                        value={unitQuery}
+                        onChange={handleUnitInputChange}
+                        onKeyDown={handleUnitInputKeyDown}
+                        className={`${getInlineFieldClass('indigo')} pr-10`}
+                        placeholder="Type unit, use Up/Down, press Enter"
+                        required
+                      />
+                      <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-indigo-500 transition-transform ${isUnitSectionActive ? 'rotate-180' : ''}`} />
+
+                      {isUnitSectionActive && unitDropdownStyle && (
+                        <div
+                          className="fixed z-[90] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                          style={unitDropdownStyle}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Unit List</span>
+                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                              {unitPanelOptions.length}
+                            </span>
+                          </div>
+                          <div className="overflow-y-auto py-1" style={{ maxHeight: unitDropdownStyle.maxHeight }}>
+                            {unitPanelOptions.length === 0 ? (
+                              <div className="px-3 py-3 text-center text-[13px] text-slate-500">
+                                No units found.
+                              </div>
+                            ) : (
+                              unitPanelOptions.map((unitName, index) => {
+                                const isActive = index === unitListIndex;
+                                const isSelected = normalizeText(formData.unit) === normalizeText(unitName);
+
+                                return (
+                                  <button
+                                    key={unitName}
+                                    type="button"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onMouseEnter={() => setUnitListIndex(index)}
+                                    onClick={() => selectUnit(unitName, true)}
+                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                      isActive
+                                        ? 'bg-yellow-200 text-amber-950'
+                                        : isSelected
+                                        ? 'bg-yellow-50 text-amber-800'
+                                        : 'text-slate-700 hover:bg-amber-50'
+                                    }`}
+                                  >
+                                    <span className="truncate font-medium">{unitName}</span>
+                                    {isSelected && (
+                                      <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                        Selected
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Type Of Supply</label>
-                    <select
-                      name="typeOfSupply"
-                      value={formData.typeOfSupply}
-                      onChange={handleChange}
-                      className={getInlineFieldClass('emerald')}
-                    >
-                      {TYPE_OF_SUPPLY_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Type Of Supply</label>
+                      <select
+                        name="typeOfSupply"
+                        value={formData.typeOfSupply}
+                        onChange={handleChange}
+                        className={getInlineFieldClass('emerald')}
+                      >
+                        {TYPE_OF_SUPPLY_OPTIONS.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Min Stock Level</label>
-                    <input
-                      type="number"
-                      name="minStockLevel"
-                      value={formData.minStockLevel}
-                      onChange={handleChange}
-                      min="0"
-                      className={getInlineFieldClass('emerald')}
-                      placeholder="0"
-                    />
-                  </div>
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Min Stock Level</label>
+                      <input
+                        ref={minStockInputRef}
+                        type="number"
+                        name="minStockLevel"
+                        value={formData.minStockLevel}
+                        onChange={handleChange}
+                        min="0"
+                        className={getInlineFieldClass('emerald')}
+                        placeholder="0"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Tax Rate</label>
-                    <input
-                      type="number"
-                      name="taxRate"
-                      value={formData.taxRate}
-                      onChange={handleChange}
-                      min="0"
-                      step="0.01"
-                      className={getInlineFieldClass('emerald')}
-                      placeholder="0"
-                    />
+                    <div>
+                      <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Tax Rate</label>
+                      <input
+                        type="number"
+                        name="taxRate"
+                        value={formData.taxRate}
+                        onChange={handleChange}
+                        min="0"
+                        step="0.01"
+                        className={getInlineFieldClass('emerald')}
+                        placeholder="0"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
