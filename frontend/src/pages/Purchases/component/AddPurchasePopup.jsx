@@ -12,11 +12,13 @@ export default function AddPurchasePopup({
   products,
   uploadingInvoice,
   leadgerSectionRef,
+  leadgerInputRef,
   leadgerQuery,
   leadgerListIndex,
   filteredLeadgers,
   isLeadgerSectionActive,
   productSectionRef,
+  productInputRef,
   productQuery,
   productListIndex,
   filteredProducts,
@@ -34,9 +36,11 @@ export default function AddPurchasePopup({
   handleLeadgerFocus,
   handleLeadgerInputChange,
   handleLeadgerInputKeyDown,
+  onOpenNewParty,
   handleProductFocus,
   handleProductInputChange,
   handleProductInputKeyDown,
+  onOpenNewProduct,
   handleSelectEnterMoveNext,
   handleInvoiceUpload,
   handleAddItem,
@@ -44,13 +48,24 @@ export default function AddPurchasePopup({
   selectLeadger,
   selectProduct
 }) {
-  const productInputRef = useRef(null);
+  const localLeadgerInputRef = useRef(null);
+  const localProductInputRef = useRef(null);
   const paidAmountInputRef = useRef(null);
   const [isItemEntryClosed, setIsItemEntryClosed] = useState(false);
   const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] text-gray-800 focus:border-transparent focus:outline-none focus:ring-2';
   const currentItemTotal = Math.max(0, Number(currentItem.quantity || 0) * Number(currentItem.unitPrice || 0));
+  const resolvedLeadgerInputRef = leadgerInputRef || localLeadgerInputRef;
+  const resolvedProductInputRef = productInputRef || localProductInputRef;
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
   const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex]);
+  const resolveItemUnit = (item) => {
+    const itemUnit = String(item?.unit || '').trim();
+    if (itemUnit) return itemUnit;
+
+    const matchingProduct = products.find((product) => String(product?._id) === String(item?.product || ''));
+    return String(matchingProduct?.unit || '').trim() || '-';
+  };
+  const currentItemUnit = String(currentItem.unit || '').trim() || '-';
 
   useEffect(() => {
     if (showForm) {
@@ -131,9 +146,21 @@ export default function AddPurchasePopup({
                     </div>
 
                     <div className="relative">
-                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">
-                        Party Name <span className="text-red-500">*</span>
-                      </label>
+                      <div className="relative mb-1 min-h-[16px]">
+                        <label className="block pr-24 text-[11px] font-semibold text-gray-700 md:text-xs">
+                          Party Name <span className="text-red-500">*</span>
+                        </label>
+                        {isLeadgerSectionActive && (
+                          <button
+                            type="button"
+                            onClick={onOpenNewParty}
+                            className="absolute right-0 -top-2 inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2 py-1 text-[10px] font-semibold text-indigo-700 transition hover:bg-indigo-50"
+                          >
+                            <span className="rounded bg-indigo-100 px-1.5 py-0.5 font-mono text-[9px] text-indigo-700">Ctrl</span>
+                            New Party
+                          </button>
+                        )}
+                      </div>
                       <div
                         ref={leadgerSectionRef}
                         className="relative"
@@ -147,6 +174,7 @@ export default function AddPurchasePopup({
                         <div className="relative">
                           <Building2 className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-indigo-400" />
                           <input
+                            ref={resolvedLeadgerInputRef}
                             type="text"
                             value={leadgerQuery}
                             onChange={handleLeadgerInputChange}
@@ -173,7 +201,16 @@ export default function AddPurchasePopup({
                             <div className="overflow-y-auto py-1" style={{ maxHeight: leadgerDropdownStyle.maxHeight }}>
                               {filteredLeadgers.length === 0 ? (
                                 <div className="px-3 py-3 text-center text-[13px] text-slate-500">
-                                  No matching parties found.
+                                  <p>No matching parties found.</p>
+                                  <button
+                                    type="button"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onClick={onOpenNewParty}
+                                    className="mt-2 inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                                  >
+                                    Create New Party
+                                    <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-indigo-600">Ctrl</span>
+                                  </button>
                                 </div>
                               ) : (
                                 filteredLeadgers.map((leadger, index) => {
@@ -274,11 +311,12 @@ export default function AddPurchasePopup({
                       <p className="text-xs font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
                     </div>
                     <div className="flex-1 overflow-auto">
-                      <table className="w-full min-w-[620px] text-[13px]">
+                      <table className="w-full min-w-[720px] text-[13px]">
                         <thead className="bg-white text-gray-600">
                           <tr>
                             <th className="border-b border-emerald-100 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider">Product</th>
                             <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Qty</th>
+                            <th className="border-b border-emerald-100 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider">Per</th>
                             <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Price</th>
                             <th className="border-b border-emerald-100 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Total</th>
                           </tr>
@@ -288,6 +326,7 @@ export default function AddPurchasePopup({
                             <tr key={index} className="hover:bg-emerald-50/40">
                               <td className="px-3 py-2.5 font-medium text-gray-800">{item.productName}</td>
                               <td className="px-3 py-2.5 text-right text-gray-600">{item.quantity}</td>
+                              <td className="px-3 py-2.5 text-center text-gray-600">{resolveItemUnit(item)}</td>
                               <td className="px-3 py-2.5 text-right text-gray-600">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
                               <td className="px-3 py-2.5 text-right font-semibold text-gray-800">Rs {Number(item.total || 0).toFixed(2)}</td>
                             </tr>
@@ -295,7 +334,7 @@ export default function AddPurchasePopup({
                           {isItemEntryClosed ? (
                             <>
                               <tr className="bg-emerald-50/40">
-                                <td colSpan={3} className="border-t border-emerald-200 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-emerald-800">
+                                <td colSpan={4} className="border-t border-emerald-200 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-emerald-800">
                                   Total Amount
                                 </td>
                                 <td className="border-t border-emerald-200 px-3 py-3 text-right text-sm font-bold text-emerald-900">
@@ -303,7 +342,7 @@ export default function AddPurchasePopup({
                                 </td>
                               </tr>
                               <tr className="bg-white">
-                                <td colSpan={3} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
+                                <td colSpan={4} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
                                   Paid Amount
                                 </td>
                                 <td className="border-t border-emerald-100 px-3 py-2">
@@ -338,7 +377,7 @@ export default function AddPurchasePopup({
                                   <div className="relative">
                                     <Package className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-emerald-500" />
                                     <input
-                                      ref={productInputRef}
+                                      ref={resolvedProductInputRef}
                                       type="text"
                                       value={productQuery}
                                       onChange={handleProductInputChange}
@@ -364,7 +403,16 @@ export default function AddPurchasePopup({
                                       <div className="overflow-y-auto py-1" style={{ maxHeight: productDropdownStyle.maxHeight }}>
                                         {filteredProducts.length === 0 ? (
                                           <div className="px-3 py-3 text-center text-[13px] text-slate-500">
-                                            No matching products found.
+                                            <p>No matching products found.</p>
+                                            <button
+                                              type="button"
+                                              onMouseDown={(event) => event.preventDefault()}
+                                              onClick={onOpenNewProduct}
+                                              className="mt-2 inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                            >
+                                              Create New Stock
+                                              <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-emerald-700">Ctrl</span>
+                                            </button>
                                           </div>
                                         ) : (
                                           filteredProducts.map((product, index) => {
@@ -427,6 +475,11 @@ export default function AddPurchasePopup({
                                   className={`${inputClass} ml-auto w-[30%] min-w-[56px] text-right focus:ring-emerald-500`}
                                 />
                               </td>
+                              <td className="px-3 py-2.5 text-center">
+                                <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-medium text-gray-700">
+                                  {currentItemUnit}
+                                </div>
+                              </td>
                               <td className="px-3 py-2.5">
                                 <input
                                   type="number"
@@ -437,9 +490,11 @@ export default function AddPurchasePopup({
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                       e.preventDefault();
                                       e.stopPropagation();
-                                      handleAddItem();
+                                      const didAddItem = handleAddItem();
+                                      if (!didAddItem) return;
                                       requestAnimationFrame(() => {
-                                        productInputRef.current?.focus();
+                                        resolvedProductInputRef.current?.focus();
+                                        resolvedProductInputRef.current?.select?.();
                                       });
                                     }
                                   }}

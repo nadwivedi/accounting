@@ -151,7 +151,7 @@ export default function AddProductPopup({
               </div>
               <div>
                 <h2 className="text-base font-bold md:text-xl">Add New Stock Item</h2>
-                <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">Create a stock item without leaving the sale popup.</p>
+                <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">Create a stock item without leaving this popup.</p>
               </div>
             </div>
             <button
