@@ -589,6 +589,16 @@ export default function AddProductPopup({
     }
   };
 
+  const handleTaxRateKeyDown = (event) => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    event.stopPropagation();
+    setIsTypeOfSupplyOpen(true);
+    if (typeOfSupplyRef.current) {
+      typeOfSupplyRef.current.focus();
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -875,94 +885,9 @@ export default function AddProductPopup({
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-4">
-                    <div
-                      ref={typeOfSupplySectionRef}
-                      onBlurCapture={(event) => {
-                        const nextFocused = event.relatedTarget;
-                        if (
-                          typeOfSupplySectionRef.current
-                          && nextFocused instanceof Node
-                          && typeOfSupplySectionRef.current.contains(nextFocused)
-                        ) {
-                          return;
-                        }
-                        setTypeOfSupplyQuery(selectedTypeOfSupplyLabel);
-                        setIsTypeOfSupplyOpen(false);
-                      }}
-                    >
-                      <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Type Of Supply</label>
-                      <div className="relative">
-                        <input
-                          ref={typeOfSupplyRef}
-                          type="text"
-                          value={typeOfSupplyQuery}
-                          onChange={handleTypeOfSupplyInputChange}
-                          onFocus={() => {
-                            const selectedOption = TYPE_OF_SUPPLY_OPTIONS.find(
-                              (option) => option.value === String(formData.typeOfSupply || 'goods').trim().toLowerCase()
-                            ) || TYPE_OF_SUPPLY_OPTIONS[0];
-                            setTypeOfSupplyQuery(selectedOption.label);
-                            setIsTypeOfSupplyOpen(true);
-                            setTypeOfSupplyListIndex(
-                              Math.max(filteredTypeOfSupplyOptions.findIndex((option) => option.value === selectedOption.value), 0)
-                            );
-                          }}
-                          onKeyDown={handleTypeOfSupplyKeyDown}
-                          className={`${getInlineFieldClass('emerald')} pr-10`}
-                          placeholder="Select type of supply"
-                        />
-                        <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500 transition-transform ${isTypeOfSupplyOpen ? 'rotate-180' : ''}`} />
-                      </div>
-
-                      {isTypeOfSupplyOpen && typeOfSupplyDropdownStyle && (
-                        <div
-                          className="fixed z-[90] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
-                          style={typeOfSupplyDropdownStyle}
-                          onClick={(event) => event.stopPropagation()}
-                        >
-                          <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
-                            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Type Of Supply</span>
-                            <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
-                              {filteredTypeOfSupplyOptions.length}
-                            </span>
-                          </div>
-                          <div className="overflow-y-auto py-1" style={{ maxHeight: typeOfSupplyDropdownStyle.maxHeight }}>
-                            {filteredTypeOfSupplyOptions.map((option, index) => {
-                              const isActive = index === typeOfSupplyListIndex;
-                              const isSelected = String(formData.typeOfSupply || 'goods') === String(option.value);
-
-                              return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  onMouseDown={(event) => event.preventDefault()}
-                                  onMouseEnter={() => setTypeOfSupplyListIndex(index)}
-                                  onClick={() => selectTypeOfSupply(option, true)}
-                                  className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
-                                    isActive
-                                      ? 'bg-yellow-200 text-amber-950'
-                                      : isSelected
-                                      ? 'bg-yellow-50 text-amber-800'
-                                      : 'text-slate-700 hover:bg-amber-50'
-                                  }`}
-                                >
-                                  <span className="truncate font-medium">{option.label}</span>
-                                  {isSelected && (
-                                    <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                      Selected
-                                    </span>
-                                  )}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Min Stock Level</label>
+                  <div className="space-y-3 md:space-y-4">
+                    <div className="flex items-center gap-2">
+                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Min Stock Level</label>
                       <input
                         ref={minStockInputRef}
                         type="number"
@@ -975,18 +900,107 @@ export default function AddProductPopup({
                       />
                     </div>
 
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-gray-700 md:text-sm">Tax Rate</label>
+                    <div className="flex items-center gap-2">
+                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Tax Rate</label>
                       <input
                         type="number"
                         name="taxRate"
                         value={formData.taxRate}
                         onChange={handleChange}
+                        onKeyDown={handleTaxRateKeyDown}
                         min="0"
                         step="0.01"
                         className={getInlineFieldClass('emerald')}
                         placeholder="0"
                       />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Type Of Supply</label>
+                      <div
+                        ref={typeOfSupplySectionRef}
+                        className="relative min-w-0 flex-1"
+                        onBlurCapture={(event) => {
+                          const nextFocused = event.relatedTarget;
+                          if (
+                            typeOfSupplySectionRef.current
+                            && nextFocused instanceof Node
+                            && typeOfSupplySectionRef.current.contains(nextFocused)
+                          ) {
+                            return;
+                          }
+                          setTypeOfSupplyQuery(selectedTypeOfSupplyLabel);
+                          setIsTypeOfSupplyOpen(false);
+                        }}
+                      >
+                        <div className="relative">
+                          <input
+                            ref={typeOfSupplyRef}
+                            type="text"
+                            value={typeOfSupplyQuery}
+                            onChange={handleTypeOfSupplyInputChange}
+                            onFocus={() => {
+                              const selectedOption = TYPE_OF_SUPPLY_OPTIONS.find(
+                                (option) => option.value === String(formData.typeOfSupply || 'goods').trim().toLowerCase()
+                              ) || TYPE_OF_SUPPLY_OPTIONS[0];
+                              setTypeOfSupplyQuery(selectedOption.label);
+                              setIsTypeOfSupplyOpen(true);
+                              setTypeOfSupplyListIndex(
+                                Math.max(filteredTypeOfSupplyOptions.findIndex((option) => option.value === selectedOption.value), 0)
+                              );
+                            }}
+                            onKeyDown={handleTypeOfSupplyKeyDown}
+                            className={`${getInlineFieldClass('emerald')} pr-10`}
+                            placeholder="Select type of supply"
+                          />
+                          <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500 transition-transform ${isTypeOfSupplyOpen ? 'rotate-180' : ''}`} />
+                        </div>
+
+                        {isTypeOfSupplyOpen && typeOfSupplyDropdownStyle && (
+                          <div
+                            className="fixed z-[90] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                            style={typeOfSupplyDropdownStyle}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Type Of Supply</span>
+                              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                {filteredTypeOfSupplyOptions.length}
+                              </span>
+                            </div>
+                            <div className="overflow-y-auto py-1" style={{ maxHeight: typeOfSupplyDropdownStyle.maxHeight }}>
+                              {filteredTypeOfSupplyOptions.map((option, index) => {
+                                const isActive = index === typeOfSupplyListIndex;
+                                const isSelected = String(formData.typeOfSupply || 'goods') === String(option.value);
+
+                                return (
+                                  <button
+                                    key={option.value}
+                                    type="button"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onMouseEnter={() => setTypeOfSupplyListIndex(index)}
+                                    onClick={() => selectTypeOfSupply(option, true)}
+                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                      isActive
+                                        ? 'bg-yellow-200 text-amber-950'
+                                        : isSelected
+                                        ? 'bg-yellow-50 text-amber-800'
+                                        : 'text-slate-700 hover:bg-amber-50'
+                                    }`}
+                                  >
+                                    <span className="truncate font-medium">{option.label}</span>
+                                    {isSelected && (
+                                      <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                        Selected
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
