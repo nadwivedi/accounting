@@ -210,88 +210,94 @@ function DayGroupCard({ group, expanded, onToggle }) {
       </button>
 
       {expanded && (
-        <div className="divide-y divide-slate-200">
-          {group.entries.map((entry, index) => {
-            const meta = ENTRY_TYPE_META[entry.type] || ENTRY_TYPE_META.sale;
-            const TypeIcon = meta.icon;
-            const isInward = Number(entry.inAmount || 0) > 0;
-            const amount = isInward ? Number(entry.inAmount || 0) : Number(entry.outAmount || 0);
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1000px]">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Type</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Date/Time</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Voucher No.</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Party Name</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Account</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Particulars</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Qty</th>
+                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Method</th>
+                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">Money In</th>
+                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">Money Out</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {group.entries.map((entry, index) => {
+                const meta = ENTRY_TYPE_META[entry.type] || ENTRY_TYPE_META.sale;
+                const TypeIcon = meta.icon;
+                const inAmount = Number(entry.inAmount || 0);
+                const outAmount = Number(entry.outAmount || 0);
 
-            return (
-              <article
-                key={`${entry.refId || entry.voucherNumber || entry.type}-${index}`}
-                className="grid grid-cols-1 gap-3 px-4 py-3.5 transition-colors duration-200 hover:bg-slate-50/80 lg:grid-cols-[150px_1fr_150px] lg:gap-4 lg:px-5"
-              >
-                <div className="flex items-start justify-between gap-3 lg:flex-col lg:justify-start">
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${meta.tone}`}>
-                      <TypeIcon className="h-3 w-3" />
-                      {meta.label}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3 lg:grid-cols-1 lg:gap-1.5">
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Time</p>
-                      <p className="text-xs font-semibold text-slate-800">{formatTime(entry.entryCreatedAt || entry.date)}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Voucher</p>
+                return (
+                  <tr key={`${entry.refId || entry.voucherNumber || entry.type}-${index}`} className="hover:bg-slate-50/80 transition-colors duration-200">
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${meta.tone}`}>
+                        <TypeIcon className="h-3 w-3" />
+                        {meta.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-xs font-semibold text-slate-800">{formatDate(entry.entryCreatedAt || entry.date)}</p>
+                      <p className="text-[10px] text-slate-500">{formatTime(entry.entryCreatedAt || entry.date)}</p>
+                    </td>
+                    <td className="px-4 py-3">
                       <p className="text-xs font-semibold text-slate-800">{entry.voucherNumber || '-'}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-2.5">
-                  <div className={`rounded-xl border border-slate-200/60 ${meta.bgGradient} px-4 py-3`}>
-                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                      <div className="flex-1">
-                        <p className="text-base font-black tracking-tight text-slate-900">{entry.partyName || 'No party'}</p>
-                        <p className="mt-0.5 text-xs font-medium text-slate-600">{entry.accountName || '-'}</p>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        {entry.quantity && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
-                            <Package className="h-3 w-3" />
-                            Qty {entry.quantity}
-                          </span>
-                        )}
-                        {entry.method && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-[11px] font-semibold capitalize text-slate-600">
-                            {entry.method}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Particulars</p>
-                    {entry.particulars && (
-                      <p className="mt-1 text-xs leading-5 text-slate-700">
-                        {entry.particulars}
-                      </p>
-                    )}
-                    {entry.note && entry.note !== entry.particulars && (
-                      <p className="mt-1 text-[11px] font-medium text-slate-500">Note: {entry.note}</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-start lg:justify-end">
-                  <div className={`w-full rounded-xl border p-3 lg:max-w-[150px] ${isInward ? 'border-emerald-200 bg-emerald-50' : 'border-rose-200 bg-rose-50'}`}>
-                    <div className={`h-1 rounded-full bg-gradient-to-r ${meta.accent}`} />
-                    <p className={`mt-2 text-[10px] font-bold uppercase tracking-wider ${isInward ? 'text-emerald-600' : 'text-rose-600'}`}>
-                      {isInward ? '↓ Money In' : '↑ Money Out'}
-                    </p>
-                    <p className={`mt-1 text-lg font-black tracking-tight ${meta.amountTone}`}>
-                      {formatCurrency(amount)}
-                    </p>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-xs font-semibold text-slate-800 max-w-[150px] truncate">{entry.partyName || '-'}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-xs text-slate-600 max-w-[120px] truncate">{entry.accountName || '-'}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-xs text-slate-700 max-w-[200px] truncate">{entry.particulars || '-'}</p>
+                      {entry.note && entry.note !== entry.particulars && (
+                        <p className="text-[10px] text-slate-500 mt-0.5">Note: {entry.note}</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-xs font-semibold text-slate-800">{entry.quantity || '-'}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="text-xs capitalize text-slate-600">{entry.method || '-'}</p>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {inAmount > 0 ? (
+                        <p className="text-xs font-bold text-emerald-700">{formatCurrency(inAmount)}</p>
+                      ) : (
+                        <p className="text-xs text-slate-400">-</p>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {outAmount > 0 ? (
+                        <p className="text-xs font-bold text-rose-700">{formatCurrency(outAmount)}</p>
+                      ) : (
+                        <p className="text-xs text-slate-400">-</p>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot className="bg-slate-100 border-t-2 border-slate-300">
+              <tr>
+                <td colSpan={8} className="px-4 py-3 text-right">
+                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Total for {group.dateLabel}</span>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <span className="text-xs font-bold text-emerald-800">{formatCurrency(group.inward)}</span>
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <span className="text-xs font-bold text-rose-800">{formatCurrency(group.outward)}</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
         </div>
       )}
     </div>
@@ -505,7 +511,7 @@ export default function DayBook() {
               <DayGroupCard
                 key={group.key}
                 group={group}
-                expanded={expandedGroups[group.key] !== false}
+                expanded={true}
                 onToggle={() => toggleGroup(group.key)}
               />
             ))}
