@@ -331,7 +331,7 @@ exports.getPartyLedger = async (req, res) => {
         entryCreatedAt: sale.createdAt || sale.saleDate,
         type: 'sale',
         refId: sale._id,
-        refNumber: sale.invoiceNumber,
+        refNumber: String(sale.invoiceNumber || '-').trim() || '-',
         partyId: salePartyId || null,
         partyName: sale.customerName || resolvePartyName(salePartyId, salePartyId ? 'Account' : 'Walk-in'),
         amount: toNumber(sale.totalAmount),
@@ -350,7 +350,7 @@ exports.getPartyLedger = async (req, res) => {
         entryCreatedAt: receipt.createdAt || receipt.receiptDate,
         type: 'receipt',
         refId: receipt._id,
-        refNumber: receipt.refId || null,
+        refNumber: formatPrefixedNumber('Rec', receipt.receiptNumber),
         partyId: receiptPartyId || null,
         partyName: resolvePartyName(receiptPartyId),
         amount: toNumber(receipt.amount),
@@ -369,7 +369,7 @@ exports.getPartyLedger = async (req, res) => {
         entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
         type: 'purchase',
         refId: purchase._id,
-        refNumber: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-',
+        refNumber: formatPrefixedNumber('Pur', purchase.purchaseNumber),
         partyId: purchasePartyId || null,
         partyName: resolvePartyName(purchasePartyId),
         amount: toNumber(purchase.totalAmount),
@@ -426,7 +426,7 @@ exports.getPartyLedger = async (req, res) => {
         entryCreatedAt: payment.createdAt || payment.paymentDate,
         type: 'payment',
         refId: payment._id,
-        refNumber: payment.refId || null,
+        refNumber: formatPrefixedNumber('Pay', payment.paymentNumber),
         partyId: paymentPartyId || null,
         partyName: resolvePartyName(paymentPartyId),
         amount: toNumber(payment.amount),
@@ -774,9 +774,22 @@ exports.getStockLedger = async (req, res) => {
       Product.find({ userId }, 'name currentStock')
     ]);
 
+    const partyNameMap = await getPartyNameMap(userId, [
+      ...purchases.map((purchase) => getRawPartyId(purchase.party)),
+      ...sales.map((sale) => getRawPartyId(sale.party)),
+      ...purchaseReturns.map((purchaseReturn) => getRawPartyId(purchaseReturn.party)),
+      ...saleReturns.map((saleReturn) => getRawPartyId(saleReturn.party))
+    ]);
+
+    const resolvePartyName = (rawPartyId, fallback = '-') => {
+      if (!rawPartyId) return fallback;
+      return partyNameMap.get(String(rawPartyId)) || getPartyLabel(rawPartyId, 'Account');
+    };
+
     const rows = [];
 
     purchases.forEach((purchase) => {
+      const purchasePartyId = getRawPartyId(purchase.party);
       purchase.items.forEach((item) => {
         if (!item.product) return;
         const productKey = String(item.product._id);
@@ -786,7 +799,8 @@ exports.getStockLedger = async (req, res) => {
           entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
           type: 'purchase',
           refId: purchase._id,
-          refNumber: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-',
+          refNumber: formatPrefixedNumber('Pur', purchase.purchaseNumber),
+          partyName: resolvePartyName(purchasePartyId),
           productId: item.product._id,
           productName: item.product.name,
           inQty: toNumber(item.quantity),
@@ -797,6 +811,7 @@ exports.getStockLedger = async (req, res) => {
     });
 
     sales.forEach((sale) => {
+      const salePartyId = getRawPartyId(sale.party);
       sale.items.forEach((item) => {
         if (!item.product) return;
         const productKey = String(item.product._id);
@@ -806,7 +821,8 @@ exports.getStockLedger = async (req, res) => {
           entryCreatedAt: sale.createdAt || sale.saleDate,
           type: 'sale',
           refId: sale._id,
-          refNumber: sale.invoiceNumber,
+          refNumber: String(sale.invoiceNumber || '-').trim() || '-',
+          partyName: sale.customerName || resolvePartyName(salePartyId, 'Walk-in'),
           productId: item.product._id,
           productName: item.product.name,
           inQty: 0,
@@ -817,6 +833,7 @@ exports.getStockLedger = async (req, res) => {
     });
 
     purchaseReturns.forEach((purchaseReturn) => {
+      const purchaseReturnPartyId = getRawPartyId(purchaseReturn.party);
       purchaseReturn.items.forEach((item) => {
         if (!item.product) return;
         const productKey = String(item.product._id || item.product);
@@ -827,6 +844,7 @@ exports.getStockLedger = async (req, res) => {
           type: 'purchase return',
           refId: purchaseReturn._id,
           refNumber: purchaseReturn.voucherNumber || '-',
+          partyName: resolvePartyName(purchaseReturnPartyId),
           productId: item.product._id || item.product,
           productName: item.productName || item.product?.name || 'Item',
           inQty: 0,
@@ -837,6 +855,7 @@ exports.getStockLedger = async (req, res) => {
     });
 
     saleReturns.forEach((saleReturn) => {
+      const saleReturnPartyId = getRawPartyId(saleReturn.party);
       saleReturn.items.forEach((item) => {
         if (!item.product) return;
         const productKey = String(item.product._id || item.product);
@@ -847,6 +866,7 @@ exports.getStockLedger = async (req, res) => {
           type: 'sale return',
           refId: saleReturn._id,
           refNumber: saleReturn.voucherNumber || '-',
+          partyName: resolvePartyName(saleReturnPartyId),
           productId: item.product._id || item.product,
           productName: item.productName || item.product?.name || 'Item',
           inQty: toNumber(item.quantity),

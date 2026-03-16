@@ -272,11 +272,12 @@ export default function StockDetail() {
           </div>
         </div>
         <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px] text-sm">
+        <table className="w-full min-w-[980px] text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50">
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">Date</th>
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">Source</th>
+              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">Party</th>
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">Reference</th>
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">In Qty</th>
               <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-600">Out Qty</th>
@@ -287,11 +288,11 @@ export default function StockDetail() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan="7" className="px-4 py-8 text-center text-slate-500">Loading...</td>
+                <td colSpan="8" className="px-4 py-8 text-center text-slate-500">Loading...</td>
               </tr>
             ) : sortedLedgerRows.length === 0 ? (
               <tr>
-                <td colSpan="7" className="px-4 py-8 text-center text-slate-500">No stock movement found for this item</td>
+                <td colSpan="8" className="px-4 py-8 text-center text-slate-500">No stock movement found for this item</td>
               </tr>
             ) : (
               sortedLedgerRows.map((row, idx) => {
@@ -304,6 +305,7 @@ export default function StockDetail() {
                         {typeMeta.label}
                       </span>
                     </td>
+                    <td className="px-4 py-2.5 font-medium text-slate-700">{row.partyName || '-'}</td>
                     <td className="px-4 py-2.5 font-medium text-slate-700">{row.refNumber || '-'}</td>
                     <td className="px-4 py-2.5 font-medium text-emerald-700">{formatQuantity(row.inQty || 0)}</td>
                     <td className="px-4 py-2.5 font-medium text-rose-700">{formatQuantity(row.outQty || 0)}</td>

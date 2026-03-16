@@ -256,10 +256,23 @@ export default function PartyDetail() {
   const closingBalance = ledger.length > 0 ? Number(ledger[ledger.length - 1].runningBalance || 0) : 0;
 
   const sortedLedgerRows = useMemo(() => {
-    return [...ledger].sort((firstRow, secondRow) => {
+    const closing = ledger.length > 0 ? Number(ledger[ledger.length - 1].runningBalance || 0) : 0;
+    const sortedRows = [...ledger].sort((firstRow, secondRow) => {
       const firstTime = new Date(firstRow.entryCreatedAt || firstRow.date).getTime() || 0;
       const secondTime = new Date(secondRow.entryCreatedAt || secondRow.date).getTime() || 0;
       return secondTime - firstTime;
+    });
+
+    let reverseRunningBalance = closing;
+
+    return sortedRows.map((row) => {
+      const displayRunningBalance = reverseRunningBalance;
+      reverseRunningBalance -= Number(row.impact || 0);
+
+      return {
+        ...row,
+        displayRunningBalance
+      };
     });
   }, [ledger]);
 
@@ -446,8 +459,8 @@ export default function PartyDetail() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-slate-900">{formatCurrency(row.amount)}</p>
-                        <p className={`mt-1 text-xs font-semibold ${Number(row.runningBalance || 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                          Bal {formatCurrency(row.runningBalance)}
+                        <p className={`mt-1 text-xs font-semibold ${Number(row.displayRunningBalance || 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                          Bal {formatCurrency(row.displayRunningBalance)}
                         </p>
                       </div>
                     </div>
@@ -527,8 +540,8 @@ export default function PartyDetail() {
                         <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-slate-900">
                           {formatCurrency(row.amount)}
                         </td>
-                        <td className={`border border-slate-300 px-4 py-3 text-center font-semibold ${Number(row.runningBalance || 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
-                          {formatCurrency(row.runningBalance)}
+                        <td className={`border border-slate-300 px-4 py-3 text-center font-semibold ${Number(row.displayRunningBalance || 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                          {formatCurrency(row.displayRunningBalance)}
                         </td>
                       </tr>
                     );
