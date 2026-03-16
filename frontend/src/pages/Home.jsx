@@ -129,6 +129,7 @@ function DayBookIcon() {
 const menuItems = [
   {
     name: 'Masters',
+    subtitle: 'Manage Party, Stocks, Banks',
     Icon: MasterIcon,
     subItems: [
       { name: 'Manage Party', path: '/party', Icon: PartyIcon },
@@ -140,6 +141,7 @@ const menuItems = [
   },
   {
     name: 'Vouchers',
+    subtitle: 'Add sales, purchase and return item',
     Icon: VoucherIcon,
     subItems: [
       { name: 'Sale', path: '/sales', Icon: SaleIcon },
@@ -148,8 +150,7 @@ const menuItems = [
       { name: 'Purchase Return', path: '/purchase-return', Icon: PurchaseReturnIcon },
       { name: 'Stock Adjustment', path: '/stock-adjustment', Icon: StockAdjustmentIcon },
       { name: 'Payment', path: '/payments', Icon: PaymentIcon },
-      { name: 'Receipt', path: '/receipts', Icon: ReceiptIcon },
-      { name: 'Day Book', path: '/day-book', Icon: DayBookIcon }
+      { name: 'Receipt', path: '/receipts', Icon: ReceiptIcon }
     ]
   },
   {
@@ -210,7 +211,10 @@ const homeQuickShortcuts = [
 
 const getSectionItems = (sectionName) => {
   if (sectionName === 'Reports') {
-    return [{ name: 'Reports', path: '/reports', Icon: ReportIcon }];
+    return [
+      { name: 'Reports', path: '/reports', Icon: ReportIcon },
+      { name: 'Day Book', path: '/day-book', Icon: DayBookIcon }
+    ];
   }
 
   return menuItems.find((item) => item.name === sectionName)?.subItems || [];
@@ -413,12 +417,19 @@ export default function Home() {
                       }}
                       className={`flex w-full cursor-pointer items-center gap-2.5 border-y px-3 py-2.5 text-left text-slate-700 transition-all duration-200 sm:gap-3 sm:px-5 sm:py-3 ${isSelectedSection ? 'bg-yellow-200 ring-2 ring-yellow-300 shadow-sm' : sectionStyle.headerClass} ${index > 0 ? 'mt-2 sm:mt-3' : ''} hover:shadow-sm`}
                     >
-                      <span className={`inline-flex ${index === 0 ? sectionStyle.accentTextClass : sectionStyle.accentDotClass}`}>
+                      <span className={`inline-flex flex-col ${index === 0 ? sectionStyle.accentTextClass : sectionStyle.accentDotClass}`}>
                         {index === 0 ? '+' : ''}
                       </span>
-                      <span className="text-[10px] font-bold tracking-[0.12em] sm:text-[12px] sm:tracking-[0.16em]">
-                        {item.name.toUpperCase()}
-                      </span>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold tracking-[0.12em] sm:text-[12px] sm:tracking-[0.16em]">
+                          {item.name.toUpperCase()}
+                        </span>
+                        {item.subtitle && (
+                          <span className="hidden text-[8px] font-medium tracking-[0.08em] text-slate-500 sm:block sm:text-[9px] sm:tracking-[0.1em]">
+                            {item.subtitle}
+                          </span>
+                        )}
+                      </div>
                       <span className={`ml-auto text-lg text-slate-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
                         ›
                       </span>

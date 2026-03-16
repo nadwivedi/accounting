@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Boxes, CreditCard, FileBarChart, Package, ReceiptText, RefreshCw, ShoppingCart, Users } from 'lucide-react';
+import { BookOpen, Boxes, CreditCard, FileBarChart, Package, ReceiptText, RefreshCw, ShoppingCart, Users } from 'lucide-react';
 import { getSectionConfig } from '../navigation/sectionMenu';
 
 const REPORT_ITEMS = [
+  { name: 'Day Book', path: '/day-book', Icon: BookOpen },
   { name: 'Party Ledger', path: '/reports/party-ledger', Icon: Users },
   { name: 'Stock Ledger', path: '/reports/stock-ledger', Icon: Boxes },
   { name: 'Sales Report', path: '/reports/sales-report', Icon: ShoppingCart },

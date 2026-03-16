@@ -126,6 +126,7 @@ function DayBookIcon() {
 export const SECTION_CONFIG = {
   Masters: {
     name: 'Masters',
+    subtitle: 'Manage Party, Stocks, Banks',
     hubPath: '/masters',
     Icon: MasterIcon,
     description: 'Parties, stock items, groups, and units',
@@ -146,6 +147,7 @@ export const SECTION_CONFIG = {
   },
   Vouchers: {
     name: 'Vouchers',
+    subtitle: 'Add sales, purchase and return item',
     hubPath: '/vouchers',
     Icon: VoucherIcon,
     description: 'Sales, purchases, returns, receipts, and stock flow',
@@ -163,8 +165,7 @@ export const SECTION_CONFIG = {
       { name: 'Purchase Return', path: '/purchase-return', Icon: PurchaseReturnIcon },
       { name: 'Stock Adjustment', path: '/stock-adjustment', Icon: StockAdjustmentIcon },
       { name: 'Payment', hint: 'Pay to supplier', path: '/payments', Icon: PaymentIcon },
-      { name: 'Receipt', hint: 'Money received from customer', path: '/receipts', Icon: ReceiptIcon },
-      { name: 'Day Book', hint: 'Daily voucher flow', path: '/day-book', Icon: DayBookIcon }
+      { name: 'Receipt', hint: 'Money received from customer', path: '/receipts', Icon: ReceiptIcon }
     ]
   },
   Expense: {
@@ -198,6 +199,7 @@ export const SECTION_CONFIG = {
     },
     items: [
       { name: 'Reports', path: '/reports', Icon: ReportIcon },
+      { name: 'Day Book', path: '/day-book', Icon: DayBookIcon },
       { name: 'Settings', path: '/settings', Icon: SettingsIcon }
     ]
   }
