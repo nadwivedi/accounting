@@ -182,51 +182,29 @@ function MetricCard({ title, value, subtitle, accentClass, valueClass = 'text-sl
 }
 
 function DayGroupCard({ group, expanded, onToggle }) {
-  const netAmount = group.inward - group.outward;
-  const isPositive = netAmount >= 0;
-
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-lg transition-all duration-300 hover:shadow-xl">
       <button
         onClick={onToggle}
-        className="w-full flex items-center justify-between px-6 py-5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white hover:from-slate-800 hover:via-slate-700 hover:to-slate-800 transition-all duration-300"
+        className="w-full flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white hover:from-slate-800 hover:via-slate-700 hover:to-slate-800 transition-all duration-300"
       >
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
             <CalendarRange className="w-6 h-6 text-white/80" />
           </div>
           <div className="text-left">
-            <h3 className="text-lg font-black tracking-tight">{group.dateLabel}</h3>
+            <h3 className="text-base font-black tracking-tight">{group.dateLabel}</h3>
             <p className="text-xs font-medium text-white/60">{group.entries.length} entries</p>
           </div>
         </div>
         
-        <div className="hidden lg:flex items-center gap-6">
-          <div className="text-center px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300">Inward</p>
-            <p className="text-sm font-black text-emerald-200">{formatCurrency(group.inward)}</p>
-          </div>
-          <div className="text-center px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-rose-300">Outward</p>
-            <p className="text-sm font-black text-rose-200">{formatCurrency(group.outward)}</p>
-          </div>
-          <div className={`text-center px-4 py-2 rounded-xl bg-white/10 backdrop-blur-sm min-w-[120px]`}>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-white/60">Net</p>
-            <p className={`text-sm font-black ${isPositive ? 'text-teal-300' : 'text-orange-300'}`}>
-              {formatCurrency(netAmount)}
-            </p>
-          </div>
+        <div className="hidden lg:flex items-center gap-3">
           <div className={`p-2 rounded-lg transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}>
             <ChevronDown className="w-5 h-5 text-white/60" />
           </div>
         </div>
         
         <div className="lg:hidden flex items-center gap-3">
-          <div className={`text-right px-3 py-1.5 rounded-lg ${isPositive ? 'bg-emerald-500/20' : 'bg-rose-500/20'}`}>
-            <p className={`text-sm font-bold ${isPositive ? 'text-emerald-300' : 'text-rose-300'}`}>
-              {formatCurrency(netAmount)}
-            </p>
-          </div>
           <ChevronDown className={`w-5 h-5 text-white/60 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
         </div>
       </button>
@@ -242,44 +220,44 @@ function DayGroupCard({ group, expanded, onToggle }) {
             return (
               <article
                 key={`${entry.refId || entry.voucherNumber || entry.type}-${index}`}
-                className="grid grid-cols-1 lg:grid-cols-[180px_1fr_200px] gap-4 px-6 py-5 hover:bg-slate-50/80 transition-colors duration-200"
+                className="grid grid-cols-1 gap-3 px-4 py-3.5 transition-colors duration-200 hover:bg-slate-50/80 lg:grid-cols-[150px_1fr_150px] lg:gap-4 lg:px-5"
               >
-                <div className="flex lg:flex-col items-start gap-3">
+                <div className="flex items-start justify-between gap-3 lg:flex-col lg:justify-start">
                   <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold ${meta.tone}`}>
-                      <TypeIcon className="w-3 h-3" />
+                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${meta.tone}`}>
+                      <TypeIcon className="h-3 w-3" />
                       {meta.label}
                     </span>
                   </div>
                   
-                  <div className="flex lg:flex-col gap-3 lg:gap-1">
+                  <div className="grid grid-cols-2 gap-3 lg:grid-cols-1 lg:gap-1.5">
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Time</p>
-                      <p className="text-sm font-semibold text-slate-800">{formatTime(entry.entryCreatedAt || entry.date)}</p>
+                      <p className="text-xs font-semibold text-slate-800">{formatTime(entry.entryCreatedAt || entry.date)}</p>
                     </div>
                     <div>
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Voucher</p>
-                      <p className="text-sm font-semibold text-slate-800">{entry.voucherNumber || '-'}</p>
+                      <p className="text-xs font-semibold text-slate-800">{entry.voucherNumber || '-'}</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  <div className={`rounded-2xl border border-slate-200/60 ${meta.bgGradient} px-5 py-4`}>
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+                <div className="flex flex-col gap-2.5">
+                  <div className={`rounded-xl border border-slate-200/60 ${meta.bgGradient} px-4 py-3`}>
+                    <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                       <div className="flex-1">
-                        <p className="text-lg font-black tracking-tight text-slate-900">{entry.partyName || 'No party'}</p>
-                        <p className="mt-1 text-sm font-medium text-slate-600">{entry.accountName || '-'}</p>
+                        <p className="text-base font-black tracking-tight text-slate-900">{entry.partyName || 'No party'}</p>
+                        <p className="mt-0.5 text-xs font-medium text-slate-600">{entry.accountName || '-'}</p>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         {entry.quantity && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600">
-                            <Package className="w-3 h-3" />
-                            Qty: {entry.quantity}
+                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+                            <Package className="h-3 w-3" />
+                            Qty {entry.quantity}
                           </span>
                         )}
                         {entry.method && (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white/80 px-2.5 py-1 text-[11px] font-semibold capitalize text-slate-600">
                             {entry.method}
                           </span>
                         )}
@@ -287,27 +265,26 @@ function DayGroupCard({ group, expanded, onToggle }) {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2.5">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Particulars</p>
                     {entry.particulars && (
-                      <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600">
+                      <p className="mt-1 text-xs leading-5 text-slate-700">
                         {entry.particulars}
-                      </span>
+                      </p>
                     )}
                     {entry.note && entry.note !== entry.particulars && (
-                      <span className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500">
-                        Note: {entry.note}
-                      </span>
+                      <p className="mt-1 text-[11px] font-medium text-slate-500">Note: {entry.note}</p>
                     )}
                   </div>
                 </div>
 
                 <div className="flex items-start lg:justify-end">
-                  <div className={`w-full max-w-[200px] rounded-2xl border ${isInward ? 'border-emerald-200 bg-emerald-50' : 'border-rose-200 bg-rose-50'} p-4`}>
-                    <div className={`h-1.5 rounded-full bg-gradient-to-r ${meta.accent}`} />
-                    <p className={`mt-3 text-[11px] font-bold uppercase tracking-wider ${isInward ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  <div className={`w-full rounded-xl border p-3 lg:max-w-[150px] ${isInward ? 'border-emerald-200 bg-emerald-50' : 'border-rose-200 bg-rose-50'}`}>
+                    <div className={`h-1 rounded-full bg-gradient-to-r ${meta.accent}`} />
+                    <p className={`mt-2 text-[10px] font-bold uppercase tracking-wider ${isInward ? 'text-emerald-600' : 'text-rose-600'}`}>
                       {isInward ? '↓ Money In' : '↑ Money Out'}
                     </p>
-                    <p className={`mt-1.5 text-2xl font-black tracking-tight ${meta.amountTone}`}>
+                    <p className={`mt-1 text-lg font-black tracking-tight ${meta.amountTone}`}>
                       {formatCurrency(amount)}
                     </p>
                   </div>
