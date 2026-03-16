@@ -152,7 +152,9 @@ const buildSummary = (entries) => entries.reduce((acc, entry) => {
 
   acc.entryCount += 1;
   acc.totalInward += inward;
-  acc.totalOutward += outward;
+  if (entry.type !== 'purchase') {
+    acc.totalOutward += outward;
+  }
 
   if (entry.type === 'sale') acc.sales += amount;
   if (entry.type === 'purchase') acc.purchases += amount;
@@ -211,7 +213,7 @@ function DayGroupCard({ group, expanded, onToggle }) {
 
       {expanded && (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1000px]">
+          <table className="w-full min-w-[800px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Type</th>
@@ -219,7 +221,6 @@ function DayGroupCard({ group, expanded, onToggle }) {
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Voucher No.</th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Party Name</th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Account</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Particulars</th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Qty</th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Method</th>
                 <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">Money In</th>
@@ -255,12 +256,6 @@ function DayGroupCard({ group, expanded, onToggle }) {
                       <p className="text-xs text-slate-600 max-w-[120px] truncate">{entry.accountName || '-'}</p>
                     </td>
                     <td className="px-4 py-3">
-                      <p className="text-xs text-slate-700 max-w-[200px] truncate">{entry.particulars || '-'}</p>
-                      {entry.note && entry.note !== entry.particulars && (
-                        <p className="text-[10px] text-slate-500 mt-0.5">Note: {entry.note}</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
                       <p className="text-xs font-semibold text-slate-800">{entry.quantity || '-'}</p>
                     </td>
                     <td className="px-4 py-3">
@@ -274,7 +269,9 @@ function DayGroupCard({ group, expanded, onToggle }) {
                       )}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {outAmount > 0 ? (
+                      {entry.type === 'purchase' ? (
+                        <p className="text-xs text-slate-300">-</p>
+                      ) : outAmount > 0 ? (
                         <p className="text-xs font-bold text-rose-700">{formatCurrency(outAmount)}</p>
                       ) : (
                         <p className="text-xs text-slate-400">-</p>
@@ -286,14 +283,19 @@ function DayGroupCard({ group, expanded, onToggle }) {
             </tbody>
             <tfoot className="bg-slate-100 border-t-2 border-slate-300">
               <tr>
-                <td colSpan={8} className="px-4 py-3 text-right">
+                <td colSpan={7} className="px-4 py-3 text-right">
                   <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Total for {group.dateLabel}</span>
                 </td>
                 <td className="px-4 py-3 text-right">
                   <span className="text-xs font-bold text-emerald-800">{formatCurrency(group.inward)}</span>
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <span className="text-xs font-bold text-rose-800">{formatCurrency(group.outward)}</span>
+                  <span className="text-xs font-bold text-rose-800">{formatCurrency(
+                    group.entries.reduce((sum, e) => {
+                      if (e.type !== 'purchase') return sum + Number(e.outAmount || 0);
+                      return sum;
+                    }, 0)
+                  )}</span>
                 </td>
               </tr>
             </tfoot>
