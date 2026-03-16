@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BookText, CalendarRange, RefreshCw, Search, ChevronDown, ChevronUp, TrendingUp, TrendingDown, ArrowRightLeft, Receipt, CreditCard, Banknote, Package } from 'lucide-react';
+import { BookText, CalendarRange, RefreshCw, ChevronDown, ChevronUp, TrendingUp, TrendingDown, ArrowRightLeft, Receipt, CreditCard, Banknote, Package } from 'lucide-react';
 import apiClient from '../utils/api';
 
 const DEFAULT_SUMMARY = {
@@ -328,7 +328,6 @@ export default function DayBook() {
   const [dayBook, setDayBook] = useState({ summary: DEFAULT_SUMMARY, entries: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [expandedGroups, setExpandedGroups] = useState({});
 
@@ -358,31 +357,14 @@ export default function DayBook() {
   }, [today]);
 
   const filteredEntries = useMemo(() => {
-    const normalizedSearch = String(search || '').trim().toLowerCase();
-
     return [...entries]
       .filter((entry) => typeFilter === 'all' || entry.type === typeFilter)
-      .filter((entry) => {
-        if (!normalizedSearch) return true;
-
-        const haystack = [
-          entry.label,
-          entry.voucherNumber,
-          entry.partyName,
-          entry.accountName,
-          entry.particulars,
-          entry.note,
-          entry.method
-        ].join(' ').toLowerCase();
-
-        return haystack.includes(normalizedSearch);
-      })
       .sort((a, b) => {
         const aTime = new Date(a.entryCreatedAt || a.date).getTime() || 0;
         const bTime = new Date(b.entryCreatedAt || b.date).getTime() || 0;
         return bTime - aTime;
       });
-  }, [entries, search, typeFilter]);
+  }, [entries, typeFilter]);
 
   const visibleSummary = useMemo(() => buildSummary(filteredEntries), [filteredEntries]);
 
@@ -408,10 +390,10 @@ export default function DayBook() {
     return Object.values(groups).sort((a, b) => b.key.localeCompare(a.key));
   }, [filteredEntries]);
 
-  const typeCounts = useMemo(() => filteredEntries.reduce((acc, entry) => {
+  const typeCounts = useMemo(() => entries.reduce((acc, entry) => {
     acc[entry.type] = (acc[entry.type] || 0) + 1;
     return acc;
-  }, {}), [filteredEntries]);
+  }, {}), [entries]);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -500,12 +482,13 @@ export default function DayBook() {
               </div>
             </div>
 
-            <div className="flex flex-wrap items-end gap-3 px-5 py-5">
-              <div className="flex-1 min-w-[140px]">
-                <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">From</label>
-                <input
-                  type="date"
-                  value={fromDate}
+            <div className="px-5 py-5">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[140px]">
+                  <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">From</label>
+                  <input
+                    type="date"
+                    value={fromDate}
                   onChange={(e) => setFromDate(e.target.value)}
                   className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
                 />
@@ -532,32 +515,13 @@ export default function DayBook() {
                 <button type="button" onClick={handleThisMonth} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">This Month</button>
               </div>
             </div>
-          </form>
-        </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[280px,1fr] gap-6">
-          <aside className="space-y-5">
-            <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-xl">
-              <div className="border-b border-slate-200 px-5 py-4 bg-gradient-to-r from-slate-50 to-white">
-                <p className="text-sm font-bold tracking-tight text-slate-900">Search & Filter</p>
-                <p className="mt-1 text-xs text-slate-500">Find entries</p>
-              </div>
-              <div className="space-y-4 px-5 py-5">
-                <label className="relative block">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search entries..."
-                    className="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-slate-500 focus:bg-white focus:ring-2 focus:ring-slate-100"
-                  />
-                </label>
-
+              <div className="mt-4 border-t border-slate-200 pt-4">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Voucher Filters</p>
                 <div className="flex flex-wrap gap-1.5">
                   {TYPE_FILTERS.map((filter) => {
                     const isActive = typeFilter === filter.value;
-                    const count = filter.value === 'all' ? visibleSummary.entryCount : (typeCounts[filter.value] || 0);
+                    const count = filter.value === 'all' ? entries.length : (typeCounts[filter.value] || 0);
 
                     return (
                       <button
@@ -577,7 +541,11 @@ export default function DayBook() {
                 </div>
               </div>
             </div>
+          </form>
+        </div>
 
+        <div className="grid grid-cols-1 xl:grid-cols-[280px,1fr] gap-6">
+          <aside className="space-y-5">
             <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-xl">
               <div className="border-b border-slate-200 px-5 py-4 bg-gradient-to-r from-slate-50 to-white">
                 <p className="text-sm font-bold tracking-tight text-slate-900">Quick Stats</p>
