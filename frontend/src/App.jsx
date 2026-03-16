@@ -51,6 +51,7 @@ function App() {
       homeQuickPurchase,
       homeQuickPayment,
       homeQuickReceipt,
+      homeQuickExpense,
       backgroundLocation,
       ...restState
     } = currentState;
@@ -445,6 +446,12 @@ function App() {
       {location.pathname === '/' && location.state?.homeQuickReceipt && (
         <ProtectedRoute>
           <Receipts modalOnly onModalFinish={clearHomeQuickShortcutState} />
+        </ProtectedRoute>
+      )}
+
+      {location.pathname === '/' && location.state?.homeQuickExpense && (
+        <ProtectedRoute>
+          <Expenses modalOnly onModalFinish={clearHomeQuickShortcutState} />
         </ProtectedRoute>
       )}
 

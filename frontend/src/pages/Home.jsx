@@ -204,7 +204,8 @@ const homeQuickShortcuts = [
   { label: 'New Sale', hint: '', combo: 'Alt + 1', accent: 'from-emerald-500 to-teal-500', stateKey: 'homeQuickSale' },
   { label: 'New Purchase', hint: '', combo: 'Alt + 2', accent: 'from-blue-500 to-cyan-500', stateKey: 'homeQuickPurchase' },
   { label: 'New Payment', hint: 'Money Paid', combo: 'Alt + 3', accent: 'from-amber-500 to-orange-500', stateKey: 'homeQuickPayment' },
-  { label: 'New Receipt', hint: 'Money Received', combo: 'Alt + 4', accent: 'from-fuchsia-500 to-pink-500', stateKey: 'homeQuickReceipt' }
+  { label: 'New Receipt', hint: 'Money Received', combo: 'Alt + 4', accent: 'from-fuchsia-500 to-pink-500', stateKey: 'homeQuickReceipt' },
+  { label: 'New Expense', hint: '', combo: 'Alt + 5', accent: 'from-emerald-500 to-lime-500', stateKey: 'homeQuickExpense' }
 ];
 
 const getSectionItems = (sectionName) => {
@@ -257,7 +258,8 @@ export default function Home() {
         homeQuickSale: stateKey === 'homeQuickSale',
         homeQuickPurchase: stateKey === 'homeQuickPurchase',
         homeQuickPayment: stateKey === 'homeQuickPayment',
-        homeQuickReceipt: stateKey === 'homeQuickReceipt'
+        homeQuickReceipt: stateKey === 'homeQuickReceipt',
+        homeQuickExpense: stateKey === 'homeQuickExpense'
       }
     });
   };
@@ -302,8 +304,22 @@ export default function Home() {
       const key = event.key?.toLowerCase();
       const isMoveDownKey = key === 'arrowdown' && !event.altKey && !event.metaKey;
       const isMoveUpKey = key === 'arrowup' && !event.altKey && !event.metaKey;
+      const quickShortcutMap = {
+        '1': 'homeQuickSale',
+        '2': 'homeQuickPurchase',
+        '3': 'homeQuickPayment',
+        '4': 'homeQuickReceipt',
+        '5': 'homeQuickExpense'
+      };
 
       if (event.defaultPrevented || event.metaKey) return;
+
+      if (event.altKey && quickShortcutMap[key]) {
+        if (isTypingTarget(event.target) || isPopupOpen()) return;
+        event.preventDefault();
+        handleQuickShortcutOpen(quickShortcutMap[key]);
+        return;
+      }
 
       if (isMoveDownKey || isMoveUpKey || key === 'enter') {
         if (isTypingTarget(event.target) || isPopupOpen()) return;
@@ -351,7 +367,7 @@ export default function Home() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeHomePath, expandedSection, navigate]);
+  }, [activeHomePath, expandedSection, location.state, navigate]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-[#020617] px-4 py-6">

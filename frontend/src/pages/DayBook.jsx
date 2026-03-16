@@ -419,8 +419,8 @@ export default function DayBook() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <div className="mx-auto w-full max-w-[1600px] px-4 py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr,320px] gap-6 mb-6">
+      <div className="mx-auto w-full max-w-[1600px] px-4 py-3">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr,320px] gap-4 mb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             <MetricCard
               title="Sales"

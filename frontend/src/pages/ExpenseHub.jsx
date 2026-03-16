@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getSectionConfig } from '../navigation/sectionMenu';
+import Expenses from './Expenses';
+
+const POPUP_EXPENSE_PATHS = new Set([
+  '/expenses'
+]);
 
 export default function ExpenseHub() {
   const location = useLocation();
@@ -8,6 +13,7 @@ export default function ExpenseHub() {
   const config = getSectionConfig('Expense');
   const items = useMemo(() => config?.items || [], [config]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [openExpensePath, setOpenExpensePath] = useState('');
 
   useEffect(() => {
     const activePath = location.state?.activePath;
@@ -19,6 +25,17 @@ export default function ExpenseHub() {
     const nextIndex = items.findIndex((item) => item.path === activePath);
     setActiveIndex(nextIndex >= 0 ? nextIndex : 0);
   }, [items, location.state]);
+
+  const openExpenseEntry = (path) => {
+    if (!path) return;
+
+    if (POPUP_EXPENSE_PATHS.has(path)) {
+      setOpenExpensePath(path);
+      return;
+    }
+
+    navigate(path);
+  };
 
   useEffect(() => {
     const isTypingTarget = (target) => {
@@ -50,7 +67,7 @@ export default function ExpenseHub() {
         event.preventDefault();
         const activeItem = items[activeIndex];
         if (activeItem?.path) {
-          navigate(activeItem.path);
+          openExpenseEntry(activeItem.path);
         }
       }
     };
@@ -99,6 +116,11 @@ export default function ExpenseHub() {
                   <Link
                     key={item.path}
                     to={item.path}
+                    onClick={(event) => {
+                      if (!POPUP_EXPENSE_PATHS.has(item.path)) return;
+                      event.preventDefault();
+                      openExpenseEntry(item.path);
+                    }}
                     onMouseEnter={() => setActiveIndex(index)}
                     onFocus={() => setActiveIndex(index)}
                     className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 last:border-b-0 ${
@@ -123,6 +145,10 @@ export default function ExpenseHub() {
           </div>
         </div>
       </div>
+
+      {openExpensePath === '/expenses' && (
+        <Expenses modalOnly onModalFinish={() => setOpenExpensePath('')} />
+      )}
     </div>
   );
 }
