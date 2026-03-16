@@ -395,11 +395,6 @@ export default function DayBook() {
     return acc;
   }, {}), [entries]);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    loadDayBook();
-  };
-
   const applyRangeAndLoad = (nextFromDate, nextToDate) => {
     setFromDate(nextFromDate);
     setToDate(nextToDate);
@@ -469,52 +464,13 @@ export default function DayBook() {
             />
           </div>
 
-          <form onSubmit={handleSubmit} className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-xl">
-            <div className="border-b border-slate-200 bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-4">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
-                  <CalendarRange className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold tracking-tight text-white">Date Selection</p>
-                  <p className="text-xs text-white/60">Select date range</p>
-                </div>
-              </div>
-            </div>
-
+          <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-xl">
             <div className="px-5 py-5">
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="flex-1 min-w-[140px]">
-                  <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">From</label>
-                  <input
-                    type="date"
-                    value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
-                />
-              </div>
-              <div className="flex-1 min-w-[140px]">
-                <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-slate-500">To</label>
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 bg-slate-50 px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-amber-400 focus:bg-white focus:ring-2 focus:ring-amber-100"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="rounded-xl bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 px-6 py-2.5 text-sm font-semibold text-white shadow-lg transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
-              >
-                {loading ? 'Loading...' : 'Load Report'}
-              </button>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={handleToday} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Today</button>
                 <button type="button" onClick={handleLast7Days} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">7 Days</button>
                 <button type="button" onClick={handleThisMonth} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">This Month</button>
               </div>
-            </div>
 
               <div className="mt-4 border-t border-slate-200 pt-4">
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Voucher Filters</p>
@@ -541,7 +497,7 @@ export default function DayBook() {
                 </div>
               </div>
             </div>
-          </form>
+          </div>
         </div>
 
         <div className="space-y-5">
