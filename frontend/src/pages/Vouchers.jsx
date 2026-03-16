@@ -1,6 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getSectionConfig } from '../navigation/sectionMenu';
+import Sales from './Sales/Sales';
+import Purchases from './Purchases/Purchases';
+import Payments from './Payments/Payments';
+import Receipts from './Receipts/Receipts';
+import SaleReturn from './SaleReturn/SaleReturn';
+import PurchaseReturn from './PurchaseReturn/PurchaseReturn';
+import StockAdjustment from './StockAdjustment';
+
+const POPUP_VOUCHER_PATHS = new Set([
+  '/sales',
+  '/purchases',
+  '/sale-return',
+  '/purchase-return',
+  '/stock-adjustment',
+  '/payments',
+  '/receipts'
+]);
 
 export default function Vouchers() {
   const location = useLocation();
@@ -8,6 +25,7 @@ export default function Vouchers() {
   const config = getSectionConfig('Vouchers');
   const items = useMemo(() => config?.items || [], [config]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [openVoucherPath, setOpenVoucherPath] = useState('');
 
   useEffect(() => {
     const activePath = location.state?.activePath;
@@ -19,6 +37,17 @@ export default function Vouchers() {
     const nextIndex = items.findIndex((item) => item.path === activePath);
     setActiveIndex(nextIndex >= 0 ? nextIndex : 0);
   }, [items, location.state]);
+
+  const openVoucherEntry = (path) => {
+    if (!path) return;
+
+    if (POPUP_VOUCHER_PATHS.has(path)) {
+      setOpenVoucherPath(path);
+      return;
+    }
+
+    navigate(path);
+  };
 
   useEffect(() => {
     const isTypingTarget = (target) => {
@@ -50,7 +79,7 @@ export default function Vouchers() {
         event.preventDefault();
         const activeItem = items[activeIndex];
         if (activeItem?.path) {
-          navigate(activeItem.path);
+          openVoucherEntry(activeItem.path);
         }
       }
     };
@@ -99,6 +128,11 @@ export default function Vouchers() {
                   <Link
                     key={item.path}
                     to={item.path}
+                    onClick={(event) => {
+                      if (!POPUP_VOUCHER_PATHS.has(item.path)) return;
+                      event.preventDefault();
+                      openVoucherEntry(item.path);
+                    }}
                     onMouseEnter={() => setActiveIndex(index)}
                     onFocus={() => setActiveIndex(index)}
                     className={`group relative flex items-center gap-3 border-b border-slate-200/90 px-5 py-2.5 text-[12px] transition-colors duration-200 last:border-b-0 ${
@@ -130,6 +164,34 @@ export default function Vouchers() {
           </div>
         </div>
       </div>
+
+      {openVoucherPath === '/sales' && (
+        <Sales modalOnly onModalFinish={() => setOpenVoucherPath('')} />
+      )}
+
+      {openVoucherPath === '/purchases' && (
+        <Purchases modalOnly onModalFinish={() => setOpenVoucherPath('')} />
+      )}
+
+      {openVoucherPath === '/payments' && (
+        <Payments modalOnly onModalFinish={() => setOpenVoucherPath('')} />
+      )}
+
+      {openVoucherPath === '/receipts' && (
+        <Receipts modalOnly onModalFinish={() => setOpenVoucherPath('')} />
+      )}
+
+      {openVoucherPath === '/sale-return' && (
+        <SaleReturn modalOnly onModalFinish={() => setOpenVoucherPath('')} />
+      )}
+
+      {openVoucherPath === '/purchase-return' && (
+        <PurchaseReturn modalOnly onModalFinish={() => setOpenVoucherPath('')} />
+      )}
+
+      {openVoucherPath === '/stock-adjustment' && (
+        <StockAdjustment modalOnly onModalFinish={() => setOpenVoucherPath('')} />
+      )}
     </div>
   );
 }
