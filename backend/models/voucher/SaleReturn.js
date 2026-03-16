@@ -7,6 +7,43 @@ const generateSaleReturnNumber = () => {
   return `SRT-${date}-${stamp}${rand}`;
 };
 
+const saleReturnItemSchema = new mongoose.Schema({
+  saleItemId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true
+  },
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product',
+    required: true
+  },
+  productName: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  soldQuantity: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 0.01
+  },
+  unitPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  total: {
+    type: Number,
+    required: true,
+    min: 0
+  }
+}, { _id: false });
+
 const saleReturnSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -22,36 +59,47 @@ const saleReturnSchema = new mongoose.Schema({
     type: Date,
     default: Date.now
   },
-  party: {
+  sale: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: 'Sale',
     default: null
   },
-  debitAccount: {
-    type: String,
-    required: true,
-    trim: true
+  party: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Party',
+    default: null
   },
-  creditAccount: {
+  items: {
+    type: [saleReturnItemSchema],
+    default: []
+  },
+  totalAmount: {
+    type: Number,
+    default: 0
+  },
+  notes: {
     type: String,
-    required: true,
     trim: true
   },
   amount: {
     type: Number,
-    required: true,
-    min: 0.01
+    default: 0
   },
   method: {
     type: String,
-    enum: ['cash', 'bank', 'upi', 'card', 'other'],
-    default: 'cash'
+    trim: true
   },
   referenceNo: {
     type: String,
     trim: true,
     default: ''
   },
-  notes: {
+  debitAccount: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  creditAccount: {
     type: String,
     trim: true,
     default: ''

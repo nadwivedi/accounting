@@ -255,7 +255,7 @@ export default function StockDetail() {
             <div>
               <h2 className="text-base font-bold text-slate-900 md:text-lg">Stock Ledger</h2>
               <p className="mt-1 text-xs text-slate-500 md:text-sm">
-                Purchase, sale, and purchase return movement for this stock item.
+                Purchase, sale, purchase return, and sale return movement for this stock item.
               </p>
             </div>
             <div className="flex flex-wrap gap-2 text-xs font-semibold">

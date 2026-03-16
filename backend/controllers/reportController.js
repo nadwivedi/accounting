@@ -410,11 +410,11 @@ exports.getPartyLedger = async (req, res) => {
         refNumber: saleReturn.voucherNumber,
         partyId: saleReturnPartyId || null,
         partyName: resolvePartyName(saleReturnPartyId),
-        amount: toNumber(saleReturn.amount),
-        impact: -toNumber(saleReturn.amount),
-        quantity: 0,
-        itemSummary: '',
-        method: saleReturn.method || '',
+        amount: toNumber(saleReturn.totalAmount || saleReturn.amount),
+        impact: -toNumber(saleReturn.totalAmount || saleReturn.amount),
+        quantity: getTotalQuantity(saleReturn.items),
+        itemSummary: getItemSummary(saleReturn.items),
+        method: '',
         note: saleReturn.notes || ''
       });
     });
@@ -670,7 +670,7 @@ exports.getDayBookReport = async (req, res) => {
 
     saleReturns.forEach((saleReturn) => {
       const saleReturnPartyId = getRawPartyId(saleReturn.party);
-      const amount = toNumber(saleReturn.amount);
+      const amount = toNumber(saleReturn.totalAmount || saleReturn.amount);
       entries.push({
         date: saleReturn.voucherDate,
         entryCreatedAt: saleReturn.createdAt || saleReturn.voucherDate,
@@ -681,9 +681,9 @@ exports.getDayBookReport = async (req, res) => {
         partyId: saleReturnPartyId || null,
         partyName: resolvePartyName(saleReturnPartyId),
         accountName: 'Sale Return',
-        particulars: saleReturn.notes || 'Sale return voucher',
-        quantity: 0,
-        method: saleReturn.method || '',
+        particulars: getItemSummary(saleReturn.items) || saleReturn.notes || 'Sale return voucher',
+        quantity: getTotalQuantity(saleReturn.items),
+        method: '',
         note: saleReturn.notes || '',
         amount,
         inAmount: 0,
@@ -760,14 +760,17 @@ exports.getStockLedger = async (req, res) => {
     const purchaseFilter = { userId };
     const saleFilter = { userId };
     const purchaseReturnFilter = { userId };
+    const saleReturnFilter = { userId };
     withDateFilters(purchaseFilter, 'purchaseDate', fromDate, toDate);
     withDateFilters(saleFilter, 'saleDate', fromDate, toDate);
     withDateFilters(purchaseReturnFilter, 'voucherDate', fromDate, toDate);
+    withDateFilters(saleReturnFilter, 'voucherDate', fromDate, toDate);
 
-    const [purchases, sales, purchaseReturns, products] = await Promise.all([
+    const [purchases, sales, purchaseReturns, saleReturns, products] = await Promise.all([
       Purchase.find(purchaseFilter).populate('items.product', 'name'),
       Sale.find(saleFilter).populate('items.product', 'name'),
       PurchaseReturn.find(purchaseReturnFilter).populate('items.product', 'name'),
+      SaleReturn.find(saleReturnFilter).populate('items.product', 'name'),
       Product.find({ userId }, 'name currentStock')
     ]);
 
@@ -829,6 +832,26 @@ exports.getStockLedger = async (req, res) => {
           inQty: 0,
           outQty: toNumber(item.quantity),
           note: purchaseReturn.notes || ''
+        });
+      });
+    });
+
+    saleReturns.forEach((saleReturn) => {
+      saleReturn.items.forEach((item) => {
+        if (!item.product) return;
+        const productKey = String(item.product._id || item.product);
+        if (productId && productKey !== String(productId)) return;
+        rows.push({
+          date: saleReturn.voucherDate,
+          entryCreatedAt: saleReturn.createdAt || saleReturn.voucherDate,
+          type: 'sale return',
+          refId: saleReturn._id,
+          refNumber: saleReturn.voucherNumber || '-',
+          productId: item.product._id || item.product,
+          productName: item.productName || item.product?.name || 'Item',
+          inQty: toNumber(item.quantity),
+          outQty: 0,
+          note: saleReturn.notes || ''
         });
       });
     });

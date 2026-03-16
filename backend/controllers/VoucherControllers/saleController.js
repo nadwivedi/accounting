@@ -253,6 +253,7 @@ exports.getAllSales = async (req, res) => {
     }
 
     let query = Sale.find(filter)
+      .populate('party', 'name')
       .populate('items.product', 'name unit');
 
     if (search) {
