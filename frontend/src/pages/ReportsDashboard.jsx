@@ -158,7 +158,7 @@ function ItemPreview({ items }) {
   );
 }
 
-export default function ReportsDashboard({ initialReport = 'partyLedger' }) {
+export default function ReportsDashboard({ initialReport = 'partyLedger', showPicker = true }) {
   const [activeReport, setActiveReport] = useState(initialReport);
   const [outstanding, setOutstanding] = useState(null);
   const [partyLedger, setPartyLedger] = useState([]);
@@ -192,6 +192,10 @@ export default function ReportsDashboard({ initialReport = 'partyLedger' }) {
   const partyOutstandingRows = outstanding?.partyOutstanding || [];
   const stockLedgerRows = stockLedger?.ledger || [];
   const currentStockRows = stockLedger?.currentStock || [];
+  const activeOption = useMemo(
+    () => REPORT_OPTIONS.find((option) => option.id === activeReport) || null,
+    [activeReport]
+  );
 
   const getPartyName = (value, fallback = '-') => {
     if (!value) return fallback;
@@ -684,26 +688,35 @@ export default function ReportsDashboard({ initialReport = 'partyLedger' }) {
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.32em] text-slate-300">BillHub Reports</p>
-                <h1 className="mt-3 text-2xl font-black tracking-tight text-white md:text-4xl">Reports Dashboard</h1>
+                <h1 className="mt-3 text-2xl font-black tracking-tight text-white md:text-4xl">
+                  {showPicker ? 'Reports Dashboard' : (activeOption?.label || 'Report')}
+                </h1>
+                {!showPicker && activeOption?.description ? (
+                  <p className="mt-2 text-sm text-slate-300">{activeOption.description}</p>
+                ) : null}
               </div>
 
-              <button
-                type="button"
-                onClick={loadAllReports}
-                disabled={pageLoading}
-                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                <RefreshCw className={`h-4 w-4 ${pageLoading ? 'animate-spin' : ''}`} />
-                {pageLoading ? 'Refreshing Reports...' : 'Refresh All Reports'}
-              </button>
+              {showPicker ? (
+                <button
+                  type="button"
+                  onClick={loadAllReports}
+                  disabled={pageLoading}
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <RefreshCw className={`h-4 w-4 ${pageLoading ? 'animate-spin' : ''}`} />
+                  {pageLoading ? 'Refreshing Reports...' : 'Refresh All Reports'}
+                </button>
+              ) : null}
             </div>
 
-            <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-              <SummaryCard label="Sale Pending" value={formatCurrency(outstandingTotals.totalSalePending)} hint="Unreceived sale balance" tone="amber" />
-              <SummaryCard label="Purchase Pending" value={formatCurrency(outstandingTotals.totalPurchasePending)} hint="Unpaid purchase balance" tone="rose" />
-              <SummaryCard label="Receivable" value={formatCurrency(outstandingTotals.totalReceivable)} hint="Expected to collect" tone="emerald" />
-              <SummaryCard label="Payable" value={formatCurrency(outstandingTotals.totalPayable)} hint="Expected to pay" tone="violet" />
-            </div>
+            {showPicker ? (
+              <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <SummaryCard label="Sale Pending" value={formatCurrency(outstandingTotals.totalSalePending)} hint="Unreceived sale balance" tone="amber" />
+                <SummaryCard label="Purchase Pending" value={formatCurrency(outstandingTotals.totalPurchasePending)} hint="Unpaid purchase balance" tone="rose" />
+                <SummaryCard label="Receivable" value={formatCurrency(outstandingTotals.totalReceivable)} hint="Expected to collect" tone="emerald" />
+                <SummaryCard label="Payable" value={formatCurrency(outstandingTotals.totalPayable)} hint="Expected to pay" tone="violet" />
+              </div>
+            ) : null}
           </div>
 
           <div className="bg-[linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(248,250,252,0.97)_100%)] px-5 py-5 md:px-8 md:py-8">
@@ -713,16 +726,18 @@ export default function ReportsDashboard({ initialReport = 'partyLedger' }) {
               </div>
             ) : null}
 
-            <div className="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-4">
-              {REPORT_OPTIONS.map((option) => (
-                <ReportOptionCard
-                  key={option.id}
-                  option={option}
-                  active={activeReport === option.id}
-                  onClick={() => setActiveReport(option.id)}
-                />
-              ))}
-            </div>
+            {showPicker ? (
+              <div className="mb-8 grid grid-cols-1 gap-4 xl:grid-cols-4">
+                {REPORT_OPTIONS.map((option) => (
+                  <ReportOptionCard
+                    key={option.id}
+                    option={option}
+                    active={activeReport === option.id}
+                    onClick={() => setActiveReport(option.id)}
+                  />
+                ))}
+              </div>
+            ) : null}
 
             {pageLoading ? (
               <div className="rounded-[28px] border border-slate-200 bg-white px-6 py-16 text-center shadow-[0_18px_40px_rgba(15,23,42,0.08)]">

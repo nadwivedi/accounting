@@ -24,7 +24,9 @@ export default function VoucherRegisterPage({
   popupVariant = 'default',
   pageVariant = 'default',
   dateInputType = 'date',
-  datePlaceholder = ''
+  datePlaceholder = '',
+  modalOnly = false,
+  onModalFinish = null
 }) {
   const parseVoucherDateValue = (value) => {
     const normalized = String(value || '').trim();
@@ -118,6 +120,11 @@ export default function VoucherRegisterPage({
 
     return () => clearTimeout(timer);
   }, [showForm]);
+
+  useEffect(() => {
+    if (!modalOnly || showForm) return;
+    handleOpenForm();
+  }, [modalOnly, showForm]);
 
   useEffect(() => {
     if (!showForm || !activeSelectField) {
@@ -490,6 +497,10 @@ export default function VoucherRegisterPage({
     setFieldQueries(buildInitialQueries());
     setSelectListIndices({});
     setActiveSelectField('');
+
+    if (modalOnly && typeof onModalFinish === 'function') {
+      onModalFinish();
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -572,10 +583,10 @@ export default function VoucherRegisterPage({
 
       await apiClient.post(endpoint, payload);
 
-      handleCloseForm();
-      fetchEntries();
       setError('');
       toast.success(`${title} created successfully`, TOAST_OPTIONS);
+      handleCloseForm();
+      fetchEntries();
     } catch (err) {
       setError(err.message || `Error saving ${title.toLowerCase()}`);
     } finally {

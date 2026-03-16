@@ -2,7 +2,7 @@
 import VoucherRegisterPage from '../components/VoucherRegisterPage';
 import apiClient from '../utils/api';
 
-export default function StockAdjustment() {
+export default function StockAdjustment({ modalOnly = false, onModalFinish = null }) {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
@@ -31,6 +31,8 @@ export default function StockAdjustment() {
       title="Stock Adjustment"
       endpoint="/stock-adjustments"
       addButtonLabel="+ Add Stock Adjustment"
+      modalOnly={modalOnly}
+      onModalFinish={onModalFinish}
       showParty={false}
       showAmount={false}
       showMethod={false}

@@ -41,7 +41,7 @@ const getMethodBadgeClass = (method) => {
   return 'border border-slate-200 bg-slate-100 text-slate-700';
 };
 
-export default function SaleReturn() {
+export default function SaleReturn({ modalOnly = false, onModalFinish = null }) {
   const [entries, setEntries] = useState([]);
   const [parties, setParties] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -98,6 +98,11 @@ export default function SaleReturn() {
 
     return () => clearTimeout(timer);
   }, [showForm]);
+
+  useEffect(() => {
+    if (!modalOnly || showForm) return;
+    handleOpenForm();
+  }, [modalOnly, showForm]);
 
   const fetchEntries = async () => {
     try {
@@ -438,6 +443,10 @@ export default function SaleReturn() {
     setMethodQuery(PAYMENT_METHOD_OPTIONS[0].label);
     setMethodListIndex(0);
     setIsMethodSectionActive(false);
+
+    if (modalOnly && typeof onModalFinish === 'function') {
+      onModalFinish();
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -477,9 +486,9 @@ export default function SaleReturn() {
       });
 
       toast.success('Sale return voucher created successfully', TOAST_OPTIONS);
+      setError('');
       handleCloseForm();
       fetchEntries();
-      setError('');
     } catch (err) {
       setError(err.message || 'Error creating sale return voucher');
     } finally {

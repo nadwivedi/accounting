@@ -23,7 +23,7 @@ const getPurchaseLabel = (purchase) => {
   return `Purchase No. ${formatPurchaseNumber(purchase?.purchaseNumber)} | ${date}`;
 };
 
-export default function PurchaseReturn() {
+export default function PurchaseReturn({ modalOnly = false, onModalFinish = null }) {
   const [entries, setEntries] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -60,6 +60,11 @@ export default function PurchaseReturn() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (!modalOnly || showForm) return;
+    handleOpenForm();
+  }, [modalOnly, showForm]);
 
   const fetchEntries = async () => {
     try {
@@ -139,6 +144,10 @@ export default function PurchaseReturn() {
     setShowForm(false);
     setFormData(getInitialForm());
     setReturnQuantities({});
+
+    if (modalOnly && typeof onModalFinish === 'function') {
+      onModalFinish();
+    }
   };
 
   const handleQuantityChange = (purchaseItemId, value, maxQty) => {
@@ -179,10 +188,10 @@ export default function PurchaseReturn() {
       });
 
       toast.success('Purchase return voucher created successfully', TOAST_OPTIONS);
+      setError('');
       handleCloseForm();
       fetchEntries();
       fetchPurchases();
-      setError('');
     } catch (err) {
       setError(err.message || 'Error creating purchase return voucher');
     } finally {

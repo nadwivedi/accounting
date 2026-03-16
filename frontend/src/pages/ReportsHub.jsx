@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Boxes, FileBarChart, Package, ReceiptText, ShoppingCart, Users } from 'lucide-react';
+import { Boxes, CreditCard, FileBarChart, Package, ReceiptText, RefreshCw, ShoppingCart, Users } from 'lucide-react';
 import { getSectionConfig } from '../navigation/sectionMenu';
 
 const REPORT_ITEMS = [
@@ -8,6 +8,11 @@ const REPORT_ITEMS = [
   { name: 'Stock Ledger', path: '/reports/stock-ledger', Icon: Boxes },
   { name: 'Sales Report', path: '/reports/sales-report', Icon: ShoppingCart },
   { name: 'Purchase Report', path: '/reports/purchase-report', Icon: Package },
+  { name: 'Sale Return Report', path: '/reports/sale-return-report', Icon: RefreshCw },
+  { name: 'Purchase Return Report', path: '/reports/purchase-return-report', Icon: RefreshCw },
+  { name: 'Stock Adjustment Report', path: '/reports/stock-adjustment-report', Icon: Boxes },
+  { name: 'Payment Report', path: '/reports/payment-report', Icon: CreditCard },
+  { name: 'Receipt Report', path: '/reports/receipt-report', Icon: ReceiptText },
   { name: 'Expense Report', path: '/reports/expense-report', Icon: ReceiptText },
   { name: 'Profit And Loss Report', path: '/reports/profit-loss-report', Icon: FileBarChart }
 ];
