@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { BookText, CalendarRange, RefreshCw, Search, ChevronDown, ChevronUp, TrendingUp, TrendingDown, ArrowRightLeft, Receipt, CreditCard, Banknote, Package } from 'lucide-react';
 import apiClient from '../utils/api';
 
@@ -444,38 +443,6 @@ export default function DayBook() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
       <div className="mx-auto w-full max-w-[1600px] px-4 py-6">
-        <div className="mb-6 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-teal-500 text-white shadow-xl">
-              <BookText className="h-8 w-8" />
-            </div>
-            <div>
-              <p className="text-xs font-bold uppercase tracking-[0.3em] text-amber-600">Financial Reports</p>
-              <h1 className="text-3xl font-black tracking-tight text-slate-900">Day Book Report</h1>
-              <p className="text-sm text-slate-500">Track daily transactions - sales, purchases, receipts & payments</p>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <Link
-              to="/vouchers"
-              className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:border-slate-400"
-            >
-              <Receipt className="w-4 h-4 mr-2" />
-              Voucher List
-            </Link>
-            <button
-              type="button"
-              onClick={() => loadDayBook()}
-              disabled={loading}
-              className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-70 shadow-lg"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? 'Refreshing...' : 'Refresh'}
-            </button>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 xl:grid-cols-[1fr,320px] gap-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             <MetricCard
