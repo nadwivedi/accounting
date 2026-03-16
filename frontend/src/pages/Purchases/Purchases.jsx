@@ -15,10 +15,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
     if (Number.isNaN(date.getTime())) return '';
 
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
+    return date.toISOString().split('T')[0];
   };
 
   const parseDateInput = (value) => {
@@ -65,11 +62,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     if (parsedDate) {
       return formatDateInput(parsedDate);
     }
-
-    return text
-      .replace(/[/.]/g, '-')
-      .replace(/[^0-9-]/g, '')
-      .slice(0, 10);
+    return text;
   };
 
   const formatPurchaseNumber = (value) => {
@@ -914,7 +907,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
 
     const parsedPurchaseDate = parseDateInput(formData.purchaseDate);
     if (!parsedPurchaseDate) {
-      setError('Purchase date must be in DD-MM-YYYY format');
+      setError('Please select a valid purchase date');
       return;
     }
 

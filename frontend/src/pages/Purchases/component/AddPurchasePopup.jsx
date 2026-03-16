@@ -150,14 +150,12 @@ export default function AddPurchasePopup({
                       <div className="relative">
                         <CalendarDays className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-indigo-400" />
                         <input
-                          type="text"
+                          type="date"
                           name="purchaseDate"
                           value={formData.purchaseDate}
                           onChange={handleInputChange}
                           onKeyDown={handleSelectEnterMoveNext}
                           className={`${inputClass} pl-10 focus:ring-indigo-500`}
-                          placeholder="DD-MM-YYYY"
-                          inputMode="numeric"
                           autoFocus
                         />
                       </div>

@@ -11,21 +11,28 @@ const formatDateForInput = (value = new Date()) => {
   const date = value instanceof Date ? value : new Date(value);
   if (Number.isNaN(date.getTime())) return '';
 
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = String(date.getFullYear());
-  return `${day}-${month}-${year}`;
+  return date.toISOString().split('T')[0];
 };
 
-const parseManualDate = (value) => {
+const parseSaleDate = (value) => {
   const normalized = String(value || '').trim();
-  const match = normalized.match(/^(\d{2})-(\d{2})-(\d{4})$/);
-  if (!match) return null;
+  if (!normalized) return null;
 
-  const [, dayText, monthText, yearText] = match;
-  const day = Number(dayText);
-  const month = Number(monthText);
-  const year = Number(yearText);
+  const yyyymmddMatch = normalized.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  const ddmmyyyyMatch = normalized.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+
+  let dayText;
+  let monthText;
+  let yearText;
+
+  if (yyyymmddMatch) {
+    [, yearText, monthText, dayText] = yyyymmddMatch;
+  } else if (ddmmyyyyMatch) {
+    [, dayText, monthText, yearText] = ddmmyyyyMatch;
+  } else {
+    return null;
+  }
+
   const date = new Date(year, month - 1, day);
 
   if (
@@ -934,9 +941,9 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       setError('Party name is required');
       return;
     }
-    const parsedSaleDate = parseManualDate(formData.saleDate);
+    const parsedSaleDate = parseSaleDate(formData.saleDate);
     if (!parsedSaleDate) {
-      setError('Invoice date must be in dd-mm-yyyy format');
+      setError('Please select a valid sale date');
       return;
     }
     if (formData.items.length === 0) {

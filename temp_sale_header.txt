@@ -1,6 +1,0 @@
-const fs = require('fs');
-const Sale = require('../../models/voucher/Sales');
-const Product = require('../../models/master/Stock');
-const Receipt = require('../../models/voucher/Receipt');
-const mongoose = require('mongoose');
-const { createSaleInvoicePdf, getSaleInvoiceAbsolutePath } = require('../../utils/saleInvoicePdf');

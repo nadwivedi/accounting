@@ -146,13 +146,12 @@ export default function AddSalePopup({
                     <div className="relative">
                       <CalendarDays className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-indigo-400 pointer-events-none" />
                       <input
-                        type="text"
+                        type="date"
                         name="saleDate"
                         value={formData.saleDate}
                         onChange={handleInputChange}
+                        onKeyDown={handleSelectEnterMoveNext}
                         autoFocus
-                        inputMode="numeric"
-                        placeholder="dd-mm-yyyy"
                         className={`${inputClass} pl-9 focus:ring-indigo-500`}
                       />
                     </div>
