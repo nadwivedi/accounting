@@ -286,10 +286,7 @@ function App() {
           path="/reports/expense-report"
           element={
             <ProtectedRoute>
-              <ReportsPlaceholder
-                title="Expense Report"
-                description="Expense-wise report summary and detailed entries will be shown here."
-              />
+              <Expenses />
             </ProtectedRoute>
           }
         />
@@ -337,7 +334,7 @@ function App() {
           path="/expenses"
           element={
             <ProtectedRoute>
-              <Expenses />
+              <Expenses modalOnly onModalFinish={() => closeVoucherRouteToHub('/expenses')} />
             </ProtectedRoute>
           }
         />

@@ -47,7 +47,7 @@ const getMethodBadgeClass = (method) => {
   return 'border border-slate-200 bg-slate-100 text-slate-700';
 };
 
-export default function Expenses() {
+export default function Expenses({ modalOnly = false, onModalFinish = null }) {
   const [expenses, setExpenses] = useState([]);
   const [expenseGroups, setExpenseGroups] = useState([]);
   const [parties, setParties] = useState([]);
@@ -91,6 +91,11 @@ export default function Expenses() {
 
     return () => clearTimeout(timer);
   }, [showForm]);
+
+  useEffect(() => {
+    if (!modalOnly || showForm) return;
+    handleOpenForm();
+  }, [modalOnly, showForm]);
 
   const getFromDateByFilter = () => {
     const now = new Date();
@@ -660,6 +665,10 @@ export default function Expenses() {
     setMethodQuery(EXPENSE_METHOD_OPTIONS[0].label);
     setMethodListIndex(0);
     setIsMethodSectionActive(false);
+
+    if (modalOnly && typeof onModalFinish === 'function') {
+      onModalFinish();
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -686,10 +695,10 @@ export default function Expenses() {
         notes: formData.notes
       });
 
-      handleCloseForm();
-      fetchExpenses();
       setError('');
       toast.success('Expense created successfully', TOAST_OPTIONS);
+      handleCloseForm();
+      fetchExpenses();
     } catch (err) {
       setError(err.message || 'Error creating expense');
     } finally {
