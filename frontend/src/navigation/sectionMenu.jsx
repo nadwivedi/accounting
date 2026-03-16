@@ -113,6 +113,16 @@ function PurchaseReturnIcon() {
   return <AssetIcon src="/purchase return_converted.avif" />;
 }
 
+function DayBookIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+      <path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h8A2.5 2.5 0 0 1 19 4.5v15A2.5 2.5 0 0 1 16.5 22h-8A2.5 2.5 0 0 1 6 19.5v-15Z" />
+      <path d="M9 7h7M9 11h7M9 15h4" />
+      <path d="M4 6.5v11A2.5 2.5 0 0 0 6.5 20H19" />
+    </svg>
+  );
+}
+
 export const SECTION_CONFIG = {
   Masters: {
     name: 'Masters',
@@ -153,7 +163,8 @@ export const SECTION_CONFIG = {
       { name: 'Purchase Return', path: '/purchase-return', Icon: PurchaseReturnIcon },
       { name: 'Stock Adjustment', path: '/stock-adjustment', Icon: StockAdjustmentIcon },
       { name: 'Payment', hint: 'Pay to supplier', path: '/payments', Icon: PaymentIcon },
-      { name: 'Receipt', hint: 'Money received from customer', path: '/receipts', Icon: ReceiptIcon }
+      { name: 'Receipt', hint: 'Money received from customer', path: '/receipts', Icon: ReceiptIcon },
+      { name: 'Day Book', hint: 'Daily voucher flow', path: '/day-book', Icon: DayBookIcon }
     ]
   },
   Expense: {

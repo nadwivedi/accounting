@@ -27,7 +27,7 @@ import PurchaseReturn from './pages/PurchaseReturn/PurchaseReturn';
 import ReportsHub from './pages/ReportsHub';
 import ReportsDashboard from './pages/ReportsDashboard';
 import ReportsPlaceholder from './pages/ReportsPlaceholder';
-import DayBookReport from './pages/Reports/DayBookReport';
+import DayBook from './pages/DayBook';
 import Settings from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 import SectionHubPage from './components/SectionHubPage';
@@ -177,6 +177,15 @@ function App() {
         />
 
         <Route
+          path="/day-book"
+          element={
+            <ProtectedRoute>
+              <DayBook />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/reports"
           element={
             <ProtectedRoute>
@@ -217,15 +226,6 @@ function App() {
           element={
             <ProtectedRoute>
               <ReportsDashboard initialReport="purchaseReport" />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/reports/day-book-report"
-          element={
-            <ProtectedRoute>
-              <DayBookReport />
             </ProtectedRoute>
           }
         />
