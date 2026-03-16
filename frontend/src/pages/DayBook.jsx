@@ -544,53 +544,7 @@ export default function DayBook() {
           </form>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-[280px,1fr] gap-6">
-          <aside className="space-y-5">
-            <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-xl">
-              <div className="border-b border-slate-200 px-5 py-4 bg-gradient-to-r from-slate-50 to-white">
-                <p className="text-sm font-bold tracking-tight text-slate-900">Quick Stats</p>
-              </div>
-              <div className="space-y-3 px-4 py-4">
-                <div className="flex items-center justify-between rounded-xl bg-emerald-50 px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="h-4 w-4 text-emerald-600" />
-                    <span className="text-xs font-semibold text-emerald-700">Sales</span>
-                  </div>
-                  <span className="text-sm font-black text-emerald-700">{formatCurrency(visibleSummary.sales)}</span>
-                </div>
-                <div className="flex items-center justify-between rounded-xl bg-rose-50 px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <TrendingDown className="h-4 w-4 text-rose-600" />
-                    <span className="text-xs font-semibold text-rose-700">Purchases</span>
-                  </div>
-                  <span className="text-sm font-black text-rose-700">{formatCurrency(visibleSummary.purchases)}</span>
-                </div>
-                <div className="flex items-center justify-between rounded-xl bg-sky-50 px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <ArrowRightLeft className="h-4 w-4 text-sky-600" />
-                    <span className="text-xs font-semibold text-sky-700">Receipts</span>
-                  </div>
-                  <span className="text-sm font-black text-sky-700">{formatCurrency(visibleSummary.receipts)}</span>
-                </div>
-                <div className="flex items-center justify-between rounded-xl bg-amber-50 px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <CreditCard className="h-4 w-4 text-amber-600" />
-                    <span className="text-xs font-semibold text-amber-700">Payments</span>
-                  </div>
-                  <span className="text-sm font-black text-amber-700">{formatCurrency(visibleSummary.payments)}</span>
-                </div>
-                <div className="flex items-center justify-between rounded-xl bg-fuchsia-50 px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Banknote className="h-4 w-4 text-fuchsia-600" />
-                    <span className="text-xs font-semibold text-fuchsia-700">Expenses</span>
-                  </div>
-                  <span className="text-sm font-black text-fuchsia-700">{formatCurrency(visibleSummary.expenses)}</span>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          <div className="space-y-5">
+        <div className="space-y-5">
             {error && (
               <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-700">
                 {error}
@@ -622,7 +576,6 @@ export default function DayBook() {
                 onToggle={() => toggleGroup(group.key)}
               />
             ))}
-          </div>
         </div>
       </div>
     </div>
