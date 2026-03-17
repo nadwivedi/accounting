@@ -1,21 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BookText, CalendarRange, RefreshCw, TrendingUp, TrendingDown, ArrowRightLeft, Receipt, CreditCard, Banknote, Package, Search, ArrowDownCircle, ArrowUpCircle, Calculator } from 'lucide-react';
 import apiClient from '../utils/api';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  PieChart,
-  Pie,
-  Cell,
-  Legend
-} from 'recharts';
 
 const DEFAULT_SUMMARY = {
   entryCount: 0,
@@ -28,16 +13,6 @@ const DEFAULT_SUMMARY = {
   expenses: 0,
   purchaseReturns: 0,
   saleReturns: 0
-};
-
-const TYPE_COLORS = {
-  sale: { fill: '#10b981', stroke: '#059669' },
-  purchase: { fill: '#f43f5e', stroke: '#e11d48' },
-  receipt: { fill: '#0ea5e9', stroke: '#0284c7' },
-  payment: { fill: '#f59e0b', stroke: '#d97706' },
-  expense: { fill: '#d946ef', stroke: '#c026d3' },
-  purchaseReturn: { fill: '#14b8a6', stroke: '#0d9488' },
-  saleReturn: { fill: '#fb923c', stroke: '#ea580c' }
 };
 
 const getTodayInput = () => {
@@ -107,23 +82,23 @@ const buildSummary = (entries) => entries.reduce((acc, entry) => {
 }, { ...DEFAULT_SUMMARY });
 
 const StatCard = ({ title, value, subtitle, icon: Icon, color, trend }) => (
-  <div className="relative overflow-hidden rounded-2xl bg-white p-6 shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300">
-    <div className={`absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 -translate-y-1/2 translate-x-1/2 bg-gradient-to-br ${color}`} />
+  <div className="relative overflow-hidden rounded-2xl bg-white px-4 py-3 shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300">
+    <div className={`absolute top-0 right-0 w-24 h-24 rounded-full opacity-10 -translate-y-1/2 translate-x-1/2 bg-gradient-to-br ${color}`} />
     <div className="relative z-10">
-      <div className="flex items-center justify-between mb-4">
-        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{title}</span>
-        <div className={`p-2.5 rounded-xl bg-gradient-to-br ${color}`}>
-          <Icon className="w-5 h-5 text-white" />
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{title}</span>
+        <div className={`p-1.5 rounded-lg bg-gradient-to-br ${color}`}>
+          <Icon className="w-3.5 h-3.5 text-white" />
         </div>
       </div>
-      <div className="text-3xl font-black text-slate-800 tracking-tight">{value}</div>
-      <div className="flex items-center gap-2 mt-2">
+      <div className="text-xl font-black leading-tight text-slate-800 tracking-tight">{value}</div>
+      <div className="flex items-center gap-1.5 mt-1">
         {trend !== undefined && (
-          <span className={`text-xs font-semibold ${trend > 0 ? 'text-emerald-600' : trend < 0 ? 'text-rose-600' : 'text-slate-500'}`}>
+          <span className={`text-[10px] font-semibold ${trend > 0 ? 'text-emerald-600' : trend < 0 ? 'text-rose-600' : 'text-slate-500'}`}>
             {trend > 0 ? '+' : ''}{typeof trend === 'number' ? formatCurrency(trend) : trend}
           </span>
         )}
-        <span className="text-xs text-slate-500">{subtitle}</span>
+        <span className="text-[10px] text-slate-500">{subtitle}</span>
       </div>
     </div>
   </div>
@@ -210,33 +185,6 @@ export default function DayBook() {
     return acc;
   }, {}), [entries]);
 
-  const chartData = useMemo(() => {
-    const dailyData = {};
-    filteredEntries.forEach((entry) => {
-      const dateKey = formatDate(entry.date);
-      if (!dailyData[dateKey]) {
-        dailyData[dateKey] = { date: dateKey, in: 0, out: 0 };
-      }
-      dailyData[dateKey].in += Number(entry.inAmount || 0);
-      dailyData[dateKey].out += Number(entry.outAmount || 0);
-    });
-    return Object.values(dailyData).reverse().slice(-30);
-  }, [filteredEntries]);
-
-  const typePieData = useMemo(() => {
-    const typeData = {};
-    filteredEntries.forEach((entry) => {
-      const type = entry.type || 'other';
-      if (!typeData[type]) {
-        typeData[type] = { name: type.charAt(0).toUpperCase() + type.slice(1), value: 0 };
-      }
-      typeData[type].value += Number(entry.amount || 0);
-    });
-    return Object.values(typeData).sort((a, b) => b.value - a.value);
-  }, [filteredEntries]);
-
-  const PIE_COLORS = ['#10b981', '#f43f5e', '#0ea5e9', '#f59e0b', '#d946ef', '#14b8a6', '#fb923c'];
-
   const applyRangeAndLoad = (nextFromDate, nextToDate) => {
     setFromDate(nextFromDate);
     setToDate(nextToDate);
@@ -264,34 +212,13 @@ export default function DayBook() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-stone-100">
       <div className="mx-auto max-w-[95%] px-4 py-6">
-        <div className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/30">
-                <BookText className="w-6 h-6 text-white" />
-              </div>
-              <h1 className="text-3xl font-black text-slate-800 tracking-tight">Day Book</h1>
-            </div>
-            <p className="text-slate-500 ml-14">Daily transactions and financial summary</p>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-3 ml-14 lg:ml-0">
+        <div className="mb-8 flex flex-wrap items-center gap-3">
             <div className="flex rounded-xl border-2 border-slate-200 bg-white overflow-hidden">
               <button type="button" onClick={handleToday} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">Today</button>
               <button type="button" onClick={handleLast7Days} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">7 Days</button>
               <button type="button" onClick={handleThisMonth} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">This Month</button>
               <button type="button" onClick={handleLastMonth} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">Last Month</button>
             </div>
-            <button
-              type="button"
-              onClick={() => loadDayBook(fromDate, toDate)}
-              disabled={loading}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold shadow-lg shadow-violet-500/30 hover:shadow-violet-500/40 hover:scale-105 transition-all disabled:opacity-60 disabled:hover:scale-100"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
-          </div>
         </div>
 
         {error && (
@@ -306,85 +233,6 @@ export default function DayBook() {
           <StatCard title="Receipts" value={formatCurrency(visibleSummary.receipts)} subtitle="money received" icon={ArrowDownCircle} color="from-sky-500 to-cyan-500" trend={visibleSummary.receipts} />
           <StatCard title="Payments" value={formatCurrency(visibleSummary.payments)} subtitle="money paid" icon={ArrowUpCircle} color="from-amber-500 to-orange-500" trend={-visibleSummary.payments} />
           <StatCard title="Expenses" value={formatCurrency(visibleSummary.expenses)} subtitle="vouchers" icon={Banknote} color="from-fuchsia-500 to-purple-500" trend={-visibleSummary.expenses} />
-        </div>
-
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-          <div className="xl:col-span-2 rounded-3xl bg-white shadow-xl border border-slate-100 overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
-              <h2 className="text-lg font-black text-slate-800">Daily Cash Flow</h2>
-              <p className="text-sm text-slate-500">Money in vs money out over time</p>
-            </div>
-            <div className="p-6">
-              <div className="h-72">
-                {chartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
-                      <defs>
-                        <linearGradient id="colorMoneyIn" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                        </linearGradient>
-                        <linearGradient id="colorMoneyOut" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                      <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={{ stroke: '#cbd5e1' }} tickLine={false} />
-                      <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={{ stroke: '#cbd5e1' }} tickLine={false} tickFormatter={(val) => `Rs ${(val / 1000).toFixed(0)}k`} />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}
-                        formatter={(value) => formatCurrency(value)}
-                      />
-                      <Area type="monotone" dataKey="in" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorMoneyIn)" name="Money In" />
-                      <Area type="monotone" dataKey="out" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorMoneyOut)" name="Money Out" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="h-full flex items-center justify-center text-slate-400">No data available</div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-3xl bg-white shadow-xl border border-slate-100 overflow-hidden">
-            <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-violet-50 to-white">
-              <h2 className="text-lg font-black text-slate-800">Transaction Types</h2>
-              <p className="text-sm text-slate-500">Breakdown by category</p>
-            </div>
-            <div className="p-4">
-              {typePieData.length > 0 ? (
-                <div className="h-72">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={typePieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={80}
-                        paddingAngle={3}
-                        dataKey="value"
-                        nameKey="name"
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                        labelLine={{ stroke: '#94a3b8' }}
-                      >
-                        {typePieData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke="none" />
-                        ))}
-                      </Pie>
-                      <Tooltip 
-                        contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}
-                        formatter={(value) => formatCurrency(value)}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              ) : (
-                <div className="h-72 flex items-center justify-center text-slate-400">No data</div>
-              )}
-            </div>
-          </div>
         </div>
 
         <div className="rounded-3xl bg-white shadow-xl border border-slate-100 overflow-hidden mb-8">
