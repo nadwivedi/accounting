@@ -76,6 +76,19 @@ const getItemSummary = (items = []) => {
     : preview.join(', ');
 };
 
+const getDetailedItems = (items = []) => {
+  if (!Array.isArray(items)) return [];
+
+  return items.map((item, index) => ({
+    id: String(item._id || item.purchaseItemId || item.saleItemId || index),
+    productName: String(item.productName || item.product?.name || 'Item').trim() || 'Item',
+    quantity: toNumber(item.quantity),
+    unitPrice: toNumber(item.unitPrice),
+    total: toNumber(item.total),
+    unit: String(item.unit || item.product?.unit || '').trim()
+  }));
+};
+
 const getPartyNameMap = async (userId, partyIds = []) => {
   const uniqueIds = [...new Set(
     partyIds
@@ -467,6 +480,270 @@ exports.getPartyLedger = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error fetching party ledger'
+    });
+  }
+};
+
+exports.getPartyLedgerEntryDetail = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { type, refId } = req.query;
+    const normalizedType = String(type || '').trim();
+
+    if (!normalizedType) {
+      return res.status(400).json({
+        success: false,
+        message: 'Type is required'
+      });
+    }
+
+    if (!refId || !mongoose.isValidObjectId(refId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid refId is required'
+      });
+    }
+
+    let detail = null;
+
+    if (normalizedType === 'sale') {
+      const sale = await Sale.findOne({ _id: refId, userId })
+        .populate('party', 'name type mobile')
+        .populate('items.product', 'name unit');
+
+      if (!sale) {
+        return res.status(404).json({ success: false, message: 'Sale not found' });
+      }
+
+      detail = {
+        type: 'sale',
+        label: 'Sale',
+        title: 'Sale Details',
+        refNumber: String(sale.invoiceNumber || '-').trim() || '-',
+        date: sale.saleDate,
+        partyName: String(sale.customerName || sale.party?.name || 'Walk-in').trim() || 'Walk-in',
+        accountName: 'Sales',
+        amount: toNumber(sale.totalAmount),
+        quantity: getTotalQuantity(sale.items),
+        method: '',
+        notes: String(sale.notes || '').trim(),
+        linkedReference: '',
+        fields: [
+          { label: 'Party', value: String(sale.customerName || sale.party?.name || 'Walk-in').trim() || 'Walk-in' },
+          { label: 'Invoice Date', value: sale.saleDate },
+          { label: 'Invoice No', value: String(sale.invoiceNumber || '-').trim() || '-' },
+          { label: 'Paid Amount', value: toNumber(sale.paidAmount) },
+          { label: 'Due Amount', value: toNumber(sale.dueAmount) }
+        ],
+        items: getDetailedItems(sale.items)
+      };
+    } else if (normalizedType === 'purchase') {
+      const purchase = await Purchase.findOne({ _id: refId, userId })
+        .populate('party', 'name type mobile')
+        .populate('items.product', 'name unit');
+
+      if (!purchase) {
+        return res.status(404).json({ success: false, message: 'Purchase not found' });
+      }
+
+      detail = {
+        type: 'purchase',
+        label: 'Purchase',
+        title: 'Purchase Details',
+        refNumber: formatPrefixedNumber('Pur', purchase.purchaseNumber),
+        date: purchase.purchaseDate,
+        partyName: String(purchase.party?.name || '-').trim() || '-',
+        accountName: 'Purchase',
+        amount: toNumber(purchase.totalAmount),
+        quantity: getTotalQuantity(purchase.items),
+        method: '',
+        notes: String(purchase.notes || '').trim(),
+        linkedReference: String(purchase.supplierInvoice || '').trim(),
+        fields: [
+          { label: 'Party', value: String(purchase.party?.name || '-').trim() || '-' },
+          { label: 'Purchase Date', value: purchase.purchaseDate },
+          { label: 'Voucher No', value: formatPrefixedNumber('Pur', purchase.purchaseNumber) },
+          { label: 'Supplier Bill', value: String(purchase.supplierInvoice || '-').trim() || '-' },
+          { label: 'Due Date', value: purchase.dueDate || '' }
+        ],
+        items: getDetailedItems(purchase.items)
+      };
+    } else if (normalizedType === 'receipt') {
+      const receipt = await Receipt.findOne({ _id: refId, userId })
+        .populate('party', 'name type mobile')
+        .populate('refId');
+
+      if (!receipt) {
+        return res.status(404).json({ success: false, message: 'Receipt not found' });
+      }
+
+      detail = {
+        type: 'receipt',
+        label: 'Receipt',
+        title: 'Receipt Details',
+        refNumber: formatPrefixedNumber('Rec', receipt.receiptNumber),
+        date: receipt.receiptDate,
+        partyName: String(receipt.party?.name || '-').trim() || '-',
+        accountName: receipt.refType === 'sale' ? 'Against Sale' : 'On Account',
+        amount: toNumber(receipt.amount),
+        quantity: 0,
+        method: String(receipt.method || '').trim(),
+        notes: String(receipt.notes || '').trim(),
+        linkedReference: receipt.refType === 'sale'
+          ? String(receipt.refId?.invoiceNumber || '-').trim() || '-'
+          : '',
+        fields: [
+          { label: 'Party', value: String(receipt.party?.name || '-').trim() || '-' },
+          { label: 'Receipt Date', value: receipt.receiptDate },
+          { label: 'Receipt No', value: formatPrefixedNumber('Rec', receipt.receiptNumber) },
+          { label: 'Method', value: String(receipt.method || '-').trim() || '-' },
+          { label: 'Reference Type', value: receipt.refType === 'sale' ? 'Against Sale' : 'On Account' }
+        ],
+        items: []
+      };
+    } else if (normalizedType === 'payment') {
+      const payment = await Payment.findOne({ _id: refId, userId })
+        .populate('party', 'name type mobile')
+        .populate('refId');
+
+      if (!payment) {
+        return res.status(404).json({ success: false, message: 'Payment not found' });
+      }
+
+      detail = {
+        type: 'payment',
+        label: 'Payment',
+        title: 'Payment Details',
+        refNumber: formatPrefixedNumber('Pay', payment.paymentNumber),
+        date: payment.paymentDate,
+        partyName: String(payment.party?.name || '-').trim() || '-',
+        accountName: payment.refType === 'purchase' ? 'Against Purchase' : 'On Account',
+        amount: toNumber(payment.amount),
+        quantity: 0,
+        method: String(payment.method || '').trim(),
+        notes: String(payment.notes || '').trim(),
+        linkedReference: payment.refType === 'purchase'
+          ? formatPrefixedNumber('Pur', payment.refId?.purchaseNumber)
+          : '',
+        fields: [
+          { label: 'Party', value: String(payment.party?.name || '-').trim() || '-' },
+          { label: 'Payment Date', value: payment.paymentDate },
+          { label: 'Payment No', value: formatPrefixedNumber('Pay', payment.paymentNumber) },
+          { label: 'Method', value: String(payment.method || '-').trim() || '-' },
+          { label: 'Reference Type', value: payment.refType === 'purchase' ? 'Against Purchase' : 'On Account' }
+        ],
+        items: []
+      };
+    } else if (normalizedType === 'expense') {
+      const expense = await Expense.findOne({ _id: refId, userId })
+        .populate('expenseGroup', 'name')
+        .populate('party', 'name type mobile');
+
+      if (!expense) {
+        return res.status(404).json({ success: false, message: 'Expense not found' });
+      }
+
+      detail = {
+        type: 'expense',
+        label: 'Expense',
+        title: 'Expense Details',
+        refNumber: '-',
+        date: expense.expenseDate,
+        partyName: String(expense.party?.name || '-').trim() || '-',
+        accountName: String(expense.expenseGroup?.name || 'Expense').trim() || 'Expense',
+        amount: toNumber(expense.amount),
+        quantity: 0,
+        method: String(expense.method || '').trim(),
+        notes: String(expense.notes || '').trim(),
+        linkedReference: '',
+        fields: [
+          { label: 'Expense Group', value: String(expense.expenseGroup?.name || 'Expense').trim() || 'Expense' },
+          { label: 'Expense Date', value: expense.expenseDate },
+          { label: 'Party', value: String(expense.party?.name || '-').trim() || '-' },
+          { label: 'Method', value: String(expense.method || '-').trim() || '-' }
+        ],
+        items: []
+      };
+    } else if (normalizedType === 'purchase return' || normalizedType === 'purchaseReturn') {
+      const purchaseReturn = await PurchaseReturn.findOne({ _id: refId, userId })
+        .populate('purchase', 'purchaseNumber supplierInvoice purchaseDate')
+        .populate('party', 'name type mobile')
+        .populate('items.product', 'name unit');
+
+      if (!purchaseReturn) {
+        return res.status(404).json({ success: false, message: 'Purchase return not found' });
+      }
+
+      detail = {
+        type: 'purchase return',
+        label: 'Purchase Return',
+        title: 'Purchase Return Details',
+        refNumber: String(purchaseReturn.voucherNumber || '-').trim() || '-',
+        date: purchaseReturn.voucherDate,
+        partyName: String(purchaseReturn.party?.name || '-').trim() || '-',
+        accountName: 'Purchase Return',
+        amount: toNumber(purchaseReturn.totalAmount),
+        quantity: getTotalQuantity(purchaseReturn.items),
+        method: '',
+        notes: String(purchaseReturn.notes || '').trim(),
+        linkedReference: formatPrefixedNumber('Pur', purchaseReturn.purchase?.purchaseNumber),
+        fields: [
+          { label: 'Party', value: String(purchaseReturn.party?.name || '-').trim() || '-' },
+          { label: 'Voucher Date', value: purchaseReturn.voucherDate },
+          { label: 'Voucher No', value: String(purchaseReturn.voucherNumber || '-').trim() || '-' },
+          { label: 'Against Purchase', value: formatPrefixedNumber('Pur', purchaseReturn.purchase?.purchaseNumber) },
+          { label: 'Supplier Bill', value: String(purchaseReturn.purchase?.supplierInvoice || '-').trim() || '-' }
+        ],
+        items: getDetailedItems(purchaseReturn.items)
+      };
+    } else if (normalizedType === 'sale return' || normalizedType === 'saleReturn') {
+      const saleReturn = await SaleReturn.findOne({ _id: refId, userId })
+        .populate('sale', 'invoiceNumber customerName saleDate')
+        .populate('party', 'name type mobile')
+        .populate('items.product', 'name unit');
+
+      if (!saleReturn) {
+        return res.status(404).json({ success: false, message: 'Sale return not found' });
+      }
+
+      detail = {
+        type: 'sale return',
+        label: 'Sale Return',
+        title: 'Sale Return Details',
+        refNumber: String(saleReturn.voucherNumber || '-').trim() || '-',
+        date: saleReturn.voucherDate,
+        partyName: String(saleReturn.party?.name || saleReturn.sale?.customerName || '-').trim() || '-',
+        accountName: 'Sale Return',
+        amount: toNumber(saleReturn.totalAmount || saleReturn.amount),
+        quantity: getTotalQuantity(saleReturn.items),
+        method: '',
+        notes: String(saleReturn.notes || '').trim(),
+        linkedReference: String(saleReturn.sale?.invoiceNumber || '-').trim() || '-',
+        fields: [
+          { label: 'Party', value: String(saleReturn.party?.name || saleReturn.sale?.customerName || '-').trim() || '-' },
+          { label: 'Voucher Date', value: saleReturn.voucherDate },
+          { label: 'Voucher No', value: String(saleReturn.voucherNumber || '-').trim() || '-' },
+          { label: 'Against Sale', value: String(saleReturn.sale?.invoiceNumber || '-').trim() || '-' },
+          { label: 'Sale Date', value: saleReturn.sale?.saleDate || '' }
+        ],
+        items: getDetailedItems(saleReturn.items)
+      };
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Unsupported voucher type'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: detail
+    });
+  } catch (error) {
+    console.error('Party ledger entry detail error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching voucher details'
     });
   }
 };

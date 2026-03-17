@@ -19,6 +19,20 @@ const formatDate = (value) => {
   return `${day}/${month}/${year}`;
 };
 
+const formatDateTime = (value) => {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+
+  return date.toLocaleString('en-GB', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
 const formatCurrency = (value) => `Rs ${Number(value || 0).toLocaleString('en-IN', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2
@@ -108,6 +122,149 @@ const getLedgerDetails = (row) => {
   return details;
 };
 
+const isLedgerDetailSupported = (row) => Boolean(row?.refId && row?.type);
+
+function VoucherDetailModal({ detail, loading, error, onClose }) {
+  if (!detail && !loading && !error) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-3" onClick={onClose}>
+      <div
+        className="max-h-[92vh] w-full max-w-4xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-900 via-cyan-900 to-sky-800 px-5 py-4 text-white">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-100">Voucher Detail</p>
+            <h2 className="mt-1 text-xl font-bold">{detail?.title || 'Loading details'}</h2>
+            {detail ? (
+              <p className="mt-1 text-sm text-cyan-50">
+                {detail.refNumber || '-'} | {detail.partyName || '-'}
+              </p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20"
+            aria-label="Close voucher detail"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="max-h-[calc(92vh-88px)] overflow-y-auto p-5">
+          {loading ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-12 text-center text-sm text-slate-500">
+              Loading voucher details...
+            </div>
+          ) : null}
+
+          {!loading && error ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          {!loading && !error && detail ? (
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Amount</p>
+                  <p className="mt-1 text-lg font-bold text-slate-900">{formatCurrency(detail.amount)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Date</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{formatDate(detail.date)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Qty</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{detail.quantity ? formatQuantity(detail.quantity) : '-'}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Method</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{detail.method || '-'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {(detail.fields || []).map((field) => (
+                  <div key={`${field.label}-${field.value || 'empty'}`} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{field.label}</p>
+                    <p className="mt-1 text-sm font-medium text-slate-800">
+                      {field.label.toLowerCase().includes('date') ? formatDate(field.value) : (field.value || '-')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Account</p>
+                  <p className="mt-1 text-sm font-medium text-slate-800">{detail.accountName || '-'}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Opened</p>
+                  <p className="mt-1 text-sm font-medium text-slate-800">{formatDateTime(detail.date)}</p>
+                </div>
+              </div>
+
+              {detail.linkedReference ? (
+                <div className="rounded-2xl border border-cyan-200 bg-cyan-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-cyan-700">Linked Reference</p>
+                  <p className="mt-1 text-sm font-semibold text-cyan-900">{detail.linkedReference}</p>
+                </div>
+              ) : null}
+
+              {detail.notes ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Notes</p>
+                  <p className="mt-1 text-sm text-slate-700">{detail.notes}</p>
+                </div>
+              ) : null}
+
+              {(detail.items || []).length > 0 ? (
+                <div className="overflow-hidden rounded-2xl border border-slate-200">
+                  <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                    <h3 className="text-sm font-semibold text-slate-900">Items</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[520px] text-sm">
+                      <thead className="bg-white text-slate-600">
+                        <tr>
+                          <th className="border-b border-slate-200 px-4 py-3 text-left font-semibold">Product</th>
+                          <th className="border-b border-slate-200 px-4 py-3 text-center font-semibold">Qty</th>
+                          <th className="border-b border-slate-200 px-4 py-3 text-center font-semibold">Rate</th>
+                          <th className="border-b border-slate-200 px-4 py-3 text-center font-semibold">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detail.items.map((item) => (
+                          <tr key={item.id} className="bg-white">
+                            <td className="border-b border-slate-100 px-4 py-3">
+                              <p className="font-medium text-slate-800">{item.productName}</p>
+                              {item.unit ? <p className="text-xs text-slate-500">{item.unit}</p> : null}
+                            </td>
+                            <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-800">{formatQuantity(item.quantity)}</td>
+                            <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-800">{formatCurrency(item.unitPrice)}</td>
+                            <td className="border-b border-slate-100 px-4 py-3 text-center font-semibold text-slate-900">{formatCurrency(item.total)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const resolveDateRange = (filterType, fromDate, toDate, monthKey) => {
   const now = new Date();
 
@@ -165,6 +322,10 @@ export default function PartyDetail() {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedLedgerEntry, setSelectedLedgerEntry] = useState(null);
+  const [voucherDetail, setVoucherDetail] = useState(null);
+  const [voucherLoading, setVoucherLoading] = useState(false);
+  const [voucherError, setVoucherError] = useState('');
 
   const loadPartyDetails = async (showLoader = true, overrides = {}) => {
     try {
@@ -295,6 +456,37 @@ export default function PartyDetail() {
     setFromDate('');
     setToDate('');
     await loadPartyDetails(true, { fromDate: '', toDate: '' });
+  };
+
+  const handleOpenVoucherDetail = async (row) => {
+    if (!isLedgerDetailSupported(row)) return;
+
+    setSelectedLedgerEntry(row);
+    setVoucherDetail(null);
+    setVoucherError('');
+    setVoucherLoading(true);
+
+    try {
+      const response = await apiClient.get('/reports/party-ledger-entry-detail', {
+        params: {
+          type: row.type,
+          refId: row.refId
+        }
+      });
+
+      setVoucherDetail(response.data || null);
+    } catch (err) {
+      setVoucherError(err.message || 'Error loading voucher detail');
+    } finally {
+      setVoucherLoading(false);
+    }
+  };
+
+  const handleCloseVoucherDetail = () => {
+    setSelectedLedgerEntry(null);
+    setVoucherDetail(null);
+    setVoucherError('');
+    setVoucherLoading(false);
   };
 
   return (
@@ -455,7 +647,17 @@ export default function PartyDetail() {
                           {typeMeta.label}
                         </span>
                         <p className="mt-2 text-sm font-semibold text-slate-900">{formatDate(row.date)}</p>
-                        <p className="mt-1 text-xs text-slate-500">{row.refNumber || '-'}</p>
+                        {isLedgerDetailSupported(row) ? (
+                          <button
+                            type="button"
+                            onClick={() => handleOpenVoucherDetail(row)}
+                            className="mt-1 text-xs font-semibold text-cyan-700 underline decoration-cyan-300 underline-offset-2 transition hover:text-cyan-900"
+                          >
+                            {row.refNumber && row.refNumber !== '-' ? row.refNumber : 'View details'}
+                          </button>
+                        ) : (
+                          <p className="mt-1 text-xs text-slate-500">{row.refNumber || '-'}</p>
+                        )}
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-slate-900">{formatCurrency(row.amount)}</p>
@@ -520,7 +722,19 @@ export default function PartyDetail() {
                             {typeMeta.label}
                           </span>
                         </td>
-                        <td className="border border-slate-300 px-4 py-3 text-center font-medium text-slate-800">{row.refNumber || '-'}</td>
+                        <td className="border border-slate-300 px-4 py-3 text-center font-medium text-slate-800">
+                          {isLedgerDetailSupported(row) ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenVoucherDetail(row)}
+                              className="font-semibold text-cyan-700 underline decoration-cyan-300 underline-offset-2 transition hover:text-cyan-900"
+                            >
+                              {row.refNumber && row.refNumber !== '-' ? row.refNumber : 'View details'}
+                            </button>
+                          ) : (
+                            row.refNumber || '-'
+                          )}
+                        </td>
                         <td className="border border-slate-300 px-4 py-3">
                           {detailRows.length > 0 ? (
                             <div className="space-y-1">
@@ -560,6 +774,17 @@ export default function PartyDetail() {
           </div>
         )}
       </div>
+
+      <VoucherDetailModal
+        detail={voucherDetail || (selectedLedgerEntry ? {
+          title: 'Voucher Details',
+          refNumber: selectedLedgerEntry.refNumber || '-',
+          partyName: selectedLedgerEntry.partyName || '-'
+        } : null)}
+        loading={voucherLoading}
+        error={voucherError}
+        onClose={handleCloseVoucherDetail}
+      />
     </div>
   );
 }

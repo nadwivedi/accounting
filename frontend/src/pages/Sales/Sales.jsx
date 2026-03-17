@@ -33,6 +33,9 @@ const parseSaleDate = (value) => {
     return null;
   }
 
+  const day = Number(dayText);
+  const month = Number(monthText);
+  const year = Number(yearText);
   const date = new Date(year, month - 1, day);
 
   if (
