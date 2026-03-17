@@ -822,7 +822,7 @@ exports.getDayBookReport = async (req, res) => {
         method: '',
         note: sale.notes || '',
         amount,
-        inAmount: amount,
+        inAmount: 0,
         outAmount: 0
       });
     });
@@ -849,7 +849,7 @@ exports.getDayBookReport = async (req, res) => {
         note: purchase.notes || '',
         amount,
         inAmount: 0,
-        outAmount: amount
+        outAmount: 0
       });
     });
 

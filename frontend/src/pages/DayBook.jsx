@@ -66,9 +66,7 @@ const buildSummary = (entries) => entries.reduce((acc, entry) => {
 
   acc.entryCount += 1;
   acc.totalInward += inward;
-  if (entry.type !== 'purchase') {
-    acc.totalOutward += outward;
-  }
+  acc.totalOutward += outward;
 
   if (entry.type === 'sale') acc.sales += amount;
   if (entry.type === 'purchase') acc.purchases += amount;
@@ -341,9 +339,7 @@ export default function DayBook() {
                           ) : <span className="text-slate-300">-</span>}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {entry.type === 'purchase' ? (
-                            <p className="text-sm text-slate-300">-</p>
-                          ) : outAmount > 0 ? (
+                          {outAmount > 0 ? (
                             <p className="text-sm font-bold text-rose-600">-{formatCurrency(outAmount)}</p>
                           ) : <span className="text-slate-300">-</span>}
                         </td>
