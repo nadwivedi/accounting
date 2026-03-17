@@ -228,8 +228,8 @@ export default function DayBook() {
         )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
-          <StatCard title="Total Sales" value={formatCurrency(visibleSummary.sales)} subtitle="from invoices" icon={TrendingUp} color="from-emerald-500 to-teal-500" trend={visibleSummary.sales} />
-          <StatCard title="Total Purchases" value={formatCurrency(visibleSummary.purchases)} subtitle="from bills" icon={Package} color="from-rose-500 to-pink-500" trend={-visibleSummary.purchases} />
+          <StatCard title="Total Sales" value={formatCurrency(visibleSummary.sales)} subtitle="from invoices" icon={TrendingUp} color="from-emerald-500 to-teal-500" />
+          <StatCard title="Total Purchases" value={formatCurrency(visibleSummary.purchases)} subtitle="from bills" icon={Package} color="from-rose-500 to-pink-500" />
           <StatCard title="Receipts" value={formatCurrency(visibleSummary.receipts)} subtitle="money received" icon={ArrowDownCircle} color="from-sky-500 to-cyan-500" trend={visibleSummary.receipts} />
           <StatCard title="Payments" value={formatCurrency(visibleSummary.payments)} subtitle="money paid" icon={ArrowUpCircle} color="from-amber-500 to-orange-500" trend={-visibleSummary.payments} />
           <StatCard title="Expenses" value={formatCurrency(visibleSummary.expenses)} subtitle="vouchers" icon={Banknote} color="from-fuchsia-500 to-purple-500" trend={-visibleSummary.expenses} />
