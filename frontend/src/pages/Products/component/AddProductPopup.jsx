@@ -84,6 +84,7 @@ export default function AddProductPopup({
   const unitSectionRef = useRef(null);
   const unitInputRef = useRef(null);
   const minStockInputRef = useRef(null);
+  const salePriceInputRef = useRef(null);
   const typeOfSupplyRef = useRef(null);
   const typeOfSupplySectionRef = useRef(null);
   const editingId = product?._id || null;
@@ -632,9 +633,9 @@ export default function AddProductPopup({
     if (event.key !== 'Enter' || event.shiftKey) return;
     event.preventDefault();
     event.stopPropagation();
-    setIsTypeOfSupplyOpen(true);
-    if (typeOfSupplyRef.current) {
-      typeOfSupplyRef.current.focus();
+    if (salePriceInputRef.current) {
+      salePriceInputRef.current.focus();
+      salePriceInputRef.current.select?.();
     }
   };
 
@@ -981,6 +982,7 @@ export default function AddProductPopup({
                     <div className="flex items-center gap-2">
                       <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Selling Price</label>
                       <input
+                        ref={salePriceInputRef}
                         type="number"
                         name="salePrice"
                         value={formData.salePrice}
