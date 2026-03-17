@@ -169,15 +169,15 @@ const buildSummary = (entries) => entries.reduce((acc, entry) => {
 
 function MetricCard({ title, value, subtitle, accentClass, valueClass = 'text-slate-900', icon: Icon }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white p-5 shadow-lg transition-all duration-300 hover:shadow-xl hover:border-slate-300/60">
-      <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${accentClass} opacity-10 rounded-full -translate-y-1/2 translate-x-1/2`} />
+    <div className="relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white px-4 py-3.5 shadow-lg transition-all duration-300 hover:border-slate-300/60 hover:shadow-xl">
+      <div className={`absolute right-0 top-0 h-20 w-20 rounded-full bg-gradient-to-br ${accentClass} opacity-10 -translate-y-1/2 translate-x-1/2`} />
       <div className="relative z-10">
-        <div className="flex items-center gap-3 mb-3">
-          {Icon && <div className={`p-2 rounded-xl bg-gradient-to-br ${accentClass}`}><Icon className="w-4 h-4 text-white" /></div>}
+        <div className="mb-2 flex items-center gap-2.5">
+          {Icon && <div className={`rounded-lg bg-gradient-to-br ${accentClass} p-1.5`}><Icon className="h-3.5 w-3.5 text-white" /></div>}
           <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</p>
         </div>
-        <p className={`text-2xl font-black tracking-tight ${valueClass}`}>{value}</p>
-        {subtitle && <p className="mt-1.5 text-xs font-medium text-slate-500">{subtitle}</p>}
+        <p className={`text-xl font-black tracking-tight ${valueClass}`}>{value}</p>
+        {subtitle && <p className="mt-1 text-[11px] font-medium text-slate-500">{subtitle}</p>}
       </div>
     </div>
   );
