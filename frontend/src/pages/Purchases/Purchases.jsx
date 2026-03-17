@@ -15,7 +15,19 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
     if (Number.isNaN(date.getTime())) return '';
 
-    return date.toISOString().split('T')[0];
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const formatDisplayDate = (dateValue = new Date()) => {
+    const isoDate = formatDateInput(dateValue);
+    if (!isoDate) return '';
+
+    const [, month, day] = isoDate.split('-');
+    const year = isoDate.slice(0, 4);
+    return `${day}-${month}-${year}`;
   };
 
   const parseDateInput = (value) => {
@@ -60,7 +72,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
 
     const parsedDate = parseDateInput(text);
     if (parsedDate) {
-      return formatDateInput(parsedDate);
+      return formatDisplayDate(parsedDate);
     }
     return text;
   };
@@ -75,14 +87,14 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     party: '',
     supplierInvoice: '',
     items: [],
-    purchaseDate: formatDateInput(),
+    purchaseDate: formatDisplayDate(),
     dueDate: '',
     totalAmount: 0,
     invoiceLink: '',
     notes: '',
     paymentAmount: '',
     paymentMethod: 'cash',
-    paymentDate: new Date().toISOString().split('T')[0],
+    paymentDate: formatDateInput(),
     paymentNotes: '',
     isBillWisePayment: false
   });
@@ -138,6 +150,10 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
   const leadgerInputRef = useRef(null);
   const productSectionRef = useRef(null);
   const productInputRef = useRef(null);
+  const purchaseDatePickerValue = (() => {
+    const parsedDate = parseDateInput(formData.purchaseDate);
+    return parsedDate ? formatDateInput(parsedDate) : '';
+  })();
 
   useEffect(() => {
     fetchPurchases();
@@ -178,23 +194,23 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     const now = new Date();
     if (dateFilter === '7d') {
       now.setDate(now.getDate() - 7);
-      return now.toISOString().split('T')[0];
+      return formatDateInput(now);
     }
     if (dateFilter === '30d') {
       now.setDate(now.getDate() - 30);
-      return now.toISOString().split('T')[0];
+      return formatDateInput(now);
     }
     if (dateFilter === '3m') {
       now.setMonth(now.getMonth() - 3);
-      return now.toISOString().split('T')[0];
+      return formatDateInput(now);
     }
     if (dateFilter === '6m') {
       now.setMonth(now.getMonth() - 6);
-      return now.toISOString().split('T')[0];
+      return formatDateInput(now);
     }
     if (dateFilter === '1y') {
       now.setFullYear(now.getFullYear() - 1);
-      return now.toISOString().split('T')[0];
+      return formatDateInput(now);
     }
     return '';
   };
@@ -928,12 +944,12 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         ...formData,
         supplierInvoice: String(formData.supplierInvoice || '').trim(),
         purchaseDate: parsedPurchaseDate,
-        dueDate: formData.dueDate ? new Date(formData.dueDate) : null,
+        dueDate: formData.dueDate ? parseDateInput(formData.dueDate) : null,
         totalAmount: Number(formData.totalAmount || 0),
         invoiceLink: formData.invoiceLink || '',
         paymentAmount: isEditMode ? 0 : entryPaymentAmount,
         paymentMethod: formData.paymentMethod || 'cash',
-        paymentDate: formData.paymentDate ? new Date(formData.paymentDate) : new Date(),
+        paymentDate: formData.paymentDate ? parseDateInput(formData.paymentDate) : new Date(),
         paymentNotes: formData.paymentNotes || '',
         isBillWisePayment: false
       };
@@ -990,14 +1006,14 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       party: normalizedPartyId,
       supplierInvoice: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '',
       items: normalizedItems,
-      purchaseDate: purchase.purchaseDate ? formatDateInput(purchase.purchaseDate) : '',
-      dueDate: purchase.dueDate ? new Date(purchase.dueDate).toISOString().split('T')[0] : '',
+      purchaseDate: purchase.purchaseDate ? formatDisplayDate(purchase.purchaseDate) : '',
+      dueDate: purchase.dueDate ? formatDateInput(purchase.dueDate) : '',
       totalAmount: Number(purchase.totalAmount || 0),
       invoiceLink: purchase.invoiceLink || '',
       notes: purchase.notes || '',
       paymentAmount: '',
       paymentMethod: 'cash',
-      paymentDate: purchase.purchaseDate ? new Date(purchase.purchaseDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+      paymentDate: purchase.purchaseDate ? formatDateInput(purchase.purchaseDate) : formatDateInput(),
       paymentNotes: '',
       isBillWisePayment: false
     });
@@ -1111,6 +1127,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
           loading={loading}
           isCashParty={isCashParty}
           formData={formData}
+          purchaseDatePickerValue={purchaseDatePickerValue}
           currentItem={currentItem}
           products={products}
           uploadingInvoice={uploadingInvoice}
@@ -1220,6 +1237,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         loading={loading}
         isCashParty={isCashParty}
         formData={formData}
+        purchaseDatePickerValue={purchaseDatePickerValue}
         currentItem={currentItem}
         products={products}
         uploadingInvoice={uploadingInvoice}

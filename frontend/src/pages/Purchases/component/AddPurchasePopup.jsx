@@ -9,6 +9,7 @@ export default function AddPurchasePopup({
   loading,
   isCashParty,
   formData,
+  purchaseDatePickerValue,
   currentItem,
   products,
   uploadingInvoice,
@@ -51,6 +52,7 @@ export default function AddPurchasePopup({
 }) {
   const localLeadgerInputRef = useRef(null);
   const localProductInputRef = useRef(null);
+  const purchaseDatePickerRef = useRef(null);
   const paidAmountInputRef = useRef(null);
   const [isItemEntryClosed, setIsItemEntryClosed] = useState(false);
   const inputClass = 'w-full rounded-lg border border-slate-400 bg-white px-2.5 py-1.5 text-[13px] text-gray-800 focus:border-transparent focus:outline-none focus:ring-2';
@@ -113,6 +115,18 @@ export default function AddPurchasePopup({
     });
   };
 
+  const openPurchaseDatePicker = () => {
+    const dateInput = purchaseDatePickerRef.current;
+    if (!dateInput) return;
+
+    if (typeof dateInput.showPicker === 'function') {
+      dateInput.showPicker();
+      return;
+    }
+
+    dateInput.click();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-1 md:p-4" onClick={handleCancel}>
       <div className="flex h-[95dvh] max-h-[95dvh] w-[94vw] max-w-[68rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
@@ -151,14 +165,34 @@ export default function AddPurchasePopup({
                       <div className="relative">
                         <CalendarDays className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-indigo-400" />
                         <input
-                          type="date"
+                          type="text"
                           name="purchaseDate"
                           value={formData.purchaseDate}
                           onChange={handleInputChange}
                           onKeyDown={handleSelectEnterMoveNext}
-                          className={`${inputClass} pl-10 focus:ring-indigo-500`}
+                          className={`${inputClass} pl-10 pr-10 focus:ring-indigo-500`}
+                          placeholder="DD-MM-YYYY"
                           autoFocus
                         />
+                        <input
+                          ref={purchaseDatePickerRef}
+                          type="date"
+                          name="purchaseDate"
+                          value={purchaseDatePickerValue}
+                          onChange={handleInputChange}
+                          tabIndex={-1}
+                          className="absolute h-0 w-0 opacity-0 pointer-events-none"
+                          aria-hidden="true"
+                        />
+                        <button
+                          type="button"
+                          onClick={openPurchaseDatePicker}
+                          tabIndex={-1}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-indigo-500 transition hover:bg-indigo-50 hover:text-indigo-700"
+                          aria-label="Open purchase date calendar"
+                        >
+                          <CalendarDays className="h-4 w-4" />
+                        </button>
                       </div>
                     </div>
 
