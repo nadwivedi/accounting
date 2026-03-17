@@ -18,6 +18,20 @@ const formatPurchaseNumber = (value) => {
   return `Pur-${String(parsed).padStart(2, '0')}`;
 };
 
+const formatPurchaseReturnNumber = (value) => {
+  const text = String(value || '').trim();
+  if (!text) return '-';
+
+  const prefixedMatch = text.match(/^prt-(\d+)$/i);
+  if (prefixedMatch) {
+    return `Prt-${String(Number.parseInt(prefixedMatch[1], 10)).padStart(2, '0')}`;
+  }
+
+  const parsed = Number.parseInt(text, 10);
+  if (!Number.isInteger(parsed) || parsed <= 0) return text;
+  return `Prt-${String(parsed).padStart(2, '0')}`;
+};
+
 const getPurchaseLabel = (purchase) => {
   const date = purchase?.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString('en-GB') : '-';
   return `Purchase No. ${formatPurchaseNumber(purchase?.purchaseNumber)} | ${date}`;
@@ -257,7 +271,7 @@ export default function PurchaseReturn({ modalOnly = false, onModalFinish = null
                   <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
                     {entries.map((entry) => (
                       <tr key={entry._id} className="transition-colors duration-150 hover:bg-slate-200/45">
-                        <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{entry.voucherNumber || '-'}</td>
+                        <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{formatPurchaseReturnNumber(entry.voucherNumber)}</td>
                         <td className="border border-slate-400 px-4 py-3 text-center">{formatPurchaseNumber(entry.purchase?.purchaseNumber)}</td>
                         <td className="border border-slate-400 px-4 py-3 text-center">{entry.party?.name || '-'}</td>
                         <td className="border border-slate-400 px-4 py-3"><div className="max-w-[24rem] truncate">{(entry.items || []).map((item) => `${item.productName} (${item.quantity})`).join(', ') || '-'}</div></td>
