@@ -21,6 +21,8 @@ const normalizeInvoiceValue = (value) => {
   return value.trim();
 };
 
+const buildSaleInvoiceNumber = (year, sequence) => `INV-${year}-${String(sequence).padStart(3, '0')}`;
+
 const backfillPurchaseInvoices = async (purchaseCollection) => {
   const filter = {
     $and: [
@@ -85,6 +87,66 @@ const backfillPurchaseInvoices = async (purchaseCollection) => {
   }
 };
 
+const backfillSaleInvoices = async (saleCollection) => {
+  const cursor = saleCollection.find(
+    {},
+    {
+      projection: {
+        _id: 1,
+        userId: 1,
+        invoiceNumber: 1,
+        saleDate: 1,
+        createdAt: 1
+      },
+      sort: { userId: 1, saleDate: 1, createdAt: 1, _id: 1 }
+    }
+  );
+
+  const sequenceMap = new Map();
+  const ops = [];
+  let updated = 0;
+
+  for await (const doc of cursor) {
+    const invoiceDate = doc.saleDate || doc.createdAt || new Date();
+    const parsedDate = new Date(invoiceDate);
+    const year = Number.isNaN(parsedDate.getTime()) ? new Date().getFullYear() : parsedDate.getFullYear();
+    const key = `${String(doc.userId)}-${year}`;
+    const nextSequence = (sequenceMap.get(key) || 0) + 1;
+    sequenceMap.set(key, nextSequence);
+
+    const nextInvoiceNumber = buildSaleInvoiceNumber(year, nextSequence);
+    if (normalizeInvoiceValue(doc.invoiceNumber) === nextInvoiceNumber) {
+      continue;
+    }
+
+    ops.push({
+      updateOne: {
+        filter: { _id: doc._id },
+        update: {
+          $set: {
+            invoiceNumber: nextInvoiceNumber
+          }
+        }
+      }
+    });
+
+    if (ops.length >= 500) {
+      const result = await saleCollection.bulkWrite(ops, { ordered: false });
+      updated += result.modifiedCount || 0;
+      ops.length = 0;
+    }
+  }
+
+  if (ops.length > 0) {
+    const result = await saleCollection.bulkWrite(ops, { ordered: false });
+    updated += result.modifiedCount || 0;
+  }
+
+  if (updated > 0) {
+    console.log(`Backfilled invoice numbers for ${updated} sale record(s)`);
+  }
+};
+
 const ensureCollectionIndexes = async (db, collectionName, ensureFn) => {
   const exists = await db.listCollections({ name: collectionName }).hasNext();
   if (!exists) return;
@@ -104,6 +166,7 @@ const runMigrations = async () => {
   });
 
   await ensureCollectionIndexes(db, 'sales', async (collection) => {
+    await backfillSaleInvoices(collection);
     await dropIndexIfExists(collection, 'invoiceNumber_1');
     await dropIndexIfExists(collection, 'userId_1_invoiceNumber_1');
   });

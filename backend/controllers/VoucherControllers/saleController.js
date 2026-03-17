@@ -11,25 +11,34 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-const generateInvoiceNumber = async (userId) => {
-  const [latestSale] = await Sale.aggregate([
-    {
-      $match: {
-        userId: new mongoose.Types.ObjectId(userId),
-        invoiceNumber: { $regex: '^[0-9]+$' }
-      }
-    },
-    {
-      $project: {
-        numericInvoiceNumber: { $toInt: '$invoiceNumber' }
-      }
-    },
-    { $sort: { numericInvoiceNumber: -1 } },
-    { $limit: 1 }
-  ]);
+const getInvoiceYear = (dateValue = new Date()) => {
+  const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
+  if (Number.isNaN(date.getTime())) {
+    return new Date().getFullYear();
+  }
+  return date.getFullYear();
+};
 
-  const nextInvoiceNumber = Number(latestSale?.numericInvoiceNumber || 0) + 1;
-  return String(nextInvoiceNumber).padStart(2, '0');
+const buildYearlyInvoiceNumber = ({ year, sequence }) => `INV-${year}-${String(sequence).padStart(3, '0')}`;
+
+const generateInvoiceNumber = async (userId, saleDate = new Date()) => {
+  const invoiceYear = getInvoiceYear(saleDate);
+  const invoicePattern = new RegExp(`^INV-${invoiceYear}-(\\d+)$`, 'i');
+
+  const matchingSales = await Sale.find({
+    userId,
+    invoiceNumber: { $regex: `^INV-${invoiceYear}-` }
+  })
+    .select('invoiceNumber')
+    .lean();
+
+  const nextSequence = matchingSales.reduce((max, sale) => {
+    const match = String(sale.invoiceNumber || '').trim().match(invoicePattern);
+    if (!match) return max;
+    return Math.max(max, Number.parseInt(match[1], 10) || 0);
+  }, 0) + 1;
+
+  return buildYearlyInvoiceNumber({ year: invoiceYear, sequence: nextSequence });
 };
 
 const isDuplicateSaleInvoiceError = (error) => (
@@ -166,7 +175,8 @@ exports.createSale = async (req, res) => {
       paidAmount
     });
 
-    const resolvedInvoiceNumber = String(invoiceNumber || '').trim() || await generateInvoiceNumber(userId);
+    const resolvedSaleDate = saleDate || new Date();
+    const resolvedInvoiceNumber = String(invoiceNumber || '').trim() || await generateInvoiceNumber(userId, resolvedSaleDate);
 
     const sale = await Sale.create({
       userId,
@@ -176,7 +186,7 @@ exports.createSale = async (req, res) => {
       customerPhone,
       customerAddress,
       items,
-      saleDate: saleDate || new Date(),
+      saleDate: resolvedSaleDate,
       dueDate: dueDate || null,
       subtotal: totals.subtotal,
       taxAmount: totals.taxAmount,
@@ -212,7 +222,7 @@ exports.createSale = async (req, res) => {
         refId: sale._id,
         amount: totals.initialReceiptAmount,
         method: 'cash',
-        receiptDate: saleDate || new Date(),
+        receiptDate: resolvedSaleDate,
         notes: notes || 'Auto receipt from sale'
       });
     }
