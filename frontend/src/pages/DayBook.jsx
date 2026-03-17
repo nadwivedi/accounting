@@ -212,15 +212,6 @@ export default function DayBook() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-stone-100">
       <div className="mx-auto max-w-[95%] px-4 py-6">
-        <div className="mb-8 flex flex-wrap items-center gap-3">
-            <div className="flex rounded-xl border-2 border-slate-200 bg-white overflow-hidden">
-              <button type="button" onClick={handleToday} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">Today</button>
-              <button type="button" onClick={handleLast7Days} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">7 Days</button>
-              <button type="button" onClick={handleThisMonth} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">This Month</button>
-              <button type="button" onClick={handleLastMonth} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">Last Month</button>
-            </div>
-        </div>
-
         {error && (
           <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-4 text-sm font-semibold text-rose-700 shadow-lg">
             {error}
@@ -239,8 +230,16 @@ export default function DayBook() {
           <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h2 className="text-lg font-black text-slate-800">Quick Filters</h2>
-              <p className="text-sm text-slate-500">Filter transactions by type</p>
+              <p className="text-sm text-slate-500">Filter transactions by type and date</p>
             </div>
+            <div className="flex rounded-xl border-2 border-slate-200 bg-white overflow-hidden">
+              <button type="button" onClick={handleToday} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">Today</button>
+              <button type="button" onClick={handleLast7Days} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">7 Days</button>
+              <button type="button" onClick={handleThisMonth} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">This Month</button>
+              <button type="button" onClick={handleLastMonth} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">Last Month</button>
+            </div>
+          </div>
+          <div className="px-6 py-5">
             <div className="flex flex-wrap gap-2">
               {[
                 { value: 'all', label: 'All', count: entries.length },
