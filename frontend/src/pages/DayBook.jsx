@@ -220,7 +220,6 @@ function DayGroupCard({ group, expanded, onToggle }) {
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Date/Time</th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Voucher No.</th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Party Name</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Account</th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Qty</th>
                 <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Method</th>
                 <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">Money In</th>
@@ -251,9 +250,6 @@ function DayGroupCard({ group, expanded, onToggle }) {
                     </td>
                     <td className="px-4 py-3">
                       <p className="text-xs font-semibold text-slate-800 max-w-[150px] truncate">{entry.partyName || '-'}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-xs text-slate-600 max-w-[120px] truncate">{entry.accountName || '-'}</p>
                     </td>
                     <td className="px-4 py-3">
                       <p className="text-xs font-semibold text-slate-800">{entry.quantity || '-'}</p>
