@@ -1320,12 +1320,6 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
               <option value="6m">Purchase History - 6 Months</option>
               <option value="1y">Purchase History - 1 Year</option>
             </select>
-            <button
-              onClick={handleOpenForm}
-              className="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900"
-            >
-              + New Purchase
-            </button>
           </div>
         </div>
 
@@ -1442,11 +1436,11 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
             <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
               <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                 <tr>
-                  <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Purchase No</th>
+                  <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Purchase No</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Party Name</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Supplier Invoice No.</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Manage Party</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold">Products</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Invoice File</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Total</th>
                   <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
@@ -1456,9 +1450,10 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                 {purchases.map((purchase) => {
                   return (
                     <tr key={purchase._id} className="transition-colors duration-150 hover:bg-slate-200/45">
+                      <td className="border border-slate-400 px-4 py-3 text-center text-slate-600">{new Date(purchase.purchaseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                       <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{formatPurchaseNumber(purchase.purchaseNumber)}</td>
-                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
                       <td className="border border-slate-400 px-4 py-3 text-center font-medium text-slate-700">{resolveLeadgerNameById(purchase.party)}</td>
+                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
                       <td className="border border-slate-400 px-4 py-3 text-slate-600">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           {purchase.items?.length
@@ -1482,7 +1477,6 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                             : <span className="text-slate-400 italic">No items</span>}
                         </div>
                       </td>
-                      <td className="border border-slate-400 px-4 py-3 text-center text-slate-600">{new Date(purchase.purchaseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                       <td className="border border-slate-400 px-4 py-3 text-center">
                         {purchase.invoiceLink ? (
                           <a
