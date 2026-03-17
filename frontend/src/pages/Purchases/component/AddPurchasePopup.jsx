@@ -70,6 +70,15 @@ export default function AddPurchasePopup({
     return String(matchingProduct?.unit || '').trim() || '-';
   };
   const currentItemUnit = String(currentItem.unit || '').trim() || '-';
+  const sanitizeNonNegativeInput = (value) => {
+    const text = String(value ?? '');
+    if (!text.trim() || text === '-' || text === '-.') return '';
+
+    const parsed = Number(text);
+    if (Number.isNaN(parsed)) return text;
+    if (parsed < 0) return '0';
+    return text;
+  };
 
   useEffect(() => {
     if (showForm) {
@@ -538,9 +547,10 @@ export default function AddPurchasePopup({
                                   type="number"
                                   placeholder="0"
                                   value={currentItem.quantity}
-                                  onChange={(e) => setCurrentItem({ ...currentItem, quantity: e.target.value })}
+                                  onChange={(e) => setCurrentItem({ ...currentItem, quantity: sanitizeNonNegativeInput(e.target.value) })}
                                   onKeyDown={handleSelectEnterMoveNext}
                                   className={`${inputClass} ml-auto w-[22%] min-w-[44px] text-right focus:ring-emerald-500`}
+                                  min="0"
                                 />
                               </td>
                               <td className="px-3 py-2.5 text-center">
@@ -553,7 +563,7 @@ export default function AddPurchasePopup({
                                   type="number"
                                   placeholder="0.00"
                                   value={currentItem.unitPrice}
-                                  onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: e.target.value })}
+                                  onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: sanitizeNonNegativeInput(e.target.value) })}
                                   onKeyDown={(e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                       e.preventDefault();
@@ -568,6 +578,7 @@ export default function AddPurchasePopup({
                                   }}
                                   className={`${inputClass} text-right focus:ring-emerald-500`}
                                   step="0.01"
+                                  min="0"
                                 />
                               </td>
                               <td className="px-3 py-2.5 text-right">
