@@ -1,6 +1,21 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BookText, CalendarRange, RefreshCw, ChevronDown, ChevronUp, TrendingUp, TrendingDown, ArrowRightLeft, Receipt, CreditCard, Banknote, Package } from 'lucide-react';
+import { BookText, CalendarRange, RefreshCw, TrendingUp, TrendingDown, ArrowRightLeft, Receipt, CreditCard, Banknote, Package, Search, ArrowDownCircle, ArrowUpCircle, Calculator } from 'lucide-react';
 import apiClient from '../utils/api';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
+} from 'recharts';
 
 const DEFAULT_SUMMARY = {
   entryCount: 0,
@@ -15,82 +30,15 @@ const DEFAULT_SUMMARY = {
   saleReturns: 0
 };
 
-const ENTRY_TYPE_META = {
-  sale: {
-    label: 'Sale',
-    icon: TrendingUp,
-    tone: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    accent: 'from-emerald-500 to-teal-500',
-    amountTone: 'text-emerald-700',
-    surface: 'from-emerald-50 to-teal-50',
-    bgGradient: 'bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50'
-  },
-  purchase: {
-    label: 'Purchase',
-    icon: TrendingDown,
-    tone: 'border-rose-200 bg-rose-50 text-rose-700',
-    accent: 'from-rose-500 to-pink-500',
-    amountTone: 'text-rose-700',
-    surface: 'from-rose-50 to-pink-50',
-    bgGradient: 'bg-gradient-to-br from-rose-50 via-pink-50 to-rose-50'
-  },
-  receipt: {
-    label: 'Receipt',
-    icon: ArrowRightLeft,
-    tone: 'border-sky-200 bg-sky-50 text-sky-700',
-    accent: 'from-sky-500 to-cyan-500',
-    amountTone: 'text-sky-700',
-    surface: 'from-sky-50 to-cyan-50',
-    bgGradient: 'bg-gradient-to-br from-sky-50 via-cyan-50 to-sky-50'
-  },
-  payment: {
-    label: 'Payment',
-    icon: CreditCard,
-    tone: 'border-amber-200 bg-amber-50 text-amber-700',
-    accent: 'from-amber-500 to-orange-500',
-    amountTone: 'text-amber-700',
-    surface: 'from-amber-50 to-orange-50',
-    bgGradient: 'bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50'
-  },
-  expense: {
-    label: 'Expense',
-    icon: Banknote,
-    tone: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700',
-    accent: 'from-fuchsia-500 to-pink-500',
-    amountTone: 'text-fuchsia-700',
-    surface: 'from-fuchsia-50 to-pink-50',
-    bgGradient: 'bg-gradient-to-br from-fuchsia-50 via-pink-50 to-fuchsia-50'
-  },
-  purchaseReturn: {
-    label: 'Purchase Return',
-    icon: Package,
-    tone: 'border-teal-200 bg-teal-50 text-teal-700',
-    accent: 'from-teal-500 to-cyan-500',
-    amountTone: 'text-teal-700',
-    surface: 'from-teal-50 to-cyan-50',
-    bgGradient: 'bg-gradient-to-br from-teal-50 via-cyan-50 to-teal-50'
-  },
-  saleReturn: {
-    label: 'Sale Return',
-    icon: Receipt,
-    tone: 'border-orange-200 bg-orange-50 text-orange-700',
-    accent: 'from-orange-500 to-amber-500',
-    amountTone: 'text-orange-700',
-    surface: 'from-orange-50 to-amber-50',
-    bgGradient: 'bg-gradient-to-br from-orange-50 via-amber-50 to-orange-50'
-  }
+const TYPE_COLORS = {
+  sale: { fill: '#10b981', stroke: '#059669' },
+  purchase: { fill: '#f43f5e', stroke: '#e11d48' },
+  receipt: { fill: '#0ea5e9', stroke: '#0284c7' },
+  payment: { fill: '#f59e0b', stroke: '#d97706' },
+  expense: { fill: '#d946ef', stroke: '#c026d3' },
+  purchaseReturn: { fill: '#14b8a6', stroke: '#0d9488' },
+  saleReturn: { fill: '#fb923c', stroke: '#ea580c' }
 };
-
-const TYPE_FILTERS = [
-  { value: 'all', label: 'All' },
-  { value: 'sale', label: 'Sales' },
-  { value: 'purchase', label: 'Purchases' },
-  { value: 'receipt', label: 'Receipts' },
-  { value: 'payment', label: 'Payments' },
-  { value: 'expense', label: 'Expenses' },
-  { value: 'purchaseReturn', label: 'P. Returns' },
-  { value: 'saleReturn', label: 'S. Returns' }
-];
 
 const getTodayInput = () => {
   const date = new Date();
@@ -103,7 +51,6 @@ const getTodayInput = () => {
 const toInputDate = (dateValue) => {
   const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
   if (Number.isNaN(date.getTime())) return '';
-
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -117,26 +64,18 @@ const formatCurrency = (value) => (
   })}`
 );
 
-const formatDate = (value, options = {}) => {
+const formatNumber = (value) => Number(value || 0).toLocaleString('en-IN');
+
+const formatDate = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
-
-  return date.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    ...options
-  });
+  return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
 const formatTime = (value) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
-
-  return date.toLocaleTimeString('en-IN', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 };
 
 const getDateKey = (value) => {
@@ -167,140 +106,28 @@ const buildSummary = (entries) => entries.reduce((acc, entry) => {
   return acc;
 }, { ...DEFAULT_SUMMARY });
 
-function MetricCard({ title, value, subtitle, accentClass, valueClass = 'text-slate-900', icon: Icon }) {
-  return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white px-4 py-3.5 shadow-lg transition-all duration-300 hover:border-slate-300/60 hover:shadow-xl">
-      <div className={`absolute right-0 top-0 h-20 w-20 rounded-full bg-gradient-to-br ${accentClass} opacity-10 -translate-y-1/2 translate-x-1/2`} />
-      <div className="relative z-10">
-        <div className="mb-2 flex items-center gap-2.5">
-          {Icon && <div className={`rounded-lg bg-gradient-to-br ${accentClass} p-1.5`}><Icon className="h-3.5 w-3.5 text-white" /></div>}
-          <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{title}</p>
+const StatCard = ({ title, value, subtitle, icon: Icon, color, trend }) => (
+  <div className="relative overflow-hidden rounded-2xl bg-white p-6 shadow-lg border border-slate-100 hover:shadow-xl transition-all duration-300">
+    <div className={`absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 -translate-y-1/2 translate-x-1/2 bg-gradient-to-br ${color}`} />
+    <div className="relative z-10">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{title}</span>
+        <div className={`p-2.5 rounded-xl bg-gradient-to-br ${color}`}>
+          <Icon className="w-5 h-5 text-white" />
         </div>
-        <p className={`text-xl font-black tracking-tight ${valueClass}`}>{value}</p>
-        {subtitle && <p className="mt-1 text-[11px] font-medium text-slate-500">{subtitle}</p>}
+      </div>
+      <div className="text-3xl font-black text-slate-800 tracking-tight">{value}</div>
+      <div className="flex items-center gap-2 mt-2">
+        {trend !== undefined && (
+          <span className={`text-xs font-semibold ${trend > 0 ? 'text-emerald-600' : trend < 0 ? 'text-rose-600' : 'text-slate-500'}`}>
+            {trend > 0 ? '+' : ''}{typeof trend === 'number' ? formatCurrency(trend) : trend}
+          </span>
+        )}
+        <span className="text-xs text-slate-500">{subtitle}</span>
       </div>
     </div>
-  );
-}
-
-function DayGroupCard({ group, expanded, onToggle }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-lg transition-all duration-300 hover:shadow-xl">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-5 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white hover:from-slate-800 hover:via-slate-700 hover:to-slate-800 transition-all duration-300"
-      >
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm flex items-center justify-center">
-            <CalendarRange className="w-6 h-6 text-white/80" />
-          </div>
-          <div className="text-left">
-            <h3 className="text-base font-black tracking-tight">{group.dateLabel}</h3>
-            <p className="text-xs font-medium text-white/60">{group.entries.length} entries</p>
-          </div>
-        </div>
-        
-        <div className="hidden lg:flex items-center gap-3">
-          <div className={`p-2 rounded-lg transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}>
-            <ChevronDown className="w-5 h-5 text-white/60" />
-          </div>
-        </div>
-        
-        <div className="lg:hidden flex items-center gap-3">
-          <ChevronDown className={`w-5 h-5 text-white/60 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`} />
-        </div>
-      </button>
-
-      {expanded && (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px]">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Type</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Date/Time</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Voucher No.</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Party Name</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Qty</th>
-                <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-600">Method</th>
-                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">Money In</th>
-                <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-wider text-slate-600">Money Out</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {group.entries.map((entry, index) => {
-                const meta = ENTRY_TYPE_META[entry.type] || ENTRY_TYPE_META.sale;
-                const TypeIcon = meta.icon;
-                const inAmount = Number(entry.inAmount || 0);
-                const outAmount = Number(entry.outAmount || 0);
-
-                return (
-                  <tr key={`${entry.refId || entry.voucherNumber || entry.type}-${index}`} className="hover:bg-slate-50/80 transition-colors duration-200">
-                    <td className="px-4 py-3">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold ${meta.tone}`}>
-                        <TypeIcon className="h-3 w-3" />
-                        {meta.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-xs font-semibold text-slate-800">{formatDate(entry.entryCreatedAt || entry.date)}</p>
-                      <p className="text-[10px] text-slate-500">{formatTime(entry.entryCreatedAt || entry.date)}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-xs font-semibold text-slate-800">{entry.voucherNumber || '-'}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-xs font-semibold text-slate-800 max-w-[150px] truncate">{entry.partyName || '-'}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-xs font-semibold text-slate-800">{entry.quantity || '-'}</p>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="text-xs capitalize text-slate-600">{entry.method || '-'}</p>
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {inAmount > 0 ? (
-                        <p className="text-xs font-bold text-emerald-700">{formatCurrency(inAmount)}</p>
-                      ) : (
-                        <p className="text-xs text-slate-400">-</p>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-right">
-                      {entry.type === 'purchase' ? (
-                        <p className="text-xs text-slate-300">-</p>
-                      ) : outAmount > 0 ? (
-                        <p className="text-xs font-bold text-rose-700">{formatCurrency(outAmount)}</p>
-                      ) : (
-                        <p className="text-xs text-slate-400">-</p>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot className="bg-slate-100 border-t-2 border-slate-300">
-              <tr>
-                <td colSpan={7} className="px-4 py-3 text-right">
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-700">Total for {group.dateLabel}</span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <span className="text-xs font-bold text-emerald-800">{formatCurrency(group.inward)}</span>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <span className="text-xs font-bold text-rose-800">{formatCurrency(
-                    group.entries.reduce((sum, e) => {
-                      if (e.type !== 'purchase') return sum + Number(e.outAmount || 0);
-                      return sum;
-                    }, 0)
-                  )}</span>
-                </td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
+  </div>
+);
 
 export default function DayBook() {
   const today = useMemo(() => getTodayInput(), []);
@@ -310,7 +137,7 @@ export default function DayBook() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
-  const [expandedGroups, setExpandedGroups] = useState({});
+  const [searchTerm, setSearchTerm] = useState('');
 
   const entries = dayBook?.entries || [];
 
@@ -323,7 +150,6 @@ export default function DayBook() {
           toDate: nextToDate || undefined
         }
       });
-
       setDayBook(response.data || { summary: DEFAULT_SUMMARY, entries: [] });
       setError('');
     } catch (err) {
@@ -338,14 +164,24 @@ export default function DayBook() {
   }, [today]);
 
   const filteredEntries = useMemo(() => {
-    return [...entries]
-      .filter((entry) => typeFilter === 'all' || entry.type === typeFilter)
-      .sort((a, b) => {
-        const aTime = new Date(a.entryCreatedAt || a.date).getTime() || 0;
-        const bTime = new Date(b.entryCreatedAt || b.date).getTime() || 0;
-        return bTime - aTime;
-      });
-  }, [entries, typeFilter]);
+    let filtered = [...entries];
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter((entry) => entry.type === typeFilter);
+    }
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(entry =>
+        (entry.partyName || '').toLowerCase().includes(term) ||
+        (entry.type || '').toLowerCase().includes(term) ||
+        (entry.voucherNumber || '').toLowerCase().includes(term)
+      );
+    }
+    return filtered.sort((a, b) => {
+      const aTime = new Date(a.entryCreatedAt || a.date).getTime() || 0;
+      const bTime = new Date(b.entryCreatedAt || b.date).getTime() || 0;
+      return bTime - aTime;
+    });
+  }, [entries, typeFilter, searchTerm]);
 
   const visibleSummary = useMemo(() => buildSummary(filteredEntries), [filteredEntries]);
 
@@ -361,13 +197,11 @@ export default function DayBook() {
           outward: 0
         };
       }
-
       acc[key].entries.push(entry);
       acc[key].inward += Number(entry.inAmount || 0);
       acc[key].outward += Number(entry.outAmount || 0);
       return acc;
     }, {});
-
     return Object.values(groups).sort((a, b) => b.key.localeCompare(a.key));
   }, [filteredEntries]);
 
@@ -375,6 +209,33 @@ export default function DayBook() {
     acc[entry.type] = (acc[entry.type] || 0) + 1;
     return acc;
   }, {}), [entries]);
+
+  const chartData = useMemo(() => {
+    const dailyData = {};
+    filteredEntries.forEach((entry) => {
+      const dateKey = formatDate(entry.date);
+      if (!dailyData[dateKey]) {
+        dailyData[dateKey] = { date: dateKey, in: 0, out: 0 };
+      }
+      dailyData[dateKey].in += Number(entry.inAmount || 0);
+      dailyData[dateKey].out += Number(entry.outAmount || 0);
+    });
+    return Object.values(dailyData).reverse().slice(-30);
+  }, [filteredEntries]);
+
+  const typePieData = useMemo(() => {
+    const typeData = {};
+    filteredEntries.forEach((entry) => {
+      const type = entry.type || 'other';
+      if (!typeData[type]) {
+        typeData[type] = { name: type.charAt(0).toUpperCase() + type.slice(1), value: 0 };
+      }
+      typeData[type].value += Number(entry.amount || 0);
+    });
+    return Object.values(typeData).sort((a, b) => b.value - a.value);
+  }, [filteredEntries]);
+
+  const PIE_COLORS = ['#10b981', '#f43f5e', '#0ea5e9', '#f59e0b', '#d946ef', '#14b8a6', '#fb923c'];
 
   const applyRangeAndLoad = (nextFromDate, nextToDate) => {
     setFromDate(nextFromDate);
@@ -393,126 +254,271 @@ export default function DayBook() {
     const startDate = new Date(now.getFullYear(), now.getMonth(), 1);
     applyRangeAndLoad(toInputDate(startDate), today);
   };
-
-  const toggleGroup = (key) => {
-    setExpandedGroups(prev => ({ ...prev, [key]: !prev[key] }));
+  const handleLastMonth = () => {
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+    applyRangeAndLoad(toInputDate(startDate), toInputDate(endDate));
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100">
-      <div className="mx-auto w-full max-w-[1600px] px-4 py-3">
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr,320px] gap-4 mb-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
-            <MetricCard
-              title="Sales"
-              value={formatCurrency(visibleSummary.sales)}
-              subtitle="Total sales amount"
-              accentClass="from-emerald-600 to-green-600"
-              valueClass="text-emerald-700"
-              icon={TrendingUp}
-            />
-            <MetricCard
-              title="Purchases"
-              value={formatCurrency(visibleSummary.purchases)}
-              subtitle="Total purchase amount"
-              accentClass="from-rose-600 to-pink-600"
-              valueClass="text-rose-700"
-              icon={Package}
-            />
-            <MetricCard
-              title="Receipt"
-              value={formatCurrency(visibleSummary.receipts)}
-              subtitle="Money received"
-              accentClass="from-sky-500 to-cyan-500"
-              valueClass="text-sky-700"
-              icon={Receipt}
-            />
-            <MetricCard
-              title="Payment"
-              value={formatCurrency(visibleSummary.payments)}
-              subtitle="Money paid out"
-              accentClass="from-amber-500 to-orange-500"
-              valueClass="text-amber-700"
-              icon={CreditCard}
-            />
-            <MetricCard
-              title="Expenses"
-              value={formatCurrency(visibleSummary.expenses)}
-              subtitle="Expense vouchers"
-              accentClass="from-fuchsia-500 to-pink-500"
-              valueClass="text-fuchsia-700"
-              icon={Banknote}
-            />
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-stone-100">
+      <div className="mx-auto max-w-[95%] px-4 py-6">
+        <div className="mb-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 shadow-lg shadow-violet-500/30">
+                <BookText className="w-6 h-6 text-white" />
+              </div>
+              <h1 className="text-3xl font-black text-slate-800 tracking-tight">Day Book</h1>
+            </div>
+            <p className="text-slate-500 ml-14">Daily transactions and financial summary</p>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-3 ml-14 lg:ml-0">
+            <div className="flex rounded-xl border-2 border-slate-200 bg-white overflow-hidden">
+              <button type="button" onClick={handleToday} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition">Today</button>
+              <button type="button" onClick={handleLast7Days} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">7 Days</button>
+              <button type="button" onClick={handleThisMonth} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">This Month</button>
+              <button type="button" onClick={handleLastMonth} className="px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition border-l border-slate-200">Last Month</button>
+            </div>
+            <button
+              type="button"
+              onClick={() => loadDayBook(fromDate, toDate)}
+              disabled={loading}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 text-white font-semibold shadow-lg shadow-violet-500/30 hover:shadow-violet-500/40 hover:scale-105 transition-all disabled:opacity-60 disabled:hover:scale-100"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-6 py-4 text-sm font-semibold text-rose-700 shadow-lg">
+            {error}
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8">
+          <StatCard title="Total Sales" value={formatCurrency(visibleSummary.sales)} subtitle="from invoices" icon={TrendingUp} color="from-emerald-500 to-teal-500" trend={visibleSummary.sales} />
+          <StatCard title="Total Purchases" value={formatCurrency(visibleSummary.purchases)} subtitle="from bills" icon={Package} color="from-rose-500 to-pink-500" trend={-visibleSummary.purchases} />
+          <StatCard title="Receipts" value={formatCurrency(visibleSummary.receipts)} subtitle="money received" icon={ArrowDownCircle} color="from-sky-500 to-cyan-500" trend={visibleSummary.receipts} />
+          <StatCard title="Payments" value={formatCurrency(visibleSummary.payments)} subtitle="money paid" icon={ArrowUpCircle} color="from-amber-500 to-orange-500" trend={-visibleSummary.payments} />
+          <StatCard title="Expenses" value={formatCurrency(visibleSummary.expenses)} subtitle="vouchers" icon={Banknote} color="from-fuchsia-500 to-purple-500" trend={-visibleSummary.expenses} />
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+          <div className="xl:col-span-2 rounded-3xl bg-white shadow-xl border border-slate-100 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+              <h2 className="text-lg font-black text-slate-800">Daily Cash Flow</h2>
+              <p className="text-sm text-slate-500">Money in vs money out over time</p>
+            </div>
+            <div className="p-6">
+              <div className="h-72">
+                {chartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 10 }}>
+                      <defs>
+                        <linearGradient id="colorMoneyIn" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                        </linearGradient>
+                        <linearGradient id="colorMoneyOut" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                      <XAxis dataKey="date" tick={{ fill: '#64748b', fontSize: 11 }} axisLine={{ stroke: '#cbd5e1' }} tickLine={false} />
+                      <YAxis tick={{ fill: '#64748b', fontSize: 11 }} axisLine={{ stroke: '#cbd5e1' }} tickLine={false} tickFormatter={(val) => `Rs ${(val / 1000).toFixed(0)}k`} />
+                      <Tooltip 
+                        contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}
+                        formatter={(value) => formatCurrency(value)}
+                      />
+                      <Area type="monotone" dataKey="in" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorMoneyIn)" name="Money In" />
+                      <Area type="monotone" dataKey="out" stroke="#f43f5e" strokeWidth={3} fillOpacity={1} fill="url(#colorMoneyOut)" name="Money Out" />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="h-full flex items-center justify-center text-slate-400">No data available</div>
+                )}
+              </div>
+            </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white shadow-xl">
-            <div className="px-5 py-5">
-              <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={handleToday} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Today</button>
-                <button type="button" onClick={handleLast7Days} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">7 Days</button>
-                <button type="button" onClick={handleThisMonth} className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">This Month</button>
-              </div>
-
-              <div className="mt-4 border-t border-slate-200 pt-4">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Voucher Filters</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {TYPE_FILTERS.map((filter) => {
-                    const isActive = typeFilter === filter.value;
-                    const count = filter.value === 'all' ? entries.length : (typeCounts[filter.value] || 0);
-
-                    return (
-                      <button
-                        key={filter.value}
-                        type="button"
-                        onClick={() => setTypeFilter(filter.value)}
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
-                          isActive
-                            ? 'border-slate-900 bg-slate-900 text-white'
-                            : 'border-slate-300 bg-white text-slate-600 hover:bg-slate-50'
-                        }`}
+          <div className="rounded-3xl bg-white shadow-xl border border-slate-100 overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-violet-50 to-white">
+              <h2 className="text-lg font-black text-slate-800">Transaction Types</h2>
+              <p className="text-sm text-slate-500">Breakdown by category</p>
+            </div>
+            <div className="p-4">
+              {typePieData.length > 0 ? (
+                <div className="h-72">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={typePieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={80}
+                        paddingAngle={3}
+                        dataKey="value"
+                        nameKey="name"
+                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        labelLine={{ stroke: '#94a3b8' }}
                       >
-                        {filter.label} ({count})
-                      </button>
-                    );
-                  })}
+                        {typePieData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} stroke="none" />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ borderRadius: 12, border: 'none', boxShadow: '0 10px 40px rgba(0,0,0,0.15)' }}
+                        formatter={(value) => formatCurrency(value)}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              </div>
+              ) : (
+                <div className="h-72 flex items-center justify-center text-slate-400">No data</div>
+              )}
             </div>
           </div>
         </div>
 
-        <div className="space-y-5">
-            {error && (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-700">
-                {error}
-              </div>
-            )}
+        <div className="rounded-3xl bg-white shadow-xl border border-slate-100 overflow-hidden mb-8">
+          <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-black text-slate-800">Quick Filters</h2>
+              <p className="text-sm text-slate-500">Filter transactions by type</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { value: 'all', label: 'All', count: entries.length },
+                { value: 'sale', label: 'Sales', count: typeCounts.sale || 0 },
+                { value: 'purchase', label: 'Purchases', count: typeCounts.purchase || 0 },
+                { value: 'receipt', label: 'Receipts', count: typeCounts.receipt || 0 },
+                { value: 'payment', label: 'Payments', count: typeCounts.payment || 0 },
+                { value: 'expense', label: 'Expenses', count: typeCounts.expense || 0 }
+              ].map((filter) => (
+                <button
+                  key={filter.value}
+                  type="button"
+                  onClick={() => setTypeFilter(filter.value)}
+                  className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                    typeFilter === filter.value
+                      ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg'
+                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  {filter.label} ({filter.count})
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
 
-            {loading ? (
-              <div className="rounded-2xl border border-slate-200 bg-white px-6 py-16 text-center text-sm font-medium text-slate-500 shadow-xl">
-                <RefreshCw className="mx-auto h-6 w-6 animate-spin text-slate-400" />
-                <p className="mt-3">Loading day book entries...</p>
-              </div>
-            ) : null}
-
-            {!loading && groupedEntries.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-slate-300 bg-white/50 px-6 py-16 text-center shadow-xl">
-                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
-                  <BookText className="h-8 w-8 text-slate-400" />
-                </div>
-                <p className="text-lg font-semibold text-slate-800">No daybook entries found</p>
-                <p className="mt-2 text-sm text-slate-500">Try another date range or clear filters</p>
-              </div>
-            ) : null}
-
-            {!loading && groupedEntries.map((group) => (
-              <DayGroupCard
-                key={group.key}
-                group={group}
-                expanded={true}
-                onToggle={() => toggleGroup(group.key)}
+        <div className="rounded-3xl bg-white shadow-xl border border-slate-100 overflow-hidden">
+          <div className="px-6 py-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-black text-slate-800">Transaction Details</h2>
+              <p className="text-sm text-slate-500">All entries for selected period</p>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search transactions..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2.5 rounded-xl border-2 border-slate-200 bg-white text-sm font-medium text-slate-700 focus:border-violet-500 focus:outline-none focus:ring-4 focus:ring-violet-100 transition-all w-full sm:w-64"
               />
-            ))}
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px]">
+              <thead>
+                <tr className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-white">
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Date/Time</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Voucher No.</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Party Name</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Method</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">Money In</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">Money Out</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredEntries.length > 0 ? (
+                  filteredEntries.map((entry, index) => {
+                    const inAmount = Number(entry.inAmount || 0);
+                    const outAmount = Number(entry.outAmount || 0);
+                    const typeColors = {
+                      sale: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
+                      purchase: { bg: 'bg-rose-100', text: 'text-rose-700' },
+                      receipt: { bg: 'bg-sky-100', text: 'text-sky-700' },
+                      payment: { bg: 'bg-amber-100', text: 'text-amber-700' },
+                      expense: { bg: 'bg-fuchsia-100', text: 'text-fuchsia-700' },
+                      purchaseReturn: { bg: 'bg-teal-100', text: 'text-teal-700' },
+                      saleReturn: { bg: 'bg-orange-100', text: 'text-orange-700' }
+                    };
+                    const colors = typeColors[entry.type] || typeColors.sale;
+                    
+                    return (
+                      <tr key={`${entry.refId || entry.voucherNumber || entry.type}-${index}`} className="hover:bg-violet-50/50 transition-colors">
+                        <td className="px-6 py-4">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-800">{formatDate(entry.entryCreatedAt || entry.date)}</p>
+                            <p className="text-xs text-slate-400">{formatTime(entry.entryCreatedAt || entry.date)}</p>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${colors.bg} ${colors.text}`}>
+                            {entry.type || 'N/A'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm text-slate-600 font-mono">{entry.voucherNumber || '-'}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm font-semibold text-slate-800 max-w-[180px] truncate">{entry.partyName || '-'}</p>
+                        </td>
+                        <td className="px-6 py-4">
+                          <p className="text-sm text-slate-500 capitalize">{entry.method || '-'}</p>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {inAmount > 0 ? (
+                            <p className="text-sm font-bold text-emerald-600">+{formatCurrency(inAmount)}</p>
+                          ) : <span className="text-slate-300">-</span>}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {entry.type === 'purchase' ? (
+                            <p className="text-sm text-slate-300">-</p>
+                          ) : outAmount > 0 ? (
+                            <p className="text-sm font-bold text-rose-600">-{formatCurrency(outAmount)}</p>
+                          ) : <span className="text-slate-300">-</span>}
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-16 text-center">
+                      <div className="flex flex-col items-center">
+                        <div className="p-4 rounded-full bg-slate-100 mb-4">
+                          <BookText className="w-8 h-8 text-slate-400" />
+                        </div>
+                        <p className="text-lg font-semibold text-slate-600">No transactions found</p>
+                        <p className="text-sm text-slate-400 mt-1">Try adjusting your filters or date range</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

@@ -26,6 +26,8 @@ import SaleReturn from './pages/SaleReturn/SaleReturn';
 import PurchaseReturn from './pages/PurchaseReturn/PurchaseReturn';
 import ReportsHub from './pages/ReportsHub';
 import ReportsDashboard from './pages/ReportsDashboard';
+import StockLedger from './pages/StockLedger';
+import PartyLedger from './pages/PartyLedger';
 import ReportsPlaceholder from './pages/ReportsPlaceholder';
 import DayBook from './pages/DayBook';
 import Settings from './pages/Settings';
@@ -206,7 +208,7 @@ function App() {
           path="/reports/party-ledger"
           element={
             <ProtectedRoute>
-              <ReportsDashboard initialReport="partyLedger" showPicker={false} />
+              <PartyLedger />
             </ProtectedRoute>
           }
         />
@@ -215,7 +217,7 @@ function App() {
           path="/reports/stock-ledger"
           element={
             <ProtectedRoute>
-              <ReportsDashboard initialReport="stockLedger" showPicker={false} />
+              <StockLedger />
             </ProtectedRoute>
           }
         />
