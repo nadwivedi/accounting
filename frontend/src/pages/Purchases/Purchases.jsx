@@ -596,7 +596,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     if (!showForm) return;
 
     if (filteredProducts.length === 0) {
-      setProductListIndex(-1);
+      setProductListIndex(isProductSectionActive ? 0 : -1);
       return;
     }
 
@@ -609,13 +609,13 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
 
     if (shouldHighlightSelectedProduct) {
       const selectedIndex = filteredProducts.findIndex((item) => String(item._id) === String(currentItem.product));
-      setProductListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+      setProductListIndex(selectedIndex >= 0 ? selectedIndex + 1 : 1);
       return;
     }
 
     setProductListIndex((prev) => {
-      if (prev < 0) return 0;
-      if (prev >= filteredProducts.length) return filteredProducts.length - 1;
+      if (prev < 0) return 1;
+      if (prev > filteredProducts.length) return filteredProducts.length;
       return prev;
     });
   }, [showForm, filteredProducts, isProductSectionActive, productQuery, selectedProductName, currentItem.product]);
@@ -657,7 +657,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     }));
 
     const selectedIndex = filteredProducts.findIndex((item) => String(item._id) === String(product._id));
-    setProductListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+    setProductListIndex(selectedIndex >= 0 ? selectedIndex + 1 : 1);
   };
 
   const handleProductFocus = () => {
@@ -682,7 +682,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         unit: String(exactProduct.unit || '').trim()
       }));
       const exactIndex = getMatchingProducts(value).findIndex((item) => String(item._id) === String(exactProduct._id));
-      setProductListIndex(exactIndex >= 0 ? exactIndex : 0);
+      setProductListIndex(exactIndex >= 0 ? exactIndex + 1 : 1);
       return;
     }
 
@@ -694,12 +694,13 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       productName: firstMatch ? getProductDisplayName(firstMatch) : '',
       unit: firstMatch ? String(firstMatch.unit || '').trim() : ''
     }));
-    setProductListIndex(firstMatch ? 0 : -1);
+    setProductListIndex(firstMatch ? 1 : 0);
   };
 
   const handleProductInputKeyDown = (e, moveToPaymentSection) => {
     const key = e.key?.toLowerCase();
-    const lastOptionIndex = filteredProducts.length;
+    const endListIndex = 0;
+    const lastProductIndex = filteredProducts.length;
 
     if (key === 'control' && !e.altKey && !e.metaKey) {
       e.preventDefault();
@@ -712,8 +713,8 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       e.preventDefault();
       e.stopPropagation();
       setProductListIndex((prev) => {
-        if (prev < 0) return 0;
-        return Math.min(prev + 1, lastOptionIndex);
+        if (prev < 0) return filteredProducts.length > 0 ? 1 : endListIndex;
+        return Math.min(prev + 1, lastProductIndex);
       });
       return;
     }
@@ -722,9 +723,17 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       e.preventDefault();
       e.stopPropagation();
       setProductListIndex((prev) => {
-        if (prev < 0) return 0;
-        return Math.max(prev - 1, 0);
+        if (prev < 0) return filteredProducts.length > 0 ? 1 : endListIndex;
+        return Math.max(prev - 1, endListIndex);
       });
+      return;
+    }
+
+    if (key === 'delete') {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsProductSectionActive(false);
+      moveToPaymentSection?.();
       return;
     }
 
@@ -732,13 +741,13 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       e.preventDefault();
       e.stopPropagation();
 
-      if (productListIndex === lastOptionIndex) {
+      if (productListIndex === endListIndex) {
         setIsProductSectionActive(false);
         moveToPaymentSection?.();
         return;
       }
 
-      const activeProduct = productListIndex >= 0 ? filteredProducts[productListIndex] : null;
+      const activeProduct = productListIndex > 0 ? filteredProducts[productListIndex - 1] : null;
       const matchedProduct = activeProduct || findExactProduct(productQuery) || findBestProductMatch(productQuery);
       if (matchedProduct) {
         selectProduct(matchedProduct);
@@ -1047,7 +1056,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     setLeadgerListIndex(0);
     setIsLeadgerSectionActive(false);
     setProductQuery('');
-    setProductListIndex(0);
+    setProductListIndex(1);
     setIsProductSectionActive(false);
     setShowPartyForm(false);
     setPartyFormData(getInitialPartyFormData('supplier'));

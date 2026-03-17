@@ -59,6 +59,7 @@ export default function AddPurchasePopup({
   const resolvedProductInputRef = productInputRef || localProductInputRef;
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
   const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex]);
+  const endItemListIndex = 0;
   const resolveItemUnit = (item) => {
     const itemUnit = String(item?.unit || '').trim();
     if (itemUnit) return itemUnit;
@@ -105,7 +106,7 @@ export default function AddPurchasePopup({
   const reopenItemEntryFromPaidAmount = () => {
     setIsItemEntryClosed(false);
     setIsProductSectionActive(true);
-    setProductListIndex(filteredProducts.length > 0 ? 0 : -1);
+    setProductListIndex(filteredProducts.length > 0 ? 1 : endItemListIndex);
     requestAnimationFrame(() => {
       resolvedProductInputRef.current?.focus();
       resolvedProductInputRef.current?.select?.();
@@ -433,6 +434,22 @@ export default function AddPurchasePopup({
                                         </span>
                                       </div>
                                       <div className="overflow-y-auto py-1" style={{ maxHeight: productDropdownStyle.maxHeight }}>
+                                        <button
+                                          type="button"
+                                          onMouseDown={(event) => event.preventDefault()}
+                                          onMouseEnter={() => setProductListIndex(endItemListIndex)}
+                                          onClick={closeItemEntryAndFocusPaidAmount}
+                                          className={`flex w-full items-center justify-between gap-3 border-b border-amber-100 px-3 py-2 text-left text-[13px] font-semibold transition ${
+                                            productListIndex === endItemListIndex
+                                              ? 'bg-yellow-200 text-amber-950'
+                                              : 'text-amber-800 hover:bg-amber-50'
+                                          }`}
+                                        >
+                                          <span>End Item List</span>
+                                          <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                            Del
+                                          </span>
+                                        </button>
                                         {filteredProducts.length === 0 ? (
                                           <div className="px-3 py-3 text-center text-[13px] text-slate-500">
                                             <p>No matching products found.</p>
@@ -448,7 +465,8 @@ export default function AddPurchasePopup({
                                           </div>
                                         ) : (
                                           filteredProducts.map((product, index) => {
-                                            const isActive = index === productListIndex;
+                                            const optionIndex = index + 1;
+                                            const isActive = optionIndex === productListIndex;
                                             const isSelected = String(currentItem.product || '') === String(product._id);
 
                                             return (
@@ -456,7 +474,7 @@ export default function AddPurchasePopup({
                                                 key={product._id}
                                                 type="button"
                                                 onMouseDown={(event) => event.preventDefault()}
-                                                onMouseEnter={() => setProductListIndex(index)}
+                                                onMouseEnter={() => setProductListIndex(optionIndex)}
                                                 onClick={() => selectProduct(product)}
                                                 className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
                                                   isActive
@@ -476,22 +494,6 @@ export default function AddPurchasePopup({
                                             );
                                           })
                                         )}
-                                        <button
-                                          type="button"
-                                          onMouseDown={(event) => event.preventDefault()}
-                                          onMouseEnter={() => setProductListIndex(filteredProducts.length)}
-                                          onClick={closeItemEntryAndFocusPaidAmount}
-                                          className={`flex w-full items-center justify-between gap-3 border-t border-amber-100 px-3 py-2 text-left text-[13px] font-semibold transition ${
-                                            productListIndex === filteredProducts.length
-                                              ? 'bg-yellow-200 text-amber-950'
-                                              : 'text-amber-800 hover:bg-amber-50'
-                                          }`}
-                                        >
-                                          <span>End Item List</span>
-                                          <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                            End
-                                          </span>
-                                        </button>
                                       </div>
                                     </div>
                                   )}
