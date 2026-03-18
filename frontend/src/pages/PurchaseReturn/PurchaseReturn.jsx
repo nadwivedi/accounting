@@ -24,12 +24,12 @@ const formatPurchaseReturnNumber = (value) => {
 
   const prefixedMatch = text.match(/^prt-(\d+)$/i);
   if (prefixedMatch) {
-    return `Prt-${String(Number.parseInt(prefixedMatch[1], 10)).padStart(2, '0')}`;
+    return `PRT-${String(Number.parseInt(prefixedMatch[1], 10)).padStart(2, '0')}`;
   }
 
   const parsed = Number.parseInt(text, 10);
   if (!Number.isInteger(parsed) || parsed <= 0) return text;
-  return `Prt-${String(parsed).padStart(2, '0')}`;
+  return `PRT-${String(parsed).padStart(2, '0')}`;
 };
 
 const getPurchaseLabel = (purchase) => {

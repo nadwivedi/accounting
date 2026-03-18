@@ -21,7 +21,7 @@ const getNextPurchaseReturnVoucherNumber = async (userId) => {
     return Math.max(max, parsed);
   }, 0) + 1;
 
-  return `Prt-${String(nextNumber).padStart(2, '0')}`;
+  return `PRT-${String(nextNumber).padStart(2, '0')}`;
 };
 
 const buildReturnedQuantityMap = (returns = []) => {

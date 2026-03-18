@@ -1,12 +1,5 @@
 const mongoose = require('mongoose');
 
-const generatePurchaseReturnNumber = () => {
-  const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const stamp = Date.now().toString().slice(-6);
-  const rand = Math.floor(Math.random() * 90 + 10);
-  return `PRT-${date}-${stamp}${rand}`;
-};
-
 const purchaseReturnItemSchema = new mongoose.Schema({
   purchaseItemId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -87,12 +80,6 @@ const purchaseReturnSchema = new mongoose.Schema({
     default: ''
   }
 }, { timestamps: true });
-
-purchaseReturnSchema.pre('validate', function ensureVoucherNumber() {
-  if (!this.voucherNumber) {
-    this.voucherNumber = generatePurchaseReturnNumber();
-  }
-});
 
 purchaseReturnSchema.index({ userId: 1, voucherNumber: 1 }, { unique: true });
 

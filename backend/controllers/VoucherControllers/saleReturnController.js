@@ -8,6 +8,22 @@ const toNumber = (value, fallback = 0) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const getNextSaleReturnVoucherNumber = async (userId) => {
+  const entries = await SaleReturn.find({ userId })
+    .select('voucherNumber createdAt')
+    .sort({ createdAt: 1, _id: 1 })
+    .lean();
+
+  const nextNumber = entries.reduce((max, entry) => {
+    const match = String(entry?.voucherNumber || '').trim().match(/^srt-(\d+)$/i);
+    const parsed = match ? Number.parseInt(match[1], 10) : null;
+    if (!Number.isInteger(parsed) || parsed <= 0) return max;
+    return Math.max(max, parsed);
+  }, 0) + 1;
+
+  return `SRT-${String(nextNumber).padStart(2, '0')}`;
+};
+
 const buildReturnedQuantityMap = (returns = []) => {
   const returnedMap = new Map();
 
@@ -95,8 +111,11 @@ exports.createSaleReturn = async (req, res) => {
       await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: item.quantity } });
     }
 
+    const voucherNumber = await getNextSaleReturnVoucherNumber(userId);
+
     const saleReturn = await SaleReturn.create({
       userId,
+      voucherNumber,
       sale: sale._id,
       party: sale.party || null,
       voucherDate,
