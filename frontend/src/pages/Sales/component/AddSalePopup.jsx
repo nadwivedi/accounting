@@ -59,6 +59,7 @@ export default function AddSalePopup({
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
   const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex]);
   const endItemListIndex = 0;
+  const formatStockQuantity = (value) => Number(value || 0).toLocaleString('en-IN');
   const resolveItemUnit = (item) => {
     const itemUnit = String(item?.unit || '').trim();
     if (itemUnit) return itemUnit;
@@ -447,11 +448,16 @@ export default function AddSalePopup({
                                                 }`}
                                               >
                                                 <span className="truncate font-medium">{getProductDisplayName(product)}</span>
-                                                {isSelected && (
-                                                  <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
-                                                    Selected
+                                                <div className="flex shrink-0 items-center gap-2">
+                                                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                                                    Qty: {formatStockQuantity(product.currentStock)}
                                                   </span>
-                                                )}
+                                                  {isSelected && (
+                                                    <span className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                                      Selected
+                                                    </span>
+                                                  )}
+                                                </div>
                                               </button>
                                             );
                                           })
