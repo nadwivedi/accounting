@@ -60,7 +60,14 @@ export default function AddPurchasePopup({
   const resolvedLeadgerInputRef = leadgerInputRef || localLeadgerInputRef;
   const resolvedProductInputRef = productInputRef || localProductInputRef;
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
-  const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex]);
+  const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex], 'auto', 'viewport');
+  const expandedProductDropdownStyle = productDropdownStyle ? {
+    ...productDropdownStyle,
+    bottom: 8,
+    maxHeight: typeof productDropdownStyle.top === 'number'
+      ? `calc(100vh - ${productDropdownStyle.top + 8}px)`
+      : productDropdownStyle.maxHeight
+  } : null;
   const endItemListIndex = 0;
   const resolveItemUnit = (item) => {
     const itemUnit = String(item?.unit || '').trim();
@@ -466,8 +473,8 @@ export default function AddPurchasePopup({
 
                                   {isProductSectionActive && productDropdownStyle && (
                                     <div
-                                      className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
-                                      style={productDropdownStyle}
+                                      className="fixed z-[120] flex flex-col overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]"
+                                      style={expandedProductDropdownStyle}
                                       onClick={(event) => event.stopPropagation()}
                                     >
                                       <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
@@ -476,7 +483,7 @@ export default function AddPurchasePopup({
                                           {filteredProducts.length}
                                         </span>
                                       </div>
-                                      <div className="overflow-y-auto py-1" style={{ maxHeight: productDropdownStyle.maxHeight }}>
+                                      <div className="flex-1 overflow-y-auto py-1">
                                         <button
                                           type="button"
                                           onMouseDown={(event) => event.preventDefault()}
