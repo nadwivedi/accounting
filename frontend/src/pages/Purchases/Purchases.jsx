@@ -7,6 +7,148 @@ import AddPartyPopup from '../Party/component/AddPartyPopup';
 import AddProductPopup from '../Products/component/AddProductPopup';
 import AddPurchasePopup from './component/AddPurchasePopup';
 
+const formatCurrency = (value) => (
+  `Rs ${Number(value || 0).toLocaleString('en-IN', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  })}`
+);
+
+const formatDetailDate = (value) => {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '-';
+
+  return date.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+};
+
+const formatQuantity = (value) => Number(value || 0).toLocaleString('en-IN');
+
+function PurchaseDetailModal({ detail, loading, error, onClose }) {
+  if (!detail && !loading && !error) return null;
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-3" onClick={onClose}>
+      <div
+        className="max-h-[92vh] w-full max-w-5xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-900 via-teal-900 to-cyan-800 px-5 py-4 text-white">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-100">Purchase Detail</p>
+            <h2 className="mt-1 text-xl font-bold">{detail?.title || 'Loading purchase detail'}</h2>
+            {detail ? (
+              <p className="mt-1 text-sm text-cyan-50">
+                {detail.refNumber || '-'} | {detail.partyName || '-'}
+              </p>
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/10 text-white transition hover:bg-white/20"
+            aria-label="Close purchase detail"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="max-h-[calc(92vh-88px)] overflow-y-auto p-5">
+          {loading ? (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-12 text-center text-sm text-slate-500">
+              Loading purchase details...
+            </div>
+          ) : null}
+
+          {!loading && error ? (
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+
+          {!loading && !error && detail ? (
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Total Amount</p>
+                  <p className="mt-1 text-lg font-bold text-slate-900">{formatCurrency(detail.amount)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Purchase Date</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{formatDetailDate(detail.date)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Quantity</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{formatQuantity(detail.quantity)}</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Party</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{detail.partyName || '-'}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {(detail.fields || []).map((field) => (
+                  <div key={`${field.label}-${field.value || 'empty'}`} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{field.label}</p>
+                    <p className="mt-1 text-sm font-medium text-slate-800">
+                      {field.label.toLowerCase().includes('date') ? formatDetailDate(field.value) : (field.value || '-')}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              {detail.notes ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Notes</p>
+                  <p className="mt-1 text-sm text-slate-700">{detail.notes}</p>
+                </div>
+              ) : null}
+
+              {(detail.items || []).length > 0 ? (
+                <div className="overflow-hidden rounded-2xl border border-slate-200">
+                  <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+                    <h3 className="text-sm font-semibold text-slate-900">Purchased Items</h3>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full min-w-[720px] text-sm">
+                      <thead className="bg-white text-slate-600">
+                        <tr>
+                          <th className="border-b border-slate-200 px-4 py-3 text-left font-semibold">Product</th>
+                          <th className="border-b border-slate-200 px-4 py-3 text-center font-semibold">Unit</th>
+                          <th className="border-b border-slate-200 px-4 py-3 text-center font-semibold">Qty</th>
+                          <th className="border-b border-slate-200 px-4 py-3 text-center font-semibold">Rate</th>
+                          <th className="border-b border-slate-200 px-4 py-3 text-center font-semibold">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detail.items.map((item) => (
+                          <tr key={item.id} className="bg-white">
+                            <td className="border-b border-slate-100 px-4 py-3 font-medium text-slate-800">{item.productName || '-'}</td>
+                            <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-700">{item.unit || '-'}</td>
+                            <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-800">{formatQuantity(item.quantity)}</td>
+                            <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-800">{formatCurrency(item.unitPrice)}</td>
+                            <td className="border-b border-slate-100 px-4 py-3 text-center font-semibold text-slate-900">{formatCurrency(item.total)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Purchases({ modalOnly = false, onModalFinish = null }) {
   const toastOptions = { autoClose: 1200 };
   const location = useLocation();
@@ -128,6 +270,10 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [selectedPurchase, setSelectedPurchase] = useState(null);
+  const [purchaseDetail, setPurchaseDetail] = useState(null);
+  const [purchaseDetailLoading, setPurchaseDetailLoading] = useState(false);
+  const [purchaseDetailError, setPurchaseDetailError] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
@@ -232,6 +378,37 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOpenPurchaseDetail = async (purchase) => {
+    if (!purchase?._id) return;
+
+    setSelectedPurchase(purchase);
+    setPurchaseDetail(null);
+    setPurchaseDetailError('');
+    setPurchaseDetailLoading(true);
+
+    try {
+      const response = await apiClient.get('/reports/party-ledger-entry-detail', {
+        params: {
+          type: 'purchase',
+          refId: purchase._id
+        }
+      });
+
+      setPurchaseDetail(response.data || null);
+    } catch (err) {
+      setPurchaseDetailError(err.message || 'Error loading purchase detail');
+    } finally {
+      setPurchaseDetailLoading(false);
+    }
+  };
+
+  const handleClosePurchaseDetail = () => {
+    setSelectedPurchase(null);
+    setPurchaseDetail(null);
+    setPurchaseDetailError('');
+    setPurchaseDetailLoading(false);
   };
 
   const fetchLeadgers = async () => {
@@ -1294,6 +1471,16 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         onClose={() => closeInlineProductForm(true)}
         onProductCreated={handleProductCreated}
       />
+      <PurchaseDetailModal
+        detail={purchaseDetail || (selectedPurchase ? {
+          title: 'Purchase Details',
+          refNumber: formatPurchaseNumber(selectedPurchase.purchaseNumber),
+          partyName: resolveLeadgerNameById(selectedPurchase.party)
+        } : null)}
+        loading={purchaseDetailLoading}
+        error={purchaseDetailError}
+        onClose={handleClosePurchaseDetail}
+      />
 
       <div className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
         <div className="border-b border-gray-200 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 px-6 py-5">
@@ -1340,9 +1527,13 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                 <div className="border-b border-slate-100 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 px-3.5 py-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/80">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenPurchaseDetail(purchase)}
+                        className="text-[9px] font-semibold uppercase tracking-[0.12em] text-white/80 transition hover:text-white"
+                      >
                         {formatPurchaseNumber(purchase.purchaseNumber)}
-                      </p>
+                      </button>
                       <p className="mt-0.5 truncate text-xs font-semibold text-white">
                         {purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || 'No supplier invoice'}
                       </p>
@@ -1451,7 +1642,15 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                   return (
                     <tr key={purchase._id} className="transition-colors duration-150 hover:bg-slate-200/45">
                       <td className="border border-slate-400 px-4 py-3 text-center text-slate-600">{new Date(purchase.purchaseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{formatPurchaseNumber(purchase.purchaseNumber)}</td>
+                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenPurchaseDetail(purchase)}
+                          className="rounded-lg px-2 py-1 text-slate-800 transition hover:bg-cyan-50 hover:text-cyan-700"
+                        >
+                          {formatPurchaseNumber(purchase.purchaseNumber)}
+                        </button>
+                      </td>
                       <td className="border border-slate-400 px-4 py-3 text-center font-medium text-slate-700">{resolveLeadgerNameById(purchase.party)}</td>
                       <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
                       <td className="border border-slate-400 px-4 py-3 text-slate-600">

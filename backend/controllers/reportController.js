@@ -1180,7 +1180,11 @@ exports.getStockLedger = async (req, res) => {
       .map((p) => ({
         productId: p._id,
         productName: p.name,
-        currentStock: toNumber(p.currentStock)
+        currentStock: toNumber(p.currentStock),
+        minStockLevel: toNumber(p.minStockLevel || 0),
+        unit: p.unit || 'pcs',
+        purchasePrice: toNumber(p.purchasePrice || 0),
+        salePrice: toNumber(p.salePrice || 0)
       }));
 
     res.status(200).json({
