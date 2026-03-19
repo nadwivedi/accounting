@@ -107,6 +107,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [invoiceNumberPreview, setInvoiceNumberPreview] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
@@ -153,6 +154,39 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     if (!modalOnly || showForm) return;
     handleOpenForm();
   }, [modalOnly, showForm]);
+
+  useEffect(() => {
+    if (!showForm || editingId) {
+      setInvoiceNumberPreview('');
+      return;
+    }
+
+    let ignore = false;
+
+    const loadNextInvoiceNumber = async () => {
+      try {
+        const response = await apiClient.get('/sales/next-invoice-number', {
+          params: {
+            saleDate: formData.saleDate || undefined
+          }
+        });
+
+        if (!ignore) {
+          setInvoiceNumberPreview(response.data?.invoiceNumber || '');
+        }
+      } catch (err) {
+        if (!ignore) {
+          setInvoiceNumberPreview('');
+        }
+      }
+    };
+
+    loadNextInvoiceNumber();
+
+    return () => {
+      ignore = true;
+    };
+  }, [showForm, editingId, formData.saleDate]);
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -1162,6 +1196,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
           editingId={editingId}
           loading={loading}
           isCashParty={isCashParty}
+          invoiceNumberPreview={invoiceNumberPreview}
           formData={formData}
           currentItem={currentItem}
           products={products}
@@ -1268,6 +1303,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         editingId={editingId}
         loading={loading}
         isCashParty={isCashParty}
+        invoiceNumberPreview={invoiceNumberPreview}
         formData={formData}
         currentItem={currentItem}
         products={products}

@@ -129,6 +129,29 @@ const calculateTotals = (payload = {}) => {
   };
 };
 
+exports.getNextSaleInvoiceNumber = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { saleDate } = req.query;
+    const resolvedSaleDate = saleDate ? new Date(saleDate) : new Date();
+
+    const invoiceNumber = await generateInvoiceNumber(userId, resolvedSaleDate);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        invoiceNumber
+      }
+    });
+  } catch (error) {
+    console.error('Get next sale invoice number error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching next sale invoice number'
+    });
+  }
+};
+
 // Create sale
 exports.createSale = async (req, res) => {
   try {

@@ -8,6 +8,7 @@ export default function AddSalePopup({
   editingId,
   loading,
   isCashParty,
+  invoiceNumberPreview,
   formData,
   currentItem,
   products,
@@ -67,6 +68,9 @@ export default function AddSalePopup({
   } : null;
   const endItemListIndex = 0;
   const formatStockQuantity = (value) => Number(value || 0).toLocaleString('en-IN');
+  const displayedInvoiceNumber = editingId
+    ? (formData.invoiceNumber || '-')
+    : (invoiceNumberPreview || 'Loading...');
   const resolveItemUnit = (item) => {
     const itemUnit = String(item?.unit || '').trim();
     if (itemUnit) return itemUnit;
@@ -158,7 +162,7 @@ export default function AddSalePopup({
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">1</span>
                     Sale Details
                   </h3>
-                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-3">
+                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-4 md:gap-3">
                   <div>
                     <label className={labelClass}>Invoice Date</label>
                     <div className="relative">
@@ -172,6 +176,13 @@ export default function AddSalePopup({
                         autoFocus
                         className={`${inputClass} pl-9 focus:ring-indigo-500`}
                       />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Invoice Number</label>
+                    <div className={`${inputClass} flex items-center bg-white font-semibold text-gray-900`}>
+                      {displayedInvoiceNumber}
                     </div>
                   </div>
 
