@@ -270,6 +270,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [purchaseNumberPreview, setPurchaseNumberPreview] = useState('');
   const [selectedPurchase, setSelectedPurchase] = useState(null);
   const [purchaseDetail, setPurchaseDetail] = useState(null);
   const [purchaseDetailLoading, setPurchaseDetailLoading] = useState(false);
@@ -335,6 +336,34 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     if (!modalOnly || showForm) return;
     handleOpenForm();
   }, [modalOnly, showForm]);
+
+  useEffect(() => {
+    if (!showForm || editingId) {
+      setPurchaseNumberPreview('');
+      return;
+    }
+
+    let ignore = false;
+
+    const loadNextPurchaseNumber = async () => {
+      try {
+        const response = await apiClient.get('/purchases/next-purchase-number');
+        if (!ignore) {
+          setPurchaseNumberPreview(response.data?.purchaseNumber ? formatPurchaseNumber(response.data.purchaseNumber) : '');
+        }
+      } catch (err) {
+        if (!ignore) {
+          setPurchaseNumberPreview('');
+        }
+      }
+    };
+
+    loadNextPurchaseNumber();
+
+    return () => {
+      ignore = true;
+    };
+  }, [showForm, editingId]);
 
   const getFromDateByFilter = () => {
     const now = new Date();
@@ -1303,6 +1332,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
           editingId={editingId}
           loading={loading}
           isCashParty={isCashParty}
+          purchaseNumberPreview={purchaseNumberPreview}
           formData={formData}
           purchaseDatePickerValue={purchaseDatePickerValue}
           currentItem={currentItem}
@@ -1413,6 +1443,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         editingId={editingId}
         loading={loading}
         isCashParty={isCashParty}
+        purchaseNumberPreview={purchaseNumberPreview}
         formData={formData}
         purchaseDatePickerValue={purchaseDatePickerValue}
         currentItem={currentItem}

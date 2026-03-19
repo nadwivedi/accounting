@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   createPurchase,
   getAllPurchases,
+  getNextPurchaseNumber,
   getPurchaseById,
   updatePurchase,
   deletePurchase
@@ -14,6 +15,7 @@ router.use(auth);
 
 router.post('/', createPurchase);
 router.get('/', getAllPurchases);
+router.get('/next-purchase-number', getNextPurchaseNumber);
 router.get('/:id', getPurchaseById);
 router.put('/:id', updatePurchase);
 router.delete('/:id', deletePurchase);

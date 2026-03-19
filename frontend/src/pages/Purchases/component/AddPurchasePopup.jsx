@@ -8,6 +8,7 @@ export default function AddPurchasePopup({
   editingId,
   loading,
   isCashParty,
+  purchaseNumberPreview,
   formData,
   purchaseDatePickerValue,
   currentItem,
@@ -59,6 +60,9 @@ export default function AddPurchasePopup({
   const currentItemTotal = Math.max(0, Number(currentItem.quantity || 0) * Number(currentItem.unitPrice || 0));
   const resolvedLeadgerInputRef = leadgerInputRef || localLeadgerInputRef;
   const resolvedProductInputRef = productInputRef || localProductInputRef;
+  const displayedPurchaseNumber = editingId
+    ? (formData.purchaseNumber ? `Pur-${String(formData.purchaseNumber).padStart(2, '0')}` : '-')
+    : (purchaseNumberPreview || 'Loading...');
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
   const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex], 'auto', 'viewport');
   const expandedProductDropdownStyle = productDropdownStyle ? {
@@ -176,6 +180,13 @@ export default function AddPurchasePopup({
                   </h3>
 
                   <div className="grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-3">
+                    <div>
+                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Purchase No</label>
+                      <div className={`${inputClass} flex items-center bg-white font-semibold text-gray-900`}>
+                        {displayedPurchaseNumber}
+                      </div>
+                    </div>
+
                     <div>
                       <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Purchase Date</label>
                       <div className="relative">
@@ -327,18 +338,6 @@ export default function AddPurchasePopup({
                         onKeyDown={handleSelectEnterMoveNext}
                         className={`${inputClass} focus:ring-indigo-500`}
                         placeholder="Enter supplier invoice no."
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Due Date</label>
-                      <input
-                        type="date"
-                        name="dueDate"
-                        value={formData.dueDate || ''}
-                        onChange={handleInputChange}
-                        onKeyDown={handleSelectEnterMoveNext}
-                        className={`${inputClass} focus:ring-indigo-500`}
                       />
                     </div>
 

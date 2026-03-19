@@ -95,6 +95,26 @@ const ensurePaymentNumbersForUser = async (userId) => ensureSequentialNumbersFor
   fieldName: 'paymentNumber'
 });
 
+exports.getNextPurchaseNumber = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const nextPurchaseNumber = await ensurePurchaseNumbersForUser(userId);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        purchaseNumber: nextPurchaseNumber
+      }
+    });
+  } catch (error) {
+    console.error('Get next purchase number error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching next purchase number'
+    });
+  }
+};
+
 // Create purchase
 exports.createPurchase = async (req, res) => {
   try {
