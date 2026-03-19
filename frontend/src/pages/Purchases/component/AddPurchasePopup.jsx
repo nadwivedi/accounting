@@ -149,7 +149,7 @@ export default function AddPurchasePopup({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-1 md:p-4" onClick={handleCancel}>
-      <div className="flex h-[95dvh] max-h-[95dvh] w-[96vw] max-w-[72rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="flex h-[95dvh] max-h-[95dvh] w-[95vw] max-w-[70rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 py-2 text-white md:px-4 md:py-3">
           <div className="flex items-center justify-between">
             <div>
@@ -327,8 +327,8 @@ export default function AddPurchasePopup({
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">
-                        Supplier Invoice No. <span className="text-xs text-gray-500">(Optional)</span>
+                      <label className="mb-1 block text-[10px] font-semibold text-gray-700 md:text-[11px]">
+                        Supplier Invoice No. <span className="text-[10px] text-gray-500 md:text-[10px]">(Optional)</span>
                       </label>
                       <input
                         type="text"
@@ -353,7 +353,7 @@ export default function AddPurchasePopup({
                       />
                       <label
                         htmlFor="purchase-invoice-upload"
-                        className={`flex min-h-[36px] cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed px-2.5 py-1.5 text-center text-[13px] font-semibold transition ${
+                        className={`flex min-h-[36px] cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed px-2.5 py-1.5 text-center text-[12px] font-semibold transition ${
                           uploadingInvoice
                             ? 'border-indigo-200 bg-indigo-50 text-indigo-500 opacity-75'
                             : 'border-indigo-300 bg-white text-indigo-700 hover:bg-indigo-50'
