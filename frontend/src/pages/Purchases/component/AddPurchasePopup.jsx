@@ -149,7 +149,7 @@ export default function AddPurchasePopup({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-1 md:p-4" onClick={handleCancel}>
-      <div className="flex h-[95dvh] max-h-[95dvh] w-[94vw] max-w-[68rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="flex h-[95dvh] max-h-[95dvh] w-[96vw] max-w-[72rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 py-2 text-white md:px-4 md:py-3">
           <div className="flex items-center justify-between">
             <div>
@@ -179,15 +179,15 @@ export default function AddPurchasePopup({
                     Purchase Details
                   </h3>
 
-                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-3">
-                    <div>
+                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-12 md:gap-3">
+                    <div className="md:col-span-2">
                       <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Purchase No</label>
                       <div className={`${inputClass} flex items-center bg-white font-semibold text-gray-900`}>
                         {displayedPurchaseNumber}
                       </div>
                     </div>
 
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">Purchase Date</label>
                       <div className="relative">
                         <CalendarDays className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-indigo-400" />
@@ -223,7 +223,7 @@ export default function AddPurchasePopup({
                       </div>
                     </div>
 
-                    <div className="relative">
+                    <div className="relative md:col-span-4">
                       <div className="relative mb-1 min-h-[16px]">
                         <label className="block pr-24 text-[11px] font-semibold text-gray-700 md:text-xs">
                           Party Name <span className="text-red-500">*</span>
@@ -326,7 +326,7 @@ export default function AddPurchasePopup({
                       </div>
                     </div>
 
-                    <div>
+                    <div className="md:col-span-2">
                       <label className="mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs">
                         Supplier Invoice No. <span className="text-xs text-gray-500">(Optional)</span>
                       </label>
