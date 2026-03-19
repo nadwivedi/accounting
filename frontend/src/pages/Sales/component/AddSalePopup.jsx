@@ -171,6 +171,13 @@ export default function AddSalePopup({
                   </h3>
                   <div className="grid grid-cols-1 gap-2.5 md:grid-cols-4 md:gap-3">
                   <div>
+                    <label className={labelClass}>Invoice Number</label>
+                    <div className={`${inputClass} flex items-center bg-white font-semibold text-gray-900`}>
+                      {displayedInvoiceNumber}
+                    </div>
+                  </div>
+
+                  <div>
                     <label className={labelClass}>Invoice Date</label>
                     <div className="relative">
                       <CalendarDays className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-indigo-400 pointer-events-none" />
@@ -186,14 +193,7 @@ export default function AddSalePopup({
                     </div>
                   </div>
 
-                  <div>
-                    <label className={labelClass}>Invoice Number</label>
-                    <div className={`${inputClass} flex items-center bg-white font-semibold text-gray-900`}>
-                      {displayedInvoiceNumber}
-                    </div>
-                  </div>
-
-                  <div className="relative">
+                  <div className="relative md:col-span-2">
                     <div className="relative mb-1 min-h-[16px]">
                       <label className="block pr-24 text-[11px] font-semibold text-gray-700 md:text-xs">Party Name</label>
                       {isLeadgerSectionActive && (
@@ -293,16 +293,6 @@ export default function AddSalePopup({
                     </div>
                   </div>
 
-                  <div>
-                    <label className={labelClass}>Due Date</label>
-                    <input
-                      type="date"
-                      name="dueDate"
-                      value={formData.dueDate}
-                      onChange={handleInputChange}
-                      className={`${inputClass} focus:ring-indigo-500`}
-                    />
-                  </div>
                 </div>
                 </div>
 
