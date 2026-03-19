@@ -58,6 +58,13 @@ export default function AddSalePopup({
   const currentItemTotal = Math.max(0, Number(currentItem.quantity || 0) * Number(currentItem.unitPrice || 0));
   const resolvedProductInputRef = productInputRef || localProductInputRef;
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
+  const expandedLeadgerDropdownStyle = leadgerDropdownStyle ? {
+    ...leadgerDropdownStyle,
+    bottom: 8,
+    maxHeight: typeof leadgerDropdownStyle.top === 'number'
+      ? `calc(100vh - ${leadgerDropdownStyle.top + 8}px)`
+      : leadgerDropdownStyle.maxHeight
+  } : null;
   const productDropdownStyle = useFloatingDropdownPosition(productSectionRef, isProductSectionActive, [filteredProducts.length, productListIndex], 'auto', 'viewport');
   const expandedProductDropdownStyle = productDropdownStyle ? {
     ...productDropdownStyle,
@@ -226,8 +233,8 @@ export default function AddSalePopup({
 
                       {isLeadgerSectionActive && leadgerDropdownStyle && (
                         <div
-                          className="fixed z-[80] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
-                          style={leadgerDropdownStyle}
+                          className="fixed z-[120] flex flex-col overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.28)]"
+                          style={expandedLeadgerDropdownStyle}
                           onClick={(event) => event.stopPropagation()}
                         >
                           <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
@@ -236,7 +243,7 @@ export default function AddSalePopup({
                               {filteredLeadgers.length}
                             </span>
                           </div>
-                          <div className="overflow-y-auto py-1" style={{ maxHeight: leadgerDropdownStyle.maxHeight }}>
+                          <div className="flex-1 overflow-y-auto py-1">
                             {filteredLeadgers.length === 0 ? (
                               <div className="px-3 py-3 text-center text-[13px] text-slate-500">
                                 <p>No matching parties found.</p>
