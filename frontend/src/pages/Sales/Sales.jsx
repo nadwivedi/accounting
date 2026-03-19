@@ -239,8 +239,12 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   };
 
   const getSaleInvoicePdfUrl = (saleId) => {
-    const baseUrl = String(apiClient.defaults.baseURL || '/api').replace(/\/+$/, '');
-    return `${baseUrl}/sales/${saleId}/invoice-pdf`;
+    const configuredBaseUrl = String(apiClient.defaults.baseURL || '/api').trim();
+    const resolvedBaseUrl = configuredBaseUrl
+      ? new URL(configuredBaseUrl, window.location.origin).toString().replace(/\/+$/, '')
+      : `${window.location.origin}/api`;
+
+    return `${resolvedBaseUrl}/sales/${saleId}/invoice-pdf`;
   };
 
   const handleOpenInvoicePdf = (saleId) => {
