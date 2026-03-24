@@ -23,6 +23,17 @@ const formatPurchaseNumber = (value) => {
 };
 
 const formatQuantity = (value) => Number(value || 0).toLocaleString('en-IN');
+const HIDDEN_DETAIL_FIELDS = new Set([
+  'party',
+  'purchase date',
+  'voucher no',
+  'voucher number',
+  'supplier invoice',
+  'invoice',
+  'invoice no',
+  'invoice number',
+  'due date'
+]);
 
 function StatCard({ title, value, icon: Icon, tone }) {
   return (
@@ -106,7 +117,7 @@ function PurchaseDetailModal({ detail, loading, error, onClose }) {
               </div>
 
               <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                {(detail.fields || []).map((field) => (
+                {(detail.fields || []).filter((field) => !HIDDEN_DETAIL_FIELDS.has(String(field?.label || '').trim().toLowerCase())).map((field) => (
                   <div key={`${field.label}-${field.value || 'empty'}`} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{field.label}</p>
                     <p className="mt-1 text-sm font-medium text-slate-800">
