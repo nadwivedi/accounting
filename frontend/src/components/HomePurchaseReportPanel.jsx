@@ -24,6 +24,7 @@ const formatPurchaseNumber = (value) => {
 
 const formatQuantity = (value) => Number(value || 0).toLocaleString('en-IN');
 const HIDDEN_DETAIL_FIELDS = new Set([
+  'supplier bill',
   'party',
   'purchase date',
   'voucher no',
@@ -114,7 +115,7 @@ function PurchaseDetailModal({ detail, loading, error, onClose }) {
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Party</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{detail.partyName || '-'}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{detail.Name || '-'}</p>
                 </div>
               </div>
 
