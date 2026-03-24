@@ -354,12 +354,14 @@ export default function StockLedger() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                      row.type === 'cash sale' ? 'bg-emerald-100 text-emerald-700' :
+                      row.type === 'credit sale' ? 'bg-blue-100 text-blue-700' :
                       row.type === 'sale' ? 'bg-rose-100 text-rose-700' :
                       row.type === 'purchase' ? 'bg-emerald-100 text-emerald-700' :
                       row.type === 'purchase return' || row.type === 'sale return' ? 'bg-amber-100 text-amber-700' :
                       'bg-slate-100 text-slate-700'
                     }`}>
-                      {row.type === 'purchase return' || row.type === 'sale return' ? 'return' : (row.type || 'N/A')}
+                      {row.type === 'sale return' ? 'Sale Return' : row.type === 'purchase return' ? 'Purchase Return' : row.type === 'cash sale' ? 'Cash Sale' : row.type === 'credit sale' ? 'Credit Sale' : row.type ? row.type.charAt(0).toUpperCase() + row.type.slice(1) : 'N/A'}
                     </span>
                   </td>
                   <td className="px-6 py-4">

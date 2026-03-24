@@ -339,16 +339,38 @@ exports.getPartyLedger = async (req, res) => {
 
     sales.forEach((sale) => {
       const salePartyId = getRawPartyId(sale.party);
+      const saleTotal = toNumber(sale.totalAmount);
+      const salePaid = toNumber(sale.paidAmount);
+
+      // inAmount = what cash was received with this sale
+      const saleInAmount = sale.type === 'cash sale'
+        ? saleTotal
+        : sale.type === 'sale'
+          ? Math.min(salePaid, saleTotal)
+          : 0;
+
+      // impact on running balance = only the unpaid/pending portion
+      // cash sale → fully paid on spot → 0 impact on balance
+      // partial sale → only the pending amount increases balance
+      // credit sale → full amount increases balance (nothing received)
+      const saleImpact = sale.type === 'cash sale'
+        ? 0
+        : sale.type === 'sale'
+          ? Math.max(0, saleTotal - salePaid)
+          : saleTotal;
+
       entries.push({
         date: sale.saleDate,
         entryCreatedAt: sale.createdAt || sale.saleDate,
-        type: 'sale',
+        type: sale.type || 'sale',
         refId: sale._id,
         refNumber: String(sale.invoiceNumber || '-').trim() || '-',
         partyId: salePartyId || null,
         partyName: sale.customerName || resolvePartyName(salePartyId, salePartyId ? 'Account' : 'Walk-in'),
-        amount: toNumber(sale.totalAmount),
-        impact: toNumber(sale.totalAmount),
+        amount: saleTotal,
+        impact: saleImpact,
+        inAmount: saleInAmount,
+        outAmount: 0,
         quantity: getTotalQuantity(sale.items),
         itemSummary: getItemSummary(sale.items),
         method: '',
@@ -807,11 +829,16 @@ exports.getDayBookReport = async (req, res) => {
     sales.forEach((sale) => {
       const salePartyId = getRawPartyId(sale.party);
       const amount = toNumber(sale.totalAmount);
+      const saleInAmount = sale.type === 'cash sale'
+        ? amount
+        : sale.type === 'sale'
+          ? Math.min(toNumber(sale.paidAmount), amount)
+          : 0;
       entries.push({
         date: sale.saleDate,
         entryCreatedAt: sale.createdAt || sale.saleDate,
-        type: 'sale',
-        label: 'Sale',
+        type: sale.type || 'sale',
+        label: sale.type === 'cash sale' ? 'Cash Sale' : sale.type === 'credit sale' ? 'Credit Sale' : 'Sale',
         refId: sale._id,
         voucherNumber: String(sale.invoiceNumber || '-').trim() || '-',
         partyId: salePartyId || null,
@@ -822,7 +849,7 @@ exports.getDayBookReport = async (req, res) => {
         method: '',
         note: sale.notes || '',
         amount,
-        inAmount: 0,
+        inAmount: saleInAmount,
         outAmount: 0
       });
     });
@@ -983,7 +1010,7 @@ exports.getDayBookReport = async (req, res) => {
       acc.totalInward += toNumber(entry.inAmount);
       acc.totalOutward += toNumber(entry.outAmount);
 
-      if (entry.type === 'sale') acc.sales += entry.amount;
+      if (entry.type === 'sale' || entry.type === 'cash sale' || entry.type === 'credit sale') acc.sales += entry.amount;
       if (entry.type === 'purchase') acc.purchases += entry.amount;
       if (entry.type === 'receipt') acc.receipts += entry.amount;
       if (entry.type === 'payment') acc.payments += entry.amount;

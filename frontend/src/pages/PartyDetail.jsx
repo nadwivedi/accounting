@@ -57,6 +57,20 @@ const getTypeMeta = (type) => {
     };
   }
 
+  if (type === 'cash sale') {
+    return {
+      label: 'Cash Sale',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    };
+  }
+
+  if (type === 'credit sale') {
+    return {
+      label: 'Credit Sale',
+      className: 'border-blue-200 bg-blue-50 text-blue-700'
+    };
+  }
+
   if (type === 'purchase') {
     return {
       label: 'Purchase',
@@ -372,7 +386,7 @@ export default function PartyDetail() {
 
       acc.entries += 1;
 
-      if (row.type === 'sale') {
+      if (row.type === 'sale' || row.type === 'cash sale' || row.type === 'credit sale') {
         acc.totalSales += amount;
         acc.saleQty += quantity;
       }
@@ -706,6 +720,8 @@ export default function PartyDetail() {
                     <th className="border-y-2 border-r border-black px-4 py-3 font-semibold">Details</th>
                     <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Qty</th>
                     <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Amount</th>
+                    <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold text-emerald-700">Money In</th>
+                    <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold text-rose-700">Money Out</th>
                     <th className="border-y-2 border-r-2 border-black px-4 py-3 text-center font-semibold">Running Balance</th>
                   </tr>
                 </thead>
@@ -754,6 +770,12 @@ export default function PartyDetail() {
                         <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-slate-900">
                           {formatCurrency(row.amount)}
                         </td>
+                        <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-emerald-700">
+                          {Number(row.inAmount || 0) > 0 ? formatCurrency(row.inAmount) : '-'}
+                        </td>
+                        <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-rose-700">
+                          {Number(row.outAmount || 0) > 0 ? formatCurrency(row.outAmount) : '-'}
+                        </td>
                         <td className={`border border-slate-300 px-4 py-3 text-center font-semibold ${Number(row.displayRunningBalance || 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                           {formatCurrency(row.displayRunningBalance)}
                         </td>
@@ -763,7 +785,7 @@ export default function PartyDetail() {
 
                   {sortedLedgerRows.length === 0 ? (
                     <tr>
-                      <td colSpan="7" className="border border-slate-300 px-4 py-10 text-center text-slate-500">
+                      <td colSpan="9" className="border border-slate-300 px-4 py-10 text-center text-slate-500">
                         No ledger data found.
                       </td>
                     </tr>

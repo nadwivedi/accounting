@@ -56,7 +56,7 @@ const buildSummary = (entries) => entries.reduce((acc, entry) => {
   acc.totalInward += inward;
   acc.totalOutward += outward;
 
-  if (entry.type === 'sale') acc.sales += amount;
+  if (entry.type === 'sale' || entry.type === 'cash sale' || entry.type === 'credit sale') acc.sales += amount;
   if (entry.type === 'purchase') acc.purchases += amount;
   if (entry.type === 'receipt') acc.receipts += amount;
   if (entry.type === 'payment') acc.payments += amount;
@@ -66,10 +66,12 @@ const buildSummary = (entries) => entries.reduce((acc, entry) => {
 }, { ...DEFAULT_SUMMARY });
 
 const TYPE_BADGE_STYLES = {
-  sale: 'bg-emerald-100 text-emerald-700',
+  sale: 'bg-amber-100 text-amber-700',
+  'cash sale': 'bg-emerald-100 text-emerald-700',
+  'credit sale': 'bg-blue-100 text-blue-700',
   payment: 'bg-rose-100 text-rose-700',
   receipt: 'bg-sky-100 text-sky-700',
-  purchase: 'bg-amber-100 text-amber-700',
+  purchase: 'bg-orange-100 text-orange-700',
   expense: 'bg-fuchsia-100 text-fuchsia-700'
 };
 
@@ -254,6 +256,7 @@ export default function HomeDayBookPanel() {
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.14em]">Ref</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.14em]">Party</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.14em]">Method</th>
+                    <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.14em]">Amount</th>
                     <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.14em]">In</th>
                     <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.14em]">Out</th>
                   </tr>
@@ -278,6 +281,9 @@ export default function HomeDayBookPanel() {
                         <td className="px-4 py-3 text-xs font-semibold text-slate-700">{entry.voucherNumber || '-'}</td>
                         <td className="px-4 py-3 text-sm text-slate-700">{entry.partyName || '-'}</td>
                         <td className="px-4 py-3 text-sm text-slate-700">{entry.method || '-'}</td>
+                        <td className="px-4 py-3 text-right text-sm font-semibold text-slate-700">
+                          {Number(entry.amount || 0) > 0 ? formatCurrency(entry.amount) : '-'}
+                        </td>
                         <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-600">
                           {Number(entry.inAmount || 0) > 0 ? formatCurrency(entry.inAmount) : '-'}
                         </td>

@@ -78,6 +78,17 @@ const salesSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  paidAmount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  type: {
+    type: String,
+    enum: ['sale', 'cash sale', 'credit sale'],
+    default: 'credit sale',
+    trim: true
+  },
   invoicePdfPath: {
     type: String,
     trim: true,
