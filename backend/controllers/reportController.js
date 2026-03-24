@@ -218,17 +218,11 @@ exports.getOutstandingReport = async (req, res) => {
       if (sale.customerName) {
         row.partyName = sale.customerName;
       }
-      // Cash sale = fully paid on spot → 0 receivable impact
-      // Partial sale = only unpaid portion is receivable
-      // Credit sale = full amount is receivable
-      const saleTotal = toNumber(sale.totalAmount);
-      const salePaid = toNumber(sale.paidAmount);
-      if (sale.type === 'cash sale') {
-        // no receivable — money already received
-      } else if (sale.type === 'sale') {
-        row.totalSales += Math.max(0, saleTotal - salePaid);
-      } else {
-        row.totalSales += saleTotal;
+      // cash sale → 0 receivable (fully paid on spot, no auto-receipt)
+      // sale (partial) → FULL totalAmount (auto-receipt handles the deduction from totalReceipts)
+      // credit sale → full totalAmount (nothing received)
+      if (sale.type !== 'cash sale') {
+        row.totalSales += toNumber(sale.totalAmount);
       }
     });
 
@@ -243,17 +237,11 @@ exports.getOutstandingReport = async (req, res) => {
       const partyId = getRawPartyId(purchase.party);
       const row = ensurePartyRow(partyId);
       if (!row) return;
-      // Cash purchase = fully paid on spot → 0 payable impact
-      // Partial purchase = only unpaid portion is payable
-      // Credit purchase = full amount is payable
-      const purchaseTotal = toNumber(purchase.totalAmount);
-      const purchasePaid = toNumber(purchase.paidAmount);
-      if (purchase.type === 'cash purchase') {
-        // no payable — money already paid
-      } else if (purchase.type === 'purchase') {
-        row.totalPurchases += Math.max(0, purchaseTotal - purchasePaid);
-      } else {
-        row.totalPurchases += purchaseTotal;
+      // cash purchase → 0 payable (fully paid on spot, no auto-payment)
+      // purchase (partial) → FULL totalAmount (auto-payment handles the deduction from totalPayments)
+      // credit purchase → full totalAmount (nothing paid)
+      if (purchase.type !== 'cash purchase') {
+        row.totalPurchases += toNumber(purchase.totalAmount);
       }
     });
 
