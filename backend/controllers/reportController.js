@@ -218,7 +218,18 @@ exports.getOutstandingReport = async (req, res) => {
       if (sale.customerName) {
         row.partyName = sale.customerName;
       }
-      row.totalSales += toNumber(sale.totalAmount);
+      // Cash sale = fully paid on spot → 0 receivable impact
+      // Partial sale = only unpaid portion is receivable
+      // Credit sale = full amount is receivable
+      const saleTotal = toNumber(sale.totalAmount);
+      const salePaid = toNumber(sale.paidAmount);
+      if (sale.type === 'cash sale') {
+        // no receivable — money already received
+      } else if (sale.type === 'sale') {
+        row.totalSales += Math.max(0, saleTotal - salePaid);
+      } else {
+        row.totalSales += saleTotal;
+      }
     });
 
     receipts.forEach((receipt) => {
