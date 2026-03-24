@@ -419,12 +419,11 @@ exports.getPartyLedger = async (req, res) => {
       const purchaseTotal = toNumber(purchase.totalAmount);
       const purchasePaid = toNumber(purchase.paidAmount);
 
-      // outAmount = cash actually paid with this purchase
-      const purchaseOutAmount = purchase.type === 'cash purchase'
-        ? purchaseTotal
-        : purchase.type === 'purchase'
-          ? Math.min(purchasePaid, purchaseTotal)
-          : 0;
+      // outAmount = cash actually paid WITH this purchase entry
+      // cash purchase → full amount (money paid on spot, no separate payment entry)
+      // purchase (partial) → 0 (the paid portion shows as a separate auto-payment entry)
+      // credit purchase → 0 (nothing paid yet)
+      const purchaseOutAmount = purchase.type === 'cash purchase' ? purchaseTotal : 0;
 
       // impact on running balance = only the unpaid/pending portion
       // impact on running balance:
@@ -893,11 +892,8 @@ exports.getDayBookReport = async (req, res) => {
       const purchasePaid = toNumber(purchase.paidAmount);
       const supplierInvoice = String(purchase.supplierInvoice || '').trim();
 
-      const purchaseOutAmount = purchase.type === 'cash purchase'
-        ? amount
-        : purchase.type === 'purchase'
-          ? Math.min(purchasePaid, amount)
-          : 0;
+      // outAmount for daybook: only cash purchase gets it; partial purchase's payment shows as separate payment entry
+      const purchaseOutAmount = purchase.type === 'cash purchase' ? amount : 0;
 
       const purchaseLabel = purchase.type === 'cash purchase'
         ? 'Cash Purchase'
