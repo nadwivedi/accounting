@@ -364,22 +364,17 @@ exports.getPartyLedger = async (req, res) => {
       const saleTotal = toNumber(sale.totalAmount);
       const salePaid = toNumber(sale.paidAmount);
 
-      // inAmount = what cash was received with this sale
-      const saleInAmount = sale.type === 'cash sale'
-        ? saleTotal
-        : sale.type === 'sale'
-          ? Math.min(salePaid, saleTotal)
-          : 0;
+      // inAmount = cash received WITH this sale entry
+      // cash sale → full amount (money on spot, no separate receipt)
+      // sale (partial) → 0 (the paid portion already appears as a separate auto-receipt)
+      // credit sale → 0 (nothing received)
+      const saleInAmount = sale.type === 'cash sale' ? saleTotal : 0;
 
-      // impact on running balance = only the unpaid/pending portion
-      // cash sale → fully paid on spot → 0 impact on balance
-      // partial sale → only the pending amount increases balance
-      // credit sale → full amount increases balance (nothing received)
-      const saleImpact = sale.type === 'cash sale'
-        ? 0
-        : sale.type === 'sale'
-          ? Math.max(0, saleTotal - salePaid)
-          : saleTotal;
+      // impact on running balance:
+      // cash sale → 0 (paid on spot, no balance change)
+      // sale (partial) → FULL totalAmount (the auto-receipt will deduct the paid portion separately)
+      // credit sale → full totalAmount (nothing received yet)
+      const saleImpact = sale.type === 'cash sale' ? 0 : saleTotal;
 
       entries.push({
         date: sale.saleDate,
@@ -432,14 +427,11 @@ exports.getPartyLedger = async (req, res) => {
           : 0;
 
       // impact on running balance = only the unpaid/pending portion
-      // cash purchase → fully paid on spot → 0 impact
-      // partial purchase → only pending increases payable
-      // credit purchase → full amount increases payable
-      const purchaseImpact = purchase.type === 'cash purchase'
-        ? 0
-        : purchase.type === 'purchase'
-          ? -Math.max(0, purchaseTotal - purchasePaid)
-          : -purchaseTotal;
+      // impact on running balance:
+      // cash purchase → 0 (paid on spot, no balance change)
+      // purchase (partial) → FULL -totalAmount (the auto-payment will reduce the payable separately)
+      // credit purchase → full -totalAmount (nothing paid yet)
+      const purchaseImpact = purchase.type === 'cash purchase' ? 0 : -purchaseTotal;
 
       entries.push({
         date: purchase.purchaseDate,
@@ -873,11 +865,8 @@ exports.getDayBookReport = async (req, res) => {
     sales.forEach((sale) => {
       const salePartyId = getRawPartyId(sale.party);
       const amount = toNumber(sale.totalAmount);
-      const saleInAmount = sale.type === 'cash sale'
-        ? amount
-        : sale.type === 'sale'
-          ? Math.min(toNumber(sale.paidAmount), amount)
-          : 0;
+      // inAmount for daybook: only cash sale gets it; partial sale's payment shows as separate receipt
+      const saleInAmount = sale.type === 'cash sale' ? amount : 0;
       entries.push({
         date: sale.saleDate,
         entryCreatedAt: sale.createdAt || sale.saleDate,
