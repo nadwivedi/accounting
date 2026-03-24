@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { RefreshCw, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import apiClient from '../utils/api';
 
@@ -27,6 +27,7 @@ function StatCard({ title, value, icon: Icon, tone }) {
 }
 
 export default function HomePartyLedgerPanel() {
+  const navigate = useNavigate();
   const [parties, setParties] = useState([]);
   const [outstanding, setOutstanding] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -68,6 +69,11 @@ export default function HomePartyLedgerPanel() {
   const totalReceivable = rows.reduce((sum, party) => sum + Number(party.receivable || 0), 0);
   const totalPayable = rows.reduce((sum, party) => sum + Number(party.payable || 0), 0);
   const visibleRows = rows.slice(0, 8);
+
+  const handlePartyClick = (party) => {
+    if (!party?._id) return;
+    navigate(`/party/${party._id}`);
+  };
 
   return (
     <section className="w-full rounded-[28px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,249,0.96))] shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
@@ -116,7 +122,11 @@ export default function HomePartyLedgerPanel() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {visibleRows.map((party) => (
-                    <tr key={party._id} className="hover:bg-slate-50">
+                    <tr
+                      key={party._id}
+                      onClick={() => handlePartyClick(party)}
+                      className="cursor-pointer hover:bg-slate-50"
+                    >
                       <td className="px-4 py-3 text-sm font-semibold text-slate-700">{party.name || '-'}</td>
                       <td className="px-4 py-3 text-sm text-slate-700 capitalize">{party.type || '-'}</td>
                       <td className="px-4 py-3 text-sm text-slate-700">{party.mobile || '-'}</td>

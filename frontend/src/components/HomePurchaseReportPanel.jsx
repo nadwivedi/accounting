@@ -69,6 +69,17 @@ function PurchaseDetailModal({ detail, loading, error, onClose }) {
 
   const resolvedPartyName = String(detail?.partyName || detail?.party?.name || '').trim() || '-';
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-3" onClick={onClose}>
       <div
