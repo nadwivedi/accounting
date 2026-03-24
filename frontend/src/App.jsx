@@ -26,7 +26,6 @@ import PurchaseReturn from './pages/PurchaseReturn/PurchaseReturn';
 import ReportsHub from './pages/ReportsHub';
 import ReportsDashboard from './pages/ReportsDashboard';
 import StockLedger from './pages/StockLedger';
-import PartyLedger from './pages/PartyLedger';
 import ReportsPlaceholder from './pages/ReportsPlaceholder';
 import DayBook from './pages/DayBook';
 import Settings from './pages/Settings';
@@ -193,14 +192,7 @@ function App() {
           }
         />
 
-        <Route
-          path="/reports/party-ledger"
-          element={
-            <ProtectedRoute>
-              <PartyLedger />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/reports/party-ledger" element={<Navigate to="/reports" replace />} />
 
         <Route
           path="/reports/stock-ledger"

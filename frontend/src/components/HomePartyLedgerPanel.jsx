@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { RefreshCw, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import apiClient from '../utils/api';
 
@@ -83,12 +83,6 @@ export default function HomePartyLedgerPanel() {
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-700">Live Preview</p>
             <h2 className="mt-1 text-2xl font-black text-slate-800">Party Ledger</h2>
           </div>
-          <Link
-            to="/reports/party-ledger"
-            className="inline-flex items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
-          >
-            Open Full Party Ledger
-          </Link>
         </div>
       </div>
 
