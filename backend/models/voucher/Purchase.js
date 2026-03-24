@@ -64,6 +64,17 @@ const purchaseSchema = new mongoose.Schema({
     type: Number,
     required: true
   },
+  paidAmount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  type: {
+    type: String,
+    enum: ['purchase', 'cash purchase', 'credit purchase'],
+    default: 'credit purchase',
+    trim: true
+  },
   notes: {
     type: String,
     trim: true

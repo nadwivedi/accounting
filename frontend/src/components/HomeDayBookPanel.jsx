@@ -57,7 +57,7 @@ const buildSummary = (entries) => entries.reduce((acc, entry) => {
   acc.totalOutward += outward;
 
   if (entry.type === 'sale' || entry.type === 'cash sale' || entry.type === 'credit sale') acc.sales += amount;
-  if (entry.type === 'purchase') acc.purchases += amount;
+  if (entry.type === 'purchase' || entry.type === 'cash purchase' || entry.type === 'credit purchase') acc.purchases += amount;
   if (entry.type === 'receipt') acc.receipts += amount;
   if (entry.type === 'payment') acc.payments += amount;
   if (entry.type === 'expense') acc.expenses += amount;
@@ -72,6 +72,8 @@ const TYPE_BADGE_STYLES = {
   payment: 'bg-rose-100 text-rose-700',
   receipt: 'bg-sky-100 text-sky-700',
   purchase: 'bg-orange-100 text-orange-700',
+  'cash purchase': 'bg-violet-100 text-violet-700',
+  'credit purchase': 'bg-indigo-100 text-indigo-700',
   expense: 'bg-fuchsia-100 text-fuchsia-700'
 };
 

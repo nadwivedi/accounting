@@ -1,4 +1,4 @@
-﻿const Purchase = require('../../models/voucher/Purchase');
+const Purchase = require('../../models/voucher/Purchase');
 const Product = require('../../models/master/Stock');
 const Payment = require('../../models/voucher/Payment');
 const mongoose = require('mongoose');
@@ -6,6 +6,14 @@ const {
   ensureSequentialNumbersForUser,
   parsePrefixedNumberSearch
 } = require('../../utils/voucherNumbers');
+
+const PURCHASE_TYPES = {
+  PURCHASE: 'purchase',
+  CREDIT: 'credit purchase',
+  CASH: 'cash purchase'
+};
+
+const AUTO_PAYMENT_SOURCES = ['purchase-payment', 'purchase-excess-payment'];
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -41,13 +49,11 @@ const validateItems = (items) => {
   if (!Array.isArray(items) || items.length === 0) {
     return 'At least one item is required';
   }
-
   for (const item of items) {
     if (!item.product) return 'Each item must have a product';
     if (toNumber(item.quantity) <= 0) return 'Item quantity must be greater than 0';
     if (toNumber(item.unitPrice) < 0) return 'Item price cannot be negative';
   }
-
   return null;
 };
 
@@ -55,11 +61,43 @@ const calculateTotalAmount = (items, requestedTotal) => {
   const computedTotal = items.reduce((sum, item) => {
     return sum + (toNumber(item.quantity) * toNumber(item.unitPrice));
   }, 0);
-
   return toNumber(requestedTotal, computedTotal);
 };
 
-const toBoolean = (value) => value === true || value === 'true' || value === 1 || value === '1';
+// ─── Purchase payment breakdown & type ──────────────────────────────────────
+
+const getPurchasePaymentBreakdown = (totalAmountValue, paidAmountValue) => {
+  const totalAmount = Math.max(0, toNumber(totalAmountValue));
+  const paidAmount = Math.max(0, toNumber(paidAmountValue));
+  const appliedAmount = Math.min(totalAmount, paidAmount);
+  const pendingAmount = Math.max(0, totalAmount - paidAmount);
+  const excessAmount = Math.max(0, paidAmount - totalAmount);
+
+  let type = PURCHASE_TYPES.CREDIT;
+  if (paidAmount <= 0) {
+    type = PURCHASE_TYPES.CREDIT;
+  } else if (paidAmount === totalAmount) {
+    type = PURCHASE_TYPES.CASH;
+  } else {
+    type = PURCHASE_TYPES.PURCHASE;
+  }
+
+  return { totalAmount, paidAmount, appliedAmount, pendingAmount, excessAmount, type };
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+const ensurePurchaseNumbersForUser = async (userId) => ensureSequentialNumbersForUser({
+  Model: Purchase,
+  userId,
+  fieldName: 'purchaseNumber'
+});
+
+const ensurePaymentNumbersForUser = async (userId) => ensureSequentialNumbersForUser({
+  Model: Payment,
+  userId,
+  fieldName: 'paymentNumber'
+});
 
 const getLinkedPurchasePaymentTotal = async ({ purchaseId, userId }) => {
   const result = await Payment.aggregate([
@@ -70,48 +108,71 @@ const getLinkedPurchasePaymentTotal = async ({ purchaseId, userId }) => {
         refId: new mongoose.Types.ObjectId(purchaseId)
       }
     },
-    {
-      $group: {
-        _id: null,
-        total: { $sum: '$amount' }
-      }
-    }
+    { $group: { _id: null, total: { $sum: '$amount' } } }
   ]);
-
   return toNumber(result[0]?.total);
 };
 
-const ensurePurchaseNumbersForUser = async (userId) => {
-  return ensureSequentialNumbersForUser({
-    Model: Purchase,
-    userId,
-    fieldName: 'purchaseNumber'
+// ─── Auto-payment sync ────────────────────────────────────────────────────────
+
+const syncPurchaseAutoPayments = async (purchaseDoc, userId) => {
+  const breakdown = getPurchasePaymentBreakdown(purchaseDoc.totalAmount, purchaseDoc.paidAmount);
+
+  // Delete previous auto-payments for this purchase
+  await Payment.deleteMany({
+    originPurchaseId: purchaseDoc._id,
+    paymentSource: { $in: AUTO_PAYMENT_SOURCES }
   });
+
+  // Create payment for the partial payment portion (paid < total)
+  if (breakdown.appliedAmount > 0 && breakdown.appliedAmount < breakdown.totalAmount) {
+    const nextPaymentNumber = await ensurePaymentNumbersForUser(userId);
+    await Payment.create({
+      userId,
+      party: purchaseDoc.party || null,
+      refType: 'purchase',
+      refId: purchaseDoc._id,
+      originPurchaseId: purchaseDoc._id,
+      amount: breakdown.appliedAmount,
+      paymentNumber: nextPaymentNumber,
+      method: 'Cash Account',
+      paymentDate: purchaseDoc.purchaseDate || new Date(),
+      notes: `Auto payment for purchase ${purchaseDoc.supplierInvoice || purchaseDoc.purchaseNumber || ''}`.trim(),
+      paymentSource: 'purchase-payment'
+    });
+  }
+
+  // Create payment for excess amount (paid more than total)
+  if (breakdown.excessAmount > 0) {
+    const nextPaymentNumber = await ensurePaymentNumbersForUser(userId);
+    await Payment.create({
+      userId,
+      party: purchaseDoc.party || null,
+      refType: 'none',
+      refId: null,
+      originPurchaseId: purchaseDoc._id,
+      amount: breakdown.excessAmount,
+      paymentNumber: nextPaymentNumber,
+      method: 'Cash Account',
+      paymentDate: purchaseDoc.purchaseDate || new Date(),
+      notes: `Auto excess payment for purchase ${purchaseDoc.supplierInvoice || purchaseDoc.purchaseNumber || ''}`.trim(),
+      paymentSource: 'purchase-excess-payment'
+    });
+  }
+
+  return breakdown;
 };
 
-const ensurePaymentNumbersForUser = async (userId) => ensureSequentialNumbersForUser({
-  Model: Payment,
-  userId,
-  fieldName: 'paymentNumber'
-});
+// ─── Controllers ─────────────────────────────────────────────────────────────
 
 exports.getNextPurchaseNumber = async (req, res) => {
   try {
     const userId = req.userId;
     const nextPurchaseNumber = await ensurePurchaseNumbersForUser(userId);
-
-    res.status(200).json({
-      success: true,
-      data: {
-        purchaseNumber: nextPurchaseNumber
-      }
-    });
+    res.status(200).json({ success: true, data: { purchaseNumber: nextPurchaseNumber } });
   } catch (error) {
     console.error('Get next purchase number error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error fetching next purchase number'
-    });
+    res.status(500).json({ success: false, message: error.message || 'Error fetching next purchase number' });
   }
 };
 
@@ -119,26 +180,13 @@ exports.getNextPurchaseNumber = async (req, res) => {
 exports.createPurchase = async (req, res) => {
   try {
     const {
-      party,
-      items,
-      purchaseDate,
-      dueDate,
-      invoiceLink,
-      notes,
-      supplierInvoice,
-      invoiceNo,
-      invoiceNumber,
-      totalAmount,
-      paymentAmount,
-      paymentMethod,
-      paymentDate,
-      paymentNotes,
-      isBillWisePayment
+      party, items, purchaseDate, dueDate, invoiceLink, notes,
+      supplierInvoice, invoiceNo, invoiceNumber, totalAmount,
+      paidAmount, paymentAmount  // paymentAmount is the legacy field from the form
     } = req.body;
     const userId = req.userId;
 
     const nextPurchaseNumber = await ensurePurchaseNumbersForUser(userId);
-
     const normalizedItems = normalizeItems(items || []);
     const itemError = validateItems(normalizedItems);
     if (itemError) {
@@ -147,17 +195,14 @@ exports.createPurchase = async (req, res) => {
 
     const normalizedSupplierInvoice = String(supplierInvoice || invoiceNo || invoiceNumber || '').trim();
     const resolvedTotalAmount = calculateTotalAmount(normalizedItems, totalAmount);
-    const resolvedPaymentAmount = Math.max(0, toNumber(paymentAmount, 0));
-    const resolvedBillWiseFlag = toBoolean(isBillWisePayment);
 
-    if (resolvedPaymentAmount > resolvedTotalAmount) {
-      return res.status(400).json({
-        success: false,
-        message: 'Payment amount cannot exceed purchase total'
-      });
-    }
+    // Accept either paidAmount (new) or paymentAmount (legacy form field)
+    const resolvedPaidAmount = paidAmount !== undefined ? paidAmount : paymentAmount;
 
-    const basePayload = {
+    // Compute type from paidAmount
+    const breakdown = getPurchasePaymentBreakdown(resolvedTotalAmount, resolvedPaidAmount);
+
+    const purchase = await Purchase.create({
       userId,
       purchaseNumber: nextPurchaseNumber,
       supplierInvoice: normalizedSupplierInvoice || undefined,
@@ -165,58 +210,28 @@ exports.createPurchase = async (req, res) => {
       items: normalizedItems,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : new Date(),
       dueDate: dueDate ? new Date(dueDate) : null,
-      totalAmount: resolvedTotalAmount,
+      totalAmount: breakdown.totalAmount,
+      paidAmount: breakdown.paidAmount,
+      type: breakdown.type,
       invoiceLink: invoiceLink || '',
       notes
-    };
-
-    const purchase = await Purchase.create(basePayload);
-    const purchaseRefLabel = normalizedSupplierInvoice ? `purchase ${normalizedSupplierInvoice}` : 'purchase entry';
+    });
 
     for (const item of normalizedItems) {
-      await Product.findByIdAndUpdate(
-        item.product,
-        { $inc: { currentStock: toNumber(item.quantity) } }
-      );
+      await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: toNumber(item.quantity) } });
     }
 
-    if (resolvedPaymentAmount > 0) {
-      const nextPaymentNumber = await ensurePaymentNumbersForUser(userId);
-      await Payment.create({
-        userId,
-        paymentNumber: nextPaymentNumber,
-        party: party || null,
-        refType: resolvedBillWiseFlag ? 'purchase' : 'none',
-        refId: resolvedBillWiseFlag ? purchase._id : null,
-        amount: resolvedPaymentAmount,
-        method: paymentMethod || 'cash',
-        paymentDate: paymentDate ? new Date(paymentDate) : (purchaseDate ? new Date(purchaseDate) : new Date()),
-        notes: paymentNotes || (resolvedBillWiseFlag
-          ? `Payment against ${purchaseRefLabel}`
-          : `On-account payment posted during ${purchaseRefLabel}`)
-      });
-    }
+    // Auto-create payments for partial/excess payments
+    await syncPurchaseAutoPayments(purchase, userId);
 
-    const populatedPurchase = await Purchase.findById(purchase._id)
-      .populate('items.product', 'name');
-
-    res.status(201).json({
-      success: true,
-      message: 'Purchase created successfully',
-      data: populatedPurchase
-    });
+    const populatedPurchase = await Purchase.findById(purchase._id).populate('items.product', 'name');
+    res.status(201).json({ success: true, message: 'Purchase created successfully', data: populatedPurchase });
   } catch (error) {
     if (isDuplicatePurchaseInvoiceError(error)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invoice number already exists for this user'
-      });
+      return res.status(400).json({ success: false, message: 'Invoice number already exists for this user' });
     }
     console.error('Create purchase error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error creating purchase'
-    });
+    res.status(500).json({ success: false, message: error.message || 'Error creating purchase' });
   }
 };
 
@@ -255,18 +270,10 @@ exports.getAllPurchases = async (req, res) => {
     }
 
     const purchases = await query.sort({ purchaseDate: -1, createdAt: -1 });
-
-    res.status(200).json({
-      success: true,
-      count: purchases.length,
-      data: purchases
-    });
+    res.status(200).json({ success: true, count: purchases.length, data: purchases });
   } catch (error) {
     console.error('Get all purchases error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error fetching purchases'
-    });
+    res.status(500).json({ success: false, message: error.message || 'Error fetching purchases' });
   }
 };
 
@@ -275,7 +282,6 @@ exports.getPurchaseById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-
     await ensurePurchaseNumbersForUser(userId);
 
     const purchase = await Purchase.findOne({ _id: id, userId })
@@ -283,22 +289,13 @@ exports.getPurchaseById = async (req, res) => {
       .populate('items.product', 'name');
 
     if (!purchase) {
-      return res.status(404).json({
-        success: false,
-        message: 'Purchase not found'
-      });
+      return res.status(404).json({ success: false, message: 'Purchase not found' });
     }
 
-    res.status(200).json({
-      success: true,
-      data: purchase
-    });
+    res.status(200).json({ success: true, data: purchase });
   } catch (error) {
     console.error('Get purchase by ID error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error fetching purchase'
-    });
+    res.status(500).json({ success: false, message: error.message || 'Error fetching purchase' });
   }
 };
 
@@ -308,31 +305,18 @@ exports.updatePurchase = async (req, res) => {
     const { id } = req.params;
     const userId = req.userId;
     const {
-      party,
-      items,
-      purchaseDate,
-      dueDate,
-      totalAmount,
-      notes,
-      invoiceLink,
-      supplierInvoice,
-      invoiceNo,
-      invoiceNumber
+      party, items, purchaseDate, dueDate, totalAmount, notes,
+      invoiceLink, supplierInvoice, invoiceNo, invoiceNumber, paidAmount
     } = req.body;
 
     await ensurePurchaseNumbersForUser(userId);
 
     const purchase = await Purchase.findOne({ _id: id, userId });
     if (!purchase) {
-      return res.status(404).json({
-        success: false,
-        message: 'Purchase not found'
-      });
+      return res.status(404).json({ success: false, message: 'Purchase not found' });
     }
 
-    if (party) {
-      purchase.party = party;
-    }
+    if (party) purchase.party = party;
 
     const hasNewItems = Array.isArray(items);
     let normalizedItems = purchase.items;
@@ -343,28 +327,18 @@ exports.updatePurchase = async (req, res) => {
       if (itemError) {
         return res.status(400).json({ success: false, message: itemError });
       }
-
       for (const oldItem of purchase.items) {
-        await Product.findByIdAndUpdate(
-          oldItem.product,
-          { $inc: { currentStock: -toNumber(oldItem.quantity) } }
-        );
+        await Product.findByIdAndUpdate(oldItem.product, { $inc: { currentStock: -toNumber(oldItem.quantity) } });
       }
-
       for (const newItem of normalizedItems) {
-        await Product.findByIdAndUpdate(
-          newItem.product,
-          { $inc: { currentStock: toNumber(newItem.quantity) } }
-        );
+        await Product.findByIdAndUpdate(newItem.product, { $inc: { currentStock: toNumber(newItem.quantity) } });
       }
-
       purchase.items = normalizedItems;
     }
 
     if (purchaseDate !== undefined) {
       purchase.purchaseDate = purchaseDate ? new Date(purchaseDate) : purchase.purchaseDate;
     }
-
     if (dueDate !== undefined) {
       purchase.dueDate = dueDate ? new Date(dueDate) : null;
     }
@@ -373,55 +347,43 @@ exports.updatePurchase = async (req, res) => {
     if (supplierInvoice !== undefined || invoiceNo !== undefined || invoiceNumber !== undefined) {
       purchase.supplierInvoice = normalizedSupplierInvoice || undefined;
     }
-
-    if (invoiceLink !== undefined) {
-      purchase.invoiceLink = invoiceLink || '';
-    }
-
-    if (notes !== undefined) {
-      purchase.notes = notes;
-    }
+    if (invoiceLink !== undefined) purchase.invoiceLink = invoiceLink || '';
+    if (notes !== undefined) purchase.notes = notes;
 
     if (hasNewItems || totalAmount !== undefined) {
       const recalculatedTotal = calculateTotalAmount(normalizedItems, totalAmount);
-      const linkedPaymentTotal = await getLinkedPurchasePaymentTotal({
-        purchaseId: purchase._id,
-        userId
-      });
-
+      const linkedPaymentTotal = await getLinkedPurchasePaymentTotal({ purchaseId: purchase._id, userId });
       if (linkedPaymentTotal > recalculatedTotal) {
-        return res.status(400).json({
-          success: false,
-          message: 'Total cannot be less than already linked purchase payments'
-        });
+        return res.status(400).json({ success: false, message: 'Total cannot be less than already linked purchase payments' });
       }
-
       purchase.totalAmount = recalculatedTotal;
     }
 
+    // If paidAmount updated, recompute type
+    if (paidAmount !== undefined) {
+      const breakdown = getPurchasePaymentBreakdown(purchase.totalAmount, paidAmount);
+      purchase.paidAmount = breakdown.paidAmount;
+      purchase.type = breakdown.type;
+    }
+
     await purchase.save();
+
+    // Re-sync auto-payments if paidAmount changed
+    if (paidAmount !== undefined) {
+      await syncPurchaseAutoPayments(purchase, userId);
+    }
 
     const updatedPurchase = await Purchase.findById(id)
       .populate('party', 'name')
       .populate('items.product', 'name');
 
-    res.status(200).json({
-      success: true,
-      message: 'Purchase updated successfully',
-      data: updatedPurchase
-    });
+    res.status(200).json({ success: true, message: 'Purchase updated successfully', data: updatedPurchase });
   } catch (error) {
     if (isDuplicatePurchaseInvoiceError(error)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invoice number already exists for this user'
-      });
+      return res.status(400).json({ success: false, message: 'Invoice number already exists for this user' });
     }
     console.error('Update purchase error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error updating purchase'
-    });
+    res.status(500).json({ success: false, message: error.message || 'Error updating purchase' });
   }
 };
 
@@ -433,43 +395,28 @@ exports.deletePurchase = async (req, res) => {
 
     const purchase = await Purchase.findOneAndDelete({ _id: id, userId });
     if (!purchase) {
-      return res.status(404).json({
-        success: false,
-        message: 'Purchase not found'
-      });
+      return res.status(404).json({ success: false, message: 'Purchase not found' });
     }
 
     for (const item of purchase.items) {
-      await Product.findByIdAndUpdate(
-        item.product,
-        { $inc: { currentStock: -toNumber(item.quantity) } }
-      );
+      await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: -toNumber(item.quantity) } });
     }
 
-    await Payment.deleteMany({
-      userId,
-      refType: 'purchase',
-      refId: purchase._id
-    });
+    // Delete all payments linked to this purchase (both auto and manual)
+    await Payment.deleteMany({ userId, refId: purchase._id });
+    await Payment.deleteMany({ originPurchaseId: purchase._id });
 
-    res.status(200).json({
-      success: true,
-      message: 'Purchase deleted successfully'
-    });
+    res.status(200).json({ success: true, message: 'Purchase deleted successfully' });
   } catch (error) {
     console.error('Delete purchase error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error deleting purchase'
-    });
+    res.status(500).json({ success: false, message: error.message || 'Error deleting purchase' });
   }
 };
 
-// Deprecated: purchase payment status is no longer tracked in purchase entry
+// Deprecated
 exports.updatePaymentStatus = async (req, res) => {
   return res.status(400).json({
     success: false,
     message: 'Purchase payment status tracking is removed. Use Payments separately.'
   });
 };
-

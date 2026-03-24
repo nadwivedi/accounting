@@ -21,6 +21,16 @@ const paymentSchema = new mongoose.Schema({
     ref: 'Purchase',
     default: null
   },
+  originPurchaseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Purchase',
+    default: null
+  },
+  paymentSource: {
+    type: String,
+    enum: ['manual', 'purchase-payment', 'purchase-excess-payment'],
+    default: 'manual'
+  },
   amount: {
     type: Number,
     required: true,

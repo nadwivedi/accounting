@@ -78,6 +78,20 @@ const getTypeMeta = (type) => {
     };
   }
 
+  if (type === 'cash purchase') {
+    return {
+      label: 'Cash Purchase',
+      className: 'border-violet-200 bg-violet-50 text-violet-700'
+    };
+  }
+
+  if (type === 'credit purchase') {
+    return {
+      label: 'Credit Purchase',
+      className: 'border-indigo-200 bg-indigo-50 text-indigo-700'
+    };
+  }
+
   if (type === 'receipt') {
     return {
       label: 'Receipt',
@@ -391,7 +405,7 @@ export default function PartyDetail() {
         acc.saleQty += quantity;
       }
 
-      if (row.type === 'purchase') {
+      if (row.type === 'purchase' || row.type === 'cash purchase' || row.type === 'credit purchase') {
         acc.totalPurchases += amount;
         acc.purchaseQty += quantity;
       }

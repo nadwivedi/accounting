@@ -243,7 +243,18 @@ exports.getOutstandingReport = async (req, res) => {
       const partyId = getRawPartyId(purchase.party);
       const row = ensurePartyRow(partyId);
       if (!row) return;
-      row.totalPurchases += toNumber(purchase.totalAmount);
+      // Cash purchase = fully paid on spot → 0 payable impact
+      // Partial purchase = only unpaid portion is payable
+      // Credit purchase = full amount is payable
+      const purchaseTotal = toNumber(purchase.totalAmount);
+      const purchasePaid = toNumber(purchase.paidAmount);
+      if (purchase.type === 'cash purchase') {
+        // no payable — money already paid
+      } else if (purchase.type === 'purchase') {
+        row.totalPurchases += Math.max(0, purchaseTotal - purchasePaid);
+      } else {
+        row.totalPurchases += purchaseTotal;
+      }
     });
 
     payments.forEach((payment) => {
@@ -410,16 +421,38 @@ exports.getPartyLedger = async (req, res) => {
 
     purchases.forEach((purchase) => {
       const purchasePartyId = getRawPartyId(purchase.party);
+      const purchaseTotal = toNumber(purchase.totalAmount);
+      const purchasePaid = toNumber(purchase.paidAmount);
+
+      // outAmount = cash actually paid with this purchase
+      const purchaseOutAmount = purchase.type === 'cash purchase'
+        ? purchaseTotal
+        : purchase.type === 'purchase'
+          ? Math.min(purchasePaid, purchaseTotal)
+          : 0;
+
+      // impact on running balance = only the unpaid/pending portion
+      // cash purchase → fully paid on spot → 0 impact
+      // partial purchase → only pending increases payable
+      // credit purchase → full amount increases payable
+      const purchaseImpact = purchase.type === 'cash purchase'
+        ? 0
+        : purchase.type === 'purchase'
+          ? -Math.max(0, purchaseTotal - purchasePaid)
+          : -purchaseTotal;
+
       entries.push({
         date: purchase.purchaseDate,
         entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
-        type: 'purchase',
+        type: purchase.type || 'purchase',
         refId: purchase._id,
         refNumber: formatPrefixedNumber('Pur', purchase.purchaseNumber),
         partyId: purchasePartyId || null,
         partyName: resolvePartyName(purchasePartyId),
-        amount: toNumber(purchase.totalAmount),
-        impact: -toNumber(purchase.totalAmount),
+        amount: purchaseTotal,
+        impact: purchaseImpact,
+        inAmount: 0,
+        outAmount: purchaseOutAmount,
         quantity: getTotalQuantity(purchase.items),
         itemSummary: getItemSummary(purchase.items),
         method: '',
@@ -868,12 +901,26 @@ exports.getDayBookReport = async (req, res) => {
     purchases.forEach((purchase) => {
       const purchasePartyId = getRawPartyId(purchase.party);
       const amount = toNumber(purchase.totalAmount);
+      const purchasePaid = toNumber(purchase.paidAmount);
       const supplierInvoice = String(purchase.supplierInvoice || '').trim();
+
+      const purchaseOutAmount = purchase.type === 'cash purchase'
+        ? amount
+        : purchase.type === 'purchase'
+          ? Math.min(purchasePaid, amount)
+          : 0;
+
+      const purchaseLabel = purchase.type === 'cash purchase'
+        ? 'Cash Purchase'
+        : purchase.type === 'credit purchase'
+          ? 'Credit Purchase'
+          : 'Purchase';
+
       entries.push({
         date: purchase.purchaseDate,
         entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
-        type: 'purchase',
-        label: 'Purchase',
+        type: purchase.type || 'purchase',
+        label: purchaseLabel,
         refId: purchase._id,
         voucherNumber: formatPrefixedNumber('Pur', purchase.purchaseNumber),
         partyId: purchasePartyId || null,
@@ -887,7 +934,7 @@ exports.getDayBookReport = async (req, res) => {
         note: purchase.notes || '',
         amount,
         inAmount: 0,
-        outAmount: 0
+        outAmount: purchaseOutAmount
       });
     });
 

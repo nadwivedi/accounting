@@ -139,7 +139,13 @@ export default function DayBook() {
   const filteredEntries = useMemo(() => {
     let filtered = [...entries];
     if (typeFilter !== 'all') {
-      filtered = filtered.filter((entry) => entry.type === typeFilter);
+      const saleTypes = ['sale', 'cash sale', 'credit sale'];
+      const purchaseTypes = ['purchase', 'cash purchase', 'credit purchase'];
+      filtered = filtered.filter((entry) => {
+        if (typeFilter === 'sale') return saleTypes.includes(entry.type);
+        if (typeFilter === 'purchase') return purchaseTypes.includes(entry.type);
+        return entry.type === typeFilter;
+      });
     }
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
