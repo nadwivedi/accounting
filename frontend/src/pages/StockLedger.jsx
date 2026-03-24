@@ -3,6 +3,7 @@ import { Boxes, TrendingUp, TrendingDown, Package, ArrowDownLeft, ArrowUpRight, 
 import apiClient from '../utils/api';
 
 const formatNumber = (value) => Number(value || 0).toLocaleString('en-IN');
+const getProductLabel = (product) => String(product?.productName || product?.name || '').trim();
 
 const formatDate = (value) => {
   const date = new Date(value);
@@ -105,8 +106,8 @@ export default function StockLedger() {
   const filteredProducts = useMemo(() => {
     if (!searchTerm) return currentStockRows;
     const term = searchTerm.toLowerCase();
-    return currentStockRows.filter(p => 
-      (p.productName || '').toLowerCase().includes(term)
+    return currentStockRows.filter((p) =>
+      getProductLabel(p).toLowerCase().includes(term)
     );
   }, [currentStockRows, searchTerm]);
 
@@ -202,7 +203,7 @@ export default function StockLedger() {
                 const stockValue = (product.currentStock || 0) * (product.purchasePrice || 0);
                 return (
                   <tr 
-                    key={product.productId || index} 
+                    key={product.productId || product._id || index} 
                     className="hover:bg-emerald-50/50 transition-colors cursor-pointer"
                     onClick={() => handleProductClick(product)}
                   >
@@ -211,7 +212,7 @@ export default function StockLedger() {
                         <div className="p-2 rounded-lg bg-gradient-to-br from-violet-500 to-purple-500">
                           <Package className="w-4 h-4 text-white" />
                         </div>
-                        <p className="text-sm font-semibold text-slate-800 max-w-[200px] truncate">{product.productName || '-'}</p>
+                        <p className="text-sm font-semibold text-slate-800 max-w-[200px] truncate">{getProductLabel(product) || '-'}</p>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -269,7 +270,7 @@ export default function StockLedger() {
               <ChevronLeft className="w-5 h-5 text-slate-600" />
             </button>
             <div>
-              <h2 className="text-lg font-black text-slate-800">{selectedProduct?.productName}</h2>
+              <h2 className="text-lg font-black text-slate-800">{getProductLabel(selectedProduct) || '-'}</h2>
               <p className="text-sm text-slate-500">Stock movement history</p>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import HomeDayBookPanel from '../components/HomeDayBookPanel';
 import Navbar from '../components/Navbar';
 import Sidebar, { homeQuickShortcutMap, openHomeQuickShortcut } from '../components/Sidebar';
 
@@ -86,10 +87,13 @@ export default function Home() {
         activeSection={expandedSection}
         onSectionSelect={(sectionName) => activateHomeSection(sectionName, navigate, setExpandedSection)}
       />
-      <div className="px-4 py-4 sm:py-5">
-        <div className="mx-auto flex min-h-[calc(100vh-5.5rem)] max-w-6xl items-start justify-center">
-          <div className="flex w-full justify-center">
+      <div className="px-4 py-4 sm:px-6 sm:py-5">
+        <div className="mx-auto grid min-h-[calc(100vh-5.5rem)] max-w-[96rem] grid-cols-1 gap-5 xl:grid-cols-[18rem_minmax(0,1.35fr)] xl:items-start">
+          <div>
             <Sidebar />
+          </div>
+          <div className="min-w-0 xl:pl-1">
+            <HomeDayBookPanel />
           </div>
         </div>
       </div>
