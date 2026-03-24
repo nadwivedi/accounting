@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Boxes, TrendingUp, TrendingDown, Package, ArrowDownLeft, ArrowUpRight, Search, ChevronLeft, Calendar, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import apiClient from '../utils/api';
 
@@ -19,6 +20,7 @@ const formatDateForInput = (value) => {
 };
 
 export default function StockLedger() {
+  const navigate = useNavigate();
   const [stockLedger, setStockLedger] = useState({ ledger: [], currentStock: [] });
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [error, setError] = useState('');
@@ -29,6 +31,25 @@ export default function StockLedger() {
 
   const stockLedgerRows = stockLedger?.ledger || [];
   const currentStockRows = stockLedger?.currentStock || [];
+
+  // ESC key: if product detail is open → go back to list; else → go back one page
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && !e.defaultPrevented) {
+        const popup = document.querySelector('.fixed.inset-0.z-50');
+        if (popup) return;
+        e.preventDefault();
+        if (selectedProduct) {
+          setSelectedProduct(null);
+          loadData();
+        } else {
+          navigate(-1);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedProduct, navigate]);
 
   useEffect(() => {
     loadData();

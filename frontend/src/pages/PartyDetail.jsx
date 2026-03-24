@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import apiClient from '../utils/api';
 
 const toInputDate = (value) => {
@@ -354,6 +354,22 @@ export default function PartyDetail() {
   const [voucherDetail, setVoucherDetail] = useState(null);
   const [voucherLoading, setVoucherLoading] = useState(false);
   const [voucherError, setVoucherError] = useState('');
+
+  const navigate = useNavigate();
+
+  // ESC key → go back to home (capture phase so it fires before any other handler)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      const popup = document.querySelector('.fixed.inset-0.z-50');
+      if (popup) return; // let popup handle its own ESC
+      e.preventDefault();
+      e.stopPropagation();
+      navigate('/');
+    };
+    window.addEventListener('keydown', handleKeyDown, true); // true = capture phase
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [navigate]);
 
   const loadPartyDetails = async (showLoader = true, overrides = {}) => {
     try {
