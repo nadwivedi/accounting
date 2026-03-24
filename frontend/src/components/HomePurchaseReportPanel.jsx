@@ -23,6 +23,18 @@ const formatPurchaseNumber = (value) => {
 };
 
 const formatQuantity = (value) => Number(value || 0).toLocaleString('en-IN');
+const getDetailedItems = (items = []) => {
+  if (!Array.isArray(items)) return [];
+
+  return items.map((item, index) => ({
+    id: String(item._id || item.purchaseItemId || item.saleItemId || index),
+    productName: String(item.productName || item.product?.name || 'Item').trim() || 'Item',
+    quantity: Number(item.quantity || 0),
+    unitPrice: Number(item.unitPrice || 0),
+    total: Number(item.total || (Number(item.quantity || 0) * Number(item.unitPrice || 0))),
+    unit: String(item.unit || item.product?.unit || '').trim() || '-'
+  }));
+};
 const HIDDEN_DETAIL_FIELDS = new Set([
   'supplier bill',
   'party',
@@ -55,6 +67,8 @@ function StatCard({ title, value, icon: Icon, tone }) {
 function PurchaseDetailModal({ detail, loading, error, onClose }) {
   if (!detail && !loading && !error) return null;
 
+  const resolvedPartyName = String(detail?.partyName || detail?.party?.name || '').trim() || '-';
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-slate-950/60 p-3" onClick={onClose}>
       <div
@@ -68,8 +82,8 @@ function PurchaseDetailModal({ detail, loading, error, onClose }) {
                 {detail?.title || 'Loading purchase detail'}
                 {detail?.refNumber ? ` - ${detail.refNumber}` : ''}
               </h2>
-              {detail?.partyName ? (
-                <p className="text-sm text-cyan-100">{detail.partyName}</p>
+              {resolvedPartyName !== '-' ? (
+                <p className="text-sm text-cyan-100">{resolvedPartyName}</p>
               ) : null}
             </div>
           </div>
@@ -115,7 +129,7 @@ function PurchaseDetailModal({ detail, loading, error, onClose }) {
                 </div>
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Party</p>
-                  <p className="mt-1 text-sm font-semibold text-slate-900">{detail.Name || '-'}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{resolvedPartyName}</p>
                 </div>
               </div>
 
@@ -251,7 +265,7 @@ export default function HomePurchaseReportPanel() {
         }
       });
 
-      setPurchaseDetail(response.data || null);
+      setPurchaseDetail(response?.data?.data || null);
     } catch (err) {
       setPurchaseDetailError(err.message || 'Error loading purchase detail');
     } finally {
@@ -272,7 +286,12 @@ export default function HomePurchaseReportPanel() {
         detail={purchaseDetail || (selectedPurchase ? {
           title: 'Purchase Details',
           refNumber: formatPurchaseNumber(selectedPurchase.purchaseNumber),
-          partyName: getPurchasePartyName(selectedPurchase)
+          partyName: getPurchasePartyName(selectedPurchase),
+          amount: Number(selectedPurchase.totalAmount || 0),
+          date: selectedPurchase.purchaseDate || '',
+          quantity: (selectedPurchase.items || []).reduce((sum, item) => sum + Number(item.quantity || 0), 0),
+          notes: String(selectedPurchase.notes || '').trim(),
+          items: getDetailedItems(selectedPurchase.items)
         } : null)}
         loading={purchaseDetailLoading}
         error={purchaseDetailError}
