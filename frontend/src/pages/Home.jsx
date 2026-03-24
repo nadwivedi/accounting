@@ -87,8 +87,8 @@ export default function Home() {
         activeSection={expandedSection}
         onSectionSelect={(sectionName) => activateHomeSection(sectionName, navigate, setExpandedSection)}
       />
-      <div className="px-4 py-4 sm:px-6 sm:py-5">
-        <div className="mx-auto grid min-h-[calc(100vh-5.5rem)] max-w-[96rem] grid-cols-1 gap-5 xl:grid-cols-[18rem_minmax(0,1.35fr)] xl:items-start">
+      <div className="px-2 py-4 sm:px-4 sm:py-5 lg:px-5">
+        <div className="grid min-h-[calc(100vh-5.5rem)] grid-cols-1 gap-4 xl:grid-cols-[17rem_minmax(0,1fr)] xl:items-start">
           <div>
             <Sidebar />
           </div>
