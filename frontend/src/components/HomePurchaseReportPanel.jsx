@@ -62,13 +62,15 @@ function PurchaseDetailModal({ detail, loading, error, onClose }) {
       >
         <div className="flex items-start justify-between gap-4 border-b border-slate-200 bg-gradient-to-r from-slate-900 via-teal-900 to-cyan-800 px-5 py-4 text-white">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-cyan-100">Purchase Detail</p>
-            <h2 className="mt-1 text-xl font-bold">{detail?.title || 'Loading purchase detail'}</h2>
-            {detail ? (
-              <p className="mt-1 text-sm text-cyan-50">
-                {detail.refNumber || '-'} | {detail.partyName || '-'}
-              </p>
-            ) : null}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <h2 className="text-xl font-bold">
+                {detail?.title || 'Loading purchase detail'}
+                {detail?.refNumber ? ` - ${detail.refNumber}` : ''}
+              </h2>
+              {detail?.partyName ? (
+                <p className="text-sm text-cyan-100">{detail.partyName}</p>
+              ) : null}
+            </div>
           </div>
           <button
             type="button"
