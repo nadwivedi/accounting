@@ -1,4 +1,5 @@
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { getSectionConfig } from '../navigation/sectionMenu';
 
 export const homeQuickShortcuts = [
   { label: 'New Sale', hint: '', combo: 'Alt + 1', accent: 'from-emerald-500 to-teal-500', stateKey: 'homeQuickSale', imageSrc: '/button/add sales_converted.avif', imageAlt: 'Add sales' },
@@ -15,6 +16,12 @@ export const homeQuickShortcutMap = {
   '4': 'homeQuickReceipt',
   '5': 'homeQuickExpense'
 };
+
+const sidebarVoucherPaths = new Set([
+  '/sale-return',
+  '/purchase-return',
+  '/stock-adjustment'
+]);
 
 export function openHomeQuickShortcut(navigate, currentState, stateKey) {
   navigate('/', {
@@ -33,6 +40,7 @@ export function openHomeQuickShortcut(navigate, currentState, stateKey) {
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
+  const sidebarVoucherLinks = (getSectionConfig('Vouchers')?.items || []).filter((item) => sidebarVoucherPaths.has(item.path));
 
   return (
     <aside className="relative min-w-0 flex-1 basis-[46%] overflow-hidden rounded-[20px] border border-slate-200/20 bg-[linear-gradient(165deg,rgba(71,85,105,0.68),rgba(100,116,139,0.62),rgba(148,163,184,0.56))] shadow-[0_24px_60px_rgba(15,23,42,0.24),0_0_42px_rgba(14,165,233,0.06)] sm:max-w-[19rem] sm:rounded-[30px] lg:max-w-[14.75rem]">
@@ -70,6 +78,29 @@ export default function Sidebar() {
               )}
             </button>
           ))}
+
+          <div className="mt-1 flex flex-col gap-2 pt-2">
+            {sidebarVoucherLinks.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className="group relative flex items-center gap-3 rounded-[20px] border border-white/20 bg-white/70 px-5 py-2.5 text-[12px] text-slate-700 shadow-[0_14px_30px_rgba(148,163,184,0.12)] backdrop-blur-sm transition-colors duration-200 hover:bg-violet-50/90 sm:rounded-[24px]"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+                  <item.Icon />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-700 group-hover:text-slate-900">{item.name}</p>
+                  {item.hint && (
+                    <p className="text-[10px] font-medium text-slate-400 group-hover:text-slate-500">
+                      {item.hint}
+                    </p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </aside>

@@ -8,13 +8,6 @@ const homeNavigationEntries = [
   { section: 'Masters', path: '/stock-groups' },
   { section: 'Masters', path: '/units' },
   { section: 'Masters', path: '/banks' },
-  { section: 'Vouchers', path: '/sales' },
-  { section: 'Vouchers', path: '/purchases' },
-  { section: 'Vouchers', path: '/sale-return' },
-  { section: 'Vouchers', path: '/purchase-return' },
-  { section: 'Vouchers', path: '/stock-adjustment' },
-  { section: 'Vouchers', path: '/payments' },
-  { section: 'Vouchers', path: '/receipts' },
   { section: 'Expense', path: '/expense-hub' },
   { section: 'Expense', path: '/expenses' },
   { section: 'Expense', path: '/expense-groups' },
@@ -25,7 +18,7 @@ const homeNavigationEntries = [
 const homeNavigationAliases = {
   '/leadger': { section: 'Masters', path: '/party' },
   '/products': { section: 'Masters', path: '/stock' },
-  '/stock-adjustments': { section: 'Vouchers', path: '/stock-adjustment' }
+  '/stock-adjustments': { section: 'Masters', path: '/party' }
 };
 
 const voucherShortcutRoutes = {
@@ -37,7 +30,6 @@ const voucherShortcutRoutes = {
 
 const sectionHubPaths = {
   Masters: '/masters',
-  Vouchers: '/vouchers',
   Expense: '/expense-hub',
   Reports: '/reports'
 };

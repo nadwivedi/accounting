@@ -148,7 +148,7 @@ export const SECTION_CONFIG = {
   Vouchers: {
     name: 'Vouchers',
     subtitle: 'Add sales, purchase and return item',
-    hubPath: '/vouchers',
+    hubPath: '/',
     Icon: VoucherIcon,
     description: 'Sales, purchases, returns, receipts, and stock flow',
     theme: {
@@ -205,7 +205,7 @@ export const SECTION_CONFIG = {
   }
 };
 
-export const SECTION_ORDER = ['Masters', 'Vouchers', 'Expense', 'Reports'];
+export const SECTION_ORDER = ['Masters', 'Expense', 'Reports'];
 
 export const SECTION_HUB_PATHS = SECTION_ORDER.map((sectionName) => SECTION_CONFIG[sectionName].hubPath);
 
