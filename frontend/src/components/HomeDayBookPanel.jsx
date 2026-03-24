@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowDownCircle, ArrowUpCircle, Banknote, BookText, Package, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import apiClient from '../utils/api';
+import HomePaymentReportPanel from './HomePaymentReportPanel';
 import HomePartyLedgerPanel from './HomePartyLedgerPanel';
+import HomePurchaseReportPanel from './HomePurchaseReportPanel';
+import HomeReceiptReportPanel from './HomeReceiptReportPanel';
 import HomeSalesLedgerPanel from './HomeSalesLedgerPanel';
 import HomeStockLedgerPanel from './HomeStockLedgerPanel';
 
@@ -154,14 +157,47 @@ export default function HomeDayBookPanel() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveView('sales-ledger')}
+            onClick={() => setActiveView('sales-report')}
             className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-              activeView === 'sales-ledger'
+              activeView === 'sales-report'
                 ? 'border-violet-300 bg-violet-100 text-violet-800'
                 : 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100'
             }`}
           >
-            Sales Ledger
+            Sales Report
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('purchase-report')}
+            className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+              activeView === 'purchase-report'
+                ? 'border-amber-300 bg-amber-100 text-amber-800'
+                : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+            }`}
+          >
+            Purchase Report
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('payment-report')}
+            className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+              activeView === 'payment-report'
+                ? 'border-rose-300 bg-rose-100 text-rose-800'
+                : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+            }`}
+          >
+            Payment Report
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('money-received-report')}
+            className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+              activeView === 'money-received-report'
+                ? 'border-cyan-300 bg-cyan-100 text-cyan-800'
+                : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
+            }`}
+          >
+            Money Received Report
           </button>
           <button
             type="button"
@@ -181,8 +217,14 @@ export default function HomeDayBookPanel() {
         <HomePartyLedgerPanel />
       ) : activeView === 'stock-ledger' ? (
         <HomeStockLedgerPanel />
-      ) : activeView === 'sales-ledger' ? (
+      ) : activeView === 'sales-report' ? (
         <HomeSalesLedgerPanel />
+      ) : activeView === 'purchase-report' ? (
+        <HomePurchaseReportPanel />
+      ) : activeView === 'payment-report' ? (
+        <HomePaymentReportPanel />
+      ) : activeView === 'money-received-report' ? (
+        <HomeReceiptReportPanel />
       ) : (
       <div className="space-y-5 p-5 sm:p-6">
         {error ? (

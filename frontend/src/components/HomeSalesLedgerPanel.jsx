@@ -45,7 +45,7 @@ export default function HomeSalesLedgerPanel() {
         setSales(response.data || []);
         setError('');
       } catch (err) {
-        setError(err.message || 'Unable to load sales ledger');
+        setError(err.message || 'Unable to load sales report');
       } finally {
         setLoading(false);
       }
@@ -71,13 +71,13 @@ export default function HomeSalesLedgerPanel() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-700">Live Preview</p>
-            <h2 className="mt-1 text-2xl font-black text-slate-800">Sales Ledger</h2>
+            <h2 className="mt-1 text-2xl font-black text-slate-800">Sales Report</h2>
           </div>
           <Link
             to="/reports/sales-report"
             className="inline-flex items-center justify-center rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700 transition hover:bg-violet-100"
           >
-            Open Full Sales Ledger
+            Open Full Sales Report
           </Link>
         </div>
       </div>
@@ -97,7 +97,7 @@ export default function HomeSalesLedgerPanel() {
 
         <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white">
           {loading ? (
-            <div className="px-4 py-12 text-center text-sm font-medium text-slate-500">Loading sales ledger...</div>
+            <div className="px-4 py-12 text-center text-sm font-medium text-slate-500">Loading sales report...</div>
           ) : visibleSales.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px]">
@@ -126,7 +126,7 @@ export default function HomeSalesLedgerPanel() {
               <div className="rounded-full bg-slate-100 p-4">
                 <ShoppingCart className="h-7 w-7 text-slate-400" />
               </div>
-              <p className="mt-4 text-base font-semibold text-slate-700">No sales ledger data found</p>
+              <p className="mt-4 text-base font-semibold text-slate-700">No sales report data found</p>
             </div>
           )}
         </div>
