@@ -23,6 +23,17 @@ const sidebarVoucherPaths = new Set([
   '/stock-adjustment'
 ]);
 
+const sidebarVoucherButtonImages = {
+  '/sale-return': {
+    imageSrc: '/button/sale retun_converted.avif',
+    imageAlt: 'Sale return'
+  },
+  '/purchase-return': {
+    imageSrc: '/button/purchaseReturn_converted.avif',
+    imageAlt: 'Purchase return'
+  }
+};
+
 export function openHomeQuickShortcut(navigate, currentState, stateKey) {
   navigate('/', {
     replace: true,
@@ -40,7 +51,12 @@ export function openHomeQuickShortcut(navigate, currentState, stateKey) {
 export default function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const sidebarVoucherLinks = (getSectionConfig('Vouchers')?.items || []).filter((item) => sidebarVoucherPaths.has(item.path));
+  const sidebarVoucherLinks = (getSectionConfig('Vouchers')?.items || [])
+    .filter((item) => sidebarVoucherPaths.has(item.path))
+    .map((item) => ({
+      ...item,
+      ...(sidebarVoucherButtonImages[item.path] || {})
+    }));
 
   return (
     <aside className="relative w-full overflow-hidden rounded-[20px] border border-slate-200/20 bg-[linear-gradient(165deg,rgba(71,85,105,0.68),rgba(100,116,139,0.62),rgba(148,163,184,0.56))] shadow-[0_24px_60px_rgba(15,23,42,0.24),0_0_42px_rgba(14,165,233,0.06)] sm:rounded-[30px] xl:sticky xl:top-24 xl:self-start">
@@ -84,20 +100,32 @@ export default function Sidebar() {
               <Link
                 key={item.path}
                 to={item.path}
-                className="group relative flex items-center gap-3 rounded-[20px] border border-white/20 bg-white/70 px-5 py-2.5 text-[12px] text-slate-700 shadow-[0_14px_30px_rgba(148,163,184,0.12)] backdrop-blur-sm transition-colors duration-200 hover:bg-violet-50/90 sm:rounded-[24px]"
+                className={item.imageSrc
+                  ? 'overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:rounded-2xl'
+                  : 'group relative flex items-center gap-3 rounded-[20px] border border-white/20 bg-white/70 px-5 py-2.5 text-[12px] text-slate-700 shadow-[0_14px_30px_rgba(148,163,184,0.12)] backdrop-blur-sm transition-colors duration-200 hover:bg-violet-50/90 sm:rounded-[24px]'}
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center">
-                  <item.Icon />
-                </div>
+                {item.imageSrc ? (
+                  <img
+                    src={item.imageSrc}
+                    alt={item.imageAlt || item.name}
+                    className="block h-auto w-full object-cover"
+                  />
+                ) : (
+                  <>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center">
+                      <item.Icon />
+                    </div>
 
-                <div className="min-w-0">
-                  <p className="font-medium text-slate-700 group-hover:text-slate-900">{item.name}</p>
-                  {item.hint && (
-                    <p className="text-[10px] font-medium text-slate-400 group-hover:text-slate-500">
-                      {item.hint}
-                    </p>
-                  )}
-                </div>
+                    <div className="min-w-0">
+                      <p className="font-medium text-slate-700 group-hover:text-slate-900">{item.name}</p>
+                      {item.hint && (
+                        <p className="text-[10px] font-medium text-slate-400 group-hover:text-slate-500">
+                          {item.hint}
+                        </p>
+                      )}
+                    </div>
+                  </>
+                )}
               </Link>
             ))}
           </div>
