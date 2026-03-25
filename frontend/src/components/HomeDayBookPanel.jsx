@@ -332,7 +332,7 @@ export default function HomeDayBookPanel() {
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-600">
+        <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-xs font-semibold text-slate-600 sm:text-sm">
           Showing data from {formatDate(dateRange.fromDate)} to {formatDate(dateRange.toDate)}
         </div>
 

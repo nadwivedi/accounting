@@ -8,10 +8,10 @@ export default function Navbar({ sections = [], activeSection = '', onSectionSel
           <button
             type="button"
             onClick={() => onMenuClick?.()}
-            className="absolute left-0 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 sm:hidden"
+            className="absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 sm:hidden"
             aria-label="Open sidebar"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-4 w-4" />
           </button>
 
           <div className="flex items-center gap-3">
@@ -32,7 +32,7 @@ export default function Navbar({ sections = [], activeSection = '', onSectionSel
               key={section}
               type="button"
               onClick={() => onSectionSelect?.(section)}
-              className={`rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] transition sm:text-[12px] ${
+              className={`rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] transition sm:px-4 sm:py-2 sm:text-[12px] sm:tracking-[0.14em] ${
                 activeSection === section
                   ? 'bg-slate-900 text-white shadow-[0_10px_22px_rgba(15,23,42,0.22)]'
                   : 'bg-white/80 text-slate-700 hover:bg-white'
