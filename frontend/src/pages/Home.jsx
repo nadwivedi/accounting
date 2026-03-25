@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { X } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import HomeDayBookPanel from '../components/HomeDayBookPanel';
 import Navbar from '../components/Navbar';
@@ -26,6 +27,7 @@ const activateHomeSection = (sectionName, navigate, setExpandedSection) => {
 
 export default function Home() {
   const [expandedSection, setExpandedSection] = useState('Masters');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -35,6 +37,10 @@ export default function Home() {
     if (requestedSection && HOME_SECTION_ORDER.includes(requestedSection)) {
       setExpandedSection(requestedSection);
     }
+  }, [location.pathname, location.state]);
+
+  useEffect(() => {
+    setIsMobileSidebarOpen(false);
   }, [location.pathname, location.state]);
 
   useEffect(() => {
@@ -86,10 +92,11 @@ export default function Home() {
         sections={HOME_SECTION_ORDER}
         activeSection={expandedSection}
         onSectionSelect={(sectionName) => activateHomeSection(sectionName, navigate, setExpandedSection)}
+        onMenuClick={() => setIsMobileSidebarOpen(true)}
       />
       <div className="px-2 py-4 sm:px-4 sm:py-5 lg:px-5">
         <div className="grid min-h-[calc(100vh-5.5rem)] grid-cols-1 gap-4 xl:grid-cols-[17rem_minmax(0,1fr)] xl:items-start">
-          <div>
+          <div className="hidden xl:block">
             <Sidebar />
           </div>
           <div className="min-w-0 xl:pl-1">
@@ -97,6 +104,31 @@ export default function Home() {
           </div>
         </div>
       </div>
+
+      {isMobileSidebarOpen ? (
+        <div className="fixed inset-0 z-40 xl:hidden">
+          <button
+            type="button"
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px]"
+            onClick={() => setIsMobileSidebarOpen(false)}
+            aria-label="Close sidebar overlay"
+          />
+
+          <div className="absolute inset-y-0 left-0 w-[86vw] max-w-[22rem] p-3">
+            <div className="relative h-full overflow-hidden rounded-[28px]">
+              <button
+                type="button"
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="absolute right-3 top-3 z-20 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/30 bg-white/85 text-slate-700 shadow-sm transition hover:bg-white"
+                aria-label="Close sidebar"
+              >
+                <X className="h-4 w-4" />
+              </button>
+              <Sidebar mobileDrawer />
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

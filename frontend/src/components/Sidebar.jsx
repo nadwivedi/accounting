@@ -48,7 +48,7 @@ export function openHomeQuickShortcut(navigate, currentState, stateKey) {
   });
 }
 
-export default function Sidebar() {
+export default function Sidebar({ mobileDrawer = false }) {
   const location = useLocation();
   const navigate = useNavigate();
   const sidebarVoucherLinks = (getSectionConfig('Vouchers')?.items || [])
@@ -59,8 +59,16 @@ export default function Sidebar() {
     }));
 
   return (
-    <aside className="relative w-full overflow-hidden rounded-[20px] border border-slate-200/20 bg-[linear-gradient(165deg,rgba(71,85,105,0.68),rgba(100,116,139,0.62),rgba(148,163,184,0.56))] shadow-[0_24px_60px_rgba(15,23,42,0.24),0_0_42px_rgba(14,165,233,0.06)] sm:rounded-[30px] xl:sticky xl:top-24 xl:self-start">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(110,231,183,0.12),transparent_32%)]" />
+    <aside className={`relative w-full overflow-hidden rounded-[20px] border shadow-[0_24px_60px_rgba(15,23,42,0.24),0_0_42px_rgba(14,165,233,0.06)] sm:rounded-[30px] xl:sticky xl:top-24 xl:self-start ${
+      mobileDrawer
+        ? 'border-slate-700/80 bg-[linear-gradient(165deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94),rgba(51,65,85,0.92))]'
+        : 'border-slate-200/20 bg-[linear-gradient(165deg,rgba(71,85,105,0.68),rgba(100,116,139,0.62),rgba(148,163,184,0.56))]'
+    }`}>
+      <div className={`pointer-events-none absolute inset-0 ${
+        mobileDrawer
+          ? 'bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.14),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(16,185,129,0.1),transparent_32%)]'
+          : 'bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(110,231,183,0.12),transparent_32%)]'
+      }`} />
       <div className="relative z-10 flex h-full flex-col">
         <div className="flex flex-1 flex-col gap-2 px-2 py-2 sm:gap-2.5 sm:px-3 sm:py-3">
           {homeQuickShortcuts.map((shortcut) => (
@@ -69,7 +77,7 @@ export default function Sidebar() {
               type="button"
               onClick={() => openHomeQuickShortcut(navigate, location.state, shortcut.stateKey)}
               className={shortcut.imageSrc
-                ? 'cursor-pointer overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:rounded-2xl'
+                ? 'flex w-[70%] cursor-pointer justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl'
                 : 'cursor-pointer rounded-xl border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.94))] p-2 text-left shadow-[0_14px_30px_rgba(148,163,184,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(148,163,184,0.22),inset_0_1px_0_rgba(255,255,255,0.95)] sm:rounded-2xl sm:p-2.5'}
             >
               {shortcut.imageSrc ? (
@@ -101,7 +109,7 @@ export default function Sidebar() {
                 key={item.path}
                 to={item.path}
                 className={item.imageSrc
-                  ? 'overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:rounded-2xl'
+                  ? 'flex w-[70%] justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl'
                   : 'group relative flex items-center gap-3 rounded-[20px] border border-white/20 bg-white/70 px-5 py-2.5 text-[12px] text-slate-700 shadow-[0_14px_30px_rgba(148,163,184,0.12)] backdrop-blur-sm transition-colors duration-200 hover:bg-violet-50/90 sm:rounded-[24px]'}
               >
                 {item.imageSrc ? (
