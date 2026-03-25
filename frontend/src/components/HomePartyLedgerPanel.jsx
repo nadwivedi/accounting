@@ -26,10 +26,10 @@ function StatCard({ title, value, icon: Icon, tone }) {
   );
 }
 
-export default function HomePartyLedgerPanel() {
+export default function HomePartyLedgerPanel({ dateRange = null }) {
   const navigate = useNavigate();
   const [parties, setParties] = useState([]);
-  const [outstanding, setOutstanding] = useState(null);
+  const [ledgerEntries, setLedgerEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -37,12 +37,17 @@ export default function HomePartyLedgerPanel() {
     const loadData = async () => {
       try {
         setLoading(true);
-        const [partiesRes, outstandingRes] = await Promise.all([
+        const [partiesRes, ledgerRes] = await Promise.all([
           apiClient.get('/parties'),
-          apiClient.get('/reports/outstanding')
+          apiClient.get('/reports/party-ledger', {
+            params: {
+              fromDate: dateRange?.fromDate || '',
+              toDate: dateRange?.toDate || ''
+            }
+          })
         ]);
         setParties(partiesRes.data || []);
-        setOutstanding(outstandingRes.data || null);
+        setLedgerEntries(ledgerRes.data || []);
         setError('');
       } catch (err) {
         setError(err.message || 'Unable to load party ledger');
@@ -52,19 +57,27 @@ export default function HomePartyLedgerPanel() {
     };
 
     loadData();
-  }, []);
+  }, [dateRange?.fromDate, dateRange?.toDate]);
 
   const rows = useMemo(() => {
-    const partyOutstanding = outstanding?.partyOutstanding || [];
+    const balanceByParty = ledgerEntries.reduce((acc, entry) => {
+      if (!entry?.partyId) return acc;
+      const key = String(entry.partyId);
+      acc.set(key, (acc.get(key) || 0) + Number(entry.impact || 0));
+      return acc;
+    }, new Map());
+
     return parties.map((party) => {
-      const match = partyOutstanding.find((item) => String(item.partyId) === String(party._id));
+      const netBalance = Number(balanceByParty.get(String(party._id)) || 0);
       return {
         ...party,
-        receivable: Number(match?.receivable || 0),
-        payable: Number(match?.payable || 0)
+        receivable: netBalance > 0 ? netBalance : 0,
+        payable: netBalance < 0 ? Math.abs(netBalance) : 0
       };
-    }).sort((a, b) => (Number(b.receivable || 0) + Number(b.payable || 0)) - (Number(a.receivable || 0) + Number(a.payable || 0)));
-  }, [outstanding, parties]);
+    })
+      .filter((party) => party.receivable > 0 || party.payable > 0)
+      .sort((a, b) => (Number(b.receivable || 0) + Number(b.payable || 0)) - (Number(a.receivable || 0) + Number(a.payable || 0)));
+  }, [ledgerEntries, parties]);
 
   const totalReceivable = rows.reduce((sum, party) => sum + Number(party.receivable || 0), 0);
   const totalPayable = rows.reduce((sum, party) => sum + Number(party.payable || 0), 0);
@@ -82,6 +95,9 @@ export default function HomePartyLedgerPanel() {
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-700">Live Preview</p>
             <h2 className="mt-1 text-2xl font-black text-slate-800">Party Ledger</h2>
+            {dateRange?.label ? (
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{dateRange.label}</p>
+            ) : null}
           </div>
         </div>
       </div>

@@ -24,7 +24,7 @@ const homeNavigationAliases = {
 const voucherShortcutRoutes = {
   '1': { path: '/sales', openShortcut: 'sale' },
   '2': { path: '/purchases', openShortcut: 'purchase' },
-  '3': { path: '/payments', openShortcut: 'payment' },
+  '3': { path: '/', openShortcut: 'payment' },
   '4': { path: '/receipts', openShortcut: 'receipt' }
 };
 
@@ -85,6 +85,21 @@ export default function ProtectedRoute({ children }) {
               homeQuickPurchase: key === '2',
               homeQuickPayment: key === '3',
               homeQuickReceipt: key === '4'
+            }
+          });
+          return;
+        }
+
+        if (shortcutTarget.openShortcut === 'payment') {
+          navigate('/', {
+            replace: true,
+            state: {
+              ...(location.state || {}),
+              homeQuickSale: false,
+              homeQuickPurchase: false,
+              homeQuickPayment: true,
+              homeQuickReceipt: false,
+              homeQuickExpense: false
             }
           });
           return;

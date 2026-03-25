@@ -20,14 +20,6 @@ const DEFAULT_SUMMARY = {
   expenses: 0
 };
 
-const getTodayInput = () => {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 const formatCurrency = (value) => (
   `Rs ${Number(value || 0).toLocaleString('en-IN', {
     minimumFractionDigits: 2,
@@ -77,6 +69,79 @@ const TYPE_BADGE_STYLES = {
   expense: 'bg-fuchsia-100 text-fuchsia-700'
 };
 
+const DATE_FILTER_OPTIONS = [
+  { value: '1day', label: '1 Day' },
+  { value: '7day', label: '7 Day' },
+  { value: '1month', label: '1 Month' },
+  { value: '3month', label: '3 Month' },
+  { value: '6month', label: '6 Month' },
+  { value: '1year', label: '1 Year' },
+  { value: 'monthwise', label: 'Monthwise' },
+  { value: 'yearwise', label: 'Yearwise' }
+];
+
+const formatInputDate = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const shiftDateByDays = (date, days) => {
+  const next = new Date(date);
+  next.setDate(next.getDate() + days);
+  return next;
+};
+
+const shiftDateByMonths = (date, months) => {
+  const next = new Date(date);
+  next.setMonth(next.getMonth() + months);
+  return next;
+};
+
+const getRangeLabel = (selectedRange) => DATE_FILTER_OPTIONS.find((option) => option.value === selectedRange)?.label || '1 Day';
+
+const resolveDateRange = (selectedRange) => {
+  const today = new Date();
+  const endDate = formatInputDate(today);
+  let startDate = endDate;
+
+  switch (selectedRange) {
+    case '7day':
+      startDate = formatInputDate(shiftDateByDays(today, -6));
+      break;
+    case '1month':
+      startDate = formatInputDate(shiftDateByMonths(today, -1));
+      break;
+    case '3month':
+      startDate = formatInputDate(shiftDateByMonths(today, -3));
+      break;
+    case '6month':
+      startDate = formatInputDate(shiftDateByMonths(today, -6));
+      break;
+    case '1year':
+      startDate = formatInputDate(shiftDateByMonths(today, -12));
+      break;
+    case 'monthwise':
+      startDate = formatInputDate(new Date(today.getFullYear(), today.getMonth(), 1));
+      break;
+    case 'yearwise':
+      startDate = formatInputDate(new Date(today.getFullYear(), 0, 1));
+      break;
+    case '1day':
+    default:
+      startDate = endDate;
+      break;
+  }
+
+  return {
+    key: selectedRange,
+    label: getRangeLabel(selectedRange),
+    fromDate: startDate,
+    toDate: endDate
+  };
+};
+
 function StatCard({ title, value, icon: Icon, tone }) {
   return (
     <div className="rounded-2xl border border-white/70 bg-white/90 px-4 py-3 shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
@@ -94,11 +159,12 @@ function StatCard({ title, value, icon: Icon, tone }) {
 }
 
 export default function HomeDayBookPanel() {
-  const today = useMemo(() => getTodayInput(), []);
   const [activeView, setActiveView] = useState('daybook');
+  const [selectedRange, setSelectedRange] = useState('1day');
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const dateRange = useMemo(() => resolveDateRange(selectedRange), [selectedRange]);
 
   useEffect(() => {
     const loadDayBook = async () => {
@@ -106,8 +172,8 @@ export default function HomeDayBookPanel() {
         setLoading(true);
         const response = await apiClient.get('/reports/day-book', {
           params: {
-            fromDate: today,
-            toDate: today
+            fromDate: dateRange.fromDate,
+            toDate: dateRange.toDate
           }
         });
         setEntries(response?.data?.entries || []);
@@ -120,7 +186,7 @@ export default function HomeDayBookPanel() {
     };
 
     loadDayBook();
-  }, [today]);
+  }, [dateRange.fromDate, dateRange.toDate]);
 
   const sortedEntries = useMemo(() => (
     [...entries].sort((a, b) => {
@@ -136,93 +202,113 @@ export default function HomeDayBookPanel() {
   return (
     <section className="w-full rounded-[28px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,249,0.96))] shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
       <div className="border-b border-slate-200/80 px-5 py-5 sm:px-6">
-        <div className="flex flex-wrap items-center justify-start gap-2">
-          <button
-            type="button"
-            onClick={() => setActiveView('party-ledger')}
-            className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-              activeView === 'party-ledger'
-                ? 'border-emerald-300 bg-emerald-100 text-emerald-800'
-                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-            }`}
-          >
-            Party Ledger
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('stock-ledger')}
-            className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-              activeView === 'stock-ledger'
-                ? 'border-sky-300 bg-sky-100 text-sky-800'
-                : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
-            }`}
-          >
-            Stock Ledger
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('sales-report')}
-            className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-              activeView === 'sales-report'
-                ? 'border-violet-300 bg-violet-100 text-violet-800'
-                : 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100'
-            }`}
-          >
-            Sales Report
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('purchase-report')}
-            className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-              activeView === 'purchase-report'
-                ? 'border-amber-300 bg-amber-100 text-amber-800'
-                : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-            }`}
-          >
-            Purchase Report
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('payment-report')}
-            className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-              activeView === 'payment-report'
-                ? 'border-rose-300 bg-rose-100 text-rose-800'
-                : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-            }`}
-          >
-            Payment Report
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('money-received-report')}
-            className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-              activeView === 'money-received-report'
-                ? 'border-cyan-300 bg-cyan-100 text-cyan-800'
-                : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
-            }`}
-          >
-            Money Received Report
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveView('daybook')}
-            className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
-              activeView === 'daybook'
-                ? 'border-amber-300 bg-amber-100 text-amber-800'
-                : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-            }`}
-          >
-            Day Book
-          </button>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-start gap-2">
+            <button
+              type="button"
+              onClick={() => setActiveView('party-ledger')}
+              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                activeView === 'party-ledger'
+                  ? 'border-emerald-300 bg-emerald-100 text-emerald-800'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+              }`}
+            >
+              Party Ledger
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('stock-ledger')}
+              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                activeView === 'stock-ledger'
+                  ? 'border-sky-300 bg-sky-100 text-sky-800'
+                  : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
+              }`}
+            >
+              Stock Ledger
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('sales-report')}
+              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                activeView === 'sales-report'
+                  ? 'border-violet-300 bg-violet-100 text-violet-800'
+                  : 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100'
+              }`}
+            >
+              Sales Report
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('purchase-report')}
+              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                activeView === 'purchase-report'
+                  ? 'border-amber-300 bg-amber-100 text-amber-800'
+                  : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+              }`}
+            >
+              Purchase Report
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('payment-report')}
+              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                activeView === 'payment-report'
+                  ? 'border-rose-300 bg-rose-100 text-rose-800'
+                  : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+              }`}
+            >
+              Payment Report
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('money-received-report')}
+              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                activeView === 'money-received-report'
+                  ? 'border-cyan-300 bg-cyan-100 text-cyan-800'
+                  : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
+              }`}
+            >
+              Money Received Report
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('daybook')}
+              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                activeView === 'daybook'
+                  ? 'border-amber-300 bg-amber-100 text-amber-800'
+                  : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
+              }`}
+            >
+              Day Book
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label htmlFor="home-report-range" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Date Filter
+            </label>
+            <select
+              id="home-report-range"
+              value={selectedRange}
+              onChange={(event) => setSelectedRange(event.target.value)}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+            >
+              {DATE_FILTER_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       {activeView === 'party-ledger' ? (
-        <HomePartyLedgerPanel />
+        <HomePartyLedgerPanel dateRange={dateRange} />
       ) : activeView === 'stock-ledger' ? (
         <HomeStockLedgerPanel />
       ) : activeView === 'sales-report' ? (
-        <HomeSalesLedgerPanel />
+        <HomeSalesLedgerPanel dateRange={dateRange} />
       ) : activeView === 'purchase-report' ? (
         <HomePurchaseReportPanel />
       ) : activeView === 'payment-report' ? (
@@ -236,6 +322,10 @@ export default function HomeDayBookPanel() {
             {error}
           </div>
         ) : null}
+
+        <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-sm font-semibold text-slate-600">
+          Showing data from {formatDate(dateRange.fromDate)} to {formatDate(dateRange.toDate)}
+        </div>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
           <StatCard title="Sales" value={formatCurrency(summary.sales)} icon={TrendingUp} tone="from-emerald-500 to-teal-500" />

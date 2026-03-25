@@ -12,7 +12,6 @@ import Unit from './pages/Unit';
 import Banks from './pages/Banks';
 import Sales from './pages/Sales/Sales';
 import Purchases from './pages/Purchases/Purchases';
-import Payments from './pages/Payments/Payments';
 import Receipts from './pages/Receipts/Receipts';
 import Party from './pages/Party/Party';
 import PartyDetail from './pages/PartyDetail';
@@ -29,6 +28,7 @@ import StockLedger from './pages/StockLedger';
 import ReportsPlaceholder from './pages/ReportsPlaceholder';
 import DayBook from './pages/DayBook';
 import Settings from './pages/Settings';
+import { AddPaymentPopupLauncher } from './pages/Payments/component/AddPaymentPopup';
 import ProtectedRoute from './components/ProtectedRoute';
 import SectionHubPage from './components/SectionHubPage';
 
@@ -248,14 +248,7 @@ function App() {
           }
         />
 
-        <Route
-          path="/reports/payment-report"
-          element={
-            <ProtectedRoute>
-              <Payments />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/reports/payment-report" element={<Navigate to="/" replace state={{ homeQuickPayment: true }} />} />
 
         <Route
           path="/reports/receipt-report"
@@ -292,15 +285,6 @@ function App() {
           element={
             <ProtectedRoute>
               <Navigate to="/reports" replace />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/payments"
-          element={
-            <ProtectedRoute>
-              <Payments modalOnly onModalFinish={closeVoucherRouteToHub} />
             </ProtectedRoute>
           }
         />
@@ -422,7 +406,7 @@ function App() {
 
       {location.pathname === '/' && location.state?.homeQuickPayment && (
         <ProtectedRoute>
-          <Payments modalOnly onModalFinish={clearHomeQuickShortcutState} />
+          <AddPaymentPopupLauncher onFinish={clearHomeQuickShortcutState} />
         </ProtectedRoute>
       )}
 

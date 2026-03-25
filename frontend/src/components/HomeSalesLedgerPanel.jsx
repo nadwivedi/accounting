@@ -16,6 +16,23 @@ const formatDate = (value) => {
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
+const isWithinRange = (value, fromDate, toDate) => {
+  const current = new Date(value);
+  if (Number.isNaN(current.getTime())) return false;
+
+  if (fromDate) {
+    const start = new Date(`${fromDate}T00:00:00`);
+    if (!Number.isNaN(start.getTime()) && current < start) return false;
+  }
+
+  if (toDate) {
+    const end = new Date(`${toDate}T23:59:59.999`);
+    if (!Number.isNaN(end.getTime()) && current > end) return false;
+  }
+
+  return true;
+};
+
 function StatCard({ title, value, icon: Icon, tone }) {
   return (
     <div className="rounded-2xl border border-white/70 bg-white/90 px-4 py-3 shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
@@ -32,7 +49,7 @@ function StatCard({ title, value, icon: Icon, tone }) {
   );
 }
 
-export default function HomeSalesLedgerPanel() {
+export default function HomeSalesLedgerPanel({ dateRange = null }) {
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -62,8 +79,13 @@ export default function HomeSalesLedgerPanel() {
     })
   ), [sales]);
 
-  const totalAmount = sortedSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
-  const visibleSales = sortedSales.slice(0, 8);
+  const filteredSales = useMemo(() => (
+    sortedSales.filter((sale) => isWithinRange(sale.saleDate, dateRange?.fromDate, dateRange?.toDate))
+  ), [dateRange?.fromDate, dateRange?.toDate, sortedSales]);
+
+  const totalAmount = filteredSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
+  const totalItems = filteredSales.reduce((sum, sale) => sum + Number(sale.items?.length || 0), 0);
+  const visibleSales = filteredSales.slice(0, 8);
 
   return (
     <section className="w-full rounded-[28px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,249,0.96))] shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
@@ -72,6 +94,9 @@ export default function HomeSalesLedgerPanel() {
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-700">Live Preview</p>
             <h2 className="mt-1 text-2xl font-black text-slate-800">Sales Report</h2>
+            {dateRange?.label ? (
+              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{dateRange.label}</p>
+            ) : null}
           </div>
           <Link
             to="/reports/sales-report"
@@ -90,9 +115,9 @@ export default function HomeSalesLedgerPanel() {
         ) : null}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatCard title="Invoices" value={sortedSales.length} icon={ShoppingCart} tone="from-blue-500 to-cyan-500" />
+          <StatCard title="Invoices" value={filteredSales.length} icon={ShoppingCart} tone="from-blue-500 to-cyan-500" />
           <StatCard title="Sales Total" value={formatCurrency(totalAmount)} icon={IndianRupee} tone="from-emerald-500 to-teal-500" />
-          <StatCard title="Items" value={visibleSales.reduce((sum, sale) => sum + Number(sale.items?.length || 0), 0)} icon={Package} tone="from-violet-500 to-purple-500" />
+          <StatCard title="Items" value={totalItems} icon={Package} tone="from-violet-500 to-purple-500" />
         </div>
 
         <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white">

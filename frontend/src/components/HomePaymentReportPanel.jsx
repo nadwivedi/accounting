@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { CreditCard, IndianRupee, Wallet } from 'lucide-react';
 import apiClient from '../utils/api';
 
@@ -33,6 +33,8 @@ function StatCard({ title, value, icon: Icon, tone }) {
 }
 
 export default function HomePaymentReportPanel() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [payments, setPayments] = useState([]);
   const [parties, setParties] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -91,12 +93,25 @@ export default function HomePaymentReportPanel() {
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-rose-700">Live Preview</p>
             <h2 className="mt-1 text-2xl font-black text-slate-800">Payment Report</h2>
           </div>
-          <Link
-            to="/reports/payment-report"
+          <button
+            type="button"
+            onClick={() => {
+              navigate('/', {
+                replace: true,
+                state: {
+                  ...(location.state || {}),
+                  homeQuickSale: false,
+                  homeQuickPurchase: false,
+                  homeQuickPayment: true,
+                  homeQuickReceipt: false,
+                  homeQuickExpense: false
+                }
+              });
+            }}
             className="inline-flex items-center justify-center rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
           >
-            Open Full Payment Report
-          </Link>
+            Add Payment
+          </button>
         </div>
       </div>
 

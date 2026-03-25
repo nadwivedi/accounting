@@ -164,7 +164,7 @@ export const SECTION_CONFIG = {
       { name: 'Sale Return', path: '/sale-return', Icon: SaleReturnIcon },
       { name: 'Purchase Return', path: '/purchase-return', Icon: PurchaseReturnIcon },
       { name: 'Stock Adjustment', path: '/stock-adjustment', Icon: StockAdjustmentIcon },
-      { name: 'Payment', hint: 'Pay to supplier', path: '/payments', Icon: PaymentIcon },
+      { name: 'Payment', hint: 'Pay to supplier', path: '/', Icon: PaymentIcon },
       { name: 'Receipt', hint: 'Money received from customer', path: '/receipts', Icon: ReceiptIcon }
     ]
   },

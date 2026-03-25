@@ -1,6 +1,87 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Building2, CalendarDays, Wallet } from 'lucide-react';
+import { toast } from 'react-toastify';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
 import { useFloatingDropdownPosition } from '../../../utils/useFloatingDropdownPosition';
+import apiClient from '../../../utils/api';
+import { getBankDisplayName, normalizeBankName } from '../../../utils/bankAccounts';
+
+const TOAST_OPTIONS = { autoClose: 1200 };
+
+const formatPaymentDateInput = (value = new Date()) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
+const parsePaymentDateInput = (value) => {
+  const normalized = String(value || '').trim();
+  if (!normalized) return null;
+
+  let year;
+  let month;
+  let day;
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(normalized)) {
+    [year, month, day] = normalized.split('-').map(Number);
+  } else if (/^\d{1,2}[/-]\d{1,2}[/-]\d{4}$/.test(normalized)) {
+    [day, month, year] = normalized.split(/[/-]/).map(Number);
+  } else {
+    return null;
+  }
+
+  const parsedDate = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(parsedDate.getTime())
+    || parsedDate.getFullYear() !== year
+    || parsedDate.getMonth() !== month - 1
+    || parsedDate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return parsedDate;
+};
+
+const getInitialForm = (defaultMethod = 'Cash Account') => ({
+  party: '',
+  amount: '',
+  method: defaultMethod,
+  paymentDate: formatPaymentDateInput(),
+  notes: '',
+  refType: 'none',
+  refId: ''
+});
+
+const getPaymentAccountOptions = (banks = []) => {
+  const uniqueNames = banks
+    .map((bank) => getBankDisplayName(bank))
+    .filter((name, index, values) => name && values.indexOf(name) === index);
+
+  return uniqueNames.length > 0 ? uniqueNames : ['Cash Account'];
+};
+
+const getDefaultPaymentMethod = (banks = []) => {
+  const cashAccount = banks.find((bank) => normalizeBankName(bank?.name) === 'cash account');
+  return getBankDisplayName(cashAccount || banks[0]) || 'Cash Account';
+};
+
+const buildPurchasePaymentMap = (payments) => {
+  const map = new Map();
+
+  payments
+    .filter((payment) => payment.refType === 'purchase' && payment.refId)
+    .forEach((payment) => {
+      const key = String(payment.refId);
+      map.set(key, (map.get(key) || 0) + Number(payment.amount || 0));
+    });
+
+  return map;
+};
 
 export default function AddPaymentPopup({
   showForm,
@@ -346,5 +427,449 @@ export default function AddPaymentPopup({
         </form>
       </div>
     </div>
+  );
+}
+
+export function AddPaymentPopupLauncher({ onFinish = null }) {
+  const [payments, setPayments] = useState([]);
+  const [parties, setParties] = useState([]);
+  const [purchases, setPurchases] = useState([]);
+  const [banks, setBanks] = useState([]);
+  const [formData, setFormData] = useState(getInitialForm());
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [partyQuery, setPartyQuery] = useState('');
+  const [partyListIndex, setPartyListIndex] = useState(-1);
+  const [isPartySectionActive, setIsPartySectionActive] = useState(false);
+  const [paymentAccountQuery, setPaymentAccountQuery] = useState('');
+  const [paymentAccountListIndex, setPaymentAccountListIndex] = useState(-1);
+  const [isPaymentAccountSectionActive, setIsPaymentAccountSectionActive] = useState(false);
+  const partySectionRef = useRef(null);
+  const paymentAccountSectionRef = useRef(null);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [paymentsResponse, partiesResponse, purchasesResponse, banksResponse] = await Promise.all([
+          apiClient.get('/payments'),
+          apiClient.get('/parties'),
+          apiClient.get('/purchases'),
+          apiClient.get('/banks')
+        ]);
+
+        setPayments(paymentsResponse.data || []);
+        setParties(partiesResponse.data || []);
+        setPurchases(purchasesResponse.data || []);
+        setBanks(banksResponse.data || []);
+      } catch (err) {
+        setError(err.message || 'Error loading payment form');
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const purchasePaymentMap = useMemo(() => buildPurchasePaymentMap(payments), [payments]);
+  const paymentAccountOptions = useMemo(() => getPaymentAccountOptions(banks), [banks]);
+  const defaultPaymentMethod = useMemo(() => getDefaultPaymentMethod(banks), [banks]);
+  const normalizeText = (value) => String(value || '').trim().toLowerCase();
+
+  useEffect(() => {
+    setFormData((prev) => {
+      const currentMethod = String(prev.method || '').trim();
+      const hasMatchingAccount = paymentAccountOptions.includes(currentMethod);
+      const isLegacyMethod = ['cash', 'bank', 'upi', 'card', 'credit', 'other'].includes(currentMethod.toLowerCase());
+
+      if (currentMethod && hasMatchingAccount && !isLegacyMethod) return prev;
+      if (currentMethod === defaultPaymentMethod) return prev;
+
+      return { ...prev, method: defaultPaymentMethod };
+    });
+  }, [defaultPaymentMethod, paymentAccountOptions]);
+
+  useEffect(() => {
+    if (isPaymentAccountSectionActive) return;
+    setPaymentAccountQuery(formData.method || '');
+  }, [formData.method, isPaymentAccountSectionActive]);
+
+  const getPartyDisplayName = (party) => {
+    const partyName = String(party?.partyName || party?.name || '').trim();
+    return partyName || 'Party Name';
+  };
+
+  const resolvePartyNameById = (partyId) => {
+    const resolvedId = typeof partyId === 'object' ? partyId?._id : partyId;
+    if (!resolvedId) return '';
+    const matching = parties.find((party) => String(party._id) === String(resolvedId));
+    return matching ? getPartyDisplayName(matching) : '';
+  };
+
+  const getMatchingParties = (queryValue) => {
+    const normalized = normalizeText(queryValue);
+    if (!normalized) return parties;
+
+    const startsWith = parties.filter((party) => normalizeText(getPartyDisplayName(party)).startsWith(normalized));
+    const includes = parties.filter((party) => !normalizeText(getPartyDisplayName(party)).startsWith(normalized) && normalizeText(getPartyDisplayName(party)).includes(normalized));
+    return [...startsWith, ...includes];
+  };
+
+  const getMatchingPaymentAccounts = (queryValue) => {
+    const normalized = normalizeText(queryValue);
+    if (!normalized) return paymentAccountOptions;
+
+    const startsWith = paymentAccountOptions.filter((accountName) => normalizeText(accountName).startsWith(normalized));
+    const includes = paymentAccountOptions.filter((accountName) => !normalizeText(accountName).startsWith(normalized) && normalizeText(accountName).includes(normalized));
+    return [...startsWith, ...includes];
+  };
+
+  const selectedPartyName = useMemo(() => resolvePartyNameById(formData.party), [formData.party, parties]);
+
+  const filteredParties = useMemo(() => {
+    const normalizedQuery = normalizeText(partyQuery);
+    const normalizedSelectedName = normalizeText(selectedPartyName);
+
+    if (isPartySectionActive && normalizedQuery && normalizedQuery === normalizedSelectedName) {
+      return parties;
+    }
+
+    return getMatchingParties(partyQuery);
+  }, [parties, partyQuery, isPartySectionActive, selectedPartyName]);
+
+  const filteredPaymentAccounts = useMemo(() => {
+    const normalizedQuery = normalizeText(paymentAccountQuery);
+    const normalizedSelectedName = normalizeText(formData.method);
+
+    if (isPaymentAccountSectionActive && normalizedQuery && normalizedQuery === normalizedSelectedName) {
+      return paymentAccountOptions;
+    }
+
+    return getMatchingPaymentAccounts(paymentAccountQuery);
+  }, [formData.method, isPaymentAccountSectionActive, paymentAccountOptions, paymentAccountQuery]);
+
+  useEffect(() => {
+    if (filteredParties.length === 0) {
+      setPartyListIndex(-1);
+      return;
+    }
+
+    const shouldHighlightSelectedParty = isPartySectionActive && normalizeText(partyQuery) && normalizeText(partyQuery) === normalizeText(selectedPartyName) && formData.party;
+    if (shouldHighlightSelectedParty) {
+      const selectedIndex = filteredParties.findIndex((item) => String(item._id) === String(formData.party));
+      setPartyListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+      return;
+    }
+
+    setPartyListIndex((prev) => (prev < 0 ? 0 : Math.min(prev, filteredParties.length - 1)));
+  }, [filteredParties, formData.party, isPartySectionActive, partyQuery, selectedPartyName]);
+
+  useEffect(() => {
+    if (filteredPaymentAccounts.length === 0) {
+      setPaymentAccountListIndex(-1);
+      return;
+    }
+
+    const shouldHighlightSelectedAccount = isPaymentAccountSectionActive && normalizeText(paymentAccountQuery) && normalizeText(paymentAccountQuery) === normalizeText(formData.method) && formData.method;
+    if (shouldHighlightSelectedAccount) {
+      const selectedIndex = filteredPaymentAccounts.findIndex((item) => item === formData.method);
+      setPaymentAccountListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+      return;
+    }
+
+    setPaymentAccountListIndex((prev) => (prev < 0 ? 0 : Math.min(prev, filteredPaymentAccounts.length - 1)));
+  }, [filteredPaymentAccounts, formData.method, isPaymentAccountSectionActive, paymentAccountQuery]);
+
+  const handlePartyFocus = () => setIsPartySectionActive(true);
+  const handlePaymentAccountFocus = () => setIsPaymentAccountSectionActive(true);
+
+  const findExactParty = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return parties.find((party) => normalizeText(getPartyDisplayName(party)) === normalized) || null;
+  };
+
+  const findBestPartyMatch = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return parties.find((party) => normalizeText(getPartyDisplayName(party)).startsWith(normalized))
+      || parties.find((party) => normalizeText(getPartyDisplayName(party)).includes(normalized))
+      || null;
+  };
+
+  const findExactPaymentAccount = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return paymentAccountOptions.find((accountName) => normalizeText(accountName) === normalized) || null;
+  };
+
+  const findBestPaymentAccountMatch = (value) => {
+    const normalized = normalizeText(value);
+    if (!normalized) return null;
+    return paymentAccountOptions.find((accountName) => normalizeText(accountName).startsWith(normalized))
+      || paymentAccountOptions.find((accountName) => normalizeText(accountName).includes(normalized))
+      || null;
+  };
+
+  const selectParty = (party) => {
+    if (!party) {
+      setPartyQuery('');
+      setFormData((prev) => ({ ...prev, party: '', refId: '' }));
+      setPartyListIndex(-1);
+      return;
+    }
+
+    const partyName = getPartyDisplayName(party);
+    setPartyQuery(partyName);
+    setFormData((prev) => ({ ...prev, party: party._id, refId: prev.refType === 'purchase' ? '' : prev.refId }));
+    const selectedIndex = filteredParties.findIndex((item) => String(item._id) === String(party._id));
+    setPartyListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  };
+
+  const handlePartyInputChange = (e) => {
+    const value = e.target.value;
+    setPartyQuery(value);
+
+    if (!normalizeText(value)) {
+      selectParty(null);
+      return;
+    }
+
+    const exactParty = findExactParty(value);
+    if (exactParty) {
+      setFormData((prev) => ({ ...prev, party: exactParty._id, refId: prev.refType === 'purchase' ? '' : prev.refId }));
+      const exactIndex = getMatchingParties(value).findIndex((item) => String(item._id) === String(exactParty._id));
+      setPartyListIndex(exactIndex >= 0 ? exactIndex : 0);
+      return;
+    }
+
+    const matches = getMatchingParties(value);
+    const firstMatch = matches[0] || null;
+    setFormData((prev) => ({ ...prev, party: firstMatch?._id || '', refId: prev.refType === 'purchase' ? '' : prev.refId }));
+    setPartyListIndex(firstMatch ? 0 : -1);
+  };
+
+  const selectPaymentAccount = (accountName) => {
+    if (!accountName) {
+      setPaymentAccountQuery('');
+      setFormData((prev) => ({ ...prev, method: '' }));
+      setPaymentAccountListIndex(-1);
+      return;
+    }
+
+    setPaymentAccountQuery(accountName);
+    setFormData((prev) => ({ ...prev, method: accountName }));
+    const selectedIndex = filteredPaymentAccounts.findIndex((item) => item === accountName);
+    setPaymentAccountListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  };
+
+  const handlePaymentAccountInputChange = (e) => {
+    const value = e.target.value;
+    const matches = getMatchingPaymentAccounts(value);
+    setPaymentAccountQuery(value);
+
+    if (!normalizeText(value)) {
+      selectPaymentAccount(null);
+      return;
+    }
+
+    const exactAccount = findExactPaymentAccount(value);
+    if (exactAccount) {
+      setFormData((prev) => ({ ...prev, method: exactAccount }));
+      const exactIndex = matches.findIndex((item) => item === exactAccount);
+      setPaymentAccountListIndex(exactIndex >= 0 ? exactIndex : 0);
+      return;
+    }
+
+    const firstMatch = matches[0] || null;
+    setFormData((prev) => ({ ...prev, method: firstMatch || '' }));
+    setPaymentAccountListIndex(firstMatch ? 0 : -1);
+  };
+
+  const focusNextPopupField = (element) => {
+    if (!(element instanceof HTMLElement)) return;
+    const form = element.closest('form');
+    if (!form) return;
+
+    const fields = Array.from(form.querySelectorAll('input:not([type="hidden"]):not([disabled]):not([readonly]), select:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly])')).filter((field) => {
+      if (!(field instanceof HTMLElement)) return false;
+      if (field.tabIndex === -1) return false;
+      const style = window.getComputedStyle(field);
+      return style.display !== 'none' && style.visibility !== 'hidden';
+    });
+
+    const currentIndex = fields.indexOf(element);
+    if (currentIndex === -1) return;
+
+    const nextField = fields[currentIndex + 1];
+    if (!(nextField instanceof HTMLElement)) return;
+    nextField.focus();
+    if (nextField instanceof HTMLInputElement && typeof nextField.select === 'function') {
+      nextField.select();
+    }
+  };
+
+  const handlePartyInputKeyDown = (e) => {
+    const key = e.key?.toLowerCase();
+    if (key === 'arrowdown') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredParties.length === 0) return;
+      setPartyListIndex((prev) => (prev < 0 ? 0 : Math.min(prev + 1, filteredParties.length - 1)));
+      return;
+    }
+    if (key === 'arrowup') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredParties.length === 0) return;
+      setPartyListIndex((prev) => (prev < 0 ? 0 : Math.max(prev - 1, 0)));
+      return;
+    }
+    if (key === 'enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      const activeParty = partyListIndex >= 0 ? filteredParties[partyListIndex] : null;
+      const matchedParty = activeParty || findExactParty(partyQuery) || findBestPartyMatch(partyQuery);
+      if (matchedParty) selectParty(matchedParty);
+      setIsPartySectionActive(false);
+      focusNextPopupField(e.currentTarget);
+    }
+  };
+
+  const handlePaymentAccountInputKeyDown = (e) => {
+    const key = e.key?.toLowerCase();
+    if (key === 'arrowdown') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredPaymentAccounts.length === 0) return;
+      setPaymentAccountListIndex((prev) => (prev < 0 ? 0 : Math.min(prev + 1, filteredPaymentAccounts.length - 1)));
+      return;
+    }
+    if (key === 'arrowup') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (filteredPaymentAccounts.length === 0) return;
+      setPaymentAccountListIndex((prev) => (prev < 0 ? 0 : Math.max(prev - 1, 0)));
+      return;
+    }
+    if (key === 'enter') {
+      e.preventDefault();
+      e.stopPropagation();
+      const activeAccount = paymentAccountListIndex >= 0 ? filteredPaymentAccounts[paymentAccountListIndex] : null;
+      const matchedAccount = activeAccount || findExactPaymentAccount(paymentAccountQuery) || findBestPaymentAccountMatch(paymentAccountQuery);
+      if (matchedAccount) selectPaymentAccount(matchedAccount);
+      setIsPaymentAccountSectionActive(false);
+      focusNextPopupField(e.currentTarget);
+    }
+  };
+
+  const purchaseOptions = useMemo(() => {
+    if (formData.refType !== 'purchase') return [];
+    return purchases.filter((purchase) => !formData.party || String(purchase.party?._id || purchase.party) === String(formData.party))
+      .filter((purchase) => Math.max(0, Number(purchase.totalAmount || 0) - Number(purchasePaymentMap.get(String(purchase._id)) || 0)) > 0);
+  }, [formData.party, formData.refType, purchasePaymentMap, purchases]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePaymentDateBlur = (e) => {
+    const parsedDate = parsePaymentDateInput(e.target.value);
+    if (!parsedDate) return;
+    setFormData((prev) => ({ ...prev, paymentDate: formatPaymentDateInput(parsedDate) }));
+  };
+
+  const handleCloseForm = () => {
+    onFinish?.();
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!formData.amount || Number(formData.amount) <= 0) {
+      setError('Valid amount is required');
+      return;
+    }
+    if (!formData.method) {
+      setError('Select payment account');
+      return;
+    }
+
+    const parsedPaymentDate = parsePaymentDateInput(formData.paymentDate);
+    if (!parsedPaymentDate) {
+      setError('Enter payment date in DD/MM/YYYY format');
+      return;
+    }
+
+    if (formData.refType === 'purchase' && !formData.refId) {
+      setError('Select purchase bill for bill-wise payment');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      await apiClient.post('/payments', {
+        party: formData.party || null,
+        amount: Number(formData.amount),
+        method: formData.method,
+        paymentDate: parsedPaymentDate,
+        notes: formData.notes,
+        refType: formData.refType,
+        refId: formData.refType === 'purchase' ? formData.refId : null
+      });
+
+      toast.success('Payment created successfully', TOAST_OPTIONS);
+      handleCloseForm();
+    } catch (err) {
+      setError(err.message || 'Error creating payment');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <>
+      {error ? (
+        <div className="fixed left-4 right-4 top-4 z-[60] rounded-lg border border-red-200 bg-red-50 p-4 text-red-700 shadow-lg md:left-auto md:right-4 md:w-[26rem]">
+          {error}
+        </div>
+      ) : null}
+
+      <AddPaymentPopup
+        showForm
+        loading={loading}
+        formData={formData}
+        parties={parties}
+        paymentAccountOptions={paymentAccountOptions}
+        paymentAccountSectionRef={paymentAccountSectionRef}
+        partySectionRef={partySectionRef}
+        paymentAccountQuery={paymentAccountQuery}
+        partyQuery={partyQuery}
+        paymentAccountListIndex={paymentAccountListIndex}
+        partyListIndex={partyListIndex}
+        filteredPaymentAccounts={filteredPaymentAccounts}
+        filteredParties={filteredParties}
+        isPaymentAccountSectionActive={isPaymentAccountSectionActive}
+        isPartySectionActive={isPartySectionActive}
+        purchaseOptions={purchaseOptions}
+        purchasePaymentMap={purchasePaymentMap}
+        setFormData={setFormData}
+        setPaymentAccountListIndex={setPaymentAccountListIndex}
+        setPartyListIndex={setPartyListIndex}
+        setIsPaymentAccountSectionActive={setIsPaymentAccountSectionActive}
+        setIsPartySectionActive={setIsPartySectionActive}
+        getPartyDisplayName={getPartyDisplayName}
+        handleCloseForm={handleCloseForm}
+        handleSubmit={handleSubmit}
+        handleChange={handleChange}
+        handlePaymentDateBlur={handlePaymentDateBlur}
+        handlePaymentAccountFocus={handlePaymentAccountFocus}
+        handlePartyFocus={handlePartyFocus}
+        handlePaymentAccountInputChange={handlePaymentAccountInputChange}
+        handlePartyInputChange={handlePartyInputChange}
+        handlePaymentAccountInputKeyDown={handlePaymentAccountInputKeyDown}
+        handlePartyInputKeyDown={handlePartyInputKeyDown}
+        selectPaymentAccount={selectPaymentAccount}
+        selectParty={selectParty}
+      />
+    </>
   );
 }
