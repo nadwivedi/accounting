@@ -125,6 +125,12 @@ export default function ProtectedRoute({ children }) {
         return;
       }
 
+      if (location.pathname.startsWith('/stock/') && location.pathname !== '/stock') {
+        event.preventDefault();
+        navigate('/', { replace: true });
+        return;
+      }
+
       const homeNavigationState = getHomeNavigationState(location.pathname);
       const sectionHubPath = homeNavigationState ? sectionHubPaths[homeNavigationState.section] : null;
 

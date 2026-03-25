@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowDownLeft, ArrowUpRight, Boxes, Package, TrendingUp } from 'lucide-react';
 import apiClient from '../utils/api';
 
@@ -23,6 +23,7 @@ function StatCard({ title, value, icon: Icon, tone }) {
 }
 
 export default function HomeStockLedgerPanel() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -57,6 +58,12 @@ export default function HomeStockLedgerPanel() {
     [products]
   );
   const visibleRows = products.slice(0, 8);
+
+  const handleProductClick = (product) => {
+    const productId = product?._id || product?.productId;
+    if (!productId) return;
+    navigate(`/stock/${productId}`);
+  };
 
   return (
     <section className="w-full rounded-[28px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,249,0.96))] shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
@@ -105,7 +112,11 @@ export default function HomeStockLedgerPanel() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {visibleRows.map((row, index) => (
-                    <tr key={`${row.productId || row._id || getProductLabel(row)}-${index}`} className="hover:bg-slate-50">
+                    <tr
+                      key={`${row.productId || row._id || getProductLabel(row)}-${index}`}
+                      onClick={() => handleProductClick(row)}
+                      className="cursor-pointer hover:bg-slate-50"
+                    >
                       <td className="px-4 py-3 text-sm font-semibold text-slate-700">{getProductLabel(row) || '-'}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-slate-700">{formatNumber(row.currentStock)}</td>
                       <td className="px-4 py-3 text-right text-sm text-slate-700">{formatNumber(row.minStockLevel)}</td>
