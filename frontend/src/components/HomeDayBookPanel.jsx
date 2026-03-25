@@ -5,6 +5,7 @@ import apiClient from '../utils/api';
 import HomePaymentReportPanel from './HomePaymentReportPanel';
 import HomePartyLedgerPanel from './HomePartyLedgerPanel';
 import HomePurchaseReportPanel from './HomePurchaseReportPanel';
+import HomeExpenseReportPanel from './HomeExpenseReportPanel';
 import HomeReceiptReportPanel from './HomeReceiptReportPanel';
 import HomeSalesLedgerPanel from './HomeSalesLedgerPanel';
 import HomeStockLedgerPanel from './HomeStockLedgerPanel';
@@ -279,6 +280,18 @@ export default function HomeDayBookPanel() {
             </button>
             <button
               type="button"
+              onClick={() => setActiveView('expense-report')}
+              aria-label="Expense Report"
+              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
+                activeView === 'expense-report'
+                  ? 'border-fuchsia-300 bg-fuchsia-100 text-fuchsia-800'
+                  : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100'
+              }`}
+            >
+              Expense Report
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveView('daybook')}
               aria-label="Day Book"
               className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
@@ -324,6 +337,8 @@ export default function HomeDayBookPanel() {
         <HomePaymentReportPanel />
       ) : activeView === 'money-received-report' ? (
         <HomeReceiptReportPanel />
+      ) : activeView === 'expense-report' ? (
+        <HomeExpenseReportPanel dateRange={dateRange} />
       ) : (
       <div className="space-y-5 p-5 sm:p-6">
         {error ? (
