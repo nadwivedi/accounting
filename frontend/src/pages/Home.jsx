@@ -94,12 +94,12 @@ export default function Home() {
         onSectionSelect={(sectionName) => activateHomeSection(sectionName, navigate, setExpandedSection)}
         onMenuClick={() => setIsMobileSidebarOpen(true)}
       />
-      <div className="px-2 py-4 sm:px-4 sm:py-5 lg:px-5">
-        <div className="grid min-h-[calc(100vh-5.5rem)] grid-cols-1 gap-4 xl:grid-cols-[17rem_minmax(0,1fr)] xl:items-start">
+      <div className="px-2 py-4 sm:px-4 sm:py-5 lg:px-5 xl:px-4 xl:py-4 2xl:px-5 2xl:py-5">
+        <div className="grid min-h-[calc(100vh-5.5rem)] grid-cols-1 gap-4 xl:grid-cols-[15.25rem_minmax(0,1fr)] xl:gap-3 xl:items-start 2xl:grid-cols-[17rem_minmax(0,1fr)] 2xl:gap-4">
           <div className="hidden xl:block">
             <Sidebar />
           </div>
-          <div className="min-w-0 xl:pl-1">
+          <div className="min-w-0 xl:pl-0.5 2xl:pl-1">
             <HomeDayBookPanel />
           </div>
         </div>

@@ -1,5 +1,5 @@
 function AssetIcon({ src, alt = '' }) {
-  return <img src={src} alt={alt} className="h-10 w-10 object-contain" />;
+  return <img src={src} alt={alt} className="h-8 w-8 object-contain 2xl:h-10 2xl:w-10" />;
 }
 
 function ProductIcon() {
@@ -20,7 +20,7 @@ function UnitIcon() {
 
 function BankIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 2xl:h-6 2xl:w-6">
       <path d="M3 9.5 12 4l9 5.5" />
       <path d="M5 10.5h14" />
       <path d="M6.5 10.5v7.5M10 10.5v7.5M14 10.5v7.5M17.5 10.5v7.5" />
@@ -51,7 +51,7 @@ function ReceiptIcon() {
 
 function ExpenseIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 2xl:h-6 2xl:w-6">
       <path d="M6 4h9l3 3v13H6z" />
       <path d="M15 4v4h4" />
       <path d="M9 12h6M9 16h4" />
@@ -61,7 +61,7 @@ function ExpenseIcon() {
 
 function ExpenseGroupIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 2xl:h-6 2xl:w-6">
       <path d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9A2.5 2.5 0 0 1 17.5 19h-11A2.5 2.5 0 0 1 4 16.5v-9Z" />
       <path d="M8 9h8M8 13h8M8 17h5" />
     </svg>
@@ -70,7 +70,7 @@ function ExpenseGroupIcon() {
 
 function ReportIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 2xl:h-6 2xl:w-6">
       <path d="M4 20V4.5A1.5 1.5 0 0 1 5.5 3h13A1.5 1.5 0 0 1 20 4.5V20" />
       <path d="M7.5 16.5 11 13l2.2 2.2 3.3-3.7" />
       <path d="M7.5 8.5h9" />
@@ -80,7 +80,7 @@ function ReportIcon() {
 
 function SettingsIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 2xl:h-6 2xl:w-6">
       <circle cx="12" cy="12" r="3.2" />
       <path d="M19.2 12a7.2 7.2 0 0 0-.1-1.2l2-1.5-2-3.5-2.4 1a7.5 7.5 0 0 0-2.1-1.2l-.4-2.6h-4l-.4 2.6a7.5 7.5 0 0 0-2.1 1.2l-2.4-1-2 3.5 2 1.5a7.2 7.2 0 0 0 0 2.4l-2 1.5 2 3.5 2.4-1a7.5 7.5 0 0 0 2.1 1.2l.4 2.6h4l.4-2.6a7.5 7.5 0 0 0 2.1-1.2l2.4 1 2-3.5-2-1.5c.1-.4.1-.8.1-1.2Z" />
     </svg>
@@ -89,7 +89,7 @@ function SettingsIcon() {
 
 function MasterIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-7 w-7">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6 2xl:h-7 2xl:w-7">
       <path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v11a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 17.5v-11Z" />
       <path d="M8 8h8M8 12h8M8 16h5" />
     </svg>
@@ -98,7 +98,7 @@ function MasterIcon() {
 
 function VoucherIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-7 w-7">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6 2xl:h-7 2xl:w-7">
       <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v13A2.5 2.5 0 0 1 17.5 21h-11A2.5 2.5 0 0 1 4 18.5v-13Z" />
       <path d="M8 8h8M8 12h8M8 16h4" />
     </svg>
@@ -115,7 +115,7 @@ function PurchaseReturnIcon() {
 
 function DayBookIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-6 w-6">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 2xl:h-6 2xl:w-6">
       <path d="M6 4.5A2.5 2.5 0 0 1 8.5 2h8A2.5 2.5 0 0 1 19 4.5v15A2.5 2.5 0 0 1 16.5 22h-8A2.5 2.5 0 0 1 6 19.5v-15Z" />
       <path d="M9 7h7M9 11h7M9 15h4" />
       <path d="M4 6.5v11A2.5 2.5 0 0 0 6.5 20H19" />
