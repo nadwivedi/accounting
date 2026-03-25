@@ -59,6 +59,8 @@ const getDateKey = (value) => {
   return toInputDate(date);
 };
 
+const getRecordedDateValue = (entry) => entry?.date || entry?.entryCreatedAt || '';
+
 const buildSummary = (entries) => entries.reduce((acc, entry) => {
   const amount = Number(entry.amount || 0);
   const inward = Number(entry.inAmount || 0);
@@ -156,9 +158,13 @@ export default function DayBook() {
       );
     }
     return filtered.sort((a, b) => {
-      const aTime = new Date(a.entryCreatedAt || a.date).getTime() || 0;
-      const bTime = new Date(b.entryCreatedAt || b.date).getTime() || 0;
-      return bTime - aTime;
+      const aDate = new Date(getRecordedDateValue(a)).getTime() || 0;
+      const bDate = new Date(getRecordedDateValue(b)).getTime() || 0;
+      if (bDate !== aDate) return bDate - aDate;
+
+      const aCreated = new Date(a.entryCreatedAt || a.date).getTime() || 0;
+      const bCreated = new Date(b.entryCreatedAt || b.date).getTime() || 0;
+      return bCreated - aCreated;
     });
   }, [entries, typeFilter, searchTerm]);
 
@@ -321,8 +327,8 @@ export default function DayBook() {
                       <tr key={`${entry.refId || entry.voucherNumber || entry.type}-${index}`} className="hover:bg-violet-50/50 transition-colors">
                         <td className="px-6 py-4">
                           <div>
-                            <p className="text-sm font-semibold text-slate-800">{formatDate(entry.entryCreatedAt || entry.date)}</p>
-                            <p className="text-xs text-slate-400">{formatTime(entry.entryCreatedAt || entry.date)}</p>
+                            <p className="text-sm font-semibold text-slate-800">{formatDate(getRecordedDateValue(entry))}</p>
+                            <p className="text-xs text-slate-400">{formatTime(getRecordedDateValue(entry))}</p>
                           </div>
                         </td>
                         <td className="px-6 py-4">

@@ -34,12 +34,6 @@ const formatDate = (value) => {
   return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 };
 
-const formatTime = (value) => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-};
-
 const buildSummary = (entries) => entries.reduce((acc, entry) => {
   const amount = Number(entry.amount || 0);
   const inward = Number(entry.inAmount || 0);
@@ -101,6 +95,8 @@ const shiftDateByMonths = (date, months) => {
 };
 
 const getRangeLabel = (selectedRange) => DATE_FILTER_OPTIONS.find((option) => option.value === selectedRange)?.label || '1 Day';
+
+const getRecordedDateValue = (entry) => entry?.date || entry?.entryCreatedAt || '';
 
 const resolveDateRange = (selectedRange) => {
   const today = new Date();
@@ -191,14 +187,19 @@ export default function HomeDayBookPanel() {
 
   const sortedEntries = useMemo(() => (
     [...entries].sort((a, b) => {
-      const aTime = new Date(a.entryCreatedAt || a.date).getTime() || 0;
-      const bTime = new Date(b.entryCreatedAt || b.date).getTime() || 0;
-      return bTime - aTime;
+      const aDate = new Date(getRecordedDateValue(a)).getTime() || 0;
+      const bDate = new Date(getRecordedDateValue(b)).getTime() || 0;
+      if (bDate !== aDate) return bDate - aDate;
+
+      const aCreated = new Date(a.entryCreatedAt || a.date).getTime() || 0;
+      const bCreated = new Date(b.entryCreatedAt || b.date).getTime() || 0;
+      return bCreated - aCreated;
     })
   ), [entries]);
 
   const summary = useMemo(() => buildSummary(sortedEntries), [sortedEntries]);
   const recentEntries = sortedEntries.slice(0, 8);
+  const showDateFilter = activeView !== 'party-ledger' && activeView !== 'stock-ledger';
 
   return (
     <section className="w-full rounded-[28px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,249,0.96))] shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
@@ -305,28 +306,30 @@ export default function HomeDayBookPanel() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label htmlFor="home-report-range" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-              Date Filter
-            </label>
-            <select
-              id="home-report-range"
-              value={selectedRange}
-              onChange={(event) => setSelectedRange(event.target.value)}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-            >
-              {DATE_FILTER_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
+          {showDateFilter ? (
+            <div className="flex items-center gap-2">
+              <label htmlFor="home-report-range" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                Date Filter
+              </label>
+              <select
+                id="home-report-range"
+                value={selectedRange}
+                onChange={(event) => setSelectedRange(event.target.value)}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
+              >
+                {DATE_FILTER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
         </div>
       </div>
 
       {activeView === 'party-ledger' ? (
-        <HomePartyLedgerPanel dateRange={dateRange} />
+        <HomePartyLedgerPanel />
       ) : activeView === 'stock-ledger' ? (
         <HomeStockLedgerPanel />
       ) : activeView === 'sales-report' ? (
@@ -385,8 +388,8 @@ export default function HomeDayBookPanel() {
                       <tr key={`${entry.refId || entry.voucherNumber || entry.type}-${index}`} className="hover:bg-slate-50">
                         <td className="px-4 py-3">
                           <div>
-                            <p className="text-sm font-semibold text-slate-700">{formatDate(entry.entryCreatedAt || entry.date)}</p>
-                            <p className="text-xs text-slate-500">{formatTime(entry.entryCreatedAt || entry.date)}</p>
+                            <p className="text-sm font-semibold text-slate-700">{formatDate(getRecordedDateValue(entry))}</p>
+                            <p className="text-xs text-slate-500">Recorded Date</p>
                           </div>
                         </td>
                         <td className="px-4 py-3">
