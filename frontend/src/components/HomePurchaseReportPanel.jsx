@@ -353,17 +353,13 @@ export default function HomePurchaseReportPanel() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {visiblePurchases.map((purchase) => (
-                    <tr key={purchase._id} className="hover:bg-slate-50">
+                    <tr
+                      key={purchase._id}
+                      onClick={() => handleOpenPurchaseDetail(purchase)}
+                      className="cursor-pointer hover:bg-slate-50"
+                    >
                       <td className="px-4 py-3 text-sm text-slate-700">{formatDate(purchase.purchaseDate)}</td>
-                      <td className="px-4 py-3 text-sm font-semibold text-slate-700">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenPurchaseDetail(purchase)}
-                          className="rounded-md px-1 py-0.5 transition hover:bg-cyan-50 hover:text-cyan-700"
-                        >
-                          {formatPurchaseNumber(purchase.purchaseNumber)}
-                        </button>
-                      </td>
+                      <td className="px-4 py-3 text-sm font-semibold text-slate-700">{formatPurchaseNumber(purchase.purchaseNumber)}</td>
                       <td className="px-4 py-3 text-sm text-slate-700">{getPurchasePartyName(purchase)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-700">{formatCurrency(purchase.totalAmount)}</td>
                     </tr>
