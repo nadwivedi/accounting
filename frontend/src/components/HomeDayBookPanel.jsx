@@ -144,14 +144,14 @@ const resolveDateRange = (selectedRange) => {
 
 function StatCard({ title, value, icon: Icon, tone }) {
   return (
-    <div className="rounded-2xl border border-white/70 bg-white/90 px-4 py-3 shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
+    <div className="rounded-2xl border border-white/70 bg-white/90 px-3 py-2.5 shadow-[0_16px_30px_rgba(15,23,42,0.08)] sm:px-4 sm:py-3">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">{title}</p>
-          <p className="mt-1 text-lg font-black text-slate-800">{value}</p>
+          <p className="text-[9px] font-bold uppercase tracking-[0.14em] text-slate-500 sm:text-[10px] sm:tracking-[0.18em]">{title}</p>
+          <p className="mt-1 text-sm font-black text-slate-800 sm:text-lg">{value}</p>
         </div>
-        <div className={`rounded-xl bg-gradient-to-br p-2 text-white ${tone}`}>
-          <Icon className="h-4 w-4" />
+        <div className={`rounded-lg bg-gradient-to-br p-1.5 text-white sm:rounded-xl sm:p-2 ${tone}`}>
+          <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </div>
       </div>
     </div>
@@ -327,7 +327,7 @@ export default function HomeDayBookPanel() {
           Showing data from {formatDate(dateRange.fromDate)} to {formatDate(dateRange.toDate)}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
           <StatCard title="Sales" value={formatCurrency(summary.sales)} icon={TrendingUp} tone="from-emerald-500 to-teal-500" />
           <StatCard title="Purchases" value={formatCurrency(summary.purchases)} icon={Package} tone="from-rose-500 to-pink-500" />
           <StatCard title="Receipts" value={formatCurrency(summary.receipts)} icon={ArrowDownCircle} tone="from-sky-500 to-cyan-500" />

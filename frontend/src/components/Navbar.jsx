@@ -4,7 +4,16 @@ export default function Navbar({ sections = [], activeSection = '', onSectionSel
   return (
     <div className="sticky top-0 z-30 w-full border-b border-white/20 bg-[linear-gradient(90deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] px-4 py-3 shadow-[0_12px_32px_rgba(15,23,42,0.18)] backdrop-blur-md sm:px-6">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center justify-between gap-3">
+        <div className="relative flex items-center justify-center gap-3 sm:justify-start">
+          <button
+            type="button"
+            onClick={() => onMenuClick?.()}
+            className="absolute left-0 inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 sm:hidden"
+            aria-label="Open sidebar"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 shadow-lg shadow-indigo-500/30 sm:h-9 sm:w-9">
               <svg className="h-4 w-4 text-white sm:h-5 sm:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -15,15 +24,6 @@ export default function Navbar({ sections = [], activeSection = '', onSectionSel
               <p className="text-[12px] font-bold tracking-[0.16em] text-slate-800 sm:text-[15px] sm:tracking-[0.18em]">BILLHUB</p>
             </div>
           </div>
-
-          <button
-            type="button"
-            onClick={() => onMenuClick?.()}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 sm:hidden"
-            aria-label="Open sidebar"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
