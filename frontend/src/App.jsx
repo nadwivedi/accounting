@@ -28,6 +28,7 @@ import StockLedger from './pages/StockLedger';
 import ReportsPlaceholder from './pages/ReportsPlaceholder';
 import DayBook from './pages/DayBook';
 import Settings from './pages/Settings';
+import ExpenseReport from './pages/ExpenseReport';
 import { AddPaymentPopupLauncher } from './pages/Payments/component/AddPaymentPopup';
 import ProtectedRoute from './components/ProtectedRoute';
 import SectionHubPage from './components/SectionHubPage';
@@ -263,7 +264,7 @@ function App() {
           path="/reports/expense-report"
           element={
             <ProtectedRoute>
-              <Expenses />
+              <ExpenseReport />
             </ProtectedRoute>
           }
         />
