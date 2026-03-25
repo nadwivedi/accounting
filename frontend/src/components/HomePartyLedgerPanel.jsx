@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import { RefreshCw, Search, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import apiClient from '../utils/api';
 
 const formatCurrency = (value) => (
@@ -32,6 +32,7 @@ export default function HomePartyLedgerPanel({ dateRange = null }) {
   const [ledgerEntries, setLedgerEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -83,9 +84,19 @@ export default function HomePartyLedgerPanel({ dateRange = null }) {
       });
   }, [ledgerEntries, parties]);
 
+  const visibleRows = useMemo(() => {
+    const normalizedSearch = String(searchTerm || '').trim().toLowerCase();
+    if (!normalizedSearch) return rows;
+
+    return rows.filter((party) => (
+      String(party.name || '').toLowerCase().includes(normalizedSearch)
+      || String(party.mobile || '').toLowerCase().includes(normalizedSearch)
+      || String(party.type || '').toLowerCase().includes(normalizedSearch)
+    ));
+  }, [rows, searchTerm]);
+
   const totalReceivable = rows.reduce((sum, party) => sum + Number(party.receivable || 0), 0);
   const totalPayable = rows.reduce((sum, party) => sum + Number(party.payable || 0), 0);
-  const visibleRows = rows;
 
   const handlePartyClick = (party) => {
     if (!party?._id) return;
@@ -102,6 +113,17 @@ export default function HomePartyLedgerPanel({ dateRange = null }) {
             {dateRange?.label ? (
               <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{dateRange.label}</p>
             ) : null}
+          </div>
+
+          <div className="relative w-full sm:w-[19rem]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search party..."
+              className="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm font-medium text-slate-700 outline-none transition focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+            />
           </div>
         </div>
       </div>

@@ -1131,6 +1131,14 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     setShowForm(true);
   };
 
+  useEffect(() => {
+    const saleToEdit = location.state?.editSale;
+    if (!saleToEdit || showForm) return;
+
+    handleEdit(saleToEdit);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.pathname, location.state, navigate, showForm]);
+
   const handleCancel = () => {
     setShowPartyForm(false);
     setShowProductForm(false);

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { IndianRupee, Package, ShoppingCart } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { IndianRupee, Package, Pencil, ShoppingCart } from 'lucide-react';
 import apiClient from '../utils/api';
 
 const formatCurrency = (value) => (
@@ -219,6 +219,7 @@ function SaleDetailModal({ detail, loading, error, onClose }) {
 }
 
 export default function HomeSalesLedgerPanel({ dateRange = null }) {
+  const navigate = useNavigate();
   const [sales, setSales] = useState([]);
   const [selectedSale, setSelectedSale] = useState(null);
   const [saleDetail, setSaleDetail] = useState(null);
@@ -291,6 +292,16 @@ export default function HomeSalesLedgerPanel({ dateRange = null }) {
     setSaleDetailLoading(false);
   };
 
+  const handleEditSale = (sale) => {
+    if (!sale?._id) return;
+
+    navigate('/reports/sales-report', {
+      state: {
+        editSale: sale
+      }
+    });
+  };
+
   return (
     <section className="w-full rounded-[28px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,249,0.96))] shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
       <SaleDetailModal
@@ -352,6 +363,7 @@ export default function HomeSalesLedgerPanel({ dateRange = null }) {
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.14em]">Party</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.14em]">Date</th>
                     <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.14em]">Amount</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-[0.14em]">Edit</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -365,6 +377,19 @@ export default function HomeSalesLedgerPanel({ dateRange = null }) {
                       <td className="px-4 py-3 text-sm text-slate-700">{sale.customerName || '-'}</td>
                       <td className="px-4 py-3 text-sm text-slate-700">{formatDate(sale.saleDate)}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-700">{formatCurrency(sale.totalAmount)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleEditSale(sale);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
