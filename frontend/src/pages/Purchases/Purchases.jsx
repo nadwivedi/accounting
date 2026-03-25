@@ -226,6 +226,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
   };
 
   const getInitialFormData = () => ({
+    purchaseNumber: '',
     party: '',
     supplierInvoice: '',
     items: [],
@@ -503,6 +504,16 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     [leadgers, formData.party]
   );
   const isCashParty = String(selectedLeadger?.type || '').trim().toLowerCase() === 'cash-in-hand';
+
+  useEffect(() => {
+    if (!showForm || !editingId || !formData.party) return;
+    if (normalizeText(leadgerQuery)) return;
+
+    const resolvedLeadgerName = resolveLeadgerNameById(formData.party);
+    if (resolvedLeadgerName && resolvedLeadgerName !== '-' && leadgerQuery !== resolvedLeadgerName) {
+      setLeadgerQuery(resolvedLeadgerName);
+    }
+  }, [editingId, formData.party, leadgerQuery, leadgers, showForm]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -1206,9 +1217,12 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     }));
 
     const normalizedPartyId = purchase.party?._id || purchase.party || '';
-    const resolvedLeadgerName = resolveLeadgerNameById(normalizedPartyId);
+    const resolvedLeadgerName = String(
+      purchase.party?.name || purchase.partyName || resolveLeadgerNameById(normalizedPartyId)
+    ).trim();
 
     setFormData({
+      purchaseNumber: purchase.purchaseNumber || '',
       party: normalizedPartyId,
       supplierInvoice: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '',
       items: normalizedItems,
@@ -1234,6 +1248,14 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     setEditingId(purchase._id);
     setShowForm(true);
   };
+
+  useEffect(() => {
+    const purchaseToEdit = location.state?.editPurchase;
+    if (!purchaseToEdit || showForm) return;
+
+    handleEdit(purchaseToEdit);
+    navigate(location.pathname, { replace: true, state: {} });
+  }, [location.pathname, location.state, navigate, showForm]);
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this purchase?')) {

@@ -75,13 +75,17 @@ export default function HomePartyLedgerPanel({ dateRange = null }) {
         payable: netBalance < 0 ? Math.abs(netBalance) : 0
       };
     })
-      .filter((party) => party.receivable > 0 || party.payable > 0)
-      .sort((a, b) => (Number(b.receivable || 0) + Number(b.payable || 0)) - (Number(a.receivable || 0) + Number(a.payable || 0)));
+      .sort((a, b) => {
+        const aBalance = Number(a.receivable || 0) + Number(a.payable || 0);
+        const bBalance = Number(b.receivable || 0) + Number(b.payable || 0);
+        if (bBalance !== aBalance) return bBalance - aBalance;
+        return String(a.name || '').localeCompare(String(b.name || ''));
+      });
   }, [ledgerEntries, parties]);
 
   const totalReceivable = rows.reduce((sum, party) => sum + Number(party.receivable || 0), 0);
   const totalPayable = rows.reduce((sum, party) => sum + Number(party.payable || 0), 0);
-  const visibleRows = rows.slice(0, 8);
+  const visibleRows = rows;
 
   const handlePartyClick = (party) => {
     if (!party?._id) return;
