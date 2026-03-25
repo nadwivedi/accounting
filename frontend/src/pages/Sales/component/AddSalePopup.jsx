@@ -140,6 +140,33 @@ export default function AddSalePopup({
     });
   };
 
+  const handleMobileLeadgerSelect = (leadger) => {
+    selectLeadger(leadger);
+
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
+      setIsLeadgerSectionActive(false);
+      requestAnimationFrame(() => {
+        resolvedProductInputRef.current?.focus();
+        resolvedProductInputRef.current?.select?.();
+      });
+    }
+  };
+
+  const handleMobileProductSelect = (product) => {
+    selectProduct(product);
+
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
+      setIsProductSectionActive(false);
+      requestAnimationFrame(() => {
+        const quantityInput = resolvedProductInputRef.current
+          ?.closest('tr')
+          ?.querySelector('input[placeholder="0"]');
+        quantityInput?.focus();
+        quantityInput?.select?.();
+      });
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-1 md:p-4" onClick={handleCancel}>
       <div className="flex h-[95dvh] max-h-[95dvh] w-[94vw] max-w-[68rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
@@ -169,7 +196,7 @@ export default function AddSalePopup({
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">1</span>
                     Sale Details
                   </h3>
-                  <div className="grid grid-cols-1 gap-2.5 md:grid-cols-4 md:gap-3">
+                  <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4 md:gap-3">
                   <div>
                     <label className={labelClass}>Invoice Number</label>
                     <div className={`${inputClass} flex items-center bg-white font-semibold text-gray-900`}>
@@ -193,7 +220,7 @@ export default function AddSalePopup({
                     </div>
                   </div>
 
-                  <div className="relative md:col-span-2">
+                  <div className="relative col-span-2 md:col-span-2">
                     <div className="relative mb-1 min-h-[16px]">
                       <label className="block pr-24 text-[11px] font-semibold text-gray-700 md:text-xs">Party Name</label>
                       {isLeadgerSectionActive && (
@@ -268,7 +295,7 @@ export default function AddSalePopup({
                                     type="button"
                                     onMouseDown={(event) => event.preventDefault()}
                                     onMouseEnter={() => setLeadgerListIndex(index)}
-                                    onClick={() => selectLeadger(leadger)}
+                                    onClick={() => handleMobileLeadgerSelect(leadger)}
                                     className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
                                       isActive
                                         ? 'bg-yellow-200 text-amber-950'
@@ -453,7 +480,7 @@ export default function AddSalePopup({
                                                 type="button"
                                                 onMouseDown={(event) => event.preventDefault()}
                                                 onMouseEnter={() => setProductListIndex(optionIndex)}
-                                                onClick={() => selectProduct(product)}
+                                                onClick={() => handleMobileProductSelect(product)}
                                                 className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
                                                   isActive
                                                     ? 'bg-yellow-200 text-amber-950'
@@ -538,7 +565,7 @@ export default function AddSalePopup({
           </div>
 
           <div className="flex flex-col items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2.5 md:flex-row md:px-4 md:py-3">
-            <div className="text-[11px] text-gray-600 md:text-xs">
+            <div className="hidden text-[11px] text-gray-600 md:block md:text-xs">
               <kbd className="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-[10px]">Esc</kbd> to close
             </div>
 
