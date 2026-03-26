@@ -106,6 +106,20 @@ const getTypeMeta = (type) => {
     };
   }
 
+  if (type === 'sale discount') {
+    return {
+      label: 'Discount After Sale',
+      className: 'border-violet-200 bg-violet-50 text-violet-700'
+    };
+  }
+
+  if (type === 'purchase discount') {
+    return {
+      label: 'Discount After Purchase',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    };
+  }
+
   if (type === 'purchase return') {
     return {
       label: 'Purchase Return',

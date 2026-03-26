@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { getSectionConfig } from '../navigation/sectionMenu';
 
@@ -20,6 +21,14 @@ export const homeQuickShortcutMap = {
 const sidebarVoucherPaths = new Set([
   '/sale-return',
   '/purchase-return',
+  '/sale-discount',
+  '/purchase-discount',
+  '/stock-adjustment'
+]);
+
+const collapsedVoucherPaths = new Set([
+  '/sale-discount',
+  '/purchase-discount',
   '/stock-adjustment'
 ]);
 
@@ -31,6 +40,14 @@ const sidebarVoucherButtonImages = {
   '/purchase-return': {
     imageSrc: '/button/purchaseReturn_converted.avif',
     imageAlt: 'Purchase return'
+  },
+  '/sale-discount': {
+    imageSrc: '/button/discount after sale_converted.avif',
+    imageAlt: 'Discount after sale'
+  },
+  '/purchase-discount': {
+    imageSrc: '/button/discount after purchase_converted.avif',
+    imageAlt: 'Discount after purchase'
   }
 };
 
@@ -51,12 +68,15 @@ export function openHomeQuickShortcut(navigate, currentState, stateKey) {
 export default function Sidebar({ mobileDrawer = false }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [showMoreVoucherLinks, setShowMoreVoucherLinks] = useState(false);
   const sidebarVoucherLinks = (getSectionConfig('Vouchers')?.items || [])
     .filter((item) => sidebarVoucherPaths.has(item.path))
     .map((item) => ({
       ...item,
       ...(sidebarVoucherButtonImages[item.path] || {})
     }));
+  const defaultVoucherLinks = sidebarVoucherLinks.filter((item) => !collapsedVoucherPaths.has(item.path));
+  const extraVoucherLinks = sidebarVoucherLinks.filter((item) => collapsedVoucherPaths.has(item.path));
 
   return (
     <aside className={`relative w-full overflow-hidden rounded-[20px] border shadow-[0_24px_60px_rgba(15,23,42,0.24),0_0_42px_rgba(14,165,233,0.06)] sm:rounded-[30px] xl:sticky xl:top-22 xl:self-start xl:rounded-[26px] 2xl:top-24 2xl:rounded-[30px] ${
@@ -104,7 +124,7 @@ export default function Sidebar({ mobileDrawer = false }) {
           ))}
 
           <div className="mt-1 flex flex-col gap-2 pt-2 xl:gap-1.5 xl:pt-1.5 2xl:gap-2 2xl:pt-2">
-            {sidebarVoucherLinks.map((item) => (
+            {defaultVoucherLinks.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
@@ -136,6 +156,60 @@ export default function Sidebar({ mobileDrawer = false }) {
                 )}
               </Link>
             ))}
+
+            {extraVoucherLinks.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setShowMoreVoucherLinks((current) => !current)}
+                  aria-label={showMoreVoucherLinks ? 'Hide more voucher buttons' : 'Show more voucher buttons'}
+                  className="group relative flex cursor-pointer items-center justify-center px-4 py-2 text-slate-700 transition-colors duration-200 hover:text-slate-900 xl:px-4 xl:py-1.5 2xl:px-5 2xl:py-2"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.6"
+                    className={`h-5 w-5 text-slate-600 transition-transform duration-200 ${showMoreVoucherLinks ? 'rotate-180' : ''}`}
+                  >
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+
+                {showMoreVoucherLinks && extraVoucherLinks.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={item.imageSrc
+                      ? 'flex w-[70%] justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl xl:rounded-[18px] xl:max-w-[92%] 2xl:max-w-full 2xl:rounded-2xl'
+                      : 'group relative flex items-center gap-3 rounded-[20px] border border-white/20 bg-white/70 px-5 py-2.5 text-[12px] text-slate-700 shadow-[0_14px_30px_rgba(148,163,184,0.12)] backdrop-blur-sm transition-colors duration-200 hover:bg-violet-50/90 sm:rounded-[24px] xl:gap-2.5 xl:rounded-[20px] xl:px-4 xl:py-2 xl:text-[11px] 2xl:gap-3 2xl:rounded-[24px] 2xl:px-5 2xl:py-2.5 2xl:text-[12px]'}
+                  >
+                    {item.imageSrc ? (
+                      <img
+                        src={item.imageSrc}
+                        alt={item.imageAlt || item.name}
+                        className="block h-auto w-full object-cover xl:scale-[0.97] 2xl:scale-100"
+                      />
+                    ) : (
+                      <>
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center xl:h-8 xl:w-8 2xl:h-10 2xl:w-10">
+                          <item.Icon />
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="font-medium text-slate-700 group-hover:text-slate-900">{item.name}</p>
+                          {item.hint && (
+                            <p className="text-[10px] font-medium text-slate-400 group-hover:text-slate-500 xl:text-[9px] 2xl:text-[10px]">
+                              {item.hint}
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </Link>
+                ))}
+              </>
+            )}
           </div>
         </div>
       </div>

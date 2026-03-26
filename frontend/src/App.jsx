@@ -22,6 +22,8 @@ import Contra from './pages/Contra';
 import StockAdjustment from './pages/StockAdjustment';
 import SaleReturn from './pages/SaleReturn/SaleReturn';
 import PurchaseReturn from './pages/PurchaseReturn/PurchaseReturn';
+import SaleDiscount from './pages/SaleDiscount';
+import PurchaseDiscount from './pages/PurchaseDiscount';
 import ReportsHub from './pages/ReportsHub';
 import ReportsDashboard from './pages/ReportsDashboard';
 import StockLedger from './pages/StockLedger';
@@ -372,10 +374,28 @@ function App() {
         />
 
         <Route
+          path="/sale-discount"
+          element={
+            <ProtectedRoute>
+              <SaleDiscount modalOnly onModalFinish={closeVoucherRouteToHub} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/purchase-return"
           element={
             <ProtectedRoute>
               <PurchaseReturn modalOnly onModalFinish={closeVoucherRouteToHub} />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/purchase-discount"
+          element={
+            <ProtectedRoute>
+              <PurchaseDiscount modalOnly onModalFinish={closeVoucherRouteToHub} />
             </ProtectedRoute>
           }
         />

@@ -17,12 +17,14 @@ export default function VoucherRegisterPage({
   buttonClassName = 'bg-indigo-600 hover:bg-indigo-700',
   accountPreview,
   showParty = true,
+  partyDisplayMode = 'select',
   showAmount = true,
   showMethod = true,
   showReferenceNo = true,
   staticPayload = {},
   popupVariant = 'default',
   pageVariant = 'default',
+  popupFieldOrder = null,
   dateInputType = 'date',
   datePlaceholder = '',
   modalOnly = false,
@@ -159,13 +161,51 @@ export default function VoucherRegisterPage({
 
   const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
-  const getSelectFieldLabel = (field, value) => {
-    const matchedOption = (field.options || []).find((option) => String(option.value) === String(value));
-    return matchedOption?.label || '';
+  const getOptionLabel = (field, option) => {
+    if (!option) return '';
+    if (typeof field.getOptionLabel === 'function') {
+      return field.getOptionLabel(option);
+    }
+    return option.label || '';
   };
+
+  const getOptionValue = (field, option) => {
+    if (!option) return '';
+    if (typeof field.getOptionValue === 'function') {
+      return field.getOptionValue(option);
+    }
+    return option.value;
+  };
+
+  const partySelectField = {
+    name: 'party',
+    label: 'Party',
+    type: 'select',
+    placeholder: 'Type to search party...',
+    options: parties,
+    getOptionLabel: (party) => String(party?.partyName || party?.name || '').trim(),
+    getOptionValue: (party) => party?._id
+  };
+
+  const getSelectConfigByName = (fieldName) => {
+    if (fieldName === 'party' && showParty) {
+      return partySelectField;
+    }
+
+    return fieldDefinitions.find((item) => item.name === fieldName) || null;
+  };
+
+  const getSelectFieldLabel = (field, value) => {
+    const matchedOption = (field.options || []).find((option) => String(getOptionValue(field, option)) === String(value));
+    return matchedOption ? getOptionLabel(field, matchedOption) : '';
+  };
+  const selectedPartyLabel = getSelectFieldLabel(partySelectField, formData.party) || fieldQueries.party || '';
 
   const buildInitialQueries = () => {
     const nextQueries = {};
+    if (showParty) {
+      nextQueries.party = '';
+    }
     fieldDefinitions.forEach((field) => {
       if (field.type !== 'select') return;
       nextQueries[field.name] = '';
@@ -188,10 +228,10 @@ export default function VoucherRegisterPage({
 
     if (!normalizedQuery) return options;
 
-    const startsWith = options.filter((option) => normalizeText(option.label).startsWith(normalizedQuery));
+    const startsWith = options.filter((option) => normalizeText(getOptionLabel(field, option)).startsWith(normalizedQuery));
     const includes = options.filter((option) => (
-      !normalizeText(option.label).startsWith(normalizedQuery)
-      && normalizeText(option.label).includes(normalizedQuery)
+      !normalizeText(getOptionLabel(field, option)).startsWith(normalizedQuery)
+      && normalizeText(getOptionLabel(field, option)).includes(normalizedQuery)
     ));
 
     return [...startsWith, ...includes];
@@ -199,11 +239,11 @@ export default function VoucherRegisterPage({
 
   const activeSelectOptions = useMemo(() => {
     if (!activeSelectField) return [];
-    const field = fieldDefinitions.find((item) => item.name === activeSelectField);
+    const field = getSelectConfigByName(activeSelectField);
     if (!field || field.type !== 'select') return [];
 
     return getFilteredSelectOptions(field, fieldQueries[activeSelectField] || '', true);
-  }, [activeSelectField, fieldDefinitions, fieldQueries, formData]);
+  }, [activeSelectField, fieldDefinitions, fieldQueries, formData, parties]);
 
   const activeSelectDropdownStyle = useFloatingDropdownPosition(
     activeSelectAnchorRef,
@@ -236,6 +276,33 @@ export default function VoucherRegisterPage({
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const applyLinkedFieldValues = (option) => {
+    if (!option || typeof option.linkedFieldValues !== 'object' || option.linkedFieldValues === null) {
+      return;
+    }
+
+    const nextFormValues = {};
+    const nextQueries = {};
+
+    Object.entries(option.linkedFieldValues).forEach(([targetField, targetValue]) => {
+      nextFormValues[targetField] = targetValue;
+    });
+
+    if (typeof option.linkedFieldLabels === 'object' && option.linkedFieldLabels !== null) {
+      Object.entries(option.linkedFieldLabels).forEach(([targetField, targetLabel]) => {
+        nextQueries[targetField] = targetLabel || '';
+      });
+    }
+
+    if (Object.keys(nextFormValues).length > 0) {
+      setFormData((prev) => ({ ...prev, ...nextFormValues }));
+    }
+
+    if (Object.keys(nextQueries).length > 0) {
+      setFieldQueries((prev) => ({ ...prev, ...nextQueries }));
+    }
   };
 
   const focusNextFormField = (fieldName) => {
@@ -273,7 +340,7 @@ export default function VoucherRegisterPage({
     const selectedLabel = getSelectFieldLabel(field, formData[field.name]);
     const nextQuery = selectedLabel || fieldQueries[field.name] || '';
     const options = getFilteredSelectOptions(field, nextQuery, true);
-    const selectedIndex = options.findIndex((option) => String(option.value) === String(formData[field.name]));
+    const selectedIndex = options.findIndex((option) => String(getOptionValue(field, option)) === String(formData[field.name]));
 
     setFieldQueries((prev) => ({ ...prev, [field.name]: nextQuery }));
     setSelectListIndices((prev) => ({
@@ -286,7 +353,10 @@ export default function VoucherRegisterPage({
 
   const closeSelectField = (field) => {
     const selectedLabel = getSelectFieldLabel(field, formData[field.name]);
-    setFieldQueries((prev) => ({ ...prev, [field.name]: selectedLabel || '' }));
+    setFieldQueries((prev) => ({
+      ...prev,
+      [field.name]: prev[field.name] || selectedLabel || ''
+    }));
     activeSelectAnchorRef.current = null;
     setActiveSelectField((prev) => (prev === field.name ? '' : prev));
   };
@@ -294,14 +364,15 @@ export default function VoucherRegisterPage({
   const selectFieldOption = (field, option, moveNext = false) => {
     if (!option) return;
 
-    setFormData((prev) => ({ ...prev, [field.name]: option.value }));
-    setFieldQueries((prev) => ({ ...prev, [field.name]: option.label }));
+    setFormData((prev) => ({ ...prev, [field.name]: getOptionValue(field, option) }));
+    setFieldQueries((prev) => ({ ...prev, [field.name]: getOptionLabel(field, option) }));
     setSelectListIndices((prev) => ({
       ...prev,
-      [field.name]: (field.options || []).findIndex((item) => String(item.value) === String(option.value))
+      [field.name]: (field.options || []).findIndex((item) => String(getOptionValue(field, item)) === String(getOptionValue(field, option)))
     }));
     activeSelectAnchorRef.current = null;
     setActiveSelectField('');
+    applyLinkedFieldValues(option);
 
     if (moveNext) {
       focusNextFormField(field.name);
@@ -310,7 +381,7 @@ export default function VoucherRegisterPage({
 
   const handleSelectInputChange = (field, value) => {
     const options = getFilteredSelectOptions(field, value, false);
-    const exactMatch = (field.options || []).find((option) => normalizeText(option.label) === normalizeText(value));
+    const exactMatch = (field.options || []).find((option) => normalizeText(getOptionLabel(field, option)) === normalizeText(value));
     const firstMatch = options[0] || null;
 
     setFieldQueries((prev) => ({ ...prev, [field.name]: value }));
@@ -319,8 +390,9 @@ export default function VoucherRegisterPage({
     setSelectListIndices((prev) => ({ ...prev, [field.name]: firstMatch ? 0 : -1 }));
     setFormData((prev) => ({
       ...prev,
-      [field.name]: exactMatch ? exactMatch.value : (firstMatch?.value || '')
+      [field.name]: exactMatch ? getOptionValue(field, exactMatch) : (firstMatch ? getOptionValue(field, firstMatch) : '')
     }));
+    applyLinkedFieldValues(exactMatch || firstMatch);
   };
 
   const handleSelectInputKeyDown = (field, e) => {
@@ -376,7 +448,7 @@ export default function VoucherRegisterPage({
 
       const activeOption = options[selectListIndices[field.name] ?? -1] || null;
       const exactMatch = (field.options || []).find(
-        (option) => normalizeText(option.label) === normalizeText(fieldQueries[field.name] || '')
+        (option) => normalizeText(getOptionLabel(field, option)) === normalizeText(fieldQueries[field.name] || '')
       );
       const matchedOption = activeOption || exactMatch || options[0] || null;
 
@@ -448,11 +520,11 @@ export default function VoucherRegisterPage({
               ) : (
                 activeSelectOptions.map((option, index) => {
                   const isOptionActive = index === (selectListIndices[field.name] ?? -1);
-                  const isSelected = String(formData[field.name] || '') === String(option.value);
+                  const isSelected = String(formData[field.name] || '') === String(getOptionValue(field, option));
 
                   return (
                     <button
-                      key={String(option.value)}
+                      key={String(getOptionValue(field, option))}
                       type="button"
                       onMouseDown={(event) => event.preventDefault()}
                       onMouseEnter={() => setSelectListIndices((prev) => ({ ...prev, [field.name]: index }))}
@@ -465,7 +537,7 @@ export default function VoucherRegisterPage({
                           : 'text-slate-700 hover:bg-amber-50'
                       }`}
                     >
-                      <span className="truncate font-medium">{option.label}</span>
+                      <span className="truncate font-medium">{getOptionLabel(field, option)}</span>
                       {isSelected && (
                         <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
                           Selected
@@ -614,8 +686,11 @@ export default function VoucherRegisterPage({
     if (rawValue === undefined || rawValue === null || rawValue === '') return '-';
 
     if (field.type === 'select' && Array.isArray(field.options)) {
-      const matched = field.options.find((option) => String(option.value) === String(rawValue));
-      return matched?.label || rawValue;
+      const resolvedValue = rawValue && typeof rawValue === 'object'
+        ? (rawValue._id || rawValue.id || rawValue.value || '')
+        : rawValue;
+      const matched = field.options.find((option) => String(option.value) === String(resolvedValue));
+      return matched?.label || resolvedValue || '-';
     }
 
     if (field.type === 'number') {
@@ -640,20 +715,40 @@ export default function VoucherRegisterPage({
       key: 'party',
       label: `Party${partyRequired ? ' *' : ''}`,
       render: (tone, ref) => (
-        <select
-          ref={ref}
-          name="party"
-          value={formData.party}
-          onChange={handleChange}
-          className={getInlineFieldClass(tone)}
-        >
-          <option value="">Select party</option>
-          {parties.map((party) => (
-            <option key={party._id} value={party._id}>
-              {party.partyName}
-            </option>
-          ))}
-        </select>
+        partyDisplayMode === 'readonly' ? (
+          <input
+            ref={ref}
+            type="text"
+            value={selectedPartyLabel}
+            readOnly
+            className={`${getInlineFieldClass(tone)} bg-slate-50 text-slate-700`}
+            placeholder="Select voucher first"
+          />
+        ) : isCompactPopupVariant ? (
+          renderFloatingSelectField(
+            {
+              ...partySelectField,
+              label: `Party${partyRequired ? ' *' : ''}`
+            },
+            tone,
+            ref
+          )
+        ) : (
+          <select
+            ref={ref}
+            name="party"
+            value={formData.party}
+            onChange={handleChange}
+            className={getInlineFieldClass(tone)}
+          >
+            <option value="">Select party</option>
+            {parties.map((party) => (
+              <option key={party._id} value={party._id}>
+                {party.partyName}
+              </option>
+            ))}
+          </select>
+        )
       )
     });
   }
@@ -698,7 +793,7 @@ export default function VoucherRegisterPage({
       key: field.name,
       label: `${field.label}${field.required ? ' *' : ''}`,
       render: (tone, ref) => (
-        field.type === 'select' && popupVariant === 'stock' ? (
+        field.type === 'select' && isCompactPopupVariant ? (
           renderFloatingSelectField(field, tone, ref)
         ) : field.type === 'select' ? (
           <select
@@ -771,9 +866,34 @@ export default function VoucherRegisterPage({
     });
   }
 
-  const midpoint = Math.max(1, Math.ceil(popupFields.length / 2));
-  const primaryFields = popupFields.slice(0, midpoint);
-  const secondaryFields = popupFields.slice(midpoint);
+  const orderedPopupFields = Array.isArray(popupFieldOrder) && popupFieldOrder.length > 0
+    ? [
+      ...popupFieldOrder
+        .map((fieldKey) => popupFields.find((field) => field.key === fieldKey))
+        .filter(Boolean),
+      ...popupFields.filter((field) => !popupFieldOrder.includes(field.key))
+    ]
+    : popupFields;
+
+  const midpoint = Math.max(1, Math.ceil(orderedPopupFields.length / 2));
+  const primaryFields = orderedPopupFields.slice(0, midpoint);
+  const secondaryFields = orderedPopupFields.slice(midpoint);
+  const isCompactPopupVariant = popupVariant === 'stock' || popupVariant === 'payment';
+  const isPaymentPopupVariant = popupVariant === 'payment';
+  const popupTitle = title;
+  const popupSubtitle = isPaymentPopupVariant
+    ? 'Capture purchase discount details in the same quick popup flow as payments.'
+    : 'Create or update voucher details in a clean accounting format.';
+  const popupShellClassName = isPaymentPopupVariant
+    ? 'flex max-h-[78vh] w-full max-w-[32rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl'
+    : 'flex max-h-[92vh] w-full max-w-[28rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl';
+  const popupHeaderClassName = isPaymentPopupVariant
+    ? 'flex-shrink-0 bg-gradient-to-r from-blue-600 to-indigo-600 px-3 py-2.5 text-white md:px-4 md:py-3'
+    : 'flex-shrink-0 border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-1.5 text-white md:px-4 md:py-2';
+  const popupSecondarySectionClassName = isPaymentPopupVariant
+    ? 'rounded-xl border-2 border-cyan-200 bg-gradient-to-r from-sky-50 to-cyan-50 p-2.5 md:p-4'
+    : 'rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-green-50 to-emerald-50 p-2.5 md:p-4';
+  const PopupIcon = isPaymentPopupVariant ? IndianRupee : Wallet;
 
   return (
     <div className={isPartyPageVariant ? 'min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50' : 'min-h-screen bg-slate-50 p-4 pt-16 md:px-8 md:pb-8 md:pt-5'}>
@@ -839,18 +959,18 @@ export default function VoucherRegisterPage({
       </div>
 
       {showForm && (
-        popupVariant === 'stock' ? (
+        isCompactPopupVariant ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-2 backdrop-blur-[1.5px] md:p-4" onClick={handleCloseForm}>
-            <div className="flex max-h-[92vh] w-full max-w-[28rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex-shrink-0 border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-1.5 text-white md:px-4 md:py-2">
+            <div className={popupShellClassName} onClick={(e) => e.stopPropagation()}>
+              <div className={popupHeaderClassName}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-start gap-3">
                     <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20 text-white ring-1 ring-white/30 md:h-8 md:w-8">
-                      <Wallet className="h-4 w-4 md:h-5 md:w-5" />
+                      <PopupIcon className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
                     <div>
-                      <h2 className="text-base font-bold md:text-xl">{title}</h2>
-                      <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">Create or update voucher details in a clean accounting format.</p>
+                      <h2 className="text-base font-bold md:text-xl">{popupTitle}</h2>
+                      <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">{popupSubtitle}</p>
                     </div>
                   </div>
                   <button
@@ -872,7 +992,7 @@ export default function VoucherRegisterPage({
                     <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
                       <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs text-white md:h-8 md:w-8 md:text-sm">1</span>
-                        Basic Details
+                        {isPaymentPopupVariant ? 'Purchase Discount Details' : 'Basic Details'}
                       </h3>
 
                       <div className="space-y-3 md:space-y-4">
@@ -885,10 +1005,10 @@ export default function VoucherRegisterPage({
                       </div>
                     </div>
 
-                    <div className="rounded-xl border-2 border-emerald-200 bg-gradient-to-r from-green-50 to-emerald-50 p-2.5 md:p-4">
+                    <div className={popupSecondarySectionClassName}>
                       <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs text-white md:h-8 md:w-8 md:text-sm">2</span>
-                        Notes & Details
+                        <span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs text-white md:h-8 md:w-8 md:text-sm ${isPaymentPopupVariant ? 'bg-cyan-600' : 'bg-emerald-600'}`}>2</span>
+                        {isPaymentPopupVariant ? 'Notes' : 'Notes & Details'}
                       </h3>
 
                       <div className="space-y-3 md:space-y-4">
@@ -1197,7 +1317,7 @@ export default function VoucherRegisterPage({
                   <tr key={item._id} className="bg-white hover:bg-slate-50 transition-colors duration-200">
                     <td className="px-6 py-4 text-slate-600 font-medium">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString() : '-'}</td>
                     <td className="px-6 py-4 font-semibold text-slate-800">{item.voucherNumber || '-'}</td>
-                    {showParty && <td className="px-6 py-4 font-semibold text-slate-700">{item.party?.partyName || '-'}</td>}
+                    {showParty && <td className="px-6 py-4 font-semibold text-slate-700">{item.party?.name || item.party?.partyName || '-'}</td>}
                     <td className="px-6 py-4 text-slate-600">{getAccountsDisplay(item)}</td>
                     {showAmount && <td className="px-6 py-4 text-emerald-600 font-semibold">Rs {Number(item.amount || 0).toFixed(2)}</td>}
                     {showMethod && (

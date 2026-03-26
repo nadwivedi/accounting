@@ -318,6 +318,8 @@ export default function DayBook() {
                       receipt: { bg: 'bg-sky-100', text: 'text-sky-700' },
                       payment: { bg: 'bg-amber-100', text: 'text-amber-700' },
                       expense: { bg: 'bg-fuchsia-100', text: 'text-fuchsia-700' },
+                      saleDiscount: { bg: 'bg-violet-100', text: 'text-violet-700' },
+                      purchaseDiscount: { bg: 'bg-emerald-100', text: 'text-emerald-700' },
                       purchaseReturn: { bg: 'bg-teal-100', text: 'text-teal-700' },
                       saleReturn: { bg: 'bg-orange-100', text: 'text-orange-700' }
                     };
@@ -333,7 +335,7 @@ export default function DayBook() {
                         </td>
                         <td className="px-6 py-4">
                           <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${colors.bg} ${colors.text}`}>
-                            {entry.type || 'N/A'}
+                            {entry.label || entry.type || 'N/A'}
                           </span>
                         </td>
                         <td className="px-6 py-4">

@@ -6,6 +6,8 @@ const SaleReturn = require('../models/voucher/SaleReturn');
 const Payment = require('../models/voucher/Payment');
 const Receipt = require('../models/voucher/Receipt');
 const Expense = require('../models/voucher/Expense');
+const SaleDiscount = require('../models/voucher/SaleDiscount');
+const PurchaseDiscount = require('../models/voucher/PurchaseDiscount');
 const Product = require('../models/master/Stock');
 const Party = require('../models/master/Party');
 
@@ -136,24 +138,55 @@ const buildSaleReceiptMap = (receipts) => {
   return map;
 };
 
+const buildSaleDiscountMap = (saleDiscounts) => {
+  const map = new Map();
+
+  saleDiscounts
+    .filter((entry) => entry.sale)
+    .forEach((entry) => {
+      const key = String(entry.sale);
+      map.set(key, (map.get(key) || 0) + toNumber(entry.amount));
+    });
+
+  return map;
+};
+
+const buildPurchaseDiscountMap = (purchaseDiscounts) => {
+  const map = new Map();
+
+  purchaseDiscounts
+    .filter((entry) => entry.purchase)
+    .forEach((entry) => {
+      const key = String(entry.purchase);
+      map.set(key, (map.get(key) || 0) + toNumber(entry.amount));
+    });
+
+  return map;
+};
+
 exports.getOutstandingReport = async (req, res) => {
   try {
     const userId = req.userId;
 
-    const [sales, purchases, payments, receipts] = await Promise.all([
+    const [sales, purchases, payments, receipts, saleDiscounts, purchaseDiscounts] = await Promise.all([
       Sale.find({ userId }),
       Purchase.find({ userId }),
       Payment.find({ userId }),
-      Receipt.find({ userId })
+      Receipt.find({ userId }),
+      SaleDiscount.find({ userId }),
+      PurchaseDiscount.find({ userId })
     ]);
     const saleReceiptMap = buildSaleReceiptMap(receipts);
     const purchasePaymentMap = buildPurchasePaymentMap(payments);
+    const saleDiscountMap = buildSaleDiscountMap(saleDiscounts);
+    const purchaseDiscountMap = buildPurchaseDiscountMap(purchaseDiscounts);
 
     const salePending = sales
       .map((sale) => {
         const partyId = getRawPartyId(sale.party);
         const paidAmount = toNumber(saleReceiptMap.get(String(sale._id)));
-        const pending = Math.max(0, toNumber(sale.totalAmount) - paidAmount);
+        const discountAmount = toNumber(saleDiscountMap.get(String(sale._id)));
+        const pending = Math.max(0, toNumber(sale.totalAmount) - paidAmount - discountAmount);
         return {
           id: sale._id,
           invoiceNumber: sale.invoiceNumber,
@@ -162,6 +195,7 @@ exports.getOutstandingReport = async (req, res) => {
           partyName: sale.customerName || getPartyLabel(partyId, 'Account') || 'Walk-in',
           totalAmount: toNumber(sale.totalAmount),
           paidAmount,
+          discountAmount,
           pendingAmount: pending,
           type: 'sale'
         };
@@ -173,7 +207,8 @@ exports.getOutstandingReport = async (req, res) => {
       .map((purchase) => {
         const partyId = getRawPartyId(purchase.party);
         const paidAmount = toNumber(purchasePaymentMap.get(String(purchase._id)));
-        const pending = Math.max(0, toNumber(purchase.totalAmount) - paidAmount);
+        const discountAmount = toNumber(purchaseDiscountMap.get(String(purchase._id)));
+        const pending = Math.max(0, toNumber(purchase.totalAmount) - paidAmount - discountAmount);
         return {
           id: purchase._id,
           supplierInvoice: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-',
@@ -182,6 +217,7 @@ exports.getOutstandingReport = async (req, res) => {
           partyName: getPartyLabel(partyId, 'Account'),
           totalAmount: toNumber(purchase.totalAmount),
           paidAmount,
+          discountAmount,
           pendingAmount: pending,
           type: 'purchase'
         };
@@ -201,8 +237,10 @@ exports.getOutstandingReport = async (req, res) => {
           type: 'account',
           totalSales: 0,
           totalReceipts: 0,
+          totalSaleDiscounts: 0,
           totalPurchases: 0,
           totalPayments: 0,
+          totalPurchaseDiscounts: 0,
           receivable: 0,
           payable: 0,
           netBalance: 0
@@ -233,6 +271,13 @@ exports.getOutstandingReport = async (req, res) => {
       row.totalReceipts += toNumber(receipt.amount);
     });
 
+    saleDiscounts.forEach((saleDiscount) => {
+      const partyId = getRawPartyId(saleDiscount.party);
+      const row = ensurePartyRow(partyId);
+      if (!row) return;
+      row.totalSaleDiscounts = (row.totalSaleDiscounts || 0) + toNumber(saleDiscount.amount);
+    });
+
     purchases.forEach((purchase) => {
       const partyId = getRawPartyId(purchase.party);
       const row = ensurePartyRow(partyId);
@@ -252,10 +297,17 @@ exports.getOutstandingReport = async (req, res) => {
       row.totalPayments += toNumber(payment.amount);
     });
 
+    purchaseDiscounts.forEach((purchaseDiscount) => {
+      const partyId = getRawPartyId(purchaseDiscount.party);
+      const row = ensurePartyRow(partyId);
+      if (!row) return;
+      row.totalPurchaseDiscounts = (row.totalPurchaseDiscounts || 0) + toNumber(purchaseDiscount.amount);
+    });
+
     const partyOutstanding = Array.from(partyMap.values())
       .map((row) => {
-        row.receivable = Math.max(0, row.totalSales - row.totalReceipts);
-        row.payable = Math.max(0, row.totalPurchases - row.totalPayments);
+        row.receivable = Math.max(0, row.totalSales - row.totalReceipts - (row.totalSaleDiscounts || 0));
+        row.payable = Math.max(0, row.totalPurchases - row.totalPayments - (row.totalPurchaseDiscounts || 0));
         row.netBalance = row.receivable - row.payable;
         return row;
       })
@@ -305,6 +357,8 @@ exports.getPartyLedger = async (req, res) => {
     const saleReturnFilter = { userId };
     const paymentFilter = { userId };
     const receiptFilter = { userId };
+    const saleDiscountFilter = { userId };
+    const purchaseDiscountFilter = { userId };
 
     if (partyId) {
       saleFilter.party = partyId;
@@ -313,6 +367,8 @@ exports.getPartyLedger = async (req, res) => {
       saleReturnFilter.party = partyId;
       paymentFilter.party = partyId;
       receiptFilter.party = partyId;
+      saleDiscountFilter.party = partyId;
+      purchaseDiscountFilter.party = partyId;
     }
 
     withDateFilters(saleFilter, 'saleDate', fromDate, toDate);
@@ -321,14 +377,18 @@ exports.getPartyLedger = async (req, res) => {
     withDateFilters(saleReturnFilter, 'voucherDate', fromDate, toDate);
     withDateFilters(paymentFilter, 'paymentDate', fromDate, toDate);
     withDateFilters(receiptFilter, 'receiptDate', fromDate, toDate);
+    withDateFilters(saleDiscountFilter, 'voucherDate', fromDate, toDate);
+    withDateFilters(purchaseDiscountFilter, 'voucherDate', fromDate, toDate);
 
-    const [sales, purchases, purchaseReturns, saleReturns, payments, receipts] = await Promise.all([
+    const [sales, purchases, purchaseReturns, saleReturns, payments, receipts, saleDiscounts, purchaseDiscounts] = await Promise.all([
       Sale.find(saleFilter),
       Purchase.find(purchaseFilter),
       PurchaseReturn.find(purchaseReturnFilter),
       SaleReturn.find(saleReturnFilter),
       Payment.find(paymentFilter),
-      Receipt.find(receiptFilter)
+      Receipt.find(receiptFilter),
+      SaleDiscount.find(saleDiscountFilter),
+      PurchaseDiscount.find(purchaseDiscountFilter)
     ]);
 
     const partyNameMap = await getPartyNameMap(userId, [
@@ -337,7 +397,9 @@ exports.getPartyLedger = async (req, res) => {
       ...purchaseReturns.map((purchaseReturn) => getRawPartyId(purchaseReturn.party)),
       ...saleReturns.map((saleReturn) => getRawPartyId(saleReturn.party)),
       ...payments.map((payment) => getRawPartyId(payment.party)),
-      ...receipts.map((receipt) => getRawPartyId(receipt.party))
+      ...receipts.map((receipt) => getRawPartyId(receipt.party)),
+      ...saleDiscounts.map((saleDiscount) => getRawPartyId(saleDiscount.party)),
+      ...purchaseDiscounts.map((purchaseDiscount) => getRawPartyId(purchaseDiscount.party))
     ]);
 
     const resolvePartyName = (rawPartyId, fallback = 'Account') => {
@@ -493,6 +555,44 @@ exports.getPartyLedger = async (req, res) => {
         itemSummary: '',
         method: payment.method || '',
         note: payment.notes || ''
+      });
+    });
+
+    saleDiscounts.forEach((saleDiscount) => {
+      const saleDiscountPartyId = getRawPartyId(saleDiscount.party);
+      entries.push({
+        date: saleDiscount.voucherDate,
+        entryCreatedAt: saleDiscount.createdAt || saleDiscount.voucherDate,
+        type: 'sale discount',
+        refId: saleDiscount._id,
+        refNumber: String(saleDiscount.voucherNumber || '-').trim() || '-',
+        partyId: saleDiscountPartyId || null,
+        partyName: resolvePartyName(saleDiscountPartyId),
+        amount: toNumber(saleDiscount.amount),
+        impact: -toNumber(saleDiscount.amount),
+        quantity: 0,
+        itemSummary: 'Discount After Sale',
+        method: '',
+        note: saleDiscount.notes || ''
+      });
+    });
+
+    purchaseDiscounts.forEach((purchaseDiscount) => {
+      const purchaseDiscountPartyId = getRawPartyId(purchaseDiscount.party);
+      entries.push({
+        date: purchaseDiscount.voucherDate,
+        entryCreatedAt: purchaseDiscount.createdAt || purchaseDiscount.voucherDate,
+        type: 'purchase discount',
+        refId: purchaseDiscount._id,
+        refNumber: String(purchaseDiscount.voucherNumber || '-').trim() || '-',
+        partyId: purchaseDiscountPartyId || null,
+        partyName: resolvePartyName(purchaseDiscountPartyId),
+        amount: toNumber(purchaseDiscount.amount),
+        impact: toNumber(purchaseDiscount.amount),
+        quantity: 0,
+        itemSummary: 'Discount After Purchase',
+        method: '',
+        note: purchaseDiscount.notes || ''
       });
     });
 
@@ -679,6 +779,68 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
         ],
         items: []
       };
+    } else if (normalizedType === 'sale discount' || normalizedType === 'saleDiscount') {
+      const saleDiscount = await SaleDiscount.findOne({ _id: refId, userId })
+        .populate('party', 'name type mobile')
+        .populate('sale', 'invoiceNumber saleDate');
+
+      if (!saleDiscount) {
+        return res.status(404).json({ success: false, message: 'Sale discount not found' });
+      }
+
+      detail = {
+        type: 'sale discount',
+        label: 'Discount After Sale',
+        title: 'Discount After Sale',
+        refNumber: String(saleDiscount.voucherNumber || '-').trim() || '-',
+        date: saleDiscount.voucherDate,
+        partyName: String(saleDiscount.party?.name || '-').trim() || '-',
+        accountName: 'Discount After Sale',
+        amount: toNumber(saleDiscount.amount),
+        quantity: 0,
+        method: '',
+        notes: String(saleDiscount.notes || '').trim(),
+        linkedReference: String(saleDiscount.sale?.invoiceNumber || '-').trim() || '-',
+        fields: [
+          { label: 'Party', value: String(saleDiscount.party?.name || '-').trim() || '-' },
+          { label: 'Voucher Date', value: saleDiscount.voucherDate },
+          { label: 'Voucher No', value: String(saleDiscount.voucherNumber || '-').trim() || '-' },
+          { label: 'Against Sale', value: String(saleDiscount.sale?.invoiceNumber || '-').trim() || '-' },
+          { label: 'Sale Date', value: saleDiscount.sale?.saleDate || '' }
+        ],
+        items: []
+      };
+    } else if (normalizedType === 'purchase discount' || normalizedType === 'purchaseDiscount') {
+      const purchaseDiscount = await PurchaseDiscount.findOne({ _id: refId, userId })
+        .populate('party', 'name type mobile')
+        .populate('purchase', 'purchaseNumber purchaseDate');
+
+      if (!purchaseDiscount) {
+        return res.status(404).json({ success: false, message: 'Purchase discount not found' });
+      }
+
+      detail = {
+        type: 'purchase discount',
+        label: 'Discount After Purchase',
+        title: 'Discount After Purchase',
+        refNumber: String(purchaseDiscount.voucherNumber || '-').trim() || '-',
+        date: purchaseDiscount.voucherDate,
+        partyName: String(purchaseDiscount.party?.name || '-').trim() || '-',
+        accountName: 'Discount After Purchase',
+        amount: toNumber(purchaseDiscount.amount),
+        quantity: 0,
+        method: '',
+        notes: String(purchaseDiscount.notes || '').trim(),
+        linkedReference: formatPrefixedNumber('Pur', purchaseDiscount.purchase?.purchaseNumber),
+        fields: [
+          { label: 'Party', value: String(purchaseDiscount.party?.name || '-').trim() || '-' },
+          { label: 'Voucher Date', value: purchaseDiscount.voucherDate },
+          { label: 'Voucher No', value: String(purchaseDiscount.voucherNumber || '-').trim() || '-' },
+          { label: 'Against Purchase', value: formatPrefixedNumber('Pur', purchaseDiscount.purchase?.purchaseNumber) },
+          { label: 'Purchase Date', value: purchaseDiscount.purchase?.purchaseDate || '' }
+        ],
+        items: []
+      };
     } else if (normalizedType === 'expense') {
       const expense = await Expense.findOne({ _id: refId, userId })
         .populate('expenseGroup', 'name')
@@ -811,6 +973,8 @@ exports.getDayBookReport = async (req, res) => {
     const paymentFilter = { userId };
     const receiptFilter = { userId };
     const expenseFilter = { userId };
+    const saleDiscountFilter = { userId };
+    const purchaseDiscountFilter = { userId };
 
     withDateFilters(saleFilter, 'saleDate', fromDate, toDate);
     withDateFilters(purchaseFilter, 'purchaseDate', fromDate, toDate);
@@ -819,8 +983,10 @@ exports.getDayBookReport = async (req, res) => {
     withDateFilters(paymentFilter, 'paymentDate', fromDate, toDate);
     withDateFilters(receiptFilter, 'receiptDate', fromDate, toDate);
     withDateFilters(expenseFilter, 'expenseDate', fromDate, toDate);
+    withDateFilters(saleDiscountFilter, 'voucherDate', fromDate, toDate);
+    withDateFilters(purchaseDiscountFilter, 'voucherDate', fromDate, toDate);
 
-    const [sales, purchases, purchaseReturns, saleReturns, payments, receipts, expenses] = await Promise.all([
+    const [sales, purchases, purchaseReturns, saleReturns, payments, receipts, expenses, saleDiscounts, purchaseDiscounts] = await Promise.all([
       Sale.find(saleFilter),
       Purchase.find(purchaseFilter),
       PurchaseReturn.find(purchaseReturnFilter),
@@ -829,7 +995,9 @@ exports.getDayBookReport = async (req, res) => {
       Receipt.find(receiptFilter),
       Expense.find(expenseFilter)
         .populate('expenseGroup', 'name')
-        .populate('party', 'name')
+        .populate('party', 'name'),
+      SaleDiscount.find(saleDiscountFilter),
+      PurchaseDiscount.find(purchaseDiscountFilter)
     ]);
 
     const partyNameMap = await getPartyNameMap(userId, [
@@ -839,7 +1007,9 @@ exports.getDayBookReport = async (req, res) => {
       ...saleReturns.map((saleReturn) => getRawPartyId(saleReturn.party)),
       ...payments.map((payment) => getRawPartyId(payment.party)),
       ...receipts.map((receipt) => getRawPartyId(receipt.party)),
-      ...expenses.map((expense) => getRawPartyId(expense.party))
+      ...expenses.map((expense) => getRawPartyId(expense.party)),
+      ...saleDiscounts.map((saleDiscount) => getRawPartyId(saleDiscount.party)),
+      ...purchaseDiscounts.map((purchaseDiscount) => getRawPartyId(purchaseDiscount.party))
     ]);
 
     const resolvePartyName = (rawPartyId, fallback = '-') => {
@@ -954,6 +1124,52 @@ exports.getDayBookReport = async (req, res) => {
         amount,
         inAmount: 0,
         outAmount: amount
+      });
+    });
+
+    saleDiscounts.forEach((saleDiscount) => {
+      const saleDiscountPartyId = getRawPartyId(saleDiscount.party);
+      const amount = toNumber(saleDiscount.amount);
+      entries.push({
+        date: saleDiscount.voucherDate,
+        entryCreatedAt: saleDiscount.createdAt || saleDiscount.voucherDate,
+        type: 'saleDiscount',
+        label: 'Discount After Sale',
+        refId: saleDiscount._id,
+        voucherNumber: String(saleDiscount.voucherNumber || '-').trim() || '-',
+        partyId: saleDiscountPartyId || null,
+        partyName: resolvePartyName(saleDiscountPartyId),
+        accountName: 'Discount After Sale',
+        particulars: saleDiscount.notes || 'Discount against sale invoice',
+        quantity: 0,
+        method: '',
+        note: saleDiscount.notes || '',
+        amount,
+        inAmount: 0,
+        outAmount: 0
+      });
+    });
+
+    purchaseDiscounts.forEach((purchaseDiscount) => {
+      const purchaseDiscountPartyId = getRawPartyId(purchaseDiscount.party);
+      const amount = toNumber(purchaseDiscount.amount);
+      entries.push({
+        date: purchaseDiscount.voucherDate,
+        entryCreatedAt: purchaseDiscount.createdAt || purchaseDiscount.voucherDate,
+        type: 'purchaseDiscount',
+        label: 'Discount After Purchase',
+        refId: purchaseDiscount._id,
+        voucherNumber: String(purchaseDiscount.voucherNumber || '-').trim() || '-',
+        partyId: purchaseDiscountPartyId || null,
+        partyName: resolvePartyName(purchaseDiscountPartyId),
+        accountName: 'Discount After Purchase',
+        particulars: purchaseDiscount.notes || 'Discount against purchase bill',
+        quantity: 0,
+        method: '',
+        note: purchaseDiscount.notes || '',
+        amount,
+        inAmount: 0,
+        outAmount: 0
       });
     });
 

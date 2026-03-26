@@ -61,7 +61,9 @@ const TYPE_BADGE_STYLES = {
   purchase: 'bg-orange-100 text-orange-700',
   'cash purchase': 'bg-violet-100 text-violet-700',
   'credit purchase': 'bg-indigo-100 text-indigo-700',
-  expense: 'bg-fuchsia-100 text-fuchsia-700'
+  expense: 'bg-fuchsia-100 text-fuchsia-700',
+  saleDiscount: 'bg-violet-100 text-violet-700',
+  purchaseDiscount: 'bg-emerald-100 text-emerald-700'
 };
 
 const DATE_FILTER_OPTIONS = [
@@ -394,7 +396,7 @@ export default function HomeDayBookPanel() {
                         </td>
                         <td className="px-4 py-3">
                           <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${typeBadgeClass}`}>
-                            {entry.displayType || entry.type || '-'}
+                            {entry.label || entry.displayType || entry.type || '-'}
                           </span>
                         </td>
                         <td className="px-4 py-3 text-xs font-semibold text-slate-700">{entry.voucherNumber || '-'}</td>

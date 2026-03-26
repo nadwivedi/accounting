@@ -23,6 +23,8 @@ const contraRoutes = require('./routes/VoucherRoutes/contraRoutes');
 const stockAdjustmentRoutes = require('./routes/VoucherRoutes/stockAdjustmentRoutes');
 const saleReturnRoutes = require('./routes/VoucherRoutes/saleReturnRoutes');
 const purchaseReturnRoutes = require('./routes/VoucherRoutes/purchaseReturnRoutes');
+const saleDiscountRoutes = require('./routes/VoucherRoutes/saleDiscountRoutes');
+const purchaseDiscountRoutes = require('./routes/VoucherRoutes/purchaseDiscountRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 
@@ -58,6 +60,8 @@ app.use('/api/contras', contraRoutes);
 app.use('/api/stock-adjustments', stockAdjustmentRoutes);
 app.use('/api/sale-returns', saleReturnRoutes);
 app.use('/api/purchase-returns', purchaseReturnRoutes);
+app.use('/api/sale-discounts', saleDiscountRoutes);
+app.use('/api/purchase-discounts', purchaseDiscountRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/uploads', uploadRoutes);
 

@@ -113,6 +113,26 @@ function PurchaseReturnIcon() {
   return <AssetIcon src="/purchase return_converted.avif" />;
 }
 
+function SaleDiscountIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 2xl:h-6 2xl:w-6">
+      <path d="M7 7h10M7 12h10M7 17h6" />
+      <path d="M5 4.5A2.5 2.5 0 0 1 7.5 2h9A2.5 2.5 0 0 1 19 4.5v15A2.5 2.5 0 0 1 16.5 22h-9A2.5 2.5 0 0 1 5 19.5v-15Z" />
+      <path d="m15.5 8.5 3 3m0-3-3 3" />
+    </svg>
+  );
+}
+
+function PurchaseDiscountIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 2xl:h-6 2xl:w-6">
+      <path d="M7 7h10M7 12h10M7 17h6" />
+      <path d="M5 4.5A2.5 2.5 0 0 1 7.5 2h9A2.5 2.5 0 0 1 19 4.5v15A2.5 2.5 0 0 1 16.5 22h-9A2.5 2.5 0 0 1 5 19.5v-15Z" />
+      <path d="m15.5 8.5 3 3m-3 0 3-3" />
+    </svg>
+  );
+}
+
 function DayBookIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5 2xl:h-6 2xl:w-6">
@@ -163,6 +183,8 @@ export const SECTION_CONFIG = {
       { name: 'Purchase', path: '/purchases', Icon: PurchaseIcon },
       { name: 'Sale Return', path: '/sale-return', Icon: SaleReturnIcon },
       { name: 'Purchase Return', path: '/purchase-return', Icon: PurchaseReturnIcon },
+      { name: 'Discount After Sale', path: '/sale-discount', Icon: SaleDiscountIcon },
+      { name: 'Discount After Purchase', path: '/purchase-discount', Icon: PurchaseDiscountIcon },
       { name: 'Stock Adjustment', path: '/stock-adjustment', Icon: StockAdjustmentIcon },
       { name: 'Payment', hint: 'Pay to supplier', path: '/', Icon: PaymentIcon },
       { name: 'Receipt', hint: 'Money received from customer', path: '/receipts', Icon: ReceiptIcon }
