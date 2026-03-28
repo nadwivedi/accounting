@@ -65,7 +65,7 @@ export function openHomeQuickShortcut(navigate, currentState, stateKey) {
   });
 }
 
-export default function Sidebar({ mobileDrawer = false }) {
+export default function Sidebar({ mobileDrawer = false, compactDesktop = false }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showMoreVoucherLinks, setShowMoreVoucherLinks] = useState(false);
@@ -79,7 +79,7 @@ export default function Sidebar({ mobileDrawer = false }) {
   const extraVoucherLinks = sidebarVoucherLinks.filter((item) => collapsedVoucherPaths.has(item.path));
 
   return (
-    <aside className={`relative w-full overflow-hidden rounded-[20px] border shadow-[0_24px_60px_rgba(15,23,42,0.24),0_0_42px_rgba(14,165,233,0.06)] sm:rounded-[30px] xl:sticky xl:top-22 xl:self-start xl:rounded-[26px] 2xl:top-24 2xl:rounded-[30px] ${
+    <aside className={`relative w-full overflow-hidden rounded-[20px] border shadow-[0_24px_60px_rgba(15,23,42,0.24),0_0_42px_rgba(14,165,233,0.06)] sm:rounded-[30px] lg:sticky lg:top-22 lg:self-start lg:rounded-[24px] xl:rounded-[26px] 2xl:top-24 2xl:rounded-[30px] ${
       mobileDrawer
         ? 'border-slate-700/80 bg-[linear-gradient(165deg,rgba(15,23,42,0.96),rgba(30,41,59,0.94),rgba(51,65,85,0.92))]'
         : 'border-slate-200/20 bg-[linear-gradient(165deg,rgba(71,85,105,0.68),rgba(100,116,139,0.62),rgba(148,163,184,0.56))]'
@@ -90,32 +90,38 @@ export default function Sidebar({ mobileDrawer = false }) {
           : 'bg-[radial-gradient(circle_at_top_right,rgba(125,211,252,0.18),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(110,231,183,0.12),transparent_32%)]'
       }`} />
       <div className="relative z-10 flex h-full flex-col">
-        <div className="flex flex-1 flex-col gap-2 px-2 py-2 sm:gap-2.5 sm:px-3 sm:py-3 xl:gap-1.5 xl:px-2.5 xl:py-2.5 2xl:gap-2.5 2xl:px-3 2xl:py-3">
+        <div className={`flex flex-1 flex-col gap-2 px-2 py-2 sm:gap-2.5 sm:px-3 sm:py-3 2xl:gap-2.5 2xl:px-3 2xl:py-3 ${
+          compactDesktop ? 'lg:gap-1.5 lg:px-2 lg:py-2 xl:gap-1.5 xl:px-2.5 xl:py-2.5' : 'lg:gap-2 lg:px-2.5 lg:py-2.5 xl:gap-1.5 xl:px-2.5 xl:py-2.5'
+        }`}>
           {homeQuickShortcuts.map((shortcut) => (
             <button
               key={shortcut.combo}
               type="button"
               onClick={() => openHomeQuickShortcut(navigate, location.state, shortcut.stateKey)}
               className={shortcut.imageSrc
-                ? 'flex w-[70%] cursor-pointer justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl xl:rounded-[18px] xl:max-w-[92%] 2xl:max-w-full 2xl:rounded-2xl'
+                ? `flex w-[70%] cursor-pointer justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl ${
+                  compactDesktop ? 'lg:rounded-[16px] lg:max-w-full lg:scale-[0.98] xl:rounded-[18px] xl:max-w-[92%] xl:scale-100' : 'lg:rounded-[18px] lg:max-w-full xl:rounded-[18px] xl:max-w-[92%]'
+                } 2xl:max-w-full 2xl:rounded-2xl`
                 : 'cursor-pointer rounded-xl border border-slate-100 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.94))] p-2 text-left shadow-[0_14px_30px_rgba(148,163,184,0.16),inset_0_1px_0_rgba(255,255,255,0.9)] backdrop-blur-sm transition hover:-translate-y-0.5 hover:shadow-[0_18px_34px_rgba(148,163,184,0.22),inset_0_1px_0_rgba(255,255,255,0.95)] sm:rounded-2xl sm:p-2.5'}
             >
               {shortcut.imageSrc ? (
                 <img
                   src={shortcut.imageSrc}
                   alt={shortcut.imageAlt || shortcut.label}
-                  className="block h-auto w-full object-cover xl:scale-[0.97] 2xl:scale-100"
+                  className={`block h-auto w-full object-cover ${compactDesktop ? 'lg:scale-[0.95] xl:scale-[0.97]' : 'lg:scale-[0.98] xl:scale-[0.97]'} 2xl:scale-100`}
                 />
               ) : (
-                <div className="flex items-center gap-2 sm:gap-3 xl:gap-2.5">
-                  <div className={`h-7 w-1.5 rounded-full bg-gradient-to-b sm:h-8 xl:h-7 2xl:h-8 ${shortcut.accent}`} />
+                <div className={`flex items-center gap-2 sm:gap-3 ${compactDesktop ? 'lg:gap-2 xl:gap-2.5' : 'lg:gap-2.5 xl:gap-2.5'}`}>
+                  <div className={`h-7 w-1.5 rounded-full bg-gradient-to-b sm:h-8 ${compactDesktop ? 'lg:h-6 xl:h-7' : 'lg:h-7 xl:h-7'} 2xl:h-8 ${shortcut.accent}`} />
                   <div className="min-w-0 flex-1">
-                    <p className="text-[11px] font-semibold leading-tight text-slate-800 sm:text-[12px] xl:text-[11px] 2xl:text-[12px]">{shortcut.label}</p>
+                    <p className={`font-semibold leading-tight text-slate-800 text-[11px] sm:text-[12px] ${compactDesktop ? 'lg:text-[10px] xl:text-[11px]' : 'lg:text-[11px] xl:text-[11px]'} 2xl:text-[12px]`}>{shortcut.label}</p>
                     {shortcut.hint && (
-                      <p className="mt-0.5 hidden text-[10px] font-medium text-slate-500 sm:block xl:text-[9px] 2xl:text-[10px]">{shortcut.hint}</p>
+                      <p className={`mt-0.5 hidden font-medium text-slate-500 sm:block text-[10px] ${compactDesktop ? 'lg:text-[8px] xl:text-[9px]' : 'lg:text-[9px] xl:text-[9px]'} 2xl:text-[10px]`}>{shortcut.hint}</p>
                     )}
                   </div>
-                  <span className="hidden rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-[10px] font-bold tracking-[0.14em] text-sky-700 sm:inline-flex xl:px-2 xl:py-0.5 xl:text-[9px] 2xl:px-2.5 2xl:py-1 2xl:text-[10px]">
+                  <span className={`hidden rounded-full border border-sky-200 bg-sky-50 font-bold tracking-[0.14em] text-sky-700 sm:inline-flex px-2.5 py-1 text-[10px] ${
+                    compactDesktop ? 'lg:px-1.5 lg:py-0.5 lg:text-[8px] xl:px-2 xl:py-0.5 xl:text-[9px]' : 'lg:px-2 lg:py-0.5 lg:text-[9px] xl:px-2 xl:py-0.5 xl:text-[9px]'
+                  } 2xl:px-2.5 2xl:py-1 2xl:text-[10px]`}>
                     {shortcut.combo}
                   </span>
                 </div>
@@ -123,31 +129,35 @@ export default function Sidebar({ mobileDrawer = false }) {
             </button>
           ))}
 
-          <div className="mt-1 flex flex-col gap-2 pt-2 xl:gap-1.5 xl:pt-1.5 2xl:gap-2 2xl:pt-2">
+          <div className={`mt-1 flex flex-col gap-2 pt-2 2xl:gap-2 2xl:pt-2 ${compactDesktop ? 'lg:gap-1.5 lg:pt-1.5 xl:gap-1.5 xl:pt-1.5' : 'lg:gap-2 lg:pt-2 xl:gap-1.5 xl:pt-1.5'}`}>
             {defaultVoucherLinks.map((item) => (
               <Link
                 key={item.path}
                 to={item.path}
                 className={item.imageSrc
-                  ? 'flex w-[70%] justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl xl:rounded-[18px] xl:max-w-[92%] 2xl:max-w-full 2xl:rounded-2xl'
-                  : 'group relative flex items-center gap-3 rounded-[20px] border border-white/20 bg-white/70 px-5 py-2.5 text-[12px] text-slate-700 shadow-[0_14px_30px_rgba(148,163,184,0.12)] backdrop-blur-sm transition-colors duration-200 hover:bg-violet-50/90 sm:rounded-[24px] xl:gap-2.5 xl:rounded-[20px] xl:px-4 xl:py-2 xl:text-[11px] 2xl:gap-3 2xl:rounded-[24px] 2xl:px-5 2xl:py-2.5 2xl:text-[12px]'}
+                  ? `flex w-[70%] justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl ${
+                    compactDesktop ? 'lg:rounded-[16px] lg:max-w-full lg:scale-[0.98] xl:rounded-[18px] xl:max-w-[92%] xl:scale-100' : 'lg:rounded-[18px] lg:max-w-full xl:rounded-[18px] xl:max-w-[92%]'
+                  } 2xl:max-w-full 2xl:rounded-2xl`
+                  : `group relative flex items-center border border-white/20 bg-white/70 text-slate-700 shadow-[0_14px_30px_rgba(148,163,184,0.12)] backdrop-blur-sm transition-colors duration-200 hover:bg-violet-50/90 sm:rounded-[24px] 2xl:gap-3 2xl:rounded-[24px] 2xl:px-5 2xl:py-2.5 2xl:text-[12px] ${
+                    compactDesktop ? 'gap-3 rounded-[20px] px-5 py-2.5 text-[12px] lg:gap-2 lg:rounded-[18px] lg:px-3 lg:py-1.5 lg:text-[10px] xl:gap-2.5 xl:rounded-[20px] xl:px-4 xl:py-2 xl:text-[11px]' : 'gap-3 rounded-[20px] px-5 py-2.5 text-[12px] lg:gap-2.5 lg:rounded-[20px] lg:px-4 lg:py-2 lg:text-[11px] xl:gap-2.5 xl:rounded-[20px] xl:px-4 xl:py-2 xl:text-[11px]'
+                  }`}
               >
                 {item.imageSrc ? (
                   <img
                     src={item.imageSrc}
                     alt={item.imageAlt || item.name}
-                    className="block h-auto w-full object-cover xl:scale-[0.97] 2xl:scale-100"
+                    className={`block h-auto w-full object-cover ${compactDesktop ? 'lg:scale-[0.95] xl:scale-[0.97]' : 'lg:scale-[0.98] xl:scale-[0.97]'} 2xl:scale-100`}
                   />
                 ) : (
                   <>
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center xl:h-8 xl:w-8 2xl:h-10 2xl:w-10">
+                    <div className={`flex shrink-0 items-center justify-center ${compactDesktop ? 'h-10 w-10 lg:h-7 lg:w-7 xl:h-8 xl:w-8' : 'h-10 w-10 lg:h-8 lg:w-8 xl:h-8 xl:w-8'} 2xl:h-10 2xl:w-10`}>
                       <item.Icon />
                     </div>
 
                     <div className="min-w-0">
                       <p className="font-medium text-slate-700 group-hover:text-slate-900">{item.name}</p>
                       {item.hint && (
-                        <p className="text-[10px] font-medium text-slate-400 group-hover:text-slate-500 xl:text-[9px] 2xl:text-[10px]">
+                        <p className={`font-medium text-slate-400 group-hover:text-slate-500 text-[10px] ${compactDesktop ? 'lg:text-[8px] xl:text-[9px]' : 'lg:text-[9px] xl:text-[9px]'} 2xl:text-[10px]`}>
                           {item.hint}
                         </p>
                       )}
@@ -181,25 +191,29 @@ export default function Sidebar({ mobileDrawer = false }) {
                     key={item.path}
                     to={item.path}
                     className={item.imageSrc
-                      ? 'flex w-[70%] justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl xl:rounded-[18px] xl:max-w-[92%] 2xl:max-w-full 2xl:rounded-2xl'
-                      : 'group relative flex items-center gap-3 rounded-[20px] border border-white/20 bg-white/70 px-5 py-2.5 text-[12px] text-slate-700 shadow-[0_14px_30px_rgba(148,163,184,0.12)] backdrop-blur-sm transition-colors duration-200 hover:bg-violet-50/90 sm:rounded-[24px] xl:gap-2.5 xl:rounded-[20px] xl:px-4 xl:py-2 xl:text-[11px] 2xl:gap-3 2xl:rounded-[24px] 2xl:px-5 2xl:py-2.5 2xl:text-[12px]'}
+                      ? `flex w-[70%] justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl ${
+                        compactDesktop ? 'lg:rounded-[16px] lg:max-w-full lg:scale-[0.98] xl:rounded-[18px] xl:max-w-[92%] xl:scale-100' : 'lg:rounded-[18px] lg:max-w-full xl:rounded-[18px] xl:max-w-[92%]'
+                      } 2xl:max-w-full 2xl:rounded-2xl`
+                      : `group relative flex items-center border border-white/20 bg-white/70 text-slate-700 shadow-[0_14px_30px_rgba(148,163,184,0.12)] backdrop-blur-sm transition-colors duration-200 hover:bg-violet-50/90 sm:rounded-[24px] 2xl:gap-3 2xl:rounded-[24px] 2xl:px-5 2xl:py-2.5 2xl:text-[12px] ${
+                        compactDesktop ? 'gap-3 rounded-[20px] px-5 py-2.5 text-[12px] lg:gap-2 lg:rounded-[18px] lg:px-3 lg:py-1.5 lg:text-[10px] xl:gap-2.5 xl:rounded-[20px] xl:px-4 xl:py-2 xl:text-[11px]' : 'gap-3 rounded-[20px] px-5 py-2.5 text-[12px] lg:gap-2.5 lg:rounded-[20px] lg:px-4 lg:py-2 lg:text-[11px] xl:gap-2.5 xl:rounded-[20px] xl:px-4 xl:py-2 xl:text-[11px]'
+                      }`}
                   >
                     {item.imageSrc ? (
                       <img
                         src={item.imageSrc}
                         alt={item.imageAlt || item.name}
-                        className="block h-auto w-full object-cover xl:scale-[0.97] 2xl:scale-100"
+                        className={`block h-auto w-full object-cover ${compactDesktop ? 'lg:scale-[0.95] xl:scale-[0.97]' : 'lg:scale-[0.98] xl:scale-[0.97]'} 2xl:scale-100`}
                       />
                     ) : (
                       <>
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center xl:h-8 xl:w-8 2xl:h-10 2xl:w-10">
+                        <div className={`flex shrink-0 items-center justify-center ${compactDesktop ? 'h-10 w-10 lg:h-7 lg:w-7 xl:h-8 xl:w-8' : 'h-10 w-10 lg:h-8 lg:w-8 xl:h-8 xl:w-8'} 2xl:h-10 2xl:w-10`}>
                           <item.Icon />
                         </div>
 
                         <div className="min-w-0">
                           <p className="font-medium text-slate-700 group-hover:text-slate-900">{item.name}</p>
                           {item.hint && (
-                            <p className="text-[10px] font-medium text-slate-400 group-hover:text-slate-500 xl:text-[9px] 2xl:text-[10px]">
+                            <p className={`font-medium text-slate-400 group-hover:text-slate-500 text-[10px] ${compactDesktop ? 'lg:text-[8px] xl:text-[9px]' : 'lg:text-[9px] xl:text-[9px]'} 2xl:text-[10px]`}>
                               {item.hint}
                             </p>
                           )}

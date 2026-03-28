@@ -8,7 +8,7 @@ export default function Navbar({ sections = [], activeSection = '', onSectionSel
           <button
             type="button"
             onClick={() => onMenuClick?.()}
-            className="absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 sm:hidden"
+            className="absolute left-0 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:bg-slate-50 lg:hidden"
             aria-label="Open sidebar"
           >
             <Menu className="h-4 w-4" />
