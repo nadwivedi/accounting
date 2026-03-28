@@ -4,9 +4,21 @@
   --darkish-table-border: rgba(100, 116, 139, 0.24);
 }
 
-@media (min-width: 1024px) and (max-width: 1365px) {
+@media (min-width: 768px) and (max-width: 1023px) {
   html {
-    font-size: 15px;
+    font-size: 13px; /* Scale down 18.75% for tablets/small screens */
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  html {
+    font-size: 14px; /* Scale down 12.5% for smaller laptops (<1280px) */
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1365px) {
+  html {
+    font-size: 15px; /* Scale down 6.25% for medium laptops */
   }
 }
 

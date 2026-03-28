@@ -79,6 +79,10 @@ export default function AddProductPopup({
   const [typeOfSupplyQuery, setTypeOfSupplyQuery] = useState(initialPopupState.typeOfSupplyQuery);
   const [typeOfSupplyListIndex, setTypeOfSupplyListIndex] = useState(initialPopupState.typeOfSupplyListIndex);
   const [isTypeOfSupplyOpen, setIsTypeOfSupplyOpen] = useState(false);
+  const [isUnitFormOpen, setIsUnitFormOpen] = useState(false);
+  const [unitFormData, setUnitFormData] = useState({ name: '', description: '' });
+  const [unitFormLoading, setUnitFormLoading] = useState(false);
+  const [unitFormError, setUnitFormError] = useState('');
   const nameInputRef = useRef(null);
   const stockGroupSectionRef = useRef(null);
   const unitSectionRef = useRef(null);
@@ -437,6 +441,55 @@ export default function AddProductPopup({
     setStockGroupListIndex(firstMatch ? 0 : -1);
   };
 
+  const openInlineUnitForm = () => {
+    setUnitFormData({ name: String(unitQuery || '').toLowerCase().trim(), description: '' });
+    setUnitFormError('');
+    setIsUnitSectionActive(false);
+    setIsUnitFormOpen(true);
+  };
+
+  const closeInlineUnitForm = (shouldRefocus = true) => {
+    setIsUnitFormOpen(false);
+    setUnitFormData({ name: '', description: '' });
+    setUnitFormError('');
+
+    if (shouldRefocus) {
+      requestAnimationFrame(() => {
+        unitInputRef.current?.focus();
+        unitInputRef.current?.select?.();
+      });
+    }
+  };
+
+  const handleUnitFormInputChange = (e) => {
+    const { name, value } = e.target;
+    setUnitFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleUnitFormSubmit = async (e) => {
+    e.preventDefault();
+    if (!unitFormData.name.trim()) {
+      setUnitFormError('Unit name is required');
+      return;
+    }
+
+    try {
+      setUnitFormLoading(true);
+      const response = await apiClient.post('/units', unitFormData);
+      const newUnit = response.data;
+      
+      if (!newUnit?._id) throw new Error('Unit created but response was incomplete');
+
+      setUnits((prev) => [...prev, newUnit]);
+      selectUnit(newUnit.name, true);
+      closeInlineUnitForm(false);
+    } catch (err) {
+      setUnitFormError(err.message || 'Error creating unit');
+    } finally {
+      setUnitFormLoading(false);
+    }
+  };
+
   const handleStockGroupInputKeyDown = (event) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
@@ -494,7 +547,16 @@ export default function AddProductPopup({
   };
 
   const handleUnitInputKeyDown = (event) => {
-    if (event.key === 'ArrowDown') {
+    const key = event.key?.toLowerCase();
+
+    if (key === 'control' && !event.altKey && !event.metaKey) {
+      event.preventDefault();
+      event.stopPropagation();
+      openInlineUnitForm();
+      return;
+    }
+
+    if (key === 'arrowdown') {
       event.preventDefault();
       event.stopPropagation();
       if (unitPanelOptions.length === 0) return;
@@ -505,7 +567,7 @@ export default function AddProductPopup({
       return;
     }
 
-    if (event.key === 'ArrowUp') {
+    if (key === 'arrowup') {
       event.preventDefault();
       event.stopPropagation();
       if (unitPanelOptions.length === 0) return;
@@ -857,7 +919,19 @@ export default function AddProductPopup({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Unit *</label>
+                    <div className="relative mb-1 min-h-[16px] w-32 shrink-0">
+                      <label className="block text-xs font-semibold text-gray-700 md:text-sm">Unit *</label>
+                      {isUnitSectionActive && (
+                        <button
+                          type="button"
+                          onClick={openInlineUnitForm}
+                          className="absolute -right-2 -top-1.5 inline-flex items-center gap-1 rounded-md border border-indigo-200 bg-white px-2 py-0.5 text-[9px] font-semibold text-indigo-700 transition hover:bg-indigo-50"
+                        >
+                          <span className="rounded bg-indigo-100 px-1 py-0.5 font-mono text-[8px] text-indigo-700">Ctrl</span>
+                          New
+                        </button>
+                      )}
+                    </div>
                     <div
                       ref={unitSectionRef}
                       className="relative min-w-0 flex-1"
@@ -911,7 +985,16 @@ export default function AddProductPopup({
                           <div className="overflow-y-auto py-1" style={{ maxHeight: unitDropdownStyle.maxHeight }}>
                             {unitPanelOptions.length === 0 ? (
                               <div className="px-3 py-3 text-center text-[13px] text-slate-500">
-                                No units found.
+                                <p>No units found.</p>
+                                <button
+                                  type="button"
+                                  onMouseDown={(e) => e.preventDefault()}
+                                  onClick={openInlineUnitForm}
+                                  className="mt-2 inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                                >
+                                  Create New Unit
+                                  <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-indigo-600">Ctrl</span>
+                                </button>
                               </div>
                             ) : (
                               unitPanelOptions.map((unitName, index) => {
@@ -1111,6 +1194,55 @@ export default function AddProductPopup({
             </div>
           </div>
         </form>
+
+        {isUnitFormOpen && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/40 p-2 backdrop-blur-[1px]" onClick={() => closeInlineUnitForm(true)}>
+            <div className="w-full max-w-[24rem] overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between border-b border-indigo-100 bg-gradient-to-r from-blue-50 to-indigo-50 px-4 py-3">
+                <h3 className="text-sm font-bold text-gray-800">Add New Unit</h3>
+                <button type="button" onClick={() => closeInlineUnitForm(true)} className="rounded-lg p-1 text-gray-500 transition hover:bg-gray-200">
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <form onSubmit={handleUnitFormSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, () => closeInlineUnitForm(true))} className="flex flex-col p-4">
+                {unitFormError && <div className="mb-3 rounded border border-red-200 bg-red-50 p-2 text-xs text-red-700">{unitFormError}</div>}
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold text-gray-700">Unit Name *</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={unitFormData.name}
+                      onChange={handleUnitFormInputChange}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                      placeholder="e.g. pcs, kg"
+                      autoFocus
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-semibold text-gray-700">Description</label>
+                    <input
+                      type="text"
+                      name="description"
+                      value={unitFormData.description}
+                      onChange={handleUnitFormInputChange}
+                      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                      placeholder="Optional details"
+                    />
+                  </div>
+                </div>
+                <div className="mt-5 flex gap-2 pt-2">
+                  <button type="button" onClick={() => closeInlineUnitForm(true)} className="flex-1 rounded-lg border border-gray-300 bg-white py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">Cancel</button>
+                  <button type="submit" disabled={unitFormLoading} className="flex-1 rounded-lg bg-indigo-600 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-50">
+                    {unitFormLoading ? 'Saving...' : 'Save Unit'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   );
