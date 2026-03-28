@@ -205,3 +205,97 @@ exports.getAllPayments = async (req, res) => {
   }
 };
 
+
+exports.updatePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      party,
+      amount,
+      method,
+      paymentDate,
+      notes,
+      refType = 'none',
+      refId = null
+    } = req.body;
+    const userId = req.userId;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid payment id' });
+    }
+
+    const existingPayment = await Payment.findOne({ _id: id, userId });
+    if (!existingPayment) {
+      return res.status(404).json({ success: false, message: 'Payment not found' });
+    }
+
+    const amountNumber = toNumber(amount, NaN);
+    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      return res.status(400).json({ success: false, message: 'Valid amount is required' });
+    }
+    if (party && !mongoose.isValidObjectId(party)) {
+      return res.status(400).json({ success: false, message: 'Invalid party id' });
+    }
+    if (!['purchase', 'none'].includes(refType)) {
+      return res.status(400).json({ success: false, message: 'refType must be purchase or none' });
+    }
+
+    let resolvedParty = party || null;
+    let resolvedRefId = null;
+    let linkedPurchase = null;
+
+    if (refType === 'purchase') {
+      if (!refId || !mongoose.isValidObjectId(refId)) {
+        return res.status(400).json({ success: false, message: 'Valid purchase id is required' });
+      }
+
+      const purchase = await Purchase.findOne({ _id: refId, userId });
+      if (!purchase) {
+        return res.status(400).json({ success: false, message: 'Purchase not found' });
+      }
+
+      const totalAmount = toNumber(purchase.totalAmount);
+      const paidAmountTotal = await getPurchaseLinkedPaymentTotal({ purchaseId: purchase._id, userId });
+      const currentPaymentOldAmount = String(existingPayment.refId) === String(purchase._id) ? existingPayment.amount : 0;
+      
+      const balanceAmount = Math.max(0, totalAmount - (paidAmountTotal - currentPaymentOldAmount));
+
+      if (amountNumber > balanceAmount) {
+        return res.status(400).json({ success: false, message: 'Amount exceeds purchase pending amount' });
+      }
+
+      linkedPurchase = purchase;
+      resolvedRefId = refId;
+      resolvedParty = resolvedParty || purchase.party || null;
+    }
+
+    existingPayment.party = resolvedParty;
+    existingPayment.amount = amountNumber;
+    existingPayment.method = method || 'Cash Account';
+    existingPayment.paymentDate = paymentDate || new Date();
+    existingPayment.notes = notes;
+    existingPayment.refType = refType;
+    existingPayment.refId = resolvedRefId;
+
+    await existingPayment.save();
+
+    const savedPayment = await Payment.findById(existingPayment._id).populate('party', 'name');
+
+    res.status(200).json({
+      success: true,
+      message: 'Payment updated successfully',
+      data: {
+        payment: savedPayment,
+        purchase: linkedPurchase
+      }
+    });
+
+  } catch (error) {
+    console.error('Update payment error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating payment'
+    });
+  }
+};
+

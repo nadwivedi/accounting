@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Building2, CalendarDays, Wallet } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
@@ -118,7 +119,8 @@ export default function AddPaymentPopup({
   handlePaymentAccountInputKeyDown,
   handlePartyInputKeyDown,
   selectPaymentAccount,
-  selectParty
+  selectParty,
+  editingId
 }) {
   const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] text-gray-800 focus:border-transparent focus:outline-none focus:ring-2';
   const partyDropdownStyle = useFloatingDropdownPosition(partySectionRef, isPartySectionActive, [filteredParties.length, partyListIndex]);
@@ -136,7 +138,7 @@ export default function AddPaymentPopup({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold md:text-xl">
-                New Payment
+                {editingId ? 'Edit Payment' : 'New Payment'}
                 <span className="ml-2 text-sm font-medium text-slate-200 md:text-base">Money Paid</span>
               </h2>
               <p className="mt-1 text-xs text-cyan-100 md:text-sm">
@@ -420,7 +422,7 @@ export default function AddPaymentPopup({
                 disabled={loading}
                 className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
               >
-                {loading ? 'Saving...' : 'Save Payment'}
+                {loading ? 'Saving...' : editingId ? 'Update Payment' : 'Save Payment'}
               </button>
             </div>
           </div>
@@ -431,6 +433,9 @@ export default function AddPaymentPopup({
 }
 
 export function AddPaymentPopupLauncher({ onFinish = null }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [editingId, setEditingId] = useState(null);
   const [payments, setPayments] = useState([]);
   const [parties, setParties] = useState([]);
   const [purchases, setPurchases] = useState([]);
@@ -486,6 +491,27 @@ export function AddPaymentPopupLauncher({ onFinish = null }) {
       return { ...prev, method: defaultPaymentMethod };
     });
   }, [defaultPaymentMethod, paymentAccountOptions]);
+
+  useEffect(() => {
+    if (location.state?.editPayment) {
+      const payment = location.state.editPayment;
+      setEditingId(payment._id);
+      setFormData({
+        party: payment.party?._id || payment.party || '',
+        amount: String(payment.amount),
+        method: payment.method || defaultPaymentMethod,
+        paymentDate: parsePaymentDateInput(payment.paymentDate) ? formatPaymentDateInput(payment.paymentDate) : formatPaymentDateInput(new Date()),
+        notes: payment.notes || '',
+        refType: payment.refType || 'none',
+        refId: payment.refId || ''
+      });
+      setPartyQuery(payment.party?.name || payment.party?.partyName || '');
+      setPaymentAccountQuery(payment.method || defaultPaymentMethod);
+      
+      const { editPayment, ...restState } = location.state;
+      navigate(location.pathname, { replace: true, state: Object.keys(restState).length > 0 ? restState : undefined });
+    }
+  }, [location.pathname, location.state, navigate, defaultPaymentMethod]);
 
   useEffect(() => {
     if (isPaymentAccountSectionActive) return;
@@ -806,7 +832,7 @@ export function AddPaymentPopupLauncher({ onFinish = null }) {
 
     try {
       setLoading(true);
-      await apiClient.post('/payments', {
+      const payload = {
         party: formData.party || null,
         amount: Number(formData.amount),
         method: formData.method,
@@ -814,9 +840,16 @@ export function AddPaymentPopupLauncher({ onFinish = null }) {
         notes: formData.notes,
         refType: formData.refType,
         refId: formData.refType === 'purchase' ? formData.refId : null
-      });
+      };
 
-      toast.success('Payment created successfully', TOAST_OPTIONS);
+      if (editingId) {
+        await apiClient.put(`/payments/${editingId}`, payload);
+        toast.success('Payment updated successfully', TOAST_OPTIONS);
+      } else {
+        await apiClient.post('/payments', payload);
+        toast.success('Payment created successfully', TOAST_OPTIONS);
+      }
+
       handleCloseForm();
     } catch (err) {
       setError(err.message || 'Error creating payment');
@@ -869,6 +902,7 @@ export function AddPaymentPopupLauncher({ onFinish = null }) {
         handlePartyInputKeyDown={handlePartyInputKeyDown}
         selectPaymentAccount={selectPaymentAccount}
         selectParty={selectParty}
+        editingId={editingId}
       />
     </>
   );

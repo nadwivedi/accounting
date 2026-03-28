@@ -203,3 +203,97 @@ exports.getAllReceipts = async (req, res) => {
   }
 };
 
+
+exports.updateReceipt = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      party,
+      amount,
+      method,
+      receiptDate,
+      notes,
+      refType = 'none',
+      refId = null
+    } = req.body;
+    const userId = req.userId;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid receipt id' });
+    }
+
+    const existingReceipt = await Receipt.findOne({ _id: id, userId });
+    if (!existingReceipt) {
+      return res.status(404).json({ success: false, message: 'Receipt not found' });
+    }
+
+    const amountNumber = toNumber(amount, NaN);
+    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      return res.status(400).json({ success: false, message: 'Valid amount is required' });
+    }
+    if (party && !mongoose.isValidObjectId(party)) {
+      return res.status(400).json({ success: false, message: 'Invalid party id' });
+    }
+    if (!['sale', 'none'].includes(refType)) {
+      return res.status(400).json({ success: false, message: 'refType must be sale or none' });
+    }
+
+    let resolvedParty = party || null;
+    let resolvedRefId = null;
+    let linkedSale = null;
+
+    if (refType === 'sale') {
+      if (!refId || !mongoose.isValidObjectId(refId)) {
+        return res.status(400).json({ success: false, message: 'Valid sale id is required' });
+      }
+
+      const sale = await Sale.findOne({ _id: refId, userId });
+      if (!sale) {
+        return res.status(400).json({ success: false, message: 'Sale not found' });
+      }
+
+      const totalAmount = toNumber(sale.totalAmount);
+      const paidAmountTotal = await getLinkedSaleReceiptTotal({ saleId: sale._id, userId });
+      const currentReceiptOldAmount = String(existingReceipt.refId) === String(sale._id) ? existingReceipt.amount : 0;
+      
+      const balanceAmount = Math.max(0, totalAmount - (paidAmountTotal - currentReceiptOldAmount));
+
+      if (amountNumber > balanceAmount) {
+        return res.status(400).json({ success: false, message: 'Amount exceeds sale pending amount' });
+      }
+
+      linkedSale = sale;
+      resolvedRefId = refId;
+      resolvedParty = resolvedParty || sale.party || null;
+    }
+
+    existingReceipt.party = resolvedParty;
+    existingReceipt.amount = amountNumber;
+    existingReceipt.method = method || 'Cash Account';
+    existingReceipt.receiptDate = receiptDate || new Date();
+    existingReceipt.notes = notes;
+    existingReceipt.refType = refType;
+    existingReceipt.refId = resolvedRefId;
+
+    await existingReceipt.save();
+
+    const savedReceipt = await Receipt.findById(existingReceipt._id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Receipt updated successfully',
+      data: {
+        receipt: savedReceipt,
+        sale: linkedSale
+      }
+    });
+
+  } catch (error) {
+    console.error('Update receipt error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating receipt'
+    });
+  }
+};
+

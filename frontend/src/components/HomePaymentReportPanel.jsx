@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { CreditCard, IndianRupee, Wallet } from 'lucide-react';
+import { CreditCard, IndianRupee, Wallet, Pencil } from 'lucide-react';
 import apiClient from '../utils/api';
 
 const formatCurrency = (value) => (
@@ -60,6 +60,23 @@ export default function HomePaymentReportPanel() {
 
     loadPayments();
   }, []);
+
+  const handleEditPayment = (payment) => {
+    if (!payment?._id) return;
+
+    navigate('/', {
+      replace: true,
+      state: {
+        ...(location.state || {}),
+        homeQuickSale: false,
+        homeQuickPurchase: false,
+        homeQuickPayment: true,
+        homeQuickReceipt: false,
+        homeQuickExpense: false,
+        editPayment: payment
+      }
+    });
+  };
 
   const sortedPayments = useMemo(() => (
     [...payments].sort((a, b) => new Date(b.paymentDate || 0).getTime() - new Date(a.paymentDate || 0).getTime())
@@ -141,6 +158,7 @@ export default function HomePaymentReportPanel() {
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.14em]">Party</th>
                     <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.14em]">Method</th>
                     <th className="px-4 py-3 text-right text-xs font-bold uppercase tracking-[0.14em]">Amount</th>
+                    <th className="px-4 py-3 text-center text-xs font-bold uppercase tracking-[0.14em]">Edit</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -151,6 +169,19 @@ export default function HomePaymentReportPanel() {
                       <td className="px-4 py-3 text-sm text-slate-700">{getPartyName(payment)}</td>
                       <td className="px-4 py-3 text-sm text-slate-700">{payment.method || '-'}</td>
                       <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-700">{formatCurrency(payment.amount)}</td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleEditPayment(payment);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

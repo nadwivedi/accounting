@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Receipt, IndianRupee, Search } from 'lucide-react';
+import { Receipt, IndianRupee, Search, Pencil } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import { getBankDisplayName, normalizeBankName } from '../../utils/bankAccounts';
@@ -85,6 +85,7 @@ const formatReceiptNumber = (value) => {
 export default function Receipts({ modalOnly = false, onModalFinish = null }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const [editingId, setEditingId] = useState(null);
   const [receipts, setReceipts] = useState([]);
   const [parties, setParties] = useState([]);
   const [sales, setSales] = useState([]);
@@ -132,12 +133,43 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showForm]);
 
+  const handleEdit = (receipt) => {
+    if (!receipt) return;
+    setEditingId(receipt._id);
+    setFormData({
+      party: receipt.party?._id || receipt.party || '',
+      amount: String(receipt.amount),
+      method: receipt.method || getDefaultReceiptMethod(banks),
+      receiptDate: parseReceiptDateInput(receipt.receiptDate) ? formatReceiptDateInput(receipt.receiptDate) : formatReceiptDateInput(new Date()),
+      notes: receipt.notes || '',
+      refType: receipt.refType || 'none',
+      refId: receipt.refId || ''
+    });
+    setPartyQuery(getPartyDisplayName(receipt.party) || '');
+    setReceiptAccountQuery(receipt.method || getDefaultReceiptMethod(banks));
+    setPartyListIndex(-1);
+    setReceiptAccountListIndex(-1);
+    setIsPartySectionActive(false);
+    setIsReceiptAccountSectionActive(false);
+    setShowForm(true);
+    setLoading(false);
+    setError('');
+  };
+
   useEffect(() => {
+    if (location.state?.editReceipt) {
+      handleEdit(location.state.editReceipt);
+      const { editReceipt, ...restState } = location.state;
+      navigate(location.pathname, { replace: true, state: Object.keys(restState).length > 0 ? restState : undefined });
+      return;
+    }
+
     if (location.state?.openShortcut !== 'receipt' || showForm) return;
 
     handleOpenForm();
-    navigate(location.pathname, { replace: true, state: {} });
-  }, [location.pathname, location.state, navigate, showForm]);
+    const { openShortcut, ...restState } = location.state;
+    navigate(location.pathname, { replace: true, state: Object.keys(restState).length > 0 ? restState : undefined });
+  }, [location.pathname, location.state, navigate, showForm, banks]);
 
   useEffect(() => {
     if (!modalOnly || showForm) return;
@@ -628,6 +660,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
   };
 
   const handleOpenForm = () => {
+    setEditingId(null);
     setFormData(getInitialForm(defaultReceiptMethod));
     setPartyQuery('');
     setPartyListIndex(-1);
@@ -646,6 +679,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
     }
 
     setShowForm(false);
+    setEditingId(null);
     setFormData(getInitialForm(defaultReceiptMethod));
     setPartyQuery('');
     setPartyListIndex(-1);
@@ -676,26 +710,33 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
     try {
       setLoading(true);
       const resolvedRefType = formData.refId ? 'sale' : 'none';
-      await apiClient.post('/receipts', {
+      const payload = {
         party: formData.party || null,
         amount: Number(formData.amount),
         method: formData.method,
         receiptDate: parsedReceiptDate,
         notes: formData.notes,
-        refType: 'none',
-        refId: null
-      });
+        refType: formData.refType || 'none',
+        refId: formData.refId || null
+      };
+
+      if (editingId) {
+        await apiClient.put(`/receipts/${editingId}`, payload);
+        toast.success('Receipt updated successfully', TOAST_OPTIONS);
+      } else {
+        await apiClient.post('/receipts', payload);
+        toast.success('Receipt created successfully', TOAST_OPTIONS);
+      }
 
       handleCloseForm();
       setError('');
       fetchReceipts();
       fetchSales();
-      toast.success('Receipt created successfully', TOAST_OPTIONS);
       if (modalOnly && typeof onModalFinish === 'function') {
         onModalFinish();
       }
     } catch (err) {
-      setError(err.message || 'Error creating receipt');
+      setError(err.message || 'Error saving receipt');
     } finally {
       setLoading(false);
     }
@@ -840,6 +881,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
           handleReceiptAccountInputKeyDown={handleReceiptAccountInputKeyDown}
           selectParty={selectParty}
           selectReceiptAccount={selectReceiptAccount}
+          editingId={editingId}
         />
 
         <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
@@ -944,7 +986,8 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Amount</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Receipt Account</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Reference</th>
-                      <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
+                      <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
+                      <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Edit</th>
                     </tr>
                   </thead>
                   <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
@@ -970,6 +1013,19 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                         </td>
                         <td className="border border-slate-400 px-4 py-3">
                           <div className="max-w-[24rem] truncate">{receipt.notes || '-'}</div>
+                        </td>
+                        <td className="border border-slate-400 px-4 py-3 text-center">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleEdit(receipt);
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Edit
+                          </button>
                         </td>
                       </tr>
                     ))}

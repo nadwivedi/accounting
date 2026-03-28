@@ -36,7 +36,8 @@ export default function AddReceiptPopup({
   handlePartyInputKeyDown,
   handleReceiptAccountInputKeyDown,
   selectParty,
-  selectReceiptAccount
+  selectReceiptAccount,
+  editingId
 }) {
   const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-2.5 py-1.5 text-[13px] text-gray-800 focus:border-transparent focus:outline-none focus:ring-2';
   const partyDropdownStyle = useFloatingDropdownPosition(partySectionRef, isPartySectionActive, [filteredParties.length, partyListIndex]);
@@ -54,7 +55,7 @@ export default function AddReceiptPopup({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-bold md:text-xl">
-                New Receipt
+                {editingId ? 'Edit Receipt' : 'New Receipt'}
                 <span className="ml-2 text-sm font-medium text-slate-200 md:text-base">Money Received</span>
               </h2>
               <p className="mt-1 text-xs text-cyan-100 md:text-sm">
@@ -327,7 +328,7 @@ export default function AddReceiptPopup({
                 disabled={loading}
                 className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
               >
-                {loading ? 'Saving...' : 'Save Receipt'}
+                {loading ? 'Saving...' : editingId ? 'Update Receipt' : 'Save Receipt'}
               </button>
             </div>
           </div>
