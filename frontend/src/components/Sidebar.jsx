@@ -58,6 +58,8 @@ export function openHomeQuickShortcut(navigate, currentState, stateKey) {
       ...(currentState || {}),
       homeQuickSale: stateKey === 'homeQuickSale',
       homeQuickPurchase: stateKey === 'homeQuickPurchase',
+      homeQuickSaleReturn: stateKey === 'homeQuickSaleReturn',
+      homeQuickPurchaseReturn: stateKey === 'homeQuickPurchaseReturn',
       homeQuickPayment: stateKey === 'homeQuickPayment',
       homeQuickReceipt: stateKey === 'homeQuickReceipt',
       homeQuickExpense: stateKey === 'homeQuickExpense'
@@ -134,6 +136,18 @@ export default function Sidebar({ mobileDrawer = false, compactDesktop = false }
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={(event) => {
+                  if (item.path === '/sale-return') {
+                    event.preventDefault();
+                    openHomeQuickShortcut(navigate, location.state, 'homeQuickSaleReturn');
+                    return;
+                  }
+
+                  if (item.path === '/purchase-return') {
+                    event.preventDefault();
+                    openHomeQuickShortcut(navigate, location.state, 'homeQuickPurchaseReturn');
+                  }
+                }}
                 className={item.imageSrc
                   ? `flex w-[70%] justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl ${
                     compactDesktop ? 'lg:rounded-[16px] lg:max-w-full lg:scale-[0.98] xl:rounded-[18px] xl:max-w-[92%] xl:scale-100' : 'lg:rounded-[18px] lg:max-w-full xl:rounded-[18px] xl:max-w-[92%]'
@@ -190,6 +204,18 @@ export default function Sidebar({ mobileDrawer = false, compactDesktop = false }
                   <Link
                     key={item.path}
                     to={item.path}
+                    onClick={(event) => {
+                      if (item.path === '/sale-return') {
+                        event.preventDefault();
+                        openHomeQuickShortcut(navigate, location.state, 'homeQuickSaleReturn');
+                        return;
+                      }
+
+                      if (item.path === '/purchase-return') {
+                        event.preventDefault();
+                        openHomeQuickShortcut(navigate, location.state, 'homeQuickPurchaseReturn');
+                      }
+                    }}
                     className={item.imageSrc
                       ? `flex w-[70%] justify-start overflow-hidden rounded-xl text-left transition hover:-translate-y-0.5 sm:block sm:w-full sm:rounded-2xl ${
                         compactDesktop ? 'lg:rounded-[16px] lg:max-w-full lg:scale-[0.98] xl:rounded-[18px] xl:max-w-[92%] xl:scale-100' : 'lg:rounded-[18px] lg:max-w-full xl:rounded-[18px] xl:max-w-[92%]'

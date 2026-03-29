@@ -58,9 +58,6 @@ export default function AddReceiptPopup({
                 {editingId ? 'Edit Receipt' : 'New Receipt'}
                 <span className="ml-2 text-sm font-medium text-slate-200 md:text-base">Money Received</span>
               </h2>
-              <p className="mt-1 text-xs text-cyan-100 md:text-sm">
-                Capture customer receipt and choose the receipt account in one flow.
-              </p>
             </div>
 
             <button

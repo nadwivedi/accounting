@@ -50,6 +50,8 @@ function App() {
     const {
       homeQuickSale,
       homeQuickPurchase,
+      homeQuickSaleReturn,
+      homeQuickPurchaseReturn,
       homeQuickPayment,
       homeQuickReceipt,
       homeQuickExpense,
@@ -414,6 +416,18 @@ function App() {
       {location.pathname === '/' && location.state?.homeQuickPurchase && (
         <ProtectedRoute>
           <Purchases modalOnly onModalFinish={clearHomeQuickShortcutState} />
+        </ProtectedRoute>
+      )}
+
+      {location.pathname === '/' && location.state?.homeQuickSaleReturn && (
+        <ProtectedRoute>
+          <SaleReturn modalOnly onModalFinish={clearHomeQuickShortcutState} />
+        </ProtectedRoute>
+      )}
+
+      {location.pathname === '/' && location.state?.homeQuickPurchaseReturn && (
+        <ProtectedRoute>
+          <PurchaseReturn modalOnly onModalFinish={clearHomeQuickShortcutState} />
         </ProtectedRoute>
       )}
 
