@@ -1,4 +1,4 @@
-﻿const Unit = require('../../models/master/Unit');
+const Unit = require('../../models/master/Unit');
 const Product = require('../../models/master/Stock');
 
 const DEFAULT_UNITS = ['pcs', 'kg', 'g', 'ltr', 'ml', 'ton', 'hrs', 'minutes'];
@@ -81,7 +81,7 @@ exports.getAllUnits = async (req, res) => {
       query = query.where('name').regex(new RegExp(search, 'i'));
     }
 
-    const units = await query.sort({ createdAt: -1 });
+    const units = await query.sort({ createdAt: -1 }).lean();
 
     return res.status(200).json({
       success: true,

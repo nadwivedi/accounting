@@ -242,8 +242,6 @@ exports.getAllPurchases = async (req, res) => {
     const userId = req.userId;
     const filter = { userId };
 
-    await ensurePurchaseNumbersForUser(userId);
-
     if (party) filter.party = party;
     if (fromDate) {
       const parsedFromDate = new Date(fromDate);
@@ -253,8 +251,8 @@ exports.getAllPurchases = async (req, res) => {
     }
 
     let query = Purchase.find(filter)
-      .populate('party', 'name')
-      .populate('items.product', 'name');
+      .select('purchaseNumber supplierInvoice party purchaseDate dueDate totalAmount paidAmount type notes invoiceLink')
+      .populate('party', 'name');
 
     if (search) {
       const purchaseNumberSearch = toPurchaseNumber(search);
@@ -269,8 +267,12 @@ exports.getAllPurchases = async (req, res) => {
       });
     }
 
-    const purchases = await query.sort({ purchaseDate: -1, createdAt: -1 });
-    res.status(200).json({ success: true, count: purchases.length, data: purchases });
+    const purchases = await query.sort({ purchaseDate: -1, createdAt: -1 }).lean();
+    res.status(200).json({
+      success: true,
+      count: purchases.length,
+      data: purchases
+    });
   } catch (error) {
     console.error('Get all purchases error:', error);
     res.status(500).json({ success: false, message: error.message || 'Error fetching purchases' });
@@ -282,11 +284,10 @@ exports.getPurchaseById = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    await ensurePurchaseNumbersForUser(userId);
-
     const purchase = await Purchase.findOne({ _id: id, userId })
       .populate('party', 'name')
-      .populate('items.product', 'name');
+      .populate('items.product', 'name')
+      .lean();
 
     if (!purchase) {
       return res.status(404).json({ success: false, message: 'Purchase not found' });

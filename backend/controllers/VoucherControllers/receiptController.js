@@ -1,4 +1,4 @@
-﻿const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 const Receipt = require('../../models/voucher/Receipt');
 const Sale = require('../../models/voucher/Sales');
 const {
@@ -69,53 +69,32 @@ exports.createReceipt = async (req, res) => {
 
     const amountNumber = toNumber(amount, NaN);
     if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid amount is required'
-      });
+      return res.status(400).json({ success: false, message: 'Valid amount is required' });
     }
 
     if (party && !mongoose.isValidObjectId(party)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid party id'
-      });
+      return res.status(400).json({ success: false, message: 'Invalid party id' });
     }
 
     if (!['sale', 'none'].includes(refType)) {
-      return res.status(400).json({
-        success: false,
-        message: 'refType must be sale or none'
-      });
+      return res.status(400).json({ success: false, message: 'refType must be sale or none' });
     }
 
     let resolvedParty = party || null;
     let resolvedRefId = null;
-    let linkedSale = null;
     const nextReceiptNumber = await ensureReceiptNumbersForUser(userId);
 
     if (refType === 'sale') {
       if (!refId || !mongoose.isValidObjectId(refId)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid sale id is required'
-        });
+        return res.status(400).json({ success: false, message: 'Valid sale id is required' });
       }
 
-      const { sale, error } = await applySaleReceipt({
-        refId,
-        userId,
-        amount: amountNumber
-      });
+      const { sale, error } = await applySaleReceipt({ refId, userId, amount: amountNumber });
 
       if (error) {
-        return res.status(400).json({
-          success: false,
-          message: error
-        });
+        return res.status(400).json({ success: false, message: error });
       }
 
-      linkedSale = sale;
       resolvedRefId = refId;
       resolvedParty = resolvedParty || sale.party || null;
     }
@@ -137,17 +116,11 @@ exports.createReceipt = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Receipt created successfully',
-      data: {
-        receipt: savedReceipt,
-        sale: linkedSale
-      }
+      data: savedReceipt
     });
   } catch (error) {
     console.error('Create receipt error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error creating receipt'
-    });
+    res.status(500).json({ success: false, message: error.message || 'Error creating receipt' });
   }
 };
 
@@ -156,8 +129,6 @@ exports.getAllReceipts = async (req, res) => {
     const { refType, refId, party, search, fromDate } = req.query;
     const userId = req.userId;
     const filter = { userId };
-
-    await ensureReceiptNumbersForUser(userId);
 
     if (refType && ['sale', 'none'].includes(refType)) {
       filter.refType = refType;
@@ -187,7 +158,8 @@ exports.getAllReceipts = async (req, res) => {
     }
 
     const receipts = await Receipt.find(filter)
-      .sort({ receiptDate: -1, createdAt: -1 });
+      .sort({ receiptDate: -1, createdAt: -1 })
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -196,13 +168,9 @@ exports.getAllReceipts = async (req, res) => {
     });
   } catch (error) {
     console.error('Get all receipts error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error fetching receipts'
-    });
+    res.status(500).json({ success: false, message: error.message || 'Error fetching receipts' });
   }
 };
-
 
 exports.updateReceipt = async (req, res) => {
   try {
@@ -240,7 +208,6 @@ exports.updateReceipt = async (req, res) => {
 
     let resolvedParty = party || null;
     let resolvedRefId = null;
-    let linkedSale = null;
 
     if (refType === 'sale') {
       if (!refId || !mongoose.isValidObjectId(refId)) {
@@ -255,14 +222,12 @@ exports.updateReceipt = async (req, res) => {
       const totalAmount = toNumber(sale.totalAmount);
       const paidAmountTotal = await getLinkedSaleReceiptTotal({ saleId: sale._id, userId });
       const currentReceiptOldAmount = String(existingReceipt.refId) === String(sale._id) ? existingReceipt.amount : 0;
-      
       const balanceAmount = Math.max(0, totalAmount - (paidAmountTotal - currentReceiptOldAmount));
 
       if (amountNumber > balanceAmount) {
         return res.status(400).json({ success: false, message: 'Amount exceeds sale pending amount' });
       }
 
-      linkedSale = sale;
       resolvedRefId = refId;
       resolvedParty = resolvedParty || sale.party || null;
     }
@@ -282,18 +247,10 @@ exports.updateReceipt = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Receipt updated successfully',
-      data: {
-        receipt: savedReceipt,
-        sale: linkedSale
-      }
+      data: savedReceipt
     });
-
   } catch (error) {
     console.error('Update receipt error:', error);
-    res.status(500).json({
-      success: false,
-      message: error.message || 'Error updating receipt'
-    });
+    res.status(500).json({ success: false, message: error.message || 'Error updating receipt' });
   }
 };
-

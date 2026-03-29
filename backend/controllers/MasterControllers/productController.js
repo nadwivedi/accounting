@@ -1,4 +1,4 @@
-﻿const Product = require('../../models/master/Stock');
+const Product = require('../../models/master/Stock');
 const Unit = require('../../models/master/Unit');
 
 // Create product
@@ -94,13 +94,15 @@ exports.getAllProducts = async (req, res) => {
 
     if (stockGroup) filter.stockGroup = stockGroup;
 
-    let query = Product.find(filter).populate('stockGroup', 'name');
+    let query = Product.find(filter)
+      .populate('stockGroup', 'name')
+      .select('name unit stockGroup currentStock minStockLevel salePrice taxRate typeOfSupply');
 
     if (search) {
       query = query.where('name').regex(new RegExp(search, 'i'));
     }
 
-    const products = await query.sort({ createdAt: -1 });
+    const products = await query.sort({ createdAt: -1 }).lean();
 
     res.status(200).json({
       success: true,
@@ -301,7 +303,7 @@ exports.updateStock = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Stock updated successfully',
-      data: product
+      data: { _id: product._id, currentStock: product.currentStock }
     });
   } catch (error) {
     console.error('Update stock error:', error);

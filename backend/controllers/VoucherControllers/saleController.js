@@ -234,8 +234,7 @@ exports.createSale = async (req, res) => {
     });
 
     let populatedSale = await Sale.findById(sale._id)
-      .populate('items.product', 'name unit')
-      .populate('userId', 'companyName email phone address gstNumber bankDetails');
+      .populate('items.product', 'name unit');
 
     try {
       await ensureSaleInvoicePdf(populatedSale);
@@ -277,8 +276,8 @@ exports.getAllSales = async (req, res) => {
     }
 
     let query = Sale.find(filter)
-      .populate('party', 'name')
-      .populate('items.product', 'name unit');
+      .select('invoiceNumber saleDate party customerName customerPhone totalAmount paidAmount type notes invoicePdfPath')
+      .populate('party', 'name');
 
     if (search) {
       query = query.where({
@@ -289,8 +288,12 @@ exports.getAllSales = async (req, res) => {
       });
     }
 
-    const sales = await query.sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: sales.length, data: sales });
+    const sales = await query.sort({ createdAt: -1 }).lean();
+    res.status(200).json({
+      success: true,
+      count: sales.length,
+      data: sales
+    });
   } catch (error) {
     console.error('Get all sales error:', error);
     res.status(500).json({ success: false, message: error.message || 'Error fetching sales' });
@@ -344,9 +347,7 @@ exports.updateSale = async (req, res) => {
       { _id: id, userId },
       updateFields,
       { new: true, runValidators: true }
-    )
-      .populate('items.product', 'name unit')
-      .populate('userId', 'companyName email phone address gstNumber bankDetails');
+    ).populate('items.product', 'name unit');
 
     // Re-sync auto-receipts if paidAmount changed
     if (paidAmount !== undefined) {

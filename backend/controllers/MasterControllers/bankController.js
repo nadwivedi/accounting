@@ -77,7 +77,10 @@ exports.getAllBanks = async (req, res) => {
       query = query.where('name').regex(new RegExp(search, 'i'));
     }
 
-    const banks = await query.sort({ createdAt: -1 });
+    const banks = await query
+      .select('name')
+      .sort({ createdAt: -1 })
+      .lean();
     const sortedBanks = [...banks].sort((firstBank, secondBank) => {
       const firstIsCash = String(firstBank.name || '').toLowerCase() === DEFAULT_CASH_ACCOUNT_NAME.toLowerCase();
       const secondIsCash = String(secondBank.name || '').toLowerCase() === DEFAULT_CASH_ACCOUNT_NAME.toLowerCase();

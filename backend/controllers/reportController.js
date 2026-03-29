@@ -169,12 +169,12 @@ exports.getOutstandingReport = async (req, res) => {
     const userId = req.userId;
 
     const [sales, purchases, payments, receipts, saleDiscounts, purchaseDiscounts] = await Promise.all([
-      Sale.find({ userId }),
-      Purchase.find({ userId }),
-      Payment.find({ userId }),
-      Receipt.find({ userId }),
-      SaleDiscount.find({ userId }),
-      PurchaseDiscount.find({ userId })
+      Sale.find({ userId }).select('party customerName totalAmount paidAmount type saleDate invoiceNumber').lean(),
+      Purchase.find({ userId }).select('party totalAmount paidAmount type purchaseDate supplierInvoice purchaseNumber').lean(),
+      Payment.find({ userId }).select('party amount refType refId').lean(),
+      Receipt.find({ userId }).select('party amount refType refId').lean(),
+      SaleDiscount.find({ userId }).select('party sale amount').lean(),
+      PurchaseDiscount.find({ userId }).select('party purchase amount').lean()
     ]);
     const saleReceiptMap = buildSaleReceiptMap(receipts);
     const purchasePaymentMap = buildPurchasePaymentMap(payments);
@@ -381,14 +381,14 @@ exports.getPartyLedger = async (req, res) => {
     withDateFilters(purchaseDiscountFilter, 'voucherDate', fromDate, toDate);
 
     const [sales, purchases, purchaseReturns, saleReturns, payments, receipts, saleDiscounts, purchaseDiscounts] = await Promise.all([
-      Sale.find(saleFilter),
-      Purchase.find(purchaseFilter),
-      PurchaseReturn.find(purchaseReturnFilter),
-      SaleReturn.find(saleReturnFilter),
-      Payment.find(paymentFilter),
-      Receipt.find(receiptFilter),
-      SaleDiscount.find(saleDiscountFilter),
-      PurchaseDiscount.find(purchaseDiscountFilter)
+      Sale.find(saleFilter).select('party customerName totalAmount paidAmount type saleDate invoiceNumber notes createdAt').lean(),
+      Purchase.find(purchaseFilter).select('party totalAmount paidAmount type purchaseDate purchaseNumber supplierInvoice notes createdAt').lean(),
+      PurchaseReturn.find(purchaseReturnFilter).select('party totalAmount voucherDate voucherNumber notes createdAt items').lean(),
+      SaleReturn.find(saleReturnFilter).select('party totalAmount amount voucherDate voucherNumber notes createdAt items').lean(),
+      Payment.find(paymentFilter).select('party amount paymentDate paymentNumber method notes refType refId createdAt').lean(),
+      Receipt.find(receiptFilter).select('party amount receiptDate receiptNumber method notes refType refId receiptSource createdAt').lean(),
+      SaleDiscount.find(saleDiscountFilter).select('party amount voucherDate voucherNumber notes createdAt').lean(),
+      PurchaseDiscount.find(purchaseDiscountFilter).select('party amount voucherDate voucherNumber notes createdAt').lean()
     ]);
 
     const partyNameMap = await getPartyNameMap(userId, [
