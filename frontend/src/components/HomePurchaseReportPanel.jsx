@@ -277,7 +277,7 @@ export default function HomePurchaseReportPanel() {
         }
       });
 
-      setPurchaseDetail(response?.data?.data || null);
+      setPurchaseDetail(response?.data || null);
     } catch (err) {
       setPurchaseDetailError(err.message || 'Error loading purchase detail');
     } finally {

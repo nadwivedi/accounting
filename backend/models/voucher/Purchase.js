@@ -44,6 +44,7 @@ const purchaseSchema = new mongoose.Schema({
   },
   party: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: 'Party',
     default: null
   },
   items: [purchaseItemSchema],

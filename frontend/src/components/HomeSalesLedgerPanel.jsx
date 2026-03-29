@@ -277,7 +277,7 @@ export default function HomeSalesLedgerPanel({ dateRange = null }) {
         }
       });
 
-      setSaleDetail(response?.data?.data || null);
+      setSaleDetail(response?.data || null);
     } catch (err) {
       setSaleDetailError(err.message || 'Error loading sale detail');
     } finally {

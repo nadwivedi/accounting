@@ -651,7 +651,7 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
 
     let detail = null;
 
-    if (normalizedType === 'sale') {
+    if (['sale', 'cash sale', 'credit sale'].includes(normalizedType)) {
       const sale = await Sale.findOne({ _id: refId, userId })
         .populate('party', 'name type mobile')
         .populate('items.product', 'name unit');
@@ -682,7 +682,7 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
         ],
         items: getDetailedItems(sale.items)
       };
-    } else if (normalizedType === 'purchase') {
+    } else if (['purchase', 'cash purchase', 'credit purchase'].includes(normalizedType)) {
       const purchase = await Purchase.findOne({ _id: refId, userId })
         .populate('party', 'name type mobile')
         .populate('items.product', 'name unit');
