@@ -33,7 +33,7 @@ exports.createExpenseGroup = async (req, res) => {
       data: expenseGroup
     });
   } catch (error) {
-    console.error('Create expense group error:', error);
+    console.error('Create expense type error:', error);
     if (isDuplicateExpenseGroupNameError(error)) {
       return res.status(400).json({
         success: false,
@@ -42,7 +42,7 @@ exports.createExpenseGroup = async (req, res) => {
     }
     return res.status(500).json({
       success: false,
-      message: error.message || 'Error creating expense group'
+      message: error.message || 'Error creating expense type'
     });
   }
 };
@@ -69,10 +69,10 @@ exports.getAllExpenseGroups = async (req, res) => {
       data: expenseGroups
     });
   } catch (error) {
-    console.error('Get expense groups error:', error);
+    console.error('Get expense types error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Error fetching expense groups'
+      message: error.message || 'Error fetching expense types'
     });
   }
 };
@@ -86,7 +86,7 @@ exports.updateExpenseGroup = async (req, res) => {
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
-        message: 'Valid expense group id is required'
+        message: 'Valid expense type id is required'
       });
     }
 
@@ -119,7 +119,7 @@ exports.updateExpenseGroup = async (req, res) => {
       data: expenseGroup
     });
   } catch (error) {
-    console.error('Update expense group error:', error);
+    console.error('Update expense type error:', error);
     if (isDuplicateExpenseGroupNameError(error)) {
       return res.status(400).json({
         success: false,
@@ -128,7 +128,7 @@ exports.updateExpenseGroup = async (req, res) => {
     }
     return res.status(500).json({
       success: false,
-      message: error.message || 'Error updating expense group'
+      message: error.message || 'Error updating expense type'
     });
   }
 };
@@ -141,7 +141,7 @@ exports.deleteExpenseGroup = async (req, res) => {
     if (!mongoose.isValidObjectId(id)) {
       return res.status(400).json({
         success: false,
-        message: 'Valid expense group id is required'
+        message: 'Valid expense type id is required'
       });
     }
 
@@ -157,7 +157,7 @@ exports.deleteExpenseGroup = async (req, res) => {
     if (linkedExpenses > 0) {
       return res.status(400).json({
         success: false,
-        message: 'This expense group is used in expenses. Cannot delete.'
+        message: 'This expense type is used in expenses. Cannot delete.'
       });
     }
 
@@ -168,10 +168,10 @@ exports.deleteExpenseGroup = async (req, res) => {
       message: 'Expense group deleted successfully'
     });
   } catch (error) {
-    console.error('Delete expense group error:', error);
+    console.error('Delete expense type error:', error);
     return res.status(500).json({
       success: false,
-      message: error.message || 'Error deleting expense group'
+      message: error.message || 'Error deleting expense type'
     });
   }
 };

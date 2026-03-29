@@ -16,8 +16,7 @@ import Receipts from './pages/Receipts/Receipts';
 import Party from './pages/Party/Party';
 import PartyDetail from './pages/PartyDetail';
 import Expenses from './pages/Expenses';
-import ExpenseGroups from './pages/ExpenseGroups';
-import ExpenseHub from './pages/ExpenseHub';
+import ExpenseType from './pages/ExpenseType';
 import Contra from './pages/Contra';
 import StockAdjustment from './pages/StockAdjustment';
 import SaleReturn from './pages/SaleReturn/SaleReturn';
@@ -97,15 +96,6 @@ function App() {
           element={
             <ProtectedRoute>
               <Masters />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/expense-hub"
-          element={
-            <ProtectedRoute>
-              <ExpenseHub />
             </ProtectedRoute>
           }
         />
@@ -311,13 +301,15 @@ function App() {
         />
 
         <Route
-          path="/expense-groups"
+          path="/expense-types"
           element={
             <ProtectedRoute>
-              <ExpenseGroups />
+              <ExpenseType />
             </ProtectedRoute>
           }
         />
+
+        <Route path="/expense-groups" element={<Navigate to="/expense-types" replace />} />
 
         <Route
           path="/party"

@@ -11,7 +11,7 @@ const getInitialForm = () => ({
   description: ''
 });
 
-export default function ExpenseGroups() {
+export default function ExpenseType() {
   const [expenseGroups, setExpenseGroups] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -42,7 +42,7 @@ export default function ExpenseGroups() {
       setExpenseGroups(response.data || []);
       setError('');
     } catch (err) {
-      setError(err.message || 'Error fetching expense groups');
+      setError(err.message || 'Error fetching expense types');
     } finally {
       setLoading(false);
     }
@@ -96,7 +96,7 @@ export default function ExpenseGroups() {
     event.preventDefault();
 
     if (!String(formData.name || '').trim()) {
-      setError('Expense group name is required');
+      setError('Expense type name is required');
       return;
     }
 
@@ -104,30 +104,30 @@ export default function ExpenseGroups() {
       setLoading(true);
       if (editingId) {
         await apiClient.put(`/expense-groups/${editingId}`, formData);
-        toast.success('Expense group updated successfully', TOAST_OPTIONS);
+        toast.success('Expense type updated successfully', TOAST_OPTIONS);
       } else {
         await apiClient.post('/expense-groups', formData);
-        toast.success('Expense group created successfully', TOAST_OPTIONS);
+        toast.success('Expense type created successfully', TOAST_OPTIONS);
       }
 
       handleCloseForm();
       fetchExpenseGroups();
     } catch (err) {
-      setError(err.message || 'Error saving expense group');
+      setError(err.message || 'Error saving expense type');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this expense group?')) return;
+    if (!window.confirm('Are you sure you want to delete this expense type?')) return;
 
     try {
       await apiClient.delete(`/expense-groups/${id}`);
-      toast.success('Expense group deleted successfully', TOAST_OPTIONS);
+      toast.success('Expense type deleted successfully', TOAST_OPTIONS);
       fetchExpenseGroups();
     } catch (err) {
-      setError(err.message || 'Error deleting expense group');
+      setError(err.message || 'Error deleting expense type');
     }
   };
 
@@ -143,7 +143,7 @@ export default function ExpenseGroups() {
 
       <div className="mb-6 grid grid-cols-1 gap-3 md:gap-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Total Groups</p>
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-slate-500">Total Types</p>
           <p className="mt-2 text-2xl font-semibold text-slate-900">{totalGroups}</p>
         </div>
       </div>
@@ -151,7 +151,7 @@ export default function ExpenseGroups() {
       <div className="mb-4 flex flex-col gap-3 md:flex-row">
         <input
           type="text"
-          placeholder="Search expense group..."
+          placeholder="Search expense type..."
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-200"
@@ -162,7 +162,7 @@ export default function ExpenseGroups() {
           className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-700"
         >
           <Plus className="h-4 w-4" />
-          Add Expense Group
+          Add Expense Type
         </button>
       </div>
 
@@ -180,10 +180,10 @@ export default function ExpenseGroups() {
                   </div>
                   <div>
                     <h2 className="text-base font-bold md:text-xl">
-                      {editingId ? 'Edit Expense Group' : 'Add Expense Group'}
+                      {editingId ? 'Edit Expense Type' : 'Add Expense Type'}
                     </h2>
                     <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">
-                      Create or update expense groups in a clean accounting format.
+                      Create or update expense types in a clean accounting format.
                     </p>
                   </div>
                 </div>
@@ -210,13 +210,13 @@ export default function ExpenseGroups() {
                   <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
                     <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs text-white md:h-8 md:w-8 md:text-sm">1</span>
-                      Expense Group Details
+                      Expense Type Details
                     </h3>
 
                     <div className="space-y-3 md:space-y-4">
                       <div className="flex items-center gap-2">
                         <label className="mb-0 w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">
-                          Group Name <span className="text-red-500">*</span>
+                          Type Name <span className="text-red-500">*</span>
                         </label>
                         <input
                           ref={nameInputRef}
@@ -225,7 +225,7 @@ export default function ExpenseGroups() {
                           value={formData.name}
                           onChange={handleChange}
                           className={getInlineFieldClass('indigo')}
-                          placeholder="Enter expense group name"
+                          placeholder="Enter expense type name"
                           required
                         />
                       </div>
@@ -276,7 +276,7 @@ export default function ExpenseGroups() {
                     disabled={loading}
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-1.5 text-sm font-semibold text-white transition hover:shadow-lg disabled:opacity-50 md:flex-none md:px-6"
                   >
-                    {loading ? 'Saving...' : editingId ? 'Update Expense Group' : 'Save Expense Group'}
+                    {loading ? 'Saving...' : editingId ? 'Update Expense Type' : 'Save Expense Type'}
                   </button>
                 </div>
               </div>
@@ -325,7 +325,7 @@ export default function ExpenseGroups() {
               {!loading && expenseGroups.length === 0 && (
                 <tr>
                   <td colSpan="3" className="px-6 py-12 text-center text-sm text-slate-500">
-                    No expense groups found. Add your first expense group.
+                    No expense types found. Add your first expense type.
                   </td>
                 </tr>
               )}

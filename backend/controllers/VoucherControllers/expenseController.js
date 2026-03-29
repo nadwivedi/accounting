@@ -31,7 +31,7 @@ exports.createExpense = async (req, res) => {
     if (!expenseGroup || !mongoose.isValidObjectId(expenseGroup)) {
       return res.status(400).json({
         success: false,
-        message: 'Valid expense group is required'
+        message: 'Valid expense type is required'
       });
     }
 
@@ -39,7 +39,7 @@ exports.createExpense = async (req, res) => {
     if (!existingExpenseGroup) {
       return res.status(404).json({
         success: false,
-        message: 'Expense group not found'
+        message: 'Expense type not found'
       });
     }
 

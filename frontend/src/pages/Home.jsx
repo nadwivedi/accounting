@@ -5,18 +5,13 @@ import HomeDayBookPanel from '../components/HomeDayBookPanel';
 import Navbar from '../components/Navbar';
 import Sidebar, { homeQuickShortcutMap, openHomeQuickShortcut } from '../components/Sidebar';
 
-const HOME_SECTION_ORDER = ['Masters', 'Expense', 'Reports'];
+const HOME_SECTION_ORDER = ['Masters', 'Reports'];
 
 const activateHomeSection = (sectionName, navigate, setExpandedSection) => {
   setExpandedSection(sectionName);
 
   if (sectionName === 'Masters') {
     navigate('/masters');
-    return;
-  }
-
-  if (sectionName === 'Expense') {
-    navigate('/expense-hub');
     return;
   }
 

@@ -149,7 +149,7 @@ export const SECTION_CONFIG = {
     subtitle: 'Manage Party, Stocks, Banks',
     hubPath: '/masters',
     Icon: MasterIcon,
-    description: 'Parties, stock items, groups, and units',
+    description: 'Parties, stock items, groups, units, and expense types',
     theme: {
       card: 'from-indigo-500 via-blue-500 to-cyan-500',
       soft: 'from-indigo-50 via-blue-50 to-cyan-50',
@@ -162,7 +162,8 @@ export const SECTION_CONFIG = {
       { name: 'Stock Item', path: '/stock', Icon: ProductIcon },
       { name: 'Stock Group', path: '/stock-groups', Icon: StockGroupIcon },
       { name: 'Unit', path: '/units', Icon: UnitIcon },
-      { name: 'Bank', path: '/banks', Icon: BankIcon }
+      { name: 'Bank', path: '/banks', Icon: BankIcon },
+      { name: 'Expense Type', path: '/expense-types', Icon: ExpenseGroupIcon }
     ]
   },
   Vouchers: {
@@ -190,23 +191,6 @@ export const SECTION_CONFIG = {
       { name: 'Receipt', hint: 'Money received from customer', path: '/receipts', Icon: ReceiptIcon }
     ]
   },
-  Expense: {
-    name: 'Expense',
-    hubPath: '/expense-hub',
-    Icon: ExpenseIcon,
-    description: 'Expenses and expense groups in one place',
-    theme: {
-      card: 'from-emerald-500 via-teal-500 to-cyan-500',
-      soft: 'from-emerald-50 via-teal-50 to-cyan-50',
-      ring: 'ring-emerald-200/70',
-      icon: 'bg-emerald-100 text-emerald-700',
-      accent: 'bg-emerald-500'
-    },
-    items: [
-      { name: 'Manage Expense', path: '/expenses', Icon: ExpenseIcon },
-      { name: 'Expense Group', path: '/expense-groups', Icon: ExpenseGroupIcon }
-    ]
-  },
   Reports: {
     name: 'Reports',
     hubPath: '/reports',
@@ -227,7 +211,7 @@ export const SECTION_CONFIG = {
   }
 };
 
-export const SECTION_ORDER = ['Masters', 'Expense', 'Reports'];
+export const SECTION_ORDER = ['Masters', 'Reports'];
 
 export const SECTION_HUB_PATHS = SECTION_ORDER.map((sectionName) => SECTION_CONFIG[sectionName].hubPath);
 

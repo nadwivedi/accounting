@@ -864,7 +864,7 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
         notes: String(expense.notes || '').trim(),
         linkedReference: '',
         fields: [
-          { label: 'Expense Group', value: String(expense.expenseGroup?.name || 'Expense').trim() || 'Expense' },
+          { label: 'Expense Type', value: String(expense.expenseGroup?.name || 'Expense').trim() || 'Expense' },
           { label: 'Expense Date', value: expense.expenseDate },
           { label: 'Party', value: String(expense.party?.name || '-').trim() || '-' },
           { label: 'Method', value: String(expense.method || '-').trim() || '-' }

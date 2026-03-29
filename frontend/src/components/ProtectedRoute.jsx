@@ -8,9 +8,7 @@ const homeNavigationEntries = [
   { section: 'Masters', path: '/stock-groups' },
   { section: 'Masters', path: '/units' },
   { section: 'Masters', path: '/banks' },
-  { section: 'Expense', path: '/expense-hub' },
-  { section: 'Expense', path: '/expenses' },
-  { section: 'Expense', path: '/expense-groups' },
+  { section: 'Masters', path: '/expense-types' },
   { section: 'Reports', path: '/reports' },
   { section: 'Reports', path: '/settings' }
 ];
@@ -30,7 +28,6 @@ const voucherShortcutRoutes = {
 
 const sectionHubPaths = {
   Masters: '/masters',
-  Expense: '/expense-hub',
   Reports: '/reports'
 };
 
