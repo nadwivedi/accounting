@@ -111,8 +111,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
-  const [dateFilter, setDateFilter] = useState('');
-  const [selectedMonthKey, setSelectedMonthKey] = useState('');
   const [formData, setFormData] = useState(initialFormData);
   const [currentItem, setCurrentItem] = useState(initialCurrentItem);
   const [showPartyForm, setShowPartyForm] = useState(false);
@@ -135,13 +133,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     fetchSales();
     fetchLeadgers();
     fetchProducts();
-  }, [search, dateFilter]);
-
-  useEffect(() => {
-    if (dateFilter !== 'monthwise') {
-      setSelectedMonthKey('');
-    }
-  }, [dateFilter]);
+  }, [search]);
 
   useEffect(() => {
     if (location.state?.openShortcut !== 'sale' || showForm) return;
@@ -206,37 +198,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [showForm]);
-
-  const getFromDateByFilter = () => {
-    const now = new Date();
-    if (dateFilter === '7d') {
-      now.setDate(now.getDate() - 7);
-      return now.toISOString().split('T')[0];
-    }
-    if (dateFilter === '30d') {
-      now.setDate(now.getDate() - 30);
-      return now.toISOString().split('T')[0];
-    }
-    if (dateFilter === '3m') {
-      now.setMonth(now.getMonth() - 3);
-      return now.toISOString().split('T')[0];
-    }
-    if (dateFilter === '6m') {
-      now.setMonth(now.getMonth() - 6);
-      return now.toISOString().split('T')[0];
-    }
-    if (dateFilter === '1y') {
-      now.setFullYear(now.getFullYear() - 1);
-      return now.toISOString().split('T')[0];
-    }
-    return '';
-  };
-
-  const getMonthKey = (dateValue) => {
-    const date = new Date(dateValue);
-    if (Number.isNaN(date.getTime())) return '';
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-  };
 
   const getSaleInvoicePdfUrl = (saleId) => {
     const configuredBaseUrl = String(apiClient.defaults.baseURL || '/api').trim();
@@ -305,11 +266,9 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const fetchSales = async () => {
     try {
       setLoading(true);
-      const fromDate = getFromDateByFilter();
       const response = await apiClient.get('/sales', {
         params: {
-          search,
-          fromDate: fromDate || undefined
+          search
         }
       });
       setSales(response.data || []);
@@ -1179,40 +1138,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     setShowForm(true);
   };
 
-  const monthWiseSummary = useMemo(() => {
-    const grouped = new Map();
-
-    sales.forEach((sale) => {
-      const monthKey = getMonthKey(sale.saleDate);
-      if (!monthKey) return;
-
-      if (!grouped.has(monthKey)) {
-        const monthDate = new Date(sale.saleDate);
-        grouped.set(monthKey, {
-          key: monthKey,
-          label: monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-          saleCount: 0,
-          totalAmount: 0
-        });
-      }
-
-      const bucket = grouped.get(monthKey);
-      const total = Number(sale.totalAmount || 0);
-
-      bucket.saleCount += 1;
-      bucket.totalAmount += total;
-    });
-
-    return Array.from(grouped.values()).sort((a, b) => b.key.localeCompare(a.key));
-  }, [sales]);
-
-  const visibleSales = useMemo(() => {
-    if (dateFilter !== 'monthwise' || !selectedMonthKey) return sales;
-    return sales.filter((sale) => getMonthKey(sale.saleDate) === selectedMonthKey);
-  }, [sales, dateFilter, selectedMonthKey]);
-
-  const totalSales = visibleSales.length;
-  const totalAmount = visibleSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
+  const totalSales = sales.length;
+  const totalAmount = sales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
   const popupFieldClass = 'w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200';
   const popupLabelClass = 'mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600';
   const popupSectionClass = 'rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3 md:p-4';
@@ -1409,19 +1336,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                 className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 lg:w-56"
-            >
-              <option value="">Sale History - All Time</option>
-              <option value="7d">Sale History - 7 Days</option>
-              <option value="30d">Sale History - 30 Days</option>
-              <option value="3m">Sale History - 3 Months</option>
-              <option value="6m">Sale History - 6 Months</option>
-              <option value="1y">Sale History - 1 Year</option>
-              <option value="monthwise">Sale History - Month Wise</option>
-            </select>
             <button
               onClick={handleOpenForm}
               className="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900"
@@ -1431,83 +1345,12 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
           </div>
         </div>
 
-      {dateFilter === 'monthwise' && (
-        <div className="border-b border-slate-200 bg-white px-4 py-4 sm:px-5">
-          <div className="mb-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSelectedMonthKey('')}
-              className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
-                !selectedMonthKey
-                  ? 'border-slate-700 bg-slate-800 text-white'
-                  : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-              }`}
-            >
-              All Months
-            </button>
-            {monthWiseSummary.map((month) => (
-              <button
-                key={month.key}
-                type="button"
-                onClick={() => setSelectedMonthKey(month.key)}
-                className={`rounded-md border px-3 py-1.5 text-xs font-semibold transition ${
-                  selectedMonthKey === month.key
-                    ? 'border-blue-700 bg-blue-700 text-white'
-                    : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
-                }`}
-              >
-                {month.label}
-              </button>
-            ))}
-          </div>
-
-          {monthWiseSummary.length === 0 ? (
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">
-              No monthly sale history available for the current search.
-            </div>
-          ) : (
-            <div className="rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
-              <div className="overflow-x-auto">
-              <table className="w-full min-w-[560px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
-                <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
-                  <tr>
-                    <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Month</th>
-                    <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Invoices</th>
-                    <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Total Sale</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
-                  {monthWiseSummary.map((month) => (
-                    <tr
-                      key={month.key}
-                      onClick={() => setSelectedMonthKey(month.key)}
-                      className={`cursor-pointer transition-colors duration-150 ${
-                        selectedMonthKey === month.key ? 'bg-blue-100/80' : 'hover:bg-slate-200/45'
-                      }`}
-                    >
-                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{month.label}</td>
-                      <td className="border border-slate-400 px-4 py-3 text-center">{month.saleCount}</td>
-                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-emerald-700">
-                        Rs {month.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Sales List */}
       {loading && !showForm ? (
         <div className="px-6 py-10 text-center text-slate-500">Loading...</div>
-      ) : visibleSales.length === 0 ? (
+      ) : sales.length === 0 ? (
         <div className="rounded-[20px] border border-dashed border-slate-300 bg-white/80 px-6 py-10 text-center text-slate-500">
-          {dateFilter === 'monthwise' && selectedMonthKey
-            ? 'No sales found for selected month.'
-            : 'No sales found. Create your first sale!'}
+          No sales found. Create your first sale!
         </div>
       ) : (
         <div className="rounded-[20px] border border-slate-200 bg-[radial-gradient(circle_at_top_right,rgba(148,163,184,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.98)_0%,rgba(241,245,249,0.96)_100%)] p-3 shadow-[0_18px_36px_rgba(15,23,42,0.08)] sm:p-5">
@@ -1524,7 +1367,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                 </tr>
               </thead>
               <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
-                {visibleSales.map((sale) => {
+                {sales.map((sale) => {
                   return (
                   <tr key={sale._id} className="transition-colors duration-150 hover:bg-slate-200/45">
                     <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">

@@ -48,23 +48,6 @@ const HIDDEN_DETAIL_FIELDS = new Set([
   'due date'
 ]);
 
-const isWithinRange = (value, fromDate, toDate) => {
-  const current = new Date(value);
-  if (Number.isNaN(current.getTime())) return false;
-
-  if (fromDate) {
-    const start = new Date(`${fromDate}T00:00:00`);
-    if (!Number.isNaN(start.getTime()) && current < start) return false;
-  }
-
-  if (toDate) {
-    const end = new Date(`${toDate}T23:59:59.999`);
-    if (!Number.isNaN(end.getTime()) && current > end) return false;
-  }
-
-  return true;
-};
-
 function StatCard({ title, value, icon: Icon, tone }) {
   return (
     <div className="rounded-2xl border border-white/70 bg-white/90 px-4 py-3 shadow-[0_16px_30px_rgba(15,23,42,0.08)]">
@@ -218,7 +201,7 @@ function SaleDetailModal({ detail, loading, error, onClose }) {
   );
 }
 
-export default function HomeSalesLedgerPanel({ dateRange = null }) {
+export default function HomeSalesLedgerPanel() {
   const navigate = useNavigate();
   const [sales, setSales] = useState([]);
   const [selectedSale, setSelectedSale] = useState(null);
@@ -253,13 +236,9 @@ export default function HomeSalesLedgerPanel({ dateRange = null }) {
     })
   ), [sales]);
 
-  const filteredSales = useMemo(() => (
-    sortedSales.filter((sale) => isWithinRange(sale.saleDate, dateRange?.fromDate, dateRange?.toDate))
-  ), [dateRange?.fromDate, dateRange?.toDate, sortedSales]);
-
-  const totalAmount = filteredSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
-  const totalItems = filteredSales.reduce((sum, sale) => sum + Number(sale.items?.length || 0), 0);
-  const visibleSales = filteredSales.slice(0, 8);
+  const totalAmount = sortedSales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
+  const totalItems = sortedSales.reduce((sum, sale) => sum + Number(sale.items?.length || 0), 0);
+  const visibleSales = sortedSales.slice(0, 8);
 
   const handleOpenSaleDetail = async (sale) => {
     if (!sale?._id) return;
@@ -325,9 +304,7 @@ export default function HomeSalesLedgerPanel({ dateRange = null }) {
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-violet-700">Live Preview</p>
             <h2 className="mt-1 text-2xl font-black text-slate-800">Sales Report</h2>
-            {dateRange?.label ? (
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{dateRange.label}</p>
-            ) : null}
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Lifetime Sales</p>
           </div>
           <Link
             to="/reports/sales-report"
@@ -346,7 +323,7 @@ export default function HomeSalesLedgerPanel({ dateRange = null }) {
         ) : null}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <StatCard title="Invoices" value={filteredSales.length} icon={ShoppingCart} tone="from-blue-500 to-cyan-500" />
+          <StatCard title="Invoices" value={sortedSales.length} icon={ShoppingCart} tone="from-blue-500 to-cyan-500" />
           <StatCard title="Sales Total" value={formatCurrency(totalAmount)} icon={IndianRupee} tone="from-emerald-500 to-teal-500" />
           <StatCard title="Items" value={totalItems} icon={Package} tone="from-violet-500 to-purple-500" />
         </div>
