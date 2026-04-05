@@ -40,6 +40,24 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const employeeLogin = async (mobile, password) => {
+    setLoading(true);
+    try {
+      const response = await apiClient.post('/users/employee-login', { mobile, password });
+
+      if (response.success) {
+        setUser(response.user);
+        return { success: true };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      return { success: false, message: error.message || 'Login failed' };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const register = async (signupData) => {
     setLoading(true);
     try {
@@ -71,9 +89,12 @@ export const AuthProvider = ({ children }) => {
     user,
     loading,
     login,
+    employeeLogin,
     register,
     logout,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
+    isEmployee: user?.role === 'employee',
+    isOwner: user?.role === 'owner'
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

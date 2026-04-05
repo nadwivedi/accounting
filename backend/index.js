@@ -9,6 +9,7 @@ const { ensureCashInHandPartyForAllUsers } = require('./utils/defaultParties');
 
 // Routes
 const userRoutes = require('./routes/userRoutes');
+const employeeRoutes = require('./routes/employeeRoutes');
 const stockGroupRoutes = require('./routes/MasterRoutes/stockGroupRoutes');
 const unitRoutes = require('./routes/MasterRoutes/unitRoutes');
 const bankRoutes = require('./routes/MasterRoutes/bankRoutes');
@@ -46,6 +47,7 @@ app.get('/', (req, res) => {
 
 // API Routes
 app.use('/api/users', userRoutes);
+app.use('/api/employees', employeeRoutes);
 app.use('/api/stock-groups', stockGroupRoutes);
 app.use('/api/units', unitRoutes);
 app.use('/api/banks', bankRoutes);
@@ -65,8 +67,6 @@ app.use('/api/sale-discounts', saleDiscountRoutes);
 app.use('/api/purchase-discounts', purchaseDiscountRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/uploads', uploadRoutes);
-
-
 
 const PORT = process.env.PORT || 5000;
 const startServer = async () => {

@@ -6,7 +6,7 @@ export default function Login() {
   const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLogin, setIsLogin] = useState(true);
+  const [activeTab, setActiveTab] = useState('signin');
   const [showPassword, setShowPassword] = useState(false);
   const [registerStep, setRegisterStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -23,7 +23,7 @@ export default function Login() {
     upiId: ''
   });
 
-  const { login, register, loading } = useAuth();
+  const { login, employeeLogin, register, loading } = useAuth();
   const navigate = useNavigate();
 
   const handleLoginSubmit = async (e) => {
@@ -35,7 +35,13 @@ export default function Login() {
       return;
     }
 
-    const result = await login(emailOrPhone, password);
+    let result;
+    if (activeTab === 'staff') {
+      result = await employeeLogin(emailOrPhone, password);
+    } else {
+      result = await login(emailOrPhone, password);
+    }
+
     if (result.success) {
       navigate('/stock');
     } else {
@@ -124,9 +130,9 @@ export default function Login() {
         <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-slate-900/50 p-6 border border-white/20">
           <div className="flex bg-slate-100 p-1 rounded-lg mb-4">
             <button
-              onClick={() => setIsLogin(true)}
+              onClick={() => { setActiveTab('signin'); setError(''); }}
               className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all duration-300 ${
-                isLogin
+                activeTab === 'signin'
                   ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
@@ -134,9 +140,19 @@ export default function Login() {
               Sign In
             </button>
             <button
-              onClick={() => setIsLogin(false)}
+              onClick={() => { setActiveTab('staff'); setError(''); }}
               className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all duration-300 ${
-                !isLogin
+                activeTab === 'staff'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Staff Login
+            </button>
+            <button
+              onClick={() => { setActiveTab('register'); setError(''); setRegisterStep(1); }}
+              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all duration-300 ${
+                activeTab === 'register'
                   ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
               }`}
@@ -154,16 +170,16 @@ export default function Login() {
             </div>
           )}
 
-          {isLogin ? (
+          {activeTab === 'signin' || activeTab === 'staff' ? (
             <form onSubmit={handleLoginSubmit} className="space-y-3">
               <div>
-                <label className={labelClasses}>Email / Mobile</label>
+                <label className={labelClasses}>{activeTab === 'staff' ? 'Mobile Number' : 'Email / Mobile'}</label>
                 <input
                   type="text"
                   value={emailOrPhone}
                   onChange={(e) => setEmailOrPhone(e.target.value)}
                   className={inputClasses}
-                  placeholder="email or mobile"
+                  placeholder={activeTab === 'staff' ? 'Enter registered mobile' : 'email or mobile'}
                   required
                 />
               </div>
@@ -443,10 +459,10 @@ export default function Login() {
           )}
 
           <p className="text-center text-gray-500 text-xs mt-4">
-            {isLogin ? "Don't have an account? " : 'Already have an account? '}
+            {activeTab !== 'register' ? "Don't have an account? " : 'Already have an account? '}
             <button
               onClick={() => {
-                setIsLogin(!isLogin);
+                setActiveTab(activeTab !== 'register' ? 'register' : 'signin');
                 setError('');
                 setEmailOrPhone('');
                 setPassword('');
@@ -454,7 +470,7 @@ export default function Login() {
               }}
               className="text-blue-600 font-medium hover:text-blue-700 transition-colors"
             >
-              {isLogin ? 'Register' : 'Sign in'}
+              {activeTab !== 'register' ? 'Register' : 'Sign in'}
             </button>
           </p>
         </div>
