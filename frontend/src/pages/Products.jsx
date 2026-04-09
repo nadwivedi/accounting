@@ -4,10 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import AddProductPopup from './Products/component/AddProductPopup';
 import apiClient from '../utils/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function Products() {
   const toastOptions = { autoClose: 1200 };
   const navigate = useNavigate();
+  const { user, isEmployee } = useAuth();
+  const canEdit = !isEmployee || user?.permissions?.edit === true;
+  const canAdd = !isEmployee || user?.permissions?.add === true;
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -141,12 +145,14 @@ export default function Products() {
                 />
               </div>
 
+              {canAdd && (
               <button
                 onClick={handleOpenForm}
                 className="whitespace-nowrap rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900"
               >
                 + Add Stock Item
               </button>
+              )}
             </div>
           </div>
 
@@ -195,6 +201,8 @@ export default function Products() {
                         </td>
                         <td className="border border-slate-200 px-4 py-3" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-center gap-2">
+                            {canEdit && (
+                            <>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -215,6 +223,8 @@ export default function Products() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
+                            </>
+                            )}
                           </div>
                         </td>
                       </tr>

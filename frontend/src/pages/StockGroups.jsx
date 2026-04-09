@@ -3,9 +3,13 @@ import { Boxes, Pencil, Search, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
 import { handlePopupFormKeyDown } from '../utils/popupFormKeyboard';
+import { useAuth } from '../context/AuthContext';
 
 export default function StockGroups() {
   const toastOptions = { autoClose: 1200 };
+  const { user, isEmployee } = useAuth();
+  const canEdit = !isEmployee || user?.permissions?.edit === true;
+  const canAdd = !isEmployee || user?.permissions?.add === true;
 
   const initialFormData = {
     name: '',
@@ -287,12 +291,14 @@ export default function StockGroups() {
                 />
               </div>
 
+              {canAdd && (
               <button
                 onClick={handleOpenForm}
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900"
               >
                 + Add Stock Group
               </button>
+              )}
             </div>
           </div>
 
@@ -312,22 +318,26 @@ export default function StockGroups() {
                         <p className="mt-1 text-xs text-cyan-100">Stock group details</p>
                       </div>
                       <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleEdit(group)}
-                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
-                          aria-label={`Edit ${group.name}`}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(group._id)}
-                          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-white text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50"
-                          aria-label={`Delete ${group.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        {canEdit && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => handleEdit(group)}
+                              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+                              aria-label={`Edit ${group.name}`}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(group._id)}
+                              className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-white text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50"
+                              aria-label={`Delete ${group.name}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
 
@@ -365,22 +375,26 @@ export default function StockGroups() {
                         </td>
                         <td className="border border-slate-400 px-4 py-3">
                           <div className="flex items-center justify-center gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleEdit(group)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
-                              aria-label={`Edit ${group.name}`}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDelete(group._id)}
-                              className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-200 bg-white text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50"
-                              aria-label={`Delete ${group.name}`}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                            {canEdit && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleEdit(group)}
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+                                  aria-label={`Edit ${group.name}`}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDelete(group._id)}
+                                  className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-200 bg-white text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50"
+                                  aria-label={`Delete ${group.name}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>

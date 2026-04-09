@@ -5,7 +5,7 @@ import HomeDayBookPanel from '../components/HomeDayBookPanel';
 import Navbar from '../components/Navbar';
 import Sidebar, { homeQuickShortcutMap, openHomeQuickShortcut } from '../components/Sidebar';
 
-const HOME_SECTION_ORDER = ['Masters', 'Reports'];
+const HOME_SECTION_ORDER = ['Masters', 'Reports', 'Settings'];
 
 const activateHomeSection = (sectionName, navigate, setExpandedSection) => {
   setExpandedSection(sectionName);
@@ -17,6 +17,11 @@ const activateHomeSection = (sectionName, navigate, setExpandedSection) => {
 
   if (sectionName === 'Reports') {
     navigate('/reports');
+    return;
+  }
+
+  if (sectionName === 'Settings') {
+    navigate('/settings');
   }
 };
 

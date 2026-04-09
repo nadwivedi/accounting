@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import { getBankDisplayName, normalizeBankName } from '../../utils/bankAccounts';
 import AddReceiptPopup from './component/AddReceiptPopup';
+import { useAuth } from '../../context/AuthContext';
 
 const formatReceiptDateInput = (value = new Date()) => {
   const date = value instanceof Date ? value : new Date(value);
@@ -85,6 +86,9 @@ const formatReceiptNumber = (value) => {
 export default function Receipts({ modalOnly = false, onModalFinish = null }) {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, isEmployee } = useAuth();
+  const canEdit = !isEmployee || user?.permissions?.edit === true;
+  const canAdd = !isEmployee || user?.permissions?.add === true;
   const [editingId, setEditingId] = useState(null);
   const [receipts, setReceipts] = useState([]);
   const [parties, setParties] = useState([]);
@@ -911,6 +915,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                 <option value="1y">Receipt History - 1 Year</option>
               </select>
 
+              {canAdd && (
               <button
                 type="button"
                 onClick={handleOpenForm}
@@ -919,6 +924,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                 <span className="text-sm font-semibold">+ New Receipt</span>
                 <span className="text-[11px] font-medium text-slate-300">Money Received</span>
               </button>
+              )}
             </div>
           </div>
 
@@ -1015,6 +1021,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                           <div className="max-w-[24rem] truncate">{receipt.notes || '-'}</div>
                         </td>
                         <td className="border border-slate-400 px-4 py-3 text-center">
+                          {canEdit && (
                           <button
                             type="button"
                             onClick={(event) => {
@@ -1026,6 +1033,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                             <Pencil className="h-3.5 w-3.5" />
                             Edit
                           </button>
+                          )}
                         </td>
                       </tr>
                     ))}

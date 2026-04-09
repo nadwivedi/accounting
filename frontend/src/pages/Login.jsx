@@ -137,7 +137,7 @@ export default function Login() {
                   : 'text-slate-500 hover:text-slate-700'
               }`}
             >
-              Sign In
+              Owner Login
             </button>
             <button
               onClick={() => { setActiveTab('staff'); setError(''); }}
@@ -148,16 +148,6 @@ export default function Login() {
               }`}
             >
               Staff Login
-            </button>
-            <button
-              onClick={() => { setActiveTab('register'); setError(''); setRegisterStep(1); }}
-              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all duration-300 ${
-                activeTab === 'register'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Register
             </button>
           </div>
 

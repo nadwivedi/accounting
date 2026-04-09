@@ -4,6 +4,7 @@ import { Pencil, Search, Wallet } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import AddPartyPopup from './component/AddPartyPopup';
+import { useAuth } from '../../context/AuthContext';
 
 const getInitialForm = () => ({
   type: '',
@@ -61,6 +62,9 @@ const resolveOpeningBalanceType = (party) => {
 
 export default function Party() {
   const navigate = useNavigate();
+  const { user, isEmployee } = useAuth();
+  const canEdit = !isEmployee || user?.permissions?.edit === true;
+  const canAdd = !isEmployee || user?.permissions?.add === true;
   const [parties, setParties] = useState([]);
   const [formData, setFormData] = useState(getInitialForm());
   const [loading, setLoading] = useState(false);
@@ -262,12 +266,14 @@ export default function Party() {
                 />
             </div>
 
+            {canAdd && (
             <button
               onClick={handleOpenForm}
               className="inline-flex items-center justify-center rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900 whitespace-nowrap"
             >
               + Add Party
             </button>
+            )}
           </div>
         </div>
 
@@ -287,6 +293,7 @@ export default function Party() {
                       <p className="truncate text-sm font-bold text-white">{item.name || '-'}</p>
                       <p className="mt-1 text-xs text-cyan-100">Open party ledger</p>
                     </div>
+                    {canEdit && (
                     <button
                       type="button"
                       onClick={(event) => {
@@ -298,6 +305,7 @@ export default function Party() {
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
+                    )}
                   </div>
 
                   <div className="space-y-3 px-4 py-4 text-sm">
@@ -349,6 +357,7 @@ export default function Party() {
                       <td className="border border-slate-400 px-4 py-3 text-center">{item.mobile || '-'}</td>
                       <td className="border border-slate-400 px-4 py-3">
                         <div className="flex items-center justify-center">
+                          {canEdit && (
                           <button
                             type="button"
                             onClick={(event) => {
@@ -360,6 +369,7 @@ export default function Party() {
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
+                          )}
                         </div>
                       </td>
                     </tr>
