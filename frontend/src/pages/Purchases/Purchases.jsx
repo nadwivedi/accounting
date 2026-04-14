@@ -1001,45 +1001,97 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     }));
   };
 
-  const handleAddItem = () => {
-    if (!currentItem.product || !currentItem.quantity || !currentItem.unitPrice) {
+  const handleAddItem = async () => {
+    const isNewProduct = !currentItem.product && String(productQuery || '').trim();
+    
+    if (!isNewProduct && (!currentItem.product || !currentItem.quantity || !currentItem.unitPrice)) {
       setError('Product, quantity and price are required');
       return false;
     }
 
-    const quantity = Number(currentItem.quantity);
-    const unitPrice = Number(currentItem.unitPrice);
-
-    if (quantity <= 0 || unitPrice < 0) {
-      setError('Quantity must be > 0 and price cannot be negative');
+    if (isNewProduct && (!currentItem.unit || !currentItem.quantity || !currentItem.unitPrice)) {
+      setError('Please select a unit for the new product, and enter quantity/price');
       return false;
     }
 
-    const product = products.find((p) => p._id === currentItem.product);
+    let finalProductId = currentItem.product;
+    let finalProductName = currentItem.productName || productQuery;
+    let finalUnit = currentItem.unit;
 
-    const newItem = {
-      ...currentItem,
-      productName: product?.name || currentItem.productName || 'Item',
-      unit: String(product?.unit || currentItem.unit || '').trim(),
-      quantity,
-      unitPrice,
-      total: quantity * unitPrice
-    };
+    try {
+      if (isNewProduct) {
+        setLoading(true);
+        const productPayload = {
+          name: String(productQuery || '').trim(),
+          unit: String(currentItem.unit || 'pcs').trim(),
+          typeOfSupply: 'goods',
+          minStockLevel: 0,
+          salePrice: 0,
+          taxRate: 0
+        };
+        const response = await apiClient.post('/products', productPayload);
+        const newProduct = response.data;
+        if (!newProduct?._id) throw new Error('Failed to create new product');
+        
+        finalProductId = newProduct._id;
+        finalProductName = newProduct.name;
+        finalUnit = newProduct.unit;
+        
+        // Update local products list
+        setProducts(prev => [newProduct, ...prev]);
+        toast.success(`New stock "${finalProductName}" created`, toastOptions);
+      }
 
-    const updatedItems = [...formData.items, newItem];
+      const quantity = Number(currentItem.quantity);
+      const unitPrice = Number(currentItem.unitPrice);
 
-    setFormData((prev) => ({
-      ...prev,
-      items: updatedItems
-    }));
+      if (quantity <= 0 || unitPrice < 0) {
+        setError('Quantity must be > 0 and price cannot be negative');
+        return false;
+      }
 
-    setCurrentItem(initialCurrentItem);
-    setProductQuery('');
-    setProductListIndex(-1);
-    setIsProductSectionActive(false);
+      const newItem = {
+        product: finalProductId,
+        productName: finalProductName,
+        unit: String(finalUnit || '').trim(),
+        quantity,
+        unitPrice,
+        total: quantity * unitPrice
+      };
+
+      const updatedItems = [...formData.items, newItem];
+
+      setFormData((prev) => ({
+        ...prev,
+        items: updatedItems
+      }));
+
+      setCurrentItem(initialCurrentItem);
+      setProductQuery('');
+      setProductListIndex(-1);
+      setIsProductSectionActive(false);
+      calculateTotals(updatedItems);
+      setError('');
+      return true;
+    } catch (err) {
+      setError(err.message || 'Error adding item');
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleItemChange = (index, field, value) => {
+    const updatedItems = [...formData.items];
+    const item = { ...updatedItems[index], [field]: value };
+    
+    if (field === 'quantity' || field === 'unitPrice') {
+      item.total = Number(item.quantity || 0) * Number(item.unitPrice || 0);
+    }
+    
+    updatedItems[index] = item;
+    setFormData((prev) => ({ ...prev, items: updatedItems }));
     calculateTotals(updatedItems);
-    setError('');
-    return true;
   };
 
   const handleRemoveItem = (index) => {
@@ -1394,6 +1446,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
           handleInvoiceUpload={handleInvoiceUpload}
           handleAddItem={handleAddItem}
           handleRemoveItem={handleRemoveItem}
+          handleItemChange={handleItemChange}
           selectLeadger={selectLeadger}
           selectProduct={selectProduct}
         />
@@ -1505,6 +1558,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         handleInvoiceUpload={handleInvoiceUpload}
         handleAddItem={handleAddItem}
         handleRemoveItem={handleRemoveItem}
+        handleItemChange={handleItemChange}
         selectLeadger={selectLeadger}
         selectProduct={selectProduct}
       />

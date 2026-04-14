@@ -48,9 +48,11 @@ export default function AddPurchasePopup({
   handleInvoiceUpload,
   handleAddItem,
   handleRemoveItem,
+  handleItemChange,
   selectLeadger,
   selectProduct
 }) {
+  const UNIT_OPTIONS = ['pcs', 'kg', 'g', 'ltr', 'ml', 'box', 'hrs', 'minutes'];
   const localLeadgerInputRef = useRef(null);
   const localProductInputRef = useRef(null);
   const purchaseDatePickerRef = useRef(null);
@@ -196,7 +198,13 @@ export default function AddPurchasePopup({
                           name="purchaseDate"
                           value={formData.purchaseDate}
                           onChange={handleInputChange}
-                          onKeyDown={handleSelectEnterMoveNext}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Backspace' && !e.currentTarget.value) {
+                              // No previous field
+                            } else {
+                              handleSelectEnterMoveNext(e);
+                            }
+                          }}
                           className={`${inputClass} pl-10 pr-10 focus:ring-indigo-500`}
                           placeholder="DD-MM-YYYY"
                           autoFocus
@@ -335,7 +343,15 @@ export default function AddPurchasePopup({
                         name="supplierInvoice"
                         value={formData.supplierInvoice || ''}
                         onChange={handleInputChange}
-                        onKeyDown={handleSelectEnterMoveNext}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Backspace' && !e.currentTarget.value) {
+                            e.preventDefault();
+                            resolvedLeadgerInputRef.current?.focus();
+                            resolvedLeadgerInputRef.current?.select?.();
+                          } else {
+                            handleSelectEnterMoveNext(e);
+                          }
+                        }}
                         className={`${inputClass} focus:ring-indigo-500`}
                         placeholder="Enter supplier invoice no."
                       />
@@ -395,15 +411,79 @@ export default function AddPurchasePopup({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-emerald-50">
-                          {formData.items.map((item, index) => (
-                            <tr key={index} className="hover:bg-emerald-50/40">
-                              <td className="border-r border-slate-400 px-3 py-2.5 font-medium text-gray-800">{item.productName}</td>
-                              <td className="border-r border-slate-400 px-3 py-2.5 pr-12 text-right text-gray-600">{item.quantity}</td>
-                              <td className="border-r border-slate-400 px-3 py-2.5 text-center text-gray-600">{resolveItemUnit(item)}</td>
-                              <td className="border-r border-slate-400 px-3 py-2.5 text-right text-gray-600">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
-                              <td className="border-r border-slate-400 px-3 py-2.5 text-right font-semibold text-gray-800">Rs {Number(item.total || 0).toFixed(2)}</td>
-                            </tr>
-                          ))}
+                          {formData.items.map((item, index) => {
+                            const isNewInTable = !item.product;
+                            return (
+                              <tr key={index} className="hover:bg-emerald-50/40">
+                                <td className="border-r border-slate-400 px-3 py-2">
+                                  <input
+                                    type="text"
+                                    value={item.productName}
+                                    onChange={(e) => handleItemChange(index, 'productName', e.target.value)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSelectEnterMoveNext(e);
+                                      if (e.key === 'Backspace' && !e.currentTarget.value) {
+                                        e.preventDefault();
+                                        const form = e.currentTarget.closest('form');
+                                        const inputs = Array.from(form.querySelectorAll('input, select'));
+                                        const idx = inputs.indexOf(e.currentTarget);
+                                        inputs[idx - 1]?.focus();
+                                      }
+                                    }}
+                                    className="w-full bg-transparent px-1 py-1 font-medium text-gray-800 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                  />
+                                </td>
+                                <td className="border-r border-slate-400 px-3 py-2">
+                                  <input
+                                    type="number"
+                                    value={item.quantity}
+                                    onChange={(e) => handleItemChange(index, 'quantity', sanitizeNonNegativeInput(e.target.value))}
+                                    onKeyDown={handleSelectEnterMoveNext}
+                                    className="w-full bg-transparent px-1 py-1 text-right text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                    min="0"
+                                  />
+                                </td>
+                                <td className="border-r border-slate-400 px-3 py-2 text-center">
+                                  {isNewInTable ? (
+                                    <select
+                                      value={item.unit || 'pcs'}
+                                      onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
+                                      onKeyDown={handleSelectEnterMoveNext}
+                                      className="w-full bg-transparent px-1 py-1 text-center text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                    >
+                                      {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                                    </select>
+                                  ) : (
+                                    <span className="text-gray-500">{resolveItemUnit(item)}</span>
+                                  )}
+                                </td>
+                                <td className="border-r border-slate-400 px-3 py-2">
+                                  <input
+                                    type="number"
+                                    value={item.unitPrice}
+                                    onChange={(e) => handleItemChange(index, 'unitPrice', sanitizeNonNegativeInput(e.target.value))}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        e.preventDefault();
+                                        const form = e.currentTarget.closest('form');
+                                        const inputs = Array.from(form.querySelectorAll('input, select, button'));
+                                        const idx = inputs.indexOf(e.currentTarget);
+                                        inputs[idx + 1]?.focus();
+                                      } else {
+                                        handleSelectEnterMoveNext(e);
+                                      }
+                                    }}
+                                    className="w-full bg-transparent px-1 py-1 text-right text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                    step="0.01"
+                                    min="0"
+                                  />
+                                </td>
+                                <td className="border-r border-slate-400 px-3 py-2 text-right font-semibold text-gray-800">
+                                  Rs {Number(item.total || 0).toFixed(2)}
+                                </td>
+                              </tr>
+                            );
+                          })}
                           {isItemEntryClosed ? (
                             <>
                               <tr className="bg-emerald-50/40">
@@ -463,7 +543,18 @@ export default function AddPurchasePopup({
                                       type="text"
                                       value={productQuery}
                                       onChange={handleProductInputChange}
-                                      onKeyDown={(e) => handleProductInputKeyDown(e, closeItemEntryAndFocusPaidAmount)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Backspace' && !productQuery) {
+                                          e.preventDefault();
+                                          const form = e.currentTarget.closest('form');
+                                          const inputs = Array.from(form.querySelectorAll('input, select'));
+                                          const idx = inputs.indexOf(e.currentTarget);
+                                          // Focus previous input (supplierInvoice)
+                                          inputs[idx - 1]?.focus();
+                                        } else {
+                                          handleProductInputKeyDown(e, closeItemEntryAndFocusPaidAmount);
+                                        }
+                                      }}
                                       className={`${inputClass} pl-9 focus:ring-emerald-500`}
                                       placeholder="Type to search product..."
                                       autoComplete="off"
@@ -560,9 +651,21 @@ export default function AddPurchasePopup({
                                 />
                               </td>
                               <td className="px-3 py-2.5 text-center">
-                                <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-medium text-gray-700">
-                                  {currentItemUnit}
-                                </div>
+                                {(!currentItem.product && productQuery.trim()) ? (
+                                  <select
+                                    value={currentItem.unit || 'pcs'}
+                                    onChange={(e) => setCurrentItem({ ...currentItem, unit: e.target.value })}
+                                    onKeyDown={handleSelectEnterMoveNext}
+                                    className={`${inputClass} text-center focus:ring-emerald-500`}
+                                  >
+                                    <option value="">Unit</option>
+                                    {UNIT_OPTIONS.map(u => <option key={u} value={u}>{u}</option>)}
+                                  </select>
+                                ) : (
+                                  <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-medium text-gray-700">
+                                    {currentItemUnit}
+                                  </div>
+                                )}
                               </td>
                               <td className="px-3 py-2.5">
                                 <input
@@ -570,11 +673,11 @@ export default function AddPurchasePopup({
                                   placeholder="0.00"
                                   value={currentItem.unitPrice}
                                   onChange={(e) => setCurrentItem({ ...currentItem, unitPrice: sanitizeNonNegativeInput(e.target.value) })}
-                                  onKeyDown={(e) => {
+                                  onKeyDown={async (e) => {
                                     if (e.key === 'Enter' && !e.shiftKey) {
                                       e.preventDefault();
                                       e.stopPropagation();
-                                      const didAddItem = handleAddItem();
+                                      const didAddItem = await handleAddItem();
                                       if (!didAddItem) return;
                                       requestAnimationFrame(() => {
                                         resolvedProductInputRef.current?.focus();
