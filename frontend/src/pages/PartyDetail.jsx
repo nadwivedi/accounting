@@ -608,7 +608,8 @@ export default function PartyDetail() {
     }
 
     const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${cleanedMobile}?text=${encodedMessage}`, '_blank');
+    const whatsappUrl = `whatsapp://send?phone=${cleanedMobile}&text=${encodedMessage}`;
+    window.location.href = whatsappUrl;
   };
 
   return (
