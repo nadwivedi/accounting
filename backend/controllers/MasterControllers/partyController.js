@@ -5,23 +5,7 @@ const { PARTY_TYPES } = require('../../utils/defaultParties');
 const normalizeType = (value) => String(value || '').trim().toLowerCase();
 const normalizeOpeningBalance = (value) => {
   const parsed = Number(value);
-  return Number.isFinite(parsed) ? Math.abs(parsed) : 0;
-};
-const normalizeOpeningBalanceType = (partyType, openingBalanceType, openingBalance) => {
-  const normalizedExplicitType = String(openingBalanceType || '').trim().toLowerCase();
-  if (normalizedExplicitType === 'receivable' || normalizedExplicitType === 'payable') {
-    return normalizedExplicitType;
-  }
-
-  const numericBalance = Number(openingBalance);
-  if (Number.isFinite(numericBalance) && numericBalance !== 0) {
-    if (partyType === PARTY_TYPES.SUPPLIER) {
-      return numericBalance >= 0 ? 'payable' : 'receivable';
-    }
-    return numericBalance >= 0 ? 'receivable' : 'payable';
-  }
-
-  return partyType === PARTY_TYPES.SUPPLIER ? 'payable' : 'receivable';
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
 const isValidPartyType = (value) => (
@@ -40,8 +24,7 @@ exports.createParty = async (req, res) => {
       address,
       state,
       pincode,
-      openingBalance,
-      openingBalanceType
+      openingBalance
     } = req.body;
     const userId = req.userId;
 
@@ -61,11 +44,6 @@ exports.createParty = async (req, res) => {
     }
 
     const normalizedOpeningBalance = normalizeOpeningBalance(openingBalance);
-    const normalizedOpeningBalanceType = normalizeOpeningBalanceType(
-      normalizedType,
-      openingBalanceType,
-      openingBalance
-    );
 
     const party = await Party.create({
       userId,
@@ -76,8 +54,7 @@ exports.createParty = async (req, res) => {
       address: String(address || '').trim(),
       state: String(state || '').trim(),
       pincode: String(pincode || '').trim(),
-      openingBalance: normalizedOpeningBalance,
-      openingBalanceType: normalizedOpeningBalanceType
+      openingBalance: normalizedOpeningBalance
     });
 
     return res.status(201).json({
@@ -124,7 +101,7 @@ exports.getAllParties = async (req, res) => {
     }
 
     const parties = await Party.find(filter)
-      .select('name type mobile openingBalance openingBalanceType')
+      .select('name type mobile openingBalance')
       .sort({ createdAt: -1 })
       .lean();
 
@@ -153,8 +130,7 @@ exports.updateParty = async (req, res) => {
       address,
       state,
       pincode,
-      openingBalance,
-      openingBalanceType
+      openingBalance
     } = req.body;
     const userId = req.userId;
 
@@ -181,11 +157,6 @@ exports.updateParty = async (req, res) => {
     }
 
     const normalizedOpeningBalance = normalizeOpeningBalance(openingBalance);
-    const normalizedOpeningBalanceType = normalizeOpeningBalanceType(
-      normalizedType,
-      openingBalanceType,
-      openingBalance
-    );
 
     const party = await Party.findOneAndUpdate(
       { _id: id, userId },
@@ -197,8 +168,7 @@ exports.updateParty = async (req, res) => {
         address: String(address || '').trim(),
         state: String(state || '').trim(),
         pincode: String(pincode || '').trim(),
-        openingBalance: normalizedOpeningBalance,
-        openingBalanceType: normalizedOpeningBalanceType
+        openingBalance: normalizedOpeningBalance
       },
       { new: true, runValidators: true }
     );

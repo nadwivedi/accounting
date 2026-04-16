@@ -45,18 +45,12 @@ const getTypeBadgeClass = (type) => {
 const getTypeLabel = (type) => PARTY_TYPE_LABELS[type] || 'Supplier';
 const getDefaultOpeningBalanceType = (partyType) => (partyType === 'supplier' ? 'payable' : 'receivable');
 const resolveOpeningBalanceType = (party) => {
-  const explicitType = String(party?.openingBalanceType || '').trim().toLowerCase();
-  if (explicitType === 'receivable' || explicitType === 'payable') return explicitType;
-
   const balance = Number(party?.openingBalance || 0);
   if (!Number.isFinite(balance) || balance === 0) {
     return getDefaultOpeningBalanceType(party?.type);
   }
-
-  if (party?.type === 'supplier') {
-    return balance >= 0 ? 'payable' : 'receivable';
-  }
-
+  
+  // Strict standard: Positive means Receivable, Negative means Payable
   return balance >= 0 ? 'receivable' : 'payable';
 };
 
@@ -185,6 +179,14 @@ export default function Party() {
 
     try {
       setLoading(true);
+      let finalOpeningBalance = Number(formData.openingBalance || 0);
+      const currentOpeningBalanceType = String(formData.openingBalanceType || getDefaultOpeningBalanceType(formData.type));
+      if (currentOpeningBalanceType === 'payable') {
+        finalOpeningBalance = -Math.abs(finalOpeningBalance);
+      } else {
+        finalOpeningBalance = Math.abs(finalOpeningBalance);
+      }
+
       const payload = {
         type: formData.type,
         name: String(formData.name || '').trim(),
@@ -193,8 +195,7 @@ export default function Party() {
         address: String(formData.address || '').trim(),
         state: String(formData.state || '').trim(),
         pincode: String(formData.pincode || '').trim(),
-        openingBalance: Number(formData.openingBalance || 0),
-        openingBalanceType: String(formData.openingBalanceType || getDefaultOpeningBalanceType(formData.type))
+        openingBalance: finalOpeningBalance
       };
 
       if (editingId) {

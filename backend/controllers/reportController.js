@@ -225,6 +225,7 @@ exports.getOutstandingReport = async (req, res) => {
       .filter((row) => row.pendingAmount > 0)
       .sort((a, b) => new Date(b.date) - new Date(a.date));
 
+    const partiesList = await Party.find({ userId }).select('name openingBalance').lean();
     const partyMap = new Map();
 
     const ensurePartyRow = (partyId, fallbackName = 'Account') => {
@@ -235,6 +236,7 @@ exports.getOutstandingReport = async (req, res) => {
           partyId,
           partyName: getPartyLabel(partyId, fallbackName),
           type: 'account',
+          openingBalance: 0,
           totalSales: 0,
           totalReceipts: 0,
           totalSaleDiscounts: 0,
@@ -248,6 +250,14 @@ exports.getOutstandingReport = async (req, res) => {
       }
       return partyMap.get(key);
     };
+
+    partiesList.forEach(party => {
+      const row = ensurePartyRow(party._id, party.name);
+      if (row && party.openingBalance) {
+        row.partyName = party.name || row.partyName;
+        row.openingBalance = toNumber(party.openingBalance);
+      }
+    });
 
     sales.forEach((sale) => {
       const partyId = getRawPartyId(sale.party);
@@ -306,8 +316,12 @@ exports.getOutstandingReport = async (req, res) => {
 
     const partyOutstanding = Array.from(partyMap.values())
       .map((row) => {
-        row.receivable = Math.max(0, row.totalSales - row.totalReceipts - (row.totalSaleDiscounts || 0));
-        row.payable = Math.max(0, row.totalPurchases - row.totalPayments - (row.totalPurchaseDiscounts || 0));
+        const ob = row.openingBalance || 0;
+        const obReceivable = ob > 0 ? ob : 0;
+        const obPayable = ob < 0 ? Math.abs(ob) : 0;
+
+        row.receivable = Math.max(0, row.totalSales + obReceivable - row.totalReceipts - (row.totalSaleDiscounts || 0));
+        row.payable = Math.max(0, row.totalPurchases + obPayable - row.totalPayments - (row.totalPurchaseDiscounts || 0));
         row.netBalance = row.receivable - row.payable;
         return row;
       })
@@ -407,7 +421,35 @@ exports.getPartyLedger = async (req, res) => {
       return partyNameMap.get(String(rawPartyId)) || getPartyLabel(rawPartyId, fallback);
     };
 
+    let partyOpeningBalance = 0;
+    if (partyId) {
+      const party = await Party.findOne({ _id: partyId, userId }).select('openingBalance').lean();
+      if (party && party.openingBalance) {
+        partyOpeningBalance = toNumber(party.openingBalance);
+      }
+    }
+
     const entries = [];
+    if (partyOpeningBalance !== 0) {
+      const obDate = fromDate ? new Date(fromDate) : new Date(0);
+      entries.push({
+        date: obDate,
+        entryCreatedAt: obDate,
+        type: 'opening balance',
+        refId: 'opening-balance',
+        refNumber: '-',
+        partyId: partyId,
+        partyName: resolvePartyName(partyId),
+        amount: Math.abs(partyOpeningBalance),
+        impact: partyOpeningBalance,
+        inAmount: 0,
+        outAmount: 0,
+        quantity: 0,
+        itemSummary: 'Opening Balance',
+        method: '',
+        note: 'Initial Opening Balance'
+      });
+    }
 
     sales.forEach((sale) => {
       const salePartyId = getRawPartyId(sale.party);

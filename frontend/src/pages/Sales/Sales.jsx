@@ -894,6 +894,19 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     return true;
   };
 
+  const handleItemChange = (index, field, value) => {
+    const updatedItems = [...formData.items];
+    const item = { ...updatedItems[index], [field]: value };
+    
+    if (field === 'quantity' || field === 'unitPrice') {
+      item.total = Number(item.quantity || 0) * Number(item.unitPrice || 0);
+    }
+    
+    updatedItems[index] = item;
+    setFormData((prev) => ({ ...prev, items: updatedItems }));
+    calculateTotals(updatedItems);
+  };
+
   const handleRemoveItem = (index) => {
     const newItems = formData.items.filter((_, i) => i !== index);
     setFormData({ ...formData, items: newItems });
@@ -1196,6 +1209,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
           handleSelectEnterMoveNext={handleSelectEnterMoveNext}
           handleAddItem={handleAddItem}
           handleRemoveItem={handleRemoveItem}
+          handleItemChange={handleItemChange}
           selectLeadger={selectLeadger}
           selectProduct={selectProduct}
         />
@@ -1304,6 +1318,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         handleSelectEnterMoveNext={handleSelectEnterMoveNext}
         handleAddItem={handleAddItem}
         handleRemoveItem={handleRemoveItem}
+        handleItemChange={handleItemChange}
         selectLeadger={selectLeadger}
         selectProduct={selectProduct}
       />

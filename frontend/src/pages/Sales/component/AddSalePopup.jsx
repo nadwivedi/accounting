@@ -47,6 +47,7 @@ export default function AddSalePopup({
   handleSelectEnterMoveNext,
   handleAddItem,
   handleRemoveItem,
+  handleItemChange,
   selectLeadger,
   selectProduct
 }) {
@@ -213,7 +214,13 @@ export default function AddSalePopup({
                         name="saleDate"
                         value={formData.saleDate}
                         onChange={handleInputChange}
-                        onKeyDown={handleSelectEnterMoveNext}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Backspace' && !e.currentTarget.value) {
+                            // No previous field
+                          } else {
+                            handleSelectEnterMoveNext(e);
+                          }
+                        }}
                         autoFocus
                         className={`${inputClass} pl-9 focus:ring-indigo-500`}
                       />
@@ -354,11 +361,61 @@ export default function AddSalePopup({
                         <tbody className="divide-y divide-emerald-50">
                           {formData.items.map((item, index) => (
                             <tr key={index} className="hover:bg-emerald-50/40">
-                              <td className="border-r border-slate-400 px-3 py-2.5 font-medium text-gray-800">{item.productName}</td>
-                              <td className="border-r border-slate-400 px-3 py-2.5 pr-12 text-right text-gray-600">{item.quantity}</td>
-                              <td className="border-r border-slate-400 px-3 py-2.5 text-center text-gray-600">{resolveItemUnit(item)}</td>
-                              <td className="border-r border-slate-400 px-3 py-2.5 text-right text-gray-600">Rs {Number(item.unitPrice || 0).toFixed(2)}</td>
-                              <td className="border-r border-slate-400 px-3 py-2.5 text-right font-semibold text-gray-800">Rs {Number(item.total || 0).toFixed(2)}</td>
+                              <td className="border-r border-slate-400 px-3 py-2">
+                                <input
+                                  type="text"
+                                  value={item.productName}
+                                  onChange={(e) => handleItemChange(index, 'productName', e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSelectEnterMoveNext(e);
+                                    if (e.key === 'Backspace' && !e.currentTarget.value) {
+                                      e.preventDefault();
+                                      const form = e.currentTarget.closest('form');
+                                      const inputs = Array.from(form.querySelectorAll('input, select'));
+                                      const idx = inputs.indexOf(e.currentTarget);
+                                      inputs[idx - 1]?.focus();
+                                    }
+                                  }}
+                                  className="w-full bg-transparent px-1 py-1 font-medium text-gray-800 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                />
+                              </td>
+                              <td className="border-r border-slate-400 px-3 py-2">
+                                <input
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={(e) => handleItemChange(index, 'quantity', sanitizeNonNegativeInput(e.target.value))}
+                                  onKeyDown={handleSelectEnterMoveNext}
+                                  className="w-full bg-transparent px-1 py-1 text-right text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                  min="0"
+                                />
+                              </td>
+                              <td className="border-r border-slate-400 px-3 py-2 text-center text-gray-600">
+                                {resolveItemUnit(item)}
+                              </td>
+                              <td className="border-r border-slate-400 px-3 py-2">
+                                <input
+                                  type="number"
+                                  value={item.unitPrice}
+                                  onChange={(e) => handleItemChange(index, 'unitPrice', sanitizeNonNegativeInput(e.target.value))}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      const form = e.currentTarget.closest('form');
+                                      const inputs = Array.from(form.querySelectorAll('input, select, button'));
+                                      const idx = inputs.indexOf(e.currentTarget);
+                                      inputs[idx + 1]?.focus();
+                                    } else {
+                                      handleSelectEnterMoveNext(e);
+                                    }
+                                  }}
+                                  className="w-full bg-transparent px-1 py-1 text-right text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                  step="0.01"
+                                  min="0"
+                                />
+                              </td>
+                              <td className="border-r border-slate-400 px-3 py-2 text-right font-semibold text-gray-800">
+                                Rs {Number(item.total || 0).toFixed(2)}
+                              </td>
                             </tr>
                           ))}
                           {isItemEntryClosed ? (
@@ -419,7 +476,18 @@ export default function AddSalePopup({
                                       type="text"
                                       value={productQuery}
                                       onChange={handleProductInputChange}
-                                      onKeyDown={(e) => handleProductInputKeyDown(e, closeItemEntryAndFocusPaidAmount)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Backspace' && !productQuery) {
+                                          e.preventDefault();
+                                          const form = e.currentTarget.closest('form');
+                                          const inputs = Array.from(form.querySelectorAll('input, select'));
+                                          const idx = inputs.indexOf(e.currentTarget);
+                                          // Focus previous input (Party Name input)
+                                          inputs[idx - 1]?.focus();
+                                        } else {
+                                          handleProductInputKeyDown(e, closeItemEntryAndFocusPaidAmount);
+                                        }
+                                      }}
                                       className={`${inputClass} pl-9 focus:ring-emerald-500`}
                                       placeholder="Type to search product..."
                                       autoComplete="off"
