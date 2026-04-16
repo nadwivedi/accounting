@@ -50,6 +50,11 @@ const formatLabel = (value) => {
 };
 
 const getTypeMeta = (type) => {
+  // New type values
+  if (type === 'cash') return { label: 'Cash Sale', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
+  if (type === 'partial') return { label: 'Partial Sale', className: 'border-amber-200 bg-amber-50 text-amber-700' };
+  if (type === 'credit') return { label: 'Credit Sale', className: 'border-rose-200 bg-rose-50 text-rose-700' };
+  // Legacy type values
   if (type === 'sale') {
     return {
       label: 'Sale',
@@ -430,7 +435,7 @@ export default function PartyDetail() {
 
       acc.entries += 1;
 
-      if (row.type === 'sale' || row.type === 'cash sale' || row.type === 'credit sale') {
+      if (row.type === 'sale' || row.type === 'cash sale' || row.type === 'credit sale' || row.type === 'cash' || row.type === 'partial' || row.type === 'credit') {
         acc.totalSales += amount;
         acc.saleQty += quantity;
       }
@@ -793,7 +798,17 @@ export default function PartyDetail() {
                         )}
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-bold text-slate-900">{formatCurrency(row.amount)}</p>
+                        {['sale', 'cash sale', 'credit sale', 'cash', 'partial', 'credit'].includes(row.type) ? (
+                          <div className="space-y-0.5">
+                            <p className="text-xs text-slate-500">Total: <span className="font-bold text-slate-900">{formatCurrency(row.amount)}</span></p>
+                            <p className="text-xs text-slate-500">Paid: <span className="font-bold text-emerald-600">{formatCurrency(row.paidAmount)}</span></p>
+                            <p className="text-xs text-slate-500">Bal: <span className={`font-bold ${Number(row.balance ?? row.impact ?? 0) > 0 ? 'text-rose-600' : Number(row.balance ?? row.impact ?? 0) < 0 ? 'text-purple-600' : 'text-emerald-600'}`}>
+                              {Number(row.balance ?? row.impact ?? 0) < 0 ? '-' : ''}{formatCurrency(Math.abs(Number(row.balance ?? row.impact ?? 0)))}
+                            </span></p>
+                          </div>
+                        ) : (
+                          <p className="text-sm font-bold text-slate-900">{formatCurrency(row.amount)}</p>
+                        )}
                         <p className={`mt-1 text-xs font-semibold ${Number(row.displayRunningBalance || 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                           Bal {formatCurrency(row.displayRunningBalance)}
                         </p>
@@ -887,7 +902,21 @@ export default function PartyDetail() {
                           {row.quantity ? formatQuantity(row.quantity) : '-'}
                         </td>
                         <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-slate-900">
-                          {formatCurrency(row.amount)}
+                          {['sale', 'cash sale', 'credit sale', 'cash', 'partial', 'credit'].includes(row.type) ? (
+                            <div className="space-y-1 text-xs">
+                              <p className="text-slate-500">Total: <span className="font-bold text-slate-900">{formatCurrency(row.amount)}</span></p>
+                              <p className="text-slate-500">Paid: <span className="font-bold text-emerald-600">{formatCurrency(row.paidAmount)}</span></p>
+                              <p className="text-slate-500">Bal: <span className={`font-bold ${
+                                Number(row.balance ?? row.impact ?? 0) > 0 ? 'text-rose-600'
+                                : Number(row.balance ?? row.impact ?? 0) < 0 ? 'text-purple-600'
+                                : 'text-emerald-600'
+                              }`}>
+                                {Number(row.balance ?? row.impact ?? 0) < 0 ? '-' : ''}{formatCurrency(Math.abs(Number(row.balance ?? row.impact ?? 0)))}
+                              </span></p>
+                            </div>
+                          ) : (
+                            formatCurrency(row.amount)
+                          )}
                         </td>
                         <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-emerald-700">
                           {Number(row.inAmount || 0) > 0 ? formatCurrency(row.inAmount) : '-'}

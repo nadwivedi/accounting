@@ -1377,12 +1377,30 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Party Name</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold">Products</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Type</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Total</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Paid</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Balance</th>
                   <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
                 {sales.map((sale) => {
+                  const saleTotal = Number(sale.totalAmount || 0);
+                  const salePaid = Number(sale.paidAmount || 0);
+                  const saleBalance = saleTotal - salePaid;
+                  const typeNorm = String(sale.type || '').toLowerCase();
+                  const isCashType = typeNorm === 'cash' || typeNorm === 'cash sale';
+                  const isPartialType = typeNorm === 'partial' || typeNorm === 'sale';
+                  const isCreditType = typeNorm === 'credit' || typeNorm === 'credit sale';
+                  let typeBadge;
+                  if (isCashType) {
+                    typeBadge = <span className="inline-block rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">Cash</span>;
+                  } else if (isPartialType) {
+                    typeBadge = <span className="inline-block rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700 ring-1 ring-amber-200">Partial</span>;
+                  } else {
+                    typeBadge = <span className="inline-block rounded-full bg-red-100 px-2.5 py-0.5 text-[11px] font-semibold text-red-700 ring-1 ring-red-200">Credit</span>;
+                  }
                   return (
                   <tr key={sale._id} className="transition-colors duration-150 hover:bg-slate-200/45">
                     <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">
@@ -1414,8 +1432,28 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                         : '-'}
                     </td>
                     <td className="border border-slate-400 px-4 py-3 text-center text-slate-600">{new Date(sale.saleDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                    {/* Type badge */}
+                    <td className="border border-slate-400 px-4 py-3 text-center">{typeBadge}</td>
+                    {/* Total */}
+                    <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-700">
+                      ₹{saleTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    {/* Paid */}
                     <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-emerald-600">
-                      Rs {Number(sale.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      ₹{salePaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    </td>
+                    {/* Balance — can be negative (advance) */}
+                    <td className={`border border-slate-400 px-4 py-3 text-center font-semibold ${
+                      saleBalance < 0 ? 'text-purple-600' : saleBalance === 0 ? 'text-emerald-600' : 'text-red-600'
+                    }`}>
+                      {saleBalance < 0 ? (
+                        <span title="Party has paid in advance">
+                          -₹{Math.abs(saleBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          <span className="ml-1 text-[10px] font-medium text-purple-400">(Adv)</span>
+                        </span>
+                      ) : (
+                        `₹${saleBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                      )}
                     </td>
                     <td className="border border-slate-400 px-4 py-3">
                       <div className="flex items-center justify-center gap-2">

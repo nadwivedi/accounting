@@ -7,12 +7,10 @@ const { createSaleInvoicePdf, getSaleInvoiceAbsolutePath } = require('../../util
 const { ensureSequentialNumbersForUser } = require('../../utils/voucherNumbers');
 
 const SALE_TYPES = {
-  SALE: 'sale',
-  CREDIT: 'credit sale',
-  CASH: 'cash sale'
+  CASH: 'cash',
+  PARTIAL: 'partial',
+  CREDIT: 'credit'
 };
-
-const AUTO_RECEIPT_SOURCES = ['sale-payment', 'sale-excess-payment'];
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -59,77 +57,29 @@ const isDuplicateSaleInvoiceError = (error) => (
 const getSalePaymentBreakdown = (totalAmountValue, paidAmountValue) => {
   const totalAmount = Math.max(0, toNumber(totalAmountValue));
   const paidAmount = Math.max(0, toNumber(paidAmountValue));
-  const appliedAmount = Math.min(totalAmount, paidAmount);
-  const pendingAmount = Math.max(0, totalAmount - paidAmount);
-  const excessAmount = Math.max(0, paidAmount - totalAmount);
 
-  let type = SALE_TYPES.CREDIT;
+  // balance can be negative when paidAmount > totalAmount (advance/overpayment)
+  const balance = totalAmount - paidAmount;
+
+  let type;
   if (paidAmount <= 0) {
-    type = SALE_TYPES.CREDIT;
-  } else if (paidAmount === totalAmount) {
-    type = SALE_TYPES.CASH;
+    type = SALE_TYPES.CREDIT;   // nothing paid – full amount pending
+  } else if (paidAmount >= totalAmount) {
+    type = SALE_TYPES.CASH;    // fully paid (or overpaid – balance goes negative)
   } else {
-    type = SALE_TYPES.SALE;
+    type = SALE_TYPES.PARTIAL;  // partially paid
   }
 
-  return { totalAmount, paidAmount, appliedAmount, pendingAmount, excessAmount, type };
+  return { totalAmount, paidAmount, balance, type };
 };
 
-// ─── Auto-receipt sync ───────────────────────────────────────────────────────
+// ─── Receipt number helper (used by updatePaymentStatus) ─────────────────────
 
 const ensureReceiptNumbersForUser = async (userId) => ensureSequentialNumbersForUser({
   Model: Receipt,
   userId,
   fieldName: 'receiptNumber'
 });
-
-const syncSaleAutoReceipts = async (saleDoc, userId) => {
-  const breakdown = getSalePaymentBreakdown(saleDoc.totalAmount, saleDoc.paidAmount);
-
-  // Delete any previous auto-receipts for this sale
-  await Receipt.deleteMany({
-    originSaleId: saleDoc._id,
-    receiptSource: { $in: AUTO_RECEIPT_SOURCES }
-  });
-
-  // Create receipt for the partial payment portion
-  if (breakdown.appliedAmount > 0 && breakdown.appliedAmount < breakdown.totalAmount) {
-    const nextReceiptNumber = await ensureReceiptNumbersForUser(userId);
-    await Receipt.create({
-      userId,
-      party: saleDoc.party || null,
-      refType: 'sale',
-      refId: saleDoc._id,
-      originSaleId: saleDoc._id,
-      amount: breakdown.appliedAmount,
-      receiptNumber: nextReceiptNumber,
-      method: 'Cash Account',
-      receiptDate: saleDoc.saleDate || new Date(),
-      notes: `Auto receipt for ${saleDoc.invoiceNumber || 'sale payment'}`,
-      receiptSource: 'sale-payment'
-    });
-  }
-
-  // Create receipt for excess payment (paid more than total)
-  if (breakdown.excessAmount > 0) {
-    const nextReceiptNumber = await ensureReceiptNumbersForUser(userId);
-    await Receipt.create({
-      userId,
-      party: saleDoc.party || null,
-      refType: 'none',
-      refId: null,
-      originSaleId: saleDoc._id,
-      amount: breakdown.excessAmount,
-      receiptNumber: nextReceiptNumber,
-      method: 'Cash Account',
-      receiptDate: saleDoc.saleDate || new Date(),
-      notes: `Auto excess receipt for ${saleDoc.invoiceNumber || 'sale payment'}`,
-      receiptSource: 'sale-excess-payment'
-    });
-  }
-
-  return breakdown;
-};
 
 // ─── PDF helpers ─────────────────────────────────────────────────────────────
 
@@ -247,8 +197,9 @@ exports.createSale = async (req, res) => {
       await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: -toNumber(item.quantity) } });
     }
 
-    // Auto-create receipts for partial/excess payments
-    await syncSaleAutoReceipts(sale, userId);
+    // Note: paidAmount is stored directly on the sale.
+    // balance = totalAmount - paidAmount (computed, never stored; can be negative = overpayment)
+    // No auto-receipts are created – receipts are always created manually.
 
     res.status(201).json({ success: true, message: 'Sale created successfully', data: populatedSale });
   } catch (error) {
@@ -349,10 +300,7 @@ exports.updateSale = async (req, res) => {
       { new: true, runValidators: true }
     ).populate('items.product', 'name unit');
 
-    // Re-sync auto-receipts if paidAmount changed
-    if (paidAmount !== undefined) {
-      await syncSaleAutoReceipts(sale, userId);
-    }
+    // balance = totalAmount - paidAmount (computed on the fly, never stored)
 
     res.status(200).json({ success: true, message: 'Sale updated successfully', data: sale });
   } catch (error) {
@@ -379,9 +327,8 @@ exports.deleteSale = async (req, res) => {
       await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: toNumber(item.quantity) } });
     }
 
-    // Delete all receipts linked to this sale (both auto and manual)
-    await Receipt.deleteMany({ userId, refId: sale._id });
-    await Receipt.deleteMany({ originSaleId: sale._id });
+    // Delete manual receipts that were specifically linked to this sale invoice
+    await Receipt.deleteMany({ userId, refType: 'sale', refId: sale._id });
 
     res.status(200).json({ success: true, message: 'Sale deleted successfully' });
   } catch (error) {

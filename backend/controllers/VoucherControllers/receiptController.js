@@ -43,12 +43,12 @@ const applySaleReceipt = async ({ refId, userId, amount }) => {
     return { error: 'Sale not found' };
   }
 
-  const totalAmount = toNumber(sale.totalAmount);
-  const paidAmount = await getLinkedSaleReceiptTotal({ saleId: sale._id, userId });
-  const balanceAmount = Math.max(0, totalAmount - paidAmount);
+  // balance = totalAmount - paidAmount (can be negative for overpaid, but receipts
+  // should only be applied up to the remaining positive balance)
+  const balance = Math.max(0, toNumber(sale.totalAmount) - toNumber(sale.paidAmount));
 
-  if (amount > balanceAmount) {
-    return { error: 'Amount exceeds sale pending amount' };
+  if (amount > balance) {
+    return { error: `Amount exceeds sale balance. Sale balance is ₹${balance.toLocaleString('en-IN')}` };
   }
 
   return { sale };

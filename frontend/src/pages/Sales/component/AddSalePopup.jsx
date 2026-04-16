@@ -429,31 +429,55 @@ export default function AddSalePopup({
                                 </td>
                               </tr>
                               {!isCashParty && (
-                                <tr className="bg-white">
-                                  <td colSpan={4} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
-                                    Paid Amount
-                                  </td>
-                                  <td className="border-t border-emerald-100 px-3 py-2">
-                                    <input
-                                      ref={paidAmountInputRef}
-                                      type="number"
-                                      name="paidAmount"
-                                      value={formData.paidAmount}
-                                      onChange={handleInputChange}
-                                      onKeyDown={(event) => {
-                                        if (event.key === 'Backspace' && !String(formData.paidAmount || '').trim()) {
-                                          event.preventDefault();
-                                          event.stopPropagation();
-                                          reopenItemEntryFromPaidAmount();
-                                        }
-                                      }}
-                                      step="0.01"
-                                      min="0"
-                                      className={`${inputClass} text-right bg-white focus:ring-emerald-500`}
-                                      placeholder="0.00"
-                                    />
-                                  </td>
-                                </tr>
+                                <>
+                                  <tr className="bg-white">
+                                    <td colSpan={4} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
+                                      Paid Amount
+                                    </td>
+                                    <td className="border-t border-emerald-100 px-3 py-2">
+                                      <input
+                                        ref={paidAmountInputRef}
+                                        type="number"
+                                        name="paidAmount"
+                                        value={formData.paidAmount}
+                                        onChange={handleInputChange}
+                                        onKeyDown={(event) => {
+                                          if (event.key === 'Backspace' && !String(formData.paidAmount || '').trim()) {
+                                            event.preventDefault();
+                                            event.stopPropagation();
+                                            reopenItemEntryFromPaidAmount();
+                                          }
+                                        }}
+                                        step="0.01"
+                                        min="0"
+                                        className={`${inputClass} text-right bg-white focus:ring-emerald-500`}
+                                        placeholder="0.00"
+                                      />
+                                    </td>
+                                  </tr>
+                                  {(() => {
+                                    const liveBalance = Number(formData.totalAmount || 0) - Number(formData.paidAmount || 0);
+                                    const balanceColor = liveBalance < 0
+                                      ? 'text-purple-600 bg-purple-50'
+                                      : liveBalance === 0
+                                      ? 'text-emerald-700 bg-emerald-50'
+                                      : 'text-red-600 bg-red-50';
+                                    const balanceLabel = liveBalance < 0 ? 'Advance (Overpaid)' : liveBalance === 0 ? 'Fully Paid' : 'Balance Due';
+                                    const balanceDisplay = liveBalance < 0
+                                      ? `-₹${Math.abs(liveBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                                      : `₹${liveBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+                                    return (
+                                      <tr className={balanceColor}>
+                                        <td colSpan={4} className="border-t border-slate-100 px-3 py-2.5 text-right text-[12px] font-bold uppercase tracking-wide">
+                                          {balanceLabel}
+                                        </td>
+                                        <td className="border-t border-slate-100 px-3 py-2.5 text-right text-sm font-bold">
+                                          {balanceDisplay}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })()}
+                                </>
                               )}
                             </>
                           ) : (

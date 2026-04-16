@@ -266,11 +266,14 @@ exports.getOutstandingReport = async (req, res) => {
       if (sale.customerName) {
         row.partyName = sale.customerName;
       }
-      // cash sale → 0 receivable (fully paid on spot, no auto-receipt)
-      // sale (partial) → FULL totalAmount (auto-receipt handles the deduction from totalReceipts)
-      // credit sale → full totalAmount (nothing received)
-      if (sale.type !== 'cash sale') {
-        row.totalSales += toNumber(sale.totalAmount);
+      // cash / cash sale → fully paid on spot, 0 receivable
+      // partial / sale   → partially paid – add ONLY the unpaid balance to receivable
+      // credit / credit sale → nothing paid, add full totalAmount
+      const isCash = sale.type === 'cash' || sale.type === 'cash sale';
+      if (!isCash) {
+        // balance = totalAmount - paidAmount (always include in receivable calculations)
+        const saleBalance = toNumber(sale.totalAmount) - toNumber(sale.paidAmount);
+        row.totalSales += saleBalance; // can be negative for overpayments
       }
     });
 
@@ -455,28 +458,32 @@ exports.getPartyLedger = async (req, res) => {
       const salePartyId = getRawPartyId(sale.party);
       const saleTotal = toNumber(sale.totalAmount);
       const salePaid = toNumber(sale.paidAmount);
+      // balance = totalAmount - paidAmount
+      //   positive → amount still receivable
+      //   zero     → fully settled
+      //   negative → overpayment / advance (party is in credit)
+      const saleBalance = saleTotal - salePaid;
 
-      // inAmount = cash received WITH this sale entry
-      // cash sale → full amount (money on spot, no separate receipt)
-      // sale (partial) → 0 (the paid portion already appears as a separate auto-receipt)
-      // credit sale → 0 (nothing received)
-      const saleInAmount = sale.type === 'cash sale' ? saleTotal : 0;
+      // inAmount = cash received WITH this sale entry (always = paidAmount)
+      const saleInAmount = salePaid;
 
-      // impact on running balance:
-      // cash sale → 0 (paid on spot, no balance change)
-      // sale (partial) → FULL totalAmount (the auto-receipt will deduct the paid portion separately)
-      // credit sale → full totalAmount (nothing received yet)
-      const saleImpact = sale.type === 'cash sale' ? 0 : saleTotal;
+      // impact on running balance = balance (totalAmount - paidAmount)
+      //   cash (fully paid)  → 0 or negative (advance)
+      //   partial            → positive (some still due)
+      //   credit             → full totalAmount (all still due)
+      const saleImpact = saleBalance;
 
       entries.push({
         date: sale.saleDate,
         entryCreatedAt: sale.createdAt || sale.saleDate,
-        type: sale.type || 'sale',
+        type: sale.type || 'credit',
         refId: sale._id,
         refNumber: String(sale.invoiceNumber || '-').trim() || '-',
         partyId: salePartyId || null,
         partyName: sale.customerName || resolvePartyName(salePartyId, salePartyId ? 'Account' : 'Walk-in'),
         amount: saleTotal,
+        paidAmount: salePaid,
+        balance: saleBalance,       // NEW: shown in ledger / daybook
         impact: saleImpact,
         inAmount: saleInAmount,
         outAmount: 0,
@@ -693,7 +700,7 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
 
     let detail = null;
 
-    if (['sale', 'cash sale', 'credit sale'].includes(normalizedType)) {
+    if (['sale', 'cash sale', 'credit sale', 'cash', 'partial', 'credit'].includes(normalizedType)) {
       const sale = await Sale.findOne({ _id: refId, userId })
         .populate('party', 'name type mobile')
         .populate('items.product', 'name unit');
@@ -701,6 +708,10 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
       if (!sale) {
         return res.status(404).json({ success: false, message: 'Sale not found' });
       }
+
+      const saleTotal = toNumber(sale.totalAmount);
+      const salePaid = toNumber(sale.paidAmount);
+      const saleBalance = saleTotal - salePaid; // can be negative
 
       detail = {
         type: 'sale',
@@ -710,7 +721,9 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
         date: sale.saleDate,
         partyName: String(sale.customerName || sale.party?.name || 'Walk-in').trim() || 'Walk-in',
         accountName: 'Sales',
-        amount: toNumber(sale.totalAmount),
+        amount: saleTotal,
+        paidAmount: salePaid,
+        balance: saleBalance,
         quantity: getTotalQuantity(sale.items),
         method: '',
         notes: String(sale.notes || '').trim(),
@@ -719,8 +732,9 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
           { label: 'Party', value: String(sale.customerName || sale.party?.name || 'Walk-in').trim() || 'Walk-in' },
           { label: 'Invoice Date', value: sale.saleDate },
           { label: 'Invoice No', value: String(sale.invoiceNumber || '-').trim() || '-' },
-          { label: 'Paid Amount', value: toNumber(sale.paidAmount) },
-          { label: 'Due Amount', value: toNumber(sale.dueAmount) }
+          { label: 'Total', value: saleTotal },
+          { label: 'Paid', value: salePaid },
+          { label: 'Balance', value: saleBalance }
         ],
         items: getDetailedItems(sale.items)
       };
@@ -1063,14 +1077,30 @@ exports.getDayBookReport = async (req, res) => {
 
     sales.forEach((sale) => {
       const salePartyId = getRawPartyId(sale.party);
-      const amount = toNumber(sale.totalAmount);
-      // inAmount for daybook: only cash sale gets it; partial sale's payment shows as separate receipt
-      const saleInAmount = sale.type === 'cash sale' ? amount : 0;
+      const saleTotal = toNumber(sale.totalAmount);
+      const salePaid = toNumber(sale.paidAmount);
+      // balance = totalAmount - paidAmount (can be negative for overpaid/advance)
+      const saleBalance = saleTotal - salePaid;
+
+      // inAmount for daybook = cash actually received at time of sale
+      const saleInAmount = salePaid;
+
+      // Determine label (backward-compat with old type strings)
+      const typeNorm = String(sale.type || '').toLowerCase();
+      let saleLabel;
+      if (typeNorm === 'cash' || typeNorm === 'cash sale') {
+        saleLabel = 'Cash Sale';
+      } else if (typeNorm === 'partial' || typeNorm === 'sale') {
+        saleLabel = 'Partial Sale';
+      } else {
+        saleLabel = 'Credit Sale';
+      }
+
       entries.push({
         date: sale.saleDate,
         entryCreatedAt: sale.createdAt || sale.saleDate,
-        type: sale.type || 'sale',
-        label: sale.type === 'cash sale' ? 'Cash Sale' : sale.type === 'credit sale' ? 'Credit Sale' : 'Sale',
+        type: sale.type || 'credit',
+        label: saleLabel,
         refId: sale._id,
         voucherNumber: String(sale.invoiceNumber || '-').trim() || '-',
         partyId: salePartyId || null,
@@ -1080,7 +1110,9 @@ exports.getDayBookReport = async (req, res) => {
         quantity: getTotalQuantity(sale.items),
         method: '',
         note: sale.notes || '',
-        amount,
+        amount: saleTotal,
+        paidAmount: salePaid,   // NEW
+        balance: saleBalance,   // NEW (can be negative)
         inAmount: saleInAmount,
         outAmount: 0
       });

@@ -86,8 +86,12 @@ const salesSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['sale', 'cash sale', 'credit sale'],
-    default: 'credit sale',
+    // cash   = fully paid at time of sale (paidAmount >= totalAmount)
+    // partial = partially paid at time of sale (0 < paidAmount < totalAmount)
+    // credit  = nothing paid at time of sale (paidAmount == 0)
+    // Legacy values 'sale', 'cash sale', 'credit sale' still exist in old data
+    enum: ['cash', 'partial', 'credit', 'sale', 'cash sale', 'credit sale'],
+    default: 'credit',
     trim: true
   },
   invoicePdfPath: {

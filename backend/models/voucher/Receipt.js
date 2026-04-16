@@ -20,16 +20,6 @@ const receiptSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     default: null
   },
-  originSaleId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Sale',
-    default: null
-  },
-  receiptSource: {
-    type: String,
-    enum: ['manual', 'sale-payment', 'sale-excess-payment'],
-    default: 'manual'
-  },
   amount: {
     type: Number,
     required: true,
