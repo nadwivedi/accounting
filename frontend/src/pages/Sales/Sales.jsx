@@ -1373,14 +1373,12 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
             <table className="w-full min-w-[880px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
               <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                 <tr>
-                  <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Invoice</th>
+                  <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date / Invoice</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Party Name</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold">Products</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Type</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Total</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Paid</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Balance</th>
+                  <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Paid</th>
                   <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -1388,7 +1386,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                 {sales.map((sale) => {
                   const saleTotal = Number(sale.totalAmount || 0);
                   const salePaid = Number(sale.paidAmount || 0);
-                  const saleBalance = saleTotal - salePaid;
                   const typeNorm = String(sale.type || '').toLowerCase();
                   const isCashType = typeNorm === 'cash' || typeNorm === 'cash sale';
                   const isPartialType = typeNorm === 'partial' || typeNorm === 'sale';
@@ -1403,14 +1400,19 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                   }
                   return (
                   <tr key={sale._id} className="transition-colors duration-150 hover:bg-slate-200/45">
-                    <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenInvoicePdf(sale._id)}
-                        className="text-blue-700 underline underline-offset-2 transition hover:text-blue-900"
-                      >
-                        {sale.invoiceNumber}
-                      </button>
+                    <td className="border border-slate-400 px-4 py-3 text-center">
+                      <div className="flex flex-col items-center">
+                        <span className="text-xs font-medium text-slate-600">
+                          {new Date(sale.saleDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenInvoicePdf(sale._id)}
+                          className="text-blue-700 text-xs underline underline-offset-2 transition hover:text-blue-900"
+                        >
+                          {sale.invoiceNumber}
+                        </button>
+                      </div>
                     </td>
                     <td className="border border-slate-400 px-4 py-3 text-center font-medium text-slate-700">{resolveLeadgerNameById(sale.party) || sale.customerName || '-'}</td>
                     <td className="border border-slate-400 px-4 py-3 text-slate-600">
@@ -1431,7 +1433,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                         )
                         : '-'}
                     </td>
-                    <td className="border border-slate-400 px-4 py-3 text-center text-slate-600">{new Date(sale.saleDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                     {/* Type badge */}
                     <td className="border border-slate-400 px-4 py-3 text-center">{typeBadge}</td>
                     {/* Total */}
@@ -1441,19 +1442,6 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                     {/* Paid */}
                     <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-emerald-600">
                       ₹{salePaid.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </td>
-                    {/* Balance — can be negative (advance) */}
-                    <td className={`border border-slate-400 px-4 py-3 text-center font-semibold ${
-                      saleBalance < 0 ? 'text-purple-600' : saleBalance === 0 ? 'text-emerald-600' : 'text-red-600'
-                    }`}>
-                      {saleBalance < 0 ? (
-                        <span title="Party has paid in advance">
-                          -₹{Math.abs(saleBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                          <span className="ml-1 text-[10px] font-medium text-purple-400">(Adv)</span>
-                        </span>
-                      ) : (
-                        `₹${saleBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
-                      )}
                     </td>
                     <td className="border border-slate-400 px-4 py-3">
                       <div className="flex items-center justify-center gap-2">

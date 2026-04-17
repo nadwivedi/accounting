@@ -1738,15 +1738,13 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
             <table className="w-full min-w-[980px] border-separate border-spacing-0 text-left text-sm whitespace-nowrap">
               <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                 <tr>
-                  <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Purchase No</th>
+                  <th className="border-y-2 border-l-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Date / Purchase No</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Party Name</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Supplier Invoice No.</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold">Products</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Type</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Total</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Paid</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Balance</th>
+                  <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Paid</th>
                   <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -1754,15 +1752,19 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                 {purchases.map((purchase) => {
                   return (
                     <tr key={purchase._id} className="transition-colors duration-150 hover:bg-slate-200/45">
-                      <td className="border border-slate-400 px-4 py-3 text-center text-slate-600">{new Date(purchase.purchaseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
-                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenPurchaseDetail(purchase)}
-                          className="rounded-lg px-2 py-1 text-slate-800 transition hover:bg-cyan-50 hover:text-cyan-700"
-                        >
-                          {formatPurchaseNumber(purchase.purchaseNumber)}
-                        </button>
+                      <td className="border border-slate-400 px-4 py-3 text-center">
+                        <div className="flex flex-col items-center">
+                          <span className="text-xs font-medium text-slate-600">
+                            {new Date(purchase.purchaseDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenPurchaseDetail(purchase)}
+                            className="text-xs text-blue-700 underline underline-offset-2 transition hover:text-blue-900"
+                          >
+                            {formatPurchaseNumber(purchase.purchaseNumber)}
+                          </button>
+                        </div>
                       </td>
                       <td className="border border-slate-400 px-4 py-3 text-center font-medium text-slate-700">{resolveLeadgerNameById(purchase.party)}</td>
                       <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-slate-800">{purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-'}</td>
@@ -1806,9 +1808,6 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                       </td>
                       <td className="border border-slate-400 px-4 py-3 text-right font-semibold text-slate-600">
                         {Number(purchase.paidAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </td>
-                      <td className="border border-slate-400 px-4 py-3 text-right font-bold text-slate-900">
-                        {Number((purchase.totalAmount || 0) - (purchase.paidAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="border border-slate-400 px-4 py-3">
                         <div className="flex items-center justify-center gap-2">

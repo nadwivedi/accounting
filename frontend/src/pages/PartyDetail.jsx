@@ -748,18 +748,20 @@ export default function PartyDetail() {
                         <span className={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${typeMeta.className}`}>
                           {typeMeta.label}
                         </span>
-                        <p className="mt-2 text-sm font-semibold text-slate-900">{formatDate(row.date)}</p>
-                        {isLedgerDetailSupported(row) ? (
-                          <button
-                            type="button"
-                            onClick={() => handleOpenVoucherDetail(row)}
-                            className="mt-1 text-xs font-semibold text-cyan-700 underline decoration-cyan-300 underline-offset-2 transition hover:text-cyan-900"
-                          >
-                            {row.refNumber && row.refNumber !== '-' ? row.refNumber : 'View details'}
-                          </button>
-                        ) : (
-                          <p className="mt-1 text-xs text-slate-500">{row.refNumber || '-'}</p>
-                        )}
+                        <div className="mt-2 flex flex-col items-start">
+                          <span className="text-xs font-medium text-slate-600">{formatDate(row.date)}</span>
+                          {isLedgerDetailSupported(row) ? (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenVoucherDetail(row)}
+                              className="text-xs font-semibold text-cyan-700 underline decoration-cyan-300 underline-offset-2 transition hover:text-cyan-900"
+                            >
+                              {row.refNumber && row.refNumber !== '-' ? row.refNumber : 'View details'}
+                            </button>
+                          ) : (
+                            <p className="text-xs text-slate-500">{row.refNumber || '-'}</p>
+                          )}
+                        </div>
                       </div>
                       <div className="text-right">
                         {['sale', 'cash sale', 'credit sale', 'sale_cash', 'sale_partial', 'sale_credit', 'purchase', 'cash purchase', 'credit purchase', 'purchase_cash', 'purchase_partial', 'purchase_credit', 'cash', 'partial', 'credit'].includes(row.type) ? (
@@ -812,14 +814,13 @@ export default function PartyDetail() {
               <table className="w-full min-w-[1120px] border-separate border-spacing-0 text-left text-sm">
                 <thead className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
                   <tr>
-                    <th className="border-y-2 border-l-2 border-r border-black px-4 py-3 text-center font-semibold">Date</th>
+                    <th className="border-y-2 border-l-2 border-r border-black px-4 py-3 text-center font-semibold">Date / Ref No</th>
                     <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Type</th>
-                    <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Ref No</th>
                     <th className="border-y-2 border-r border-black px-4 py-3 font-semibold">Details</th>
                     <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Qty</th>
                     <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Amount</th>
-                    <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold text-emerald-700">Money In</th>
-                    <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold text-rose-700">Money Out</th>
+                    <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Money In</th>
+                    <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Money Out</th>
                     <th className="border-y-2 border-r-2 border-black px-4 py-3 text-center font-semibold">Running Balance</th>
                   </tr>
                 </thead>
@@ -830,24 +831,30 @@ export default function PartyDetail() {
 
                     return (
                       <tr key={`${row.refId || 'party-ledger'}-${index}`} className="transition-colors hover:bg-slate-200/45">
-                        <td className="border border-slate-300 px-4 py-3 text-center">{formatDate(row.date)}</td>
+                        <td className="border border-slate-300 px-4 py-3 text-center">
+                          <div className="flex flex-col items-center">
+                            <span className="text-xs font-medium text-slate-600">
+                              {formatDate(row.date)}
+                            </span>
+                            {isLedgerDetailSupported(row) ? (
+                              <button
+                                type="button"
+                                onClick={() => handleOpenVoucherDetail(row)}
+                                className="text-xs font-semibold text-cyan-700 underline decoration-cyan-300 underline-offset-2 transition hover:text-cyan-900"
+                              >
+                                {row.refNumber && row.refNumber !== '-' ? row.refNumber : 'View details'}
+                              </button>
+                            ) : (
+                              <span className="text-xs font-medium text-slate-800">
+                                {row.refNumber || '-'}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="border border-slate-300 px-4 py-3 text-center">
                           <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${typeMeta.className}`}>
                             {typeMeta.label}
                           </span>
-                        </td>
-                        <td className="border border-slate-300 px-4 py-3 text-center font-medium text-slate-800">
-                          {isLedgerDetailSupported(row) ? (
-                            <button
-                              type="button"
-                              onClick={() => handleOpenVoucherDetail(row)}
-                              className="font-semibold text-cyan-700 underline decoration-cyan-300 underline-offset-2 transition hover:text-cyan-900"
-                            >
-                              {row.refNumber && row.refNumber !== '-' ? row.refNumber : 'View details'}
-                            </button>
-                          ) : (
-                            row.refNumber || '-'
-                          )}
                         </td>
                         <td className="border border-slate-300 px-4 py-3">
                           {detailRows.length > 0 ? (

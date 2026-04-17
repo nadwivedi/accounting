@@ -1307,15 +1307,17 @@ export default function VoucherRegisterPage({
                   {showParty && <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Party</th>}
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Accounts</th>
                   {showAmount && <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Amount</th>}
-                  {showMethod && <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Method</th>}
-                  {showReferenceNo && <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Reference</th>}
+{showMethod && <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Method</th>}
                   <th className="px-6 py-4 font-medium text-xs uppercase tracking-wider">Notes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {entries.map((item) => (
-                  <tr key={item._id} className="bg-white hover:bg-slate-50 transition-colors duration-200">
-                    <td className="px-6 py-4 text-slate-600 font-medium">{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString() : '-'}</td>
+<tr key={item._id} className="bg-white hover:bg-slate-50 transition-colors duration-200">
+                    <td className="px-6 py-4 text-slate-600 font-medium">
+                      <div>{item.voucherDate ? new Date(item.voucherDate).toLocaleDateString() : '-'}</div>
+                      {showReferenceNo && <div className="text-xs text-slate-400 mt-0.5">{item.referenceNo || ''}</div>}
+                    </td>
                     <td className="px-6 py-4 font-semibold text-slate-800">{item.voucherNumber || '-'}</td>
                     {showParty && <td className="px-6 py-4 font-semibold text-slate-700">{item.party?.name || item.party?.partyName || '-'}</td>}
                     <td className="px-6 py-4 text-slate-600">{getAccountsDisplay(item)}</td>
@@ -1326,8 +1328,7 @@ export default function VoucherRegisterPage({
                           {item.method || '-'}
                         </span>
                       </td>
-                    )}
-                    {showReferenceNo && <td className="px-6 py-4 text-slate-600">{item.referenceNo || '-'}</td>}
+)}
                     <td className="px-6 py-4 text-slate-500 italic max-w-xs truncate">{item.notes || '-'}</td>
                   </tr>
                 ))}
