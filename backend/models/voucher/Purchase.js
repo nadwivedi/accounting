@@ -72,8 +72,8 @@ const purchaseSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['purchase', 'cash purchase', 'credit purchase'],
-    default: 'credit purchase',
+    enum: ['purchase', 'cash purchase', 'credit purchase', 'cash', 'partial', 'credit'],
+    default: 'credit',
     trim: true
   },
   notes: {

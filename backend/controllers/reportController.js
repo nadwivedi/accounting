@@ -184,9 +184,10 @@ exports.getOutstandingReport = async (req, res) => {
     const salePending = sales
       .map((sale) => {
         const partyId = getRawPartyId(sale.party);
-        const paidAmount = toNumber(saleReceiptMap.get(String(sale._id)));
+        const receiptPaidAmount = toNumber(saleReceiptMap.get(String(sale._id)));
+        const totalPaidAmount = toNumber(sale.paidAmount) + receiptPaidAmount;
         const discountAmount = toNumber(saleDiscountMap.get(String(sale._id)));
-        const pending = Math.max(0, toNumber(sale.totalAmount) - paidAmount - discountAmount);
+        const pending = Math.max(0, toNumber(sale.totalAmount) - totalPaidAmount - discountAmount);
         return {
           id: sale._id,
           invoiceNumber: sale.invoiceNumber,
@@ -194,7 +195,7 @@ exports.getOutstandingReport = async (req, res) => {
           partyId: partyId || null,
           partyName: sale.customerName || getPartyLabel(partyId, 'Account') || 'Walk-in',
           totalAmount: toNumber(sale.totalAmount),
-          paidAmount,
+          paidAmount: totalPaidAmount,
           discountAmount,
           pendingAmount: pending,
           type: 'sale'
@@ -206,9 +207,10 @@ exports.getOutstandingReport = async (req, res) => {
     const purchasePending = purchases
       .map((purchase) => {
         const partyId = getRawPartyId(purchase.party);
-        const paidAmount = toNumber(purchasePaymentMap.get(String(purchase._id)));
+        const paymentPaidAmount = toNumber(purchasePaymentMap.get(String(purchase._id)));
+        const totalPaidAmount = toNumber(purchase.paidAmount) + paymentPaidAmount;
         const discountAmount = toNumber(purchaseDiscountMap.get(String(purchase._id)));
-        const pending = Math.max(0, toNumber(purchase.totalAmount) - paidAmount - discountAmount);
+        const pending = Math.max(0, toNumber(purchase.totalAmount) - totalPaidAmount - discountAmount);
         return {
           id: purchase._id,
           supplierInvoice: purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || '-',
@@ -216,7 +218,7 @@ exports.getOutstandingReport = async (req, res) => {
           partyId: partyId || null,
           partyName: getPartyLabel(partyId, 'Account'),
           totalAmount: toNumber(purchase.totalAmount),
-          paidAmount,
+          paidAmount: totalPaidAmount,
           discountAmount,
           pendingAmount: pending,
           type: 'purchase'
@@ -476,7 +478,7 @@ exports.getPartyLedger = async (req, res) => {
       entries.push({
         date: sale.saleDate,
         entryCreatedAt: sale.createdAt || sale.saleDate,
-        type: sale.type || 'credit',
+        type: sale.type ? `sale_${sale.type}` : 'sale',
         refId: sale._id,
         refNumber: String(sale.invoiceNumber || '-').trim() || '-',
         partyId: salePartyId || null,
@@ -518,28 +520,20 @@ exports.getPartyLedger = async (req, res) => {
       const purchaseTotal = toNumber(purchase.totalAmount);
       const purchasePaid = toNumber(purchase.paidAmount);
 
-      // outAmount = cash actually paid WITH this purchase entry
-      // cash purchase → full amount (money paid on spot, no separate payment entry)
-      // purchase (partial) → 0 (the paid portion shows as a separate auto-payment entry)
-      // credit purchase → 0 (nothing paid yet)
-      const purchaseOutAmount = purchase.type === 'cash purchase' ? purchaseTotal : 0;
-
-      // impact on running balance = only the unpaid/pending portion
-      // impact on running balance:
-      // cash purchase → 0 (paid on spot, no balance change)
-      // purchase (partial) → FULL -totalAmount (the auto-payment will reduce the payable separately)
-      // credit purchase → full -totalAmount (nothing paid yet)
-      const purchaseImpact = purchase.type === 'cash purchase' ? 0 : -purchaseTotal;
+      const purchaseOutAmount = purchasePaid;
+      const purchaseImpact = -(purchaseTotal - purchasePaid);
 
       entries.push({
         date: purchase.purchaseDate,
         entryCreatedAt: purchase.createdAt || purchase.purchaseDate,
-        type: purchase.type || 'purchase',
+        type: purchase.type ? `purchase_${purchase.type}` : 'purchase',
         refId: purchase._id,
         refNumber: formatPrefixedNumber('Pur', purchase.purchaseNumber),
         partyId: purchasePartyId || null,
         partyName: resolvePartyName(purchasePartyId),
         amount: purchaseTotal,
+        paidAmount: purchasePaid,
+        balance: purchaseTotal - purchasePaid,
         impact: purchaseImpact,
         inAmount: 0,
         outAmount: purchaseOutAmount,
@@ -700,7 +694,7 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
 
     let detail = null;
 
-    if (['sale', 'cash sale', 'credit sale', 'cash', 'partial', 'credit'].includes(normalizedType)) {
+    if (['sale', 'cash sale', 'credit sale', 'cash', 'partial', 'credit', 'sale_cash', 'sale_partial', 'sale_credit'].includes(normalizedType)) {
       const sale = await Sale.findOne({ _id: refId, userId })
         .populate('party', 'name type mobile')
         .populate('items.product', 'name unit');
@@ -738,7 +732,7 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
         ],
         items: getDetailedItems(sale.items)
       };
-    } else if (['purchase', 'cash purchase', 'credit purchase'].includes(normalizedType)) {
+    } else if (['purchase', 'cash purchase', 'credit purchase', 'cash', 'partial', 'credit', 'purchase_cash', 'purchase_partial', 'purchase_credit'].includes(normalizedType)) {
       const purchase = await Purchase.findOne({ _id: refId, userId })
         .populate('party', 'name type mobile')
         .populate('items.product', 'name unit');
@@ -746,6 +740,10 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
       if (!purchase) {
         return res.status(404).json({ success: false, message: 'Purchase not found' });
       }
+
+      const purchaseTotal = toNumber(purchase.totalAmount);
+      const purchasePaid = toNumber(purchase.paidAmount);
+      const purchaseBalance = purchaseTotal - purchasePaid;
 
       detail = {
         type: 'purchase',
@@ -755,7 +753,9 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
         date: purchase.purchaseDate,
         partyName: String(purchase.party?.name || '-').trim() || '-',
         accountName: 'Purchase',
-        amount: toNumber(purchase.totalAmount),
+        amount: purchaseTotal,
+        paidAmount: purchasePaid,
+        balance: purchaseBalance,
         quantity: getTotalQuantity(purchase.items),
         method: '',
         notes: String(purchase.notes || '').trim(),
@@ -765,6 +765,9 @@ exports.getPartyLedgerEntryDetail = async (req, res) => {
           { label: 'Purchase Date', value: purchase.purchaseDate },
           { label: 'Voucher No', value: formatPrefixedNumber('Pur', purchase.purchaseNumber) },
           { label: 'Supplier Bill', value: String(purchase.supplierInvoice || '-').trim() || '-' },
+          { label: 'Total', value: purchaseTotal },
+          { label: 'Paid', value: purchasePaid },
+          { label: 'Balance', value: purchaseBalance },
           { label: 'Due Date', value: purchase.dueDate || '' }
         ],
         items: getDetailedItems(purchase.items)
@@ -1124,14 +1127,15 @@ exports.getDayBookReport = async (req, res) => {
       const purchasePaid = toNumber(purchase.paidAmount);
       const supplierInvoice = String(purchase.supplierInvoice || '').trim();
 
-      // outAmount for daybook: only cash purchase gets it; partial purchase's payment shows as separate payment entry
-      const purchaseOutAmount = purchase.type === 'cash purchase' ? amount : 0;
+      const purchaseOutAmount = purchasePaid;
 
-      const purchaseLabel = purchase.type === 'cash purchase'
+      const purchaseLabel = purchase.type === 'cash' || purchase.type === 'cash purchase'
         ? 'Cash Purchase'
-        : purchase.type === 'credit purchase'
-          ? 'Credit Purchase'
-          : 'Purchase';
+        : purchase.type === 'partial'
+          ? 'Partial Purchase'
+          : purchase.type === 'credit' || purchase.type === 'credit purchase'
+            ? 'Credit Purchase'
+            : 'Purchase';
 
       entries.push({
         date: purchase.purchaseDate,
@@ -1332,7 +1336,7 @@ exports.getDayBookReport = async (req, res) => {
       acc.totalOutward += toNumber(entry.outAmount);
 
       if (entry.type === 'sale' || entry.type === 'cash sale' || entry.type === 'credit sale') acc.sales += entry.amount;
-      if (entry.type === 'purchase') acc.purchases += entry.amount;
+      if (entry.type === 'purchase' || entry.type === 'cash purchase' || entry.type === 'credit purchase' || entry.type === 'cash' || entry.type === 'partial' || entry.type === 'credit') acc.purchases += entry.amount;
       if (entry.type === 'receipt') acc.receipts += entry.amount;
       if (entry.type === 'payment') acc.payments += entry.amount;
       if (entry.type === 'expense') acc.expenses += entry.amount;

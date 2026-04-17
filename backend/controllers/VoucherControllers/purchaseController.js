@@ -7,13 +7,7 @@ const {
   parsePrefixedNumberSearch
 } = require('../../utils/voucherNumbers');
 
-const PURCHASE_TYPES = {
-  PURCHASE: 'purchase',
-  CREDIT: 'credit purchase',
-  CASH: 'cash purchase'
-};
 
-const AUTO_PAYMENT_SOURCES = ['purchase-payment', 'purchase-excess-payment'];
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -73,13 +67,13 @@ const getPurchasePaymentBreakdown = (totalAmountValue, paidAmountValue) => {
   const pendingAmount = Math.max(0, totalAmount - paidAmount);
   const excessAmount = Math.max(0, paidAmount - totalAmount);
 
-  let type = PURCHASE_TYPES.CREDIT;
+  let type = 'credit';
   if (paidAmount <= 0) {
-    type = PURCHASE_TYPES.CREDIT;
+    type = 'credit';
   } else if (paidAmount === totalAmount) {
-    type = PURCHASE_TYPES.CASH;
+    type = 'cash';
   } else {
-    type = PURCHASE_TYPES.PURCHASE;
+    type = 'partial';
   }
 
   return { totalAmount, paidAmount, appliedAmount, pendingAmount, excessAmount, type };
@@ -113,55 +107,7 @@ const getLinkedPurchasePaymentTotal = async ({ purchaseId, userId }) => {
   return toNumber(result[0]?.total);
 };
 
-// ─── Auto-payment sync ────────────────────────────────────────────────────────
 
-const syncPurchaseAutoPayments = async (purchaseDoc, userId) => {
-  const breakdown = getPurchasePaymentBreakdown(purchaseDoc.totalAmount, purchaseDoc.paidAmount);
-
-  // Delete previous auto-payments for this purchase
-  await Payment.deleteMany({
-    originPurchaseId: purchaseDoc._id,
-    paymentSource: { $in: AUTO_PAYMENT_SOURCES }
-  });
-
-  // Create payment for the partial payment portion (paid < total)
-  if (breakdown.appliedAmount > 0 && breakdown.appliedAmount < breakdown.totalAmount) {
-    const nextPaymentNumber = await ensurePaymentNumbersForUser(userId);
-    await Payment.create({
-      userId,
-      party: purchaseDoc.party || null,
-      refType: 'purchase',
-      refId: purchaseDoc._id,
-      originPurchaseId: purchaseDoc._id,
-      amount: breakdown.appliedAmount,
-      paymentNumber: nextPaymentNumber,
-      method: 'Cash Account',
-      paymentDate: purchaseDoc.purchaseDate || new Date(),
-      notes: `Auto payment for purchase ${purchaseDoc.supplierInvoice || purchaseDoc.purchaseNumber || ''}`.trim(),
-      paymentSource: 'purchase-payment'
-    });
-  }
-
-  // Create payment for excess amount (paid more than total)
-  if (breakdown.excessAmount > 0) {
-    const nextPaymentNumber = await ensurePaymentNumbersForUser(userId);
-    await Payment.create({
-      userId,
-      party: purchaseDoc.party || null,
-      refType: 'none',
-      refId: null,
-      originPurchaseId: purchaseDoc._id,
-      amount: breakdown.excessAmount,
-      paymentNumber: nextPaymentNumber,
-      method: 'Cash Account',
-      paymentDate: purchaseDoc.purchaseDate || new Date(),
-      notes: `Auto excess payment for purchase ${purchaseDoc.supplierInvoice || purchaseDoc.purchaseNumber || ''}`.trim(),
-      paymentSource: 'purchase-excess-payment'
-    });
-  }
-
-  return breakdown;
-};
 
 // ─── Controllers ─────────────────────────────────────────────────────────────
 
@@ -221,8 +167,7 @@ exports.createPurchase = async (req, res) => {
       await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: toNumber(item.quantity) } });
     }
 
-    // Auto-create payments for partial/excess payments
-    await syncPurchaseAutoPayments(purchase, userId);
+
 
     const populatedPurchase = await Purchase.findById(purchase._id).populate('items.product', 'name');
     res.status(201).json({ success: true, message: 'Purchase created successfully', data: populatedPurchase });
@@ -369,10 +314,7 @@ exports.updatePurchase = async (req, res) => {
 
     await purchase.save();
 
-    // Re-sync auto-payments if paidAmount changed
-    if (paidAmount !== undefined) {
-      await syncPurchaseAutoPayments(purchase, userId);
-    }
+
 
     const updatedPurchase = await Purchase.findById(id)
       .populate('party', 'name')
@@ -403,9 +345,8 @@ exports.deletePurchase = async (req, res) => {
       await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: -toNumber(item.quantity) } });
     }
 
-    // Delete all payments linked to this purchase (both auto and manual)
-    await Payment.deleteMany({ userId, refId: purchase._id });
-    await Payment.deleteMany({ originPurchaseId: purchase._id });
+    // Delete all payments linked to this purchase
+    await Payment.deleteMany({ userId, refId: purchase._id, refType: 'purchase' });
 
     res.status(200).json({ success: true, message: 'Purchase deleted successfully' });
   } catch (error) {

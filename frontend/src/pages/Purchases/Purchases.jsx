@@ -235,7 +235,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     totalAmount: 0,
     invoiceLink: '',
     notes: '',
-    paymentAmount: '',
+    paidAmount: '',
     paymentMethod: 'cash',
     paymentDate: formatDateInput(),
     paymentNotes: '',
@@ -551,9 +551,9 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     if (!showForm || editingId || !isCashParty) return;
 
     setFormData((prev) => {
-      const nextPaymentAmount = String(Number(prev.totalAmount || 0));
+      const nextPaidAmount = String(Number(prev.totalAmount || 0));
       if (
-        String(prev.paymentAmount || '') === nextPaymentAmount
+        String(prev.paidAmount || '') === nextPaidAmount
         && prev.paymentMethod === 'cash'
         && prev.dueDate === ''
       ) {
@@ -562,7 +562,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
 
       return {
         ...prev,
-        paymentAmount: nextPaymentAmount,
+        paidAmount: nextPaidAmount,
         paymentMethod: 'cash',
         dueDate: ''
       };
@@ -1191,13 +1191,9 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       return;
     }
 
-    const entryPaymentAmount = isCashParty
+    const resolvedPaidAmount = isCashParty
       ? Math.max(0, Number(formData.totalAmount || 0))
-      : Math.max(0, Number(formData.paymentAmount || 0));
-    if (entryPaymentAmount > Number(formData.totalAmount || 0)) {
-      setError('Entry payment amount cannot exceed total purchase amount');
-      return;
-    }
+      : Math.max(0, Number(formData.paidAmount || 0));
 
     const parsedPurchaseDate = parseDateInput(formData.purchaseDate);
     if (!parsedPurchaseDate) {
@@ -1216,7 +1212,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         dueDate: formData.dueDate ? parseDateInput(formData.dueDate) : null,
         totalAmount: Number(formData.totalAmount || 0),
         invoiceLink: formData.invoiceLink || '',
-        paymentAmount: isEditMode ? 0 : entryPaymentAmount,
+        paidAmount: resolvedPaidAmount,
         paymentMethod: formData.paymentMethod || 'cash',
         paymentDate: formData.paymentDate ? parseDateInput(formData.paymentDate) : new Date(),
         paymentNotes: formData.paymentNotes || '',
@@ -1283,7 +1279,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       totalAmount: Number(purchase.totalAmount || 0),
       invoiceLink: purchase.invoiceLink || '',
       notes: purchase.notes || '',
-      paymentAmount: '',
+      paidAmount: purchase.paidAmount ?? '',
       paymentMethod: 'cash',
       paymentDate: purchase.purchaseDate ? formatDateInput(purchase.purchaseDate) : formatDateInput(),
       paymentNotes: '',
@@ -1645,11 +1641,19 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                         {purchase.supplierInvoice || purchase.invoiceNo || purchase.invoiceNumber || 'No supplier invoice'}
                       </p>
                     </div>
-                    <div className="rounded-lg bg-white/20 backdrop-blur-sm px-2.5 py-1.5 text-right">
-                      <p className="text-[8px] font-semibold uppercase tracking-[0.1em] text-white/90">Total</p>
-                      <p className="text-xs font-bold text-white">
-                        Rs {Number(purchase.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                      </p>
+                    <div className="flex gap-2">
+                      <div className="rounded-lg bg-white/20 backdrop-blur-sm px-2.5 py-1.5 text-right">
+                        <p className="text-[8px] font-semibold uppercase tracking-[0.1em] text-white/90">Total</p>
+                        <p className="text-xs font-bold text-white">
+                          Rs {Number(purchase.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
+                      <div className="rounded-lg bg-white/20 backdrop-blur-sm px-2.5 py-1.5 text-right">
+                        <p className="text-[8px] font-semibold uppercase tracking-[0.1em] text-white/90">Bal</p>
+                        <p className="text-xs font-bold text-white">
+                          Rs {Number((purchase.totalAmount || 0) - (purchase.paidAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1739,8 +1743,10 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Party Name</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Supplier Invoice No.</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold">Products</th>
-                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Invoice File</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Type</th>
                   <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Total</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Paid</th>
+                  <th className="border-y-2 border-r border-black px-4 py-3.5 text-center text-sm font-semibold">Balance</th>
                   <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -1783,23 +1789,26 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                             : <span className="text-slate-400 italic">No items</span>}
                         </div>
                       </td>
-                      <td className="border border-slate-400 px-4 py-3 text-center">
-                        {purchase.invoiceLink ? (
-                          <a
-                            href={purchase.invoiceLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors font-medium text-xs"
-                          >
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
-                            View
-                          </a>
-                        ) : <span className="text-slate-400">-</span>}
+                      <td className="border border-slate-400 px-4 py-3 text-center font-medium">
+                        {(() => {
+                           const type = String(purchase.type || 'credit').trim().toLowerCase();
+                           if (type === 'cash' || type === 'cash purchase') {
+                             return <span className="inline-flex rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">Cash</span>;
+                           }
+                           if (type === 'partial') {
+                             return <span className="inline-flex rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-semibold text-amber-800">Partial</span>;
+                           }
+                           return <span className="inline-flex rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-800">Credit</span>;
+                        })()}
                       </td>
-                      <td className="border border-slate-400 px-4 py-3 text-center font-semibold text-emerald-600">
-                        Rs {Number(purchase.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      <td className="border border-slate-400 px-4 py-3 text-right font-semibold text-slate-800">
+                        {Number(purchase.totalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="border border-slate-400 px-4 py-3 text-right font-semibold text-slate-600">
+                        {Number(purchase.paidAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                      </td>
+                      <td className="border border-slate-400 px-4 py-3 text-right font-bold text-slate-900">
+                        {Number((purchase.totalAmount || 0) - (purchase.paidAmount || 0)).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                       </td>
                       <td className="border border-slate-400 px-4 py-3">
                         <div className="flex items-center justify-center gap-2">

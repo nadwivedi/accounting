@@ -50,51 +50,15 @@ const formatLabel = (value) => {
 };
 
 const getTypeMeta = (type) => {
-  // New type values
-  if (type === 'cash') return { label: 'Cash Sale', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
-  if (type === 'partial') return { label: 'Partial Sale', className: 'border-amber-200 bg-amber-50 text-amber-700' };
-  if (type === 'credit') return { label: 'Credit Sale', className: 'border-rose-200 bg-rose-50 text-rose-700' };
-  // Legacy type values
-  if (type === 'sale') {
-    return {
-      label: 'Sale',
-      className: 'border-amber-200 bg-amber-50 text-amber-700'
-    };
+  // Clean, unified badges based on the actual transaction term
+  if (type === 'sale_cash' || type === 'purchase_cash' || type === 'cash') {
+    return { label: 'Cash', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
   }
-
-  if (type === 'cash sale') {
-    return {
-      label: 'Cash Sale',
-      className: 'border-emerald-200 bg-emerald-50 text-emerald-700'
-    };
+  if (type === 'sale_partial' || type === 'purchase_partial' || type === 'partial') {
+    return { label: 'Partial', className: 'border-amber-200 bg-amber-50 text-amber-700' };
   }
-
-  if (type === 'credit sale') {
-    return {
-      label: 'Credit Sale',
-      className: 'border-blue-200 bg-blue-50 text-blue-700'
-    };
-  }
-
-  if (type === 'purchase') {
-    return {
-      label: 'Purchase',
-      className: 'border-emerald-200 bg-emerald-50 text-emerald-700'
-    };
-  }
-
-  if (type === 'cash purchase') {
-    return {
-      label: 'Cash Purchase',
-      className: 'border-violet-200 bg-violet-50 text-violet-700'
-    };
-  }
-
-  if (type === 'credit purchase') {
-    return {
-      label: 'Credit Purchase',
-      className: 'border-indigo-200 bg-indigo-50 text-indigo-700'
-    };
+  if (type === 'sale_credit' || type === 'purchase_credit' || type === 'credit') {
+    return { label: 'Credit', className: 'border-rose-200 bg-rose-50 text-rose-700' };
   }
 
   if (type === 'receipt') {
@@ -435,12 +399,12 @@ export default function PartyDetail() {
 
       acc.entries += 1;
 
-      if (row.type === 'sale' || row.type === 'cash sale' || row.type === 'credit sale' || row.type === 'cash' || row.type === 'partial' || row.type === 'credit') {
+      if (row.type?.startsWith('sale_') || ['sale', 'cash sale', 'credit sale', 'cash', 'partial', 'credit'].includes(row.type)) {
         acc.totalSales += amount;
         acc.saleQty += quantity;
       }
 
-      if (row.type === 'purchase' || row.type === 'cash purchase' || row.type === 'credit purchase') {
+      if (row.type?.startsWith('purchase_') || ['purchase', 'cash purchase', 'credit purchase'].includes(row.type)) {
         acc.totalPurchases += amount;
         acc.purchaseQty += quantity;
       }
@@ -798,7 +762,7 @@ export default function PartyDetail() {
                         )}
                       </div>
                       <div className="text-right">
-                        {['sale', 'cash sale', 'credit sale', 'cash', 'partial', 'credit'].includes(row.type) ? (
+                        {['sale', 'cash sale', 'credit sale', 'sale_cash', 'sale_partial', 'sale_credit', 'purchase', 'cash purchase', 'credit purchase', 'purchase_cash', 'purchase_partial', 'purchase_credit', 'cash', 'partial', 'credit'].includes(row.type) ? (
                           <div className="space-y-0.5">
                             <p className="text-xs text-slate-500">Total: <span className="font-bold text-slate-900">{formatCurrency(row.amount)}</span></p>
                             <p className="text-xs text-slate-500">Paid: <span className="font-bold text-emerald-600">{formatCurrency(row.paidAmount)}</span></p>
@@ -902,7 +866,7 @@ export default function PartyDetail() {
                           {row.quantity ? formatQuantity(row.quantity) : '-'}
                         </td>
                         <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-slate-900">
-                          {['sale', 'cash sale', 'credit sale', 'cash', 'partial', 'credit'].includes(row.type) ? (
+                          {['sale', 'cash sale', 'credit sale', 'sale_cash', 'sale_partial', 'sale_credit', 'purchase', 'cash purchase', 'credit purchase', 'purchase_cash', 'purchase_partial', 'purchase_credit', 'cash', 'partial', 'credit'].includes(row.type) ? (
                             <div className="space-y-1 text-xs">
                               <p className="text-slate-500">Total: <span className="font-bold text-slate-900">{formatCurrency(row.amount)}</span></p>
                               <p className="text-slate-500">Paid: <span className="font-bold text-emerald-600">{formatCurrency(row.paidAmount)}</span></p>
