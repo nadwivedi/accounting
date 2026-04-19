@@ -207,29 +207,7 @@ export default function HomeDayBookPanel() {
 
   return (
     <section className="w-full rounded-[28px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,249,0.96))] shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
-      <div className="border-b border-slate-200/80 px-5 py-5 sm:px-6">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
-          {showDateFilter ? (
-            <div className="flex items-center gap-2">
-              <label htmlFor="home-report-range" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                Date Filter
-              </label>
-              <select
-                id="home-report-range"
-                value={selectedRange}
-                onChange={(event) => setSelectedRange(event.target.value)}
-                className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-100"
-              >
-                {DATE_FILTER_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
-        </div>
-      </div>
+
 
       <div className="space-y-5 p-5 sm:p-6 lg:p-5 xl:p-6">
         {error ? (
@@ -238,9 +216,7 @@ export default function HomeDayBookPanel() {
           </div>
         ) : null}
 
-        <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-xs font-semibold text-slate-600 sm:text-sm">
-          Showing data from {formatDate(dateRange.fromDate)} to {formatDate(dateRange.toDate)}
-        </div>
+
 
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5 lg:gap-2 xl:gap-3">
           <StatCard title="Sales" value={formatCurrency(summary.sales)} icon={TrendingUp} tone="from-emerald-500 to-teal-500" />
