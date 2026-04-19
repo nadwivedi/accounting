@@ -208,108 +208,7 @@ export default function HomeDayBookPanel() {
   return (
     <section className="w-full rounded-[28px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,245,249,0.96))] shadow-[0_28px_70px_rgba(15,23,42,0.18)]">
       <div className="border-b border-slate-200/80 px-5 py-5 sm:px-6">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="-mx-1 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex min-w-max items-center gap-2 px-1">
-            <button
-              type="button"
-              onClick={() => setActiveView('party-ledger')}
-              aria-label="Party Ledger"
-              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
-                activeView === 'party-ledger'
-                  ? 'border-emerald-300 bg-emerald-100 text-emerald-800'
-                  : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-              }`}
-            >
-              Party Ledger
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView('stock-ledger')}
-              aria-label="Stock Ledger"
-              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
-                activeView === 'stock-ledger'
-                  ? 'border-sky-300 bg-sky-100 text-sky-800'
-                  : 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100'
-              }`}
-            >
-              Stock Ledger
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView('sales-report')}
-              aria-label="Sales Report"
-              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
-                activeView === 'sales-report'
-                  ? 'border-violet-300 bg-violet-100 text-violet-800'
-                  : 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100'
-              }`}
-            >
-              Sales Report
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView('purchase-report')}
-              aria-label="Purchase Report"
-              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
-                activeView === 'purchase-report'
-                  ? 'border-amber-300 bg-amber-100 text-amber-800'
-                  : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-              }`}
-            >
-              Purchase Report
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView('payment-report')}
-              aria-label="Payment Report"
-              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
-                activeView === 'payment-report'
-                  ? 'border-rose-300 bg-rose-100 text-rose-800'
-                  : 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
-              }`}
-            >
-              Payment Report
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView('money-received-report')}
-              aria-label="Money Received Report"
-              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
-                activeView === 'money-received-report'
-                  ? 'border-cyan-300 bg-cyan-100 text-cyan-800'
-                  : 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100'
-              }`}
-            >
-              Money Received Report
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView('expense-report')}
-              aria-label="Expense Report"
-              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
-                activeView === 'expense-report'
-                  ? 'border-fuchsia-300 bg-fuchsia-100 text-fuchsia-800'
-                  : 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100'
-              }`}
-            >
-              Expense Report
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveView('daybook')}
-              aria-label="Day Book"
-              className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${
-                activeView === 'daybook'
-                  ? 'border-amber-300 bg-amber-100 text-amber-800'
-                  : 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100'
-              }`}
-            >
-              Day Book
-            </button>
-            </div>
-          </div>
-
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-end">
           {showDateFilter ? (
             <div className="flex items-center gap-2">
               <label htmlFor="home-report-range" className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
@@ -332,21 +231,6 @@ export default function HomeDayBookPanel() {
         </div>
       </div>
 
-      {activeView === 'party-ledger' ? (
-        <HomePartyLedgerPanel />
-      ) : activeView === 'stock-ledger' ? (
-        <HomeStockLedgerPanel />
-      ) : activeView === 'sales-report' ? (
-        <HomeSalesLedgerPanel dateRange={dateRange} />
-      ) : activeView === 'purchase-report' ? (
-        <HomePurchaseReportPanel />
-      ) : activeView === 'payment-report' ? (
-        <HomePaymentReportPanel />
-      ) : activeView === 'money-received-report' ? (
-        <HomeReceiptReportPanel />
-      ) : activeView === 'expense-report' ? (
-        <HomeExpenseReportPanel dateRange={dateRange} />
-      ) : (
       <div className="space-y-5 p-5 sm:p-6 lg:p-5 xl:p-6">
         {error ? (
           <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-semibold text-rose-700">
@@ -430,7 +314,6 @@ export default function HomeDayBookPanel() {
           )}
         </div>
       </div>
-      )}
     </section>
   );
 }
