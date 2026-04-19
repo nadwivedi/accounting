@@ -139,10 +139,44 @@ const deleteEmployee = async (req, res) => {
   }
 };
 
+// Employee changes their own password
+const changeOwnPassword = async (req, res) => {
+  try {
+    if (!req.employee) {
+      return res.status(403).json({ success: false, message: 'Only staff accounts can use this endpoint.' });
+    }
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Please provide current and new password' });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 6 characters' });
+    }
+
+    const emp = await Employee.findById(req.employee._id).select('+password');
+    if (!emp) {
+      return res.status(404).json({ success: false, message: 'Employee not found' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, emp.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Current password is incorrect' });
+    }
+
+    emp.password = await hashPassword(newPassword);
+    await emp.save();
+    res.json({ success: true, message: 'Password changed successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Failed to change password' });
+  }
+};
+
 module.exports = {
   getEmployees,
   addEmployee,
   updateEmployee,
   resetEmployeePassword,
-  deleteEmployee
+  deleteEmployee,
+  changeOwnPassword
 };

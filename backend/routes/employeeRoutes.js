@@ -4,7 +4,8 @@ const {
   addEmployee,
   updateEmployee,
   resetEmployeePassword,
-  deleteEmployee
+  deleteEmployee,
+  changeOwnPassword
 } = require('../controllers/employeeController');
 const auth = require('../middleware/auth');
 
@@ -18,6 +19,10 @@ const requireOwner = (req, res, next) => {
 };
 
 router.use(auth);
+
+// Employee self-service: change own password (no requireOwner guard)
+router.post('/me/change-password', changeOwnPassword);
+
 router.use(requireOwner);
 
 router.get('/', getEmployees);

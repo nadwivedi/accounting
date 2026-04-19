@@ -462,7 +462,13 @@ exports.changePassword = async (req, res) => {
       });
     }
 
-    const user = await User.findById(id).select('+password');
+    let user;
+    // Check if the request is for an employee changing their own password
+    if (req.employee && id === req.employee._id.toString()) {
+      user = await Employee.findById(id).select('+password');
+    } else {
+      user = await User.findById(id).select('+password');
+    }
 
     if (!user) {
       return res.status(404).json({
