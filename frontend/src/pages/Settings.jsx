@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import EmployeeManagement from '../components/EmployeeManagement';
@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import { Eye, EyeOff, Lock } from 'lucide-react';
 
 export default function Settings() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const navigate = useNavigate();
 
   // Password change state
@@ -16,10 +16,16 @@ export default function Settings() {
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
+  const [expiryAlertSetting, setExpiryAlertSetting] = useState('no');
+  const [expirySettingLoading, setExpirySettingLoading] = useState(false);
 
   const displayName = user?.role === 'employee'
     ? user?.ownerName
     : String(user?.companyName || `${user?.firstName || ''} ${user?.lastName || ''}`).trim() || '-';
+
+  useEffect(() => {
+    setExpiryAlertSetting(user?.userSettings?.expiryAlert ? 'yes' : 'no');
+  }, [user?.userSettings?.expiryAlert]);
 
   const handleLogout = () => {
     logout();
@@ -57,6 +63,27 @@ export default function Settings() {
       toast.error(err?.message || 'Failed to change password');
     } finally {
       setPwLoading(false);
+    }
+  };
+
+  const handleExpiryAlertChange = async (event) => {
+    const nextValue = event.target.value;
+    setExpiryAlertSetting(nextValue);
+    setExpirySettingLoading(true);
+
+    try {
+      await apiClient.put('/users/settings', {
+        userSettings: {
+          expiryAlert: nextValue === 'yes'
+        }
+      });
+      await refreshUser?.();
+      toast.success('Expiry alert setting updated');
+    } catch (err) {
+      setExpiryAlertSetting(user?.userSettings?.expiryAlert ? 'yes' : 'no');
+      toast.error(err?.message || 'Failed to update expiry alert setting');
+    } finally {
+      setExpirySettingLoading(false);
     }
   };
 
@@ -107,6 +134,29 @@ export default function Settings() {
         </div>
 
         {/* ── Change Password Card ── */}
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 className="mb-1 text-lg font-semibold text-slate-800">Stock Defaults</h2>
+          <p className="mb-5 text-xs text-slate-500">
+            Choose the default expiry tracking value for new stock items.
+          </p>
+
+          <div>
+            <label className="mb-1 block text-xs font-semibold text-slate-700">Expiry Alert</label>
+            <select
+              value={expiryAlertSetting}
+              onChange={handleExpiryAlertChange}
+              disabled={expirySettingLoading || !user?.id}
+              className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <option value="no">No</option>
+              <option value="yes">Yes</option>
+            </select>
+            <p className="mt-2 text-xs text-slate-500">
+              If Yes is selected, new stock will keep Track Expiry as Yes by default.
+            </p>
+          </div>
+        </div>
+
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-slate-800 mb-1 flex items-center gap-2">
             <Lock className="w-5 h-5 text-indigo-500" />

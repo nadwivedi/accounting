@@ -143,7 +143,8 @@ exports.register = async (req, res) => {
         companyName: user.companyName,
         email: user.email,
         phone: user.phone,
-        role: user.role
+        role: user.role,
+        userSettings: user.userSettings || { expiryAlert: false }
       }
     });
   } catch (error) {
@@ -215,7 +216,8 @@ exports.login = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        department: user.department
+        department: user.department,
+        userSettings: user.userSettings || { expiryAlert: false }
       }
     });
   } catch (error) {
@@ -318,9 +320,10 @@ exports.getCurrentUser = async (req, res) => {
            name: req.employee.name,
            mobile: req.employee.mobile,
            role: 'employee',
-           ownerName: owner.companyName || owner.firstName,
-           permissions: req.employee.permissions,
-           historyLimitDays: req.employee.historyLimitDays
+         ownerName: owner.companyName || owner.firstName,
+         userSettings: owner.userSettings || { expiryAlert: false },
+         permissions: req.employee.permissions,
+         historyLimitDays: req.employee.historyLimitDays
         }
       });
     }
@@ -350,6 +353,45 @@ exports.getCurrentUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Error fetching user'
+    });
+  }
+};
+
+// Update Current User Settings
+exports.updateUserSettings = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { expiryAlert } = req.body?.userSettings || req.body || {};
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          'userSettings.expiryAlert': Boolean(expiryAlert)
+        }
+      },
+      { new: true, runValidators: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Settings updated successfully',
+      data: {
+        userSettings: user.userSettings || { expiryAlert: false }
+      }
+    });
+  } catch (error) {
+    console.error('Update user settings error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error updating user settings'
     });
   }
 };
@@ -419,12 +461,26 @@ exports.updateUser = async (req, res) => {
       address,
       gstNumber,
       bankDetails,
+      userSettings,
       isActive
     } = req.body;
 
+    const normalizedUserSettings = userSettings && typeof userSettings === 'object'
+      ? { expiryAlert: Boolean(userSettings.expiryAlert) }
+      : undefined;
+    const updatePayload = { firstName, lastName, companyName, phone, department, address, gstNumber, bankDetails, isActive };
+    Object.keys(updatePayload).forEach((key) => {
+      if (updatePayload[key] === undefined) {
+        delete updatePayload[key];
+      }
+    });
+    if (normalizedUserSettings) {
+      updatePayload.userSettings = normalizedUserSettings;
+    }
+
     const user = await User.findByIdAndUpdate(
       id,
-      { firstName, lastName, companyName, phone, department, address, gstNumber, bankDetails, isActive },
+      updatePayload,
       { new: true, runValidators: true }
     );
 

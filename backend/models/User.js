@@ -54,6 +54,12 @@ const userSchema = new mongoose.Schema({
     accountHolderName: { type: String, trim: true, default: '' },
     upiId: { type: String, trim: true, default: '' }
   },
+  userSettings: {
+    expiryAlert: {
+      type: Boolean,
+      default: false
+    }
+  },
   isActive: {
     type: Boolean,
     default: true

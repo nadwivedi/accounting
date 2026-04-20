@@ -7,11 +7,16 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const refreshUser = async () => {
+    const response = await apiClient.get('/users/current');
+    setUser(response.data || null);
+    return response.data || null;
+  };
+
   useEffect(() => {
     const bootstrapAuth = async () => {
       try {
-        const response = await apiClient.get('/users/current');
-        setUser(response.data || null);
+        await refreshUser();
       } catch (error) {
         setUser(null);
       } finally {
@@ -91,6 +96,7 @@ export const AuthProvider = ({ children }) => {
     login,
     employeeLogin,
     register,
+    refreshUser,
     logout,
     isAuthenticated: !!user,
     isEmployee: user?.role === 'employee',

@@ -1,5 +1,6 @@
 const Product = require('../../models/master/Stock');
 const Unit = require('../../models/master/Unit');
+const User = require('../../models/User');
 
 // Create product
 exports.createProduct = async (req, res) => {
@@ -60,6 +61,10 @@ exports.createProduct = async (req, res) => {
       && String(minStockLevel).trim() !== ''
     ) ? Number(minStockLevel) : 0;
 
+    const shouldTrackExpiry = trackExpiry === undefined
+      ? Boolean((await User.findById(userId).select('userSettings.expiryAlert').lean())?.userSettings?.expiryAlert)
+      : Boolean(trackExpiry);
+
     const product = await Product.create({
       userId,
       name,
@@ -70,7 +75,7 @@ exports.createProduct = async (req, res) => {
       purchasePrice: Number(purchasePrice || 0),
       salePrice: Number(salePrice || 0),
       taxRate: taxRate || 0,
-      trackExpiry: Boolean(trackExpiry)
+      trackExpiry: shouldTrackExpiry
     });
 
     res.status(201).json({

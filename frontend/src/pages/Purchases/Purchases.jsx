@@ -1042,6 +1042,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     let finalProductId = currentItem.product;
     let finalProductName = currentItem.productName || productQuery;
     let finalUnit = currentItem.unit;
+    let finalTrackExpiry = Boolean(currentItem.trackExpiry);
 
     try {
       if (isNewProduct) {
@@ -1052,8 +1053,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
           typeOfSupply: 'goods',
           minStockLevel: 0,
           salePrice: 0,
-          taxRate: 0,
-          trackExpiry: false
+          taxRate: 0
         };
         const response = await apiClient.post('/products', productPayload);
         const newProduct = response.data;
@@ -1062,6 +1062,7 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         finalProductId = newProduct._id;
         finalProductName = newProduct.name;
         finalUnit = newProduct.unit;
+        finalTrackExpiry = Boolean(newProduct.trackExpiry);
         
         // Update local products list
         setProducts(prev => [newProduct, ...prev]);
@@ -1076,7 +1077,15 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         return false;
       }
 
-      if (currentItem.trackExpiry && !currentItem.expiryDate) {
+      if (finalTrackExpiry && !currentItem.expiryDate) {
+        setCurrentItem((prev) => ({
+          ...prev,
+          product: finalProductId,
+          productName: finalProductName,
+          unit: String(finalUnit || '').trim(),
+          trackExpiry: true
+        }));
+        setProductQuery(finalProductName);
         setError(`Expiry date is required for ${finalProductName || 'this product'}`);
         return false;
       }
@@ -1087,8 +1096,8 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         unit: String(finalUnit || '').trim(),
         quantity,
         unitPrice,
-        trackExpiry: Boolean(currentItem.trackExpiry),
-        expiryDate: currentItem.trackExpiry ? currentItem.expiryDate : '',
+        trackExpiry: finalTrackExpiry,
+        expiryDate: finalTrackExpiry ? currentItem.expiryDate : '',
         total: quantity * unitPrice
       };
 

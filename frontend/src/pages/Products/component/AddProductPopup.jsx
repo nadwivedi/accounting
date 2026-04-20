@@ -3,6 +3,7 @@ import { ChevronDown, Package } from 'lucide-react';
 import apiClient from '../../../utils/api';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
 import { useFloatingDropdownPosition } from '../../../utils/useFloatingDropdownPosition';
+import { useAuth } from '../../../context/AuthContext';
 
 const TYPE_OF_SUPPLY_OPTIONS = [
   { value: 'goods', label: 'Goods' },
@@ -20,7 +21,7 @@ const getNormalizedTypeOfSupply = (value) => (
   String(value || '').trim().toLowerCase() === 'services' ? 'services' : 'goods'
 );
 
-const getPopupInitialState = (initialName = '', product = null) => {
+const getPopupInitialState = (initialName = '', product = null, defaultTrackExpiry = false) => {
   const normalizedStockGroupId = product
     ? (typeof product.stockGroup === 'object' ? product.stockGroup?._id || '' : product.stockGroup || '')
     : '';
@@ -29,7 +30,7 @@ const getPopupInitialState = (initialName = '', product = null) => {
     : '';
   const resolvedUnit = String(product?.unit || 'pcs').trim() || 'pcs';
   const resolvedTypeOfSupply = getNormalizedTypeOfSupply(product?.typeOfSupply);
-  const resolvedTrackExpiry = Boolean(product?.trackExpiry);
+  const resolvedTrackExpiry = product ? Boolean(product?.trackExpiry) : Boolean(defaultTrackExpiry);
   const typeOfSupplyQuery = TYPE_OF_SUPPLY_OPTIONS.find(
     (option) => option.value === resolvedTypeOfSupply
   )?.label || TYPE_OF_SUPPLY_OPTIONS[0].label;
@@ -79,7 +80,9 @@ export default function AddProductPopup({
   onProductCreated,
   onProductSaved
 }) {
-  const initialPopupState = getPopupInitialState(initialName, product);
+  const { user } = useAuth();
+  const defaultTrackExpiry = Boolean(user?.userSettings?.expiryAlert);
+  const initialPopupState = getPopupInitialState(initialName, product, defaultTrackExpiry);
   const [formData, setFormData] = useState(initialPopupState.formData);
   const [stockGroups, setStockGroups] = useState([]);
   const [units, setUnits] = useState([]);
@@ -294,7 +297,7 @@ export default function AddProductPopup({
 
   useEffect(() => {
     if (!showForm) {
-      const nextState = getPopupInitialState(initialName, product);
+      const nextState = getPopupInitialState(initialName, product, defaultTrackExpiry);
       setFormData(nextState.formData);
       setError('');
       setStockGroupQuery(nextState.stockGroupQuery);
@@ -312,7 +315,7 @@ export default function AddProductPopup({
       return;
     }
 
-    const nextState = getPopupInitialState(initialName, product);
+    const nextState = getPopupInitialState(initialName, product, defaultTrackExpiry);
     setFormData(nextState.formData);
     setError('');
     setStockGroupQuery(nextState.stockGroupQuery);
@@ -345,7 +348,7 @@ export default function AddProductPopup({
     };
 
     loadOptions();
-  }, [initialName, product, showForm]);
+  }, [defaultTrackExpiry, initialName, product, showForm]);
 
   useEffect(() => {
     if (!showForm) return;
@@ -933,7 +936,7 @@ export default function AddProductPopup({
       onProductSaved?.(savedProduct, { isEditMode });
 
       if (!onProductSaved && !isEditMode) {
-        const resetState = getPopupInitialState('', null);
+        const resetState = getPopupInitialState('', null, defaultTrackExpiry);
         setFormData(resetState.formData);
         setStockGroupQuery(resetState.stockGroupQuery);
         setStockGroupListIndex(-1);
