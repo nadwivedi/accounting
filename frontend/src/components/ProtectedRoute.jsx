@@ -9,12 +9,14 @@ const homeNavigationEntries = [
   { section: 'Masters', path: '/units' },
   { section: 'Masters', path: '/banks' },
   { section: 'Masters', path: '/expense-types' },
+  { section: 'Reports', path: '/party-ledger' },
   { section: 'Reports', path: '/reports' },
   { section: 'Reports', path: '/settings' }
 ];
 
 const homeNavigationAliases = {
-  '/leadger': { section: 'Masters', path: '/party' },
+  '/leadger': { section: 'Reports', path: '/party-ledger' },
+  '/reports/party-ledger': { section: 'Reports', path: '/party-ledger' },
   '/products': { section: 'Masters', path: '/stock' },
   '/stock-adjustments': { section: 'Masters', path: '/party' }
 };

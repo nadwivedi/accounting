@@ -205,6 +205,7 @@ export const SECTION_CONFIG = {
     },
     items: [
       { name: 'Reports', path: '/reports', Icon: ReportIcon },
+      { name: 'Party Ledger', path: '/party-ledger', Icon: PartyIcon },
       { name: 'Day Book', path: '/day-book', Icon: DayBookIcon },
       { name: 'Settings', path: '/settings', Icon: SettingsIcon }
     ]

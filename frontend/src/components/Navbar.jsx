@@ -2,7 +2,7 @@ import { Menu } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const NAV_LINKS = [
-  { name: 'Party Ledger', path: '/party', colorClass: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100', activeClass: 'border-emerald-300 bg-emerald-100 text-emerald-800' },
+  { name: 'Party Ledger', path: '/party-ledger', colorClass: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100', activeClass: 'border-emerald-300 bg-emerald-100 text-emerald-800' },
   { name: 'Stock Ledger', path: '/reports/stock-ledger', colorClass: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100', activeClass: 'border-sky-300 bg-sky-100 text-sky-800' },
   { name: 'Sales Report', path: '/reports/sales-report', colorClass: 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100', activeClass: 'border-violet-300 bg-violet-100 text-violet-800' },
   { name: 'Purchase Report', path: '/reports/purchase-report', colorClass: 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100', activeClass: 'border-amber-300 bg-amber-100 text-amber-800' },

@@ -14,6 +14,7 @@ import Sales from './pages/Sales/Sales';
 import Purchases from './pages/Purchases/Purchases';
 import Receipts from './pages/Receipts/Receipts';
 import Party from './pages/Party/Party';
+import PartyLedger from './pages/PartyLedger';
 import PartyDetail from './pages/PartyDetail';
 import Expenses from './pages/Expenses';
 import ExpenseType from './pages/ExpenseType';
@@ -30,6 +31,7 @@ import ReportsPlaceholder from './pages/ReportsPlaceholder';
 import DayBook from './pages/DayBook';
 import Settings from './pages/Settings';
 import ExpenseReport from './pages/ExpenseReport';
+import PaymentReport from './pages/PaymentReport';
 import { AddPaymentPopupLauncher } from './pages/Payments/component/AddPaymentPopup';
 import ProtectedRoute from './components/ProtectedRoute';
 import SectionHubPage from './components/SectionHubPage';
@@ -187,7 +189,14 @@ function App() {
           }
         />
 
-        <Route path="/reports/party-ledger" element={<Navigate to="/reports" replace />} />
+        <Route
+          path="/reports/party-ledger"
+          element={
+            <ProtectedRoute>
+              <PartyLedger />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/reports/stock-ledger"
@@ -243,7 +252,14 @@ function App() {
           }
         />
 
-        <Route path="/reports/payment-report" element={<Navigate to="/" replace state={{ homeQuickPayment: true }} />} />
+        <Route
+          path="/reports/payment-report"
+          element={
+            <ProtectedRoute>
+              <PaymentReport />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/reports/receipt-report"
@@ -314,6 +330,15 @@ function App() {
         <Route path="/expense-groups" element={<Navigate to="/expense-types" replace />} />
 
         <Route
+          path="/party-ledger"
+          element={
+            <ProtectedRoute>
+              <PartyLedger />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/party"
           element={
             <ProtectedRoute>
@@ -335,7 +360,7 @@ function App() {
           path="/leadger"
           element={
             <ProtectedRoute>
-              <Navigate to="/party" replace />
+              <Navigate to="/party-ledger" replace />
             </ProtectedRoute>
           }
         />
