@@ -32,6 +32,7 @@ import DayBook from './pages/DayBook';
 import Settings from './pages/Settings';
 import ExpenseReport from './pages/ExpenseReport';
 import PaymentReport from './pages/PaymentReport';
+import CashflowDashboard from './pages/CashflowDashboard';
 import { AddPaymentPopupLauncher } from './pages/Payments/component/AddPaymentPopup';
 import ProtectedRoute from './components/ProtectedRoute';
 import SectionHubPage from './components/SectionHubPage';
@@ -185,6 +186,15 @@ function App() {
           element={
             <ProtectedRoute>
               <ReportsHub />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/cashflow-dashboard"
+          element={
+            <ProtectedRoute>
+              <CashflowDashboard />
             </ProtectedRoute>
           }
         />

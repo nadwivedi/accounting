@@ -9,6 +9,7 @@ const homeNavigationEntries = [
   { section: 'Masters', path: '/units' },
   { section: 'Masters', path: '/banks' },
   { section: 'Masters', path: '/expense-types' },
+  { section: 'Reports', path: '/reports/cashflow-dashboard' },
   { section: 'Reports', path: '/party-ledger' },
   { section: 'Reports', path: '/reports' },
   { section: 'Reports', path: '/settings' }

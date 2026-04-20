@@ -2,6 +2,7 @@ import { Menu } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 
 const NAV_LINKS = [
+  { name: 'Cashflow', path: '/reports/cashflow-dashboard', colorClass: 'border-lime-200 bg-lime-50 text-lime-700 hover:bg-lime-100', activeClass: 'border-lime-300 bg-lime-100 text-lime-800' },
   { name: 'Party Ledger', path: '/party-ledger', colorClass: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100', activeClass: 'border-emerald-300 bg-emerald-100 text-emerald-800' },
   { name: 'Stock Ledger', path: '/reports/stock-ledger', colorClass: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100', activeClass: 'border-sky-300 bg-sky-100 text-sky-800' },
   { name: 'Sales Report', path: '/reports/sales-report', colorClass: 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100', activeClass: 'border-violet-300 bg-violet-100 text-violet-800' },

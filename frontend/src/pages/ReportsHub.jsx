@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, Boxes, CreditCard, FileBarChart, Package, ReceiptText, RefreshCw, ShoppingCart, Wallet } from 'lucide-react';
+import { BookOpen, Boxes, CreditCard, FileBarChart, Package, ReceiptText, RefreshCw, ShoppingCart, TrendingUp, Wallet } from 'lucide-react';
 import { getSectionConfig } from '../navigation/sectionMenu';
 
 const REPORT_ITEMS = [
+  { name: 'Cashflow Dashboard', path: '/reports/cashflow-dashboard', Icon: TrendingUp },
   { name: 'Party Ledger', path: '/party-ledger', Icon: Wallet },
   { name: 'Day Book', path: '/day-book', Icon: BookOpen },
   { name: 'Stock Ledger', path: '/reports/stock-ledger', Icon: Boxes },
