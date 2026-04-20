@@ -67,6 +67,23 @@ export default function ProtectedRoute({ children }) {
 
     const handleKeyDown = (event) => {
       const key = event.key?.toLowerCase();
+      if (key === 'escape') {
+        const popup = document.querySelector('.fixed.inset-0.z-50');
+        if (popup) return; // let popup handle it
+        event.preventDefault();
+        
+        if (typeof showForm !== 'undefined' && showForm) {
+          handleCloseForm();
+        } else if (typeof modalOnly !== 'undefined' && modalOnly && typeof onModalFinish === 'function') {
+          onModalFinish();
+        } else if (typeof navigate !== 'undefined') {
+          navigate('/');
+        } else {
+          window.location.href = '/';
+        }
+        return;
+      }
+
       const shortcutTarget = voucherShortcutRoutes[key];
 
       if (shortcutTarget && event.altKey && !event.ctrlKey && !event.metaKey) {

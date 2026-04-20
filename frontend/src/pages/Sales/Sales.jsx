@@ -187,6 +187,21 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       const key = event.key?.toLowerCase();
       const isSaleShortcut = event.altKey && key === 's';
       const isF1Shortcut = key === 'f1';
+
+      if (key === 'escape') {
+        const popup = document.querySelector('.fixed.inset-0.z-50');
+        if (popup) return; // let popup handle it
+        event.preventDefault();
+        if (showForm) {
+          setShowForm(false);
+        } else if (modalOnly && typeof onModalFinish === 'function') {
+          onModalFinish();
+        } else {
+          navigate('/');
+        }
+        return;
+      }
+
       if (event.defaultPrevented || event.ctrlKey || event.metaKey) return;
       if (isTypingTarget || showForm) return;
       if (!isSaleShortcut && !isF1Shortcut) return;

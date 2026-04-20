@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Boxes, RotateCcw, Search } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
@@ -38,6 +39,7 @@ const getPurchaseLabel = (purchase) => {
 };
 
 export default function PurchaseReturn({ modalOnly = false, onModalFinish = null }) {
+  const navigate = useNavigate();
   const [entries, setEntries] = useState([]);
   const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -65,6 +67,22 @@ export default function PurchaseReturn({ modalOnly = false, onModalFinish = null
   useEffect(() => {
     const handleKeyDown = (event) => {
       const key = event.key?.toLowerCase();
+      
+      if (key === 'escape') {
+        const popup = document.querySelector('.fixed.inset-0.z-50');
+        if (popup) return; // let popup handle it
+        event.preventDefault();
+        
+        if (showForm) {
+          handleCloseForm();
+        } else if (modalOnly && typeof onModalFinish === 'function') {
+          onModalFinish();
+        } else {
+          navigate('/');
+        }
+        return;
+      }
+
       if (event.defaultPrevented || !event.altKey || event.ctrlKey || event.metaKey) return;
       if (key !== 'n') return;
       event.preventDefault();

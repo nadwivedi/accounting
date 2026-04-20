@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronDown, Wallet, IndianRupee } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
@@ -112,6 +113,29 @@ export default function VoucherRegisterPage({
       fetchParties();
     }
   }, [showParty]);
+
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      const key = event.key?.toLowerCase();
+      if (key === 'escape') {
+        const popup = document.querySelector('.fixed.inset-0.z-50');
+        if (popup) return; // let popup handle it
+        event.preventDefault();
+
+        if (showForm) {
+          handleCloseForm();
+        } else if (modalOnly && typeof onModalFinish === 'function') {
+          onModalFinish();
+        } else {
+          navigate('/');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showForm, modalOnly, onModalFinish, navigate]);
 
   useEffect(() => {
     if (!showForm) return;

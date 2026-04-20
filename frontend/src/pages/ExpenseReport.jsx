@@ -1,7 +1,23 @@
-import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import HomeExpenseReportPanel from '../components/HomeExpenseReportPanel';
 
 export default function ExpenseReport() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key?.toLowerCase() === 'escape') {
+        const popup = document.querySelector('.fixed.inset-0.z-50');
+        if (popup) return;
+        event.preventDefault();
+        navigate('/');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,rgba(148,163,184,0.16),transparent_24%),linear-gradient(180deg,#0f172a_0%,#111827_48%,#020617_100%)] px-4 py-6 xl:px-4 xl:py-5 2xl:px-4 2xl:py-6">
       <div className="mx-auto max-w-7xl xl:max-w-[72rem] 2xl:max-w-7xl">

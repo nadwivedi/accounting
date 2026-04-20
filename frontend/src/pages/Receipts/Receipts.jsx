@@ -125,6 +125,21 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
       const isTypingTarget = tagName === 'input' || tagName === 'textarea' || tagName === 'select' || event.target?.isContentEditable;
       const key = event.key?.toLowerCase();
 
+      if (key === 'escape') {
+        const popup = document.querySelector('.fixed.inset-0.z-50');
+        if (popup) return; // let popup handle it
+        event.preventDefault();
+        
+        if (showForm) {
+          handleCloseForm();
+        } else if (modalOnly && typeof onModalFinish === 'function') {
+          onModalFinish();
+        } else {
+          navigate('/');
+        }
+        return;
+      }
+
       if (event.defaultPrevented || !event.altKey || event.ctrlKey || event.metaKey) return;
       if (isTypingTarget || showForm) return;
       if (key !== 'r') return;

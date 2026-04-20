@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Landmark, Pencil, Search, Trash2, Wallet } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../utils/api';
@@ -12,6 +13,7 @@ const currencyFormatter = new Intl.NumberFormat('en-IN', {
 });
 
 export default function Banks() {
+  const navigate = useNavigate();
   const toastOptions = { autoClose: 1200 };
   const { user, isEmployee } = useAuth();
   const canEdit = !isEmployee || user?.permissions?.edit === true;
@@ -39,6 +41,23 @@ export default function Banks() {
   useEffect(() => {
     const handleKeyDown = (event) => {
       const key = event.key?.toLowerCase();
+      if (key === 'escape') {
+        const popup = document.querySelector('.fixed.inset-0.z-50');
+        if (popup) return; // let popup handle it
+        event.preventDefault();
+        
+        if (typeof showForm !== 'undefined' && showForm) {
+          handleCloseForm();
+        } else if (typeof modalOnly !== 'undefined' && modalOnly && typeof onModalFinish === 'function') {
+          onModalFinish();
+        } else if (typeof navigate !== 'undefined') {
+          navigate('/');
+        } else {
+          window.location.href = '/';
+        }
+        return;
+      }
+
       if (event.defaultPrevented || !event.altKey || event.ctrlKey || event.metaKey) return;
       if (key !== 'n') return;
 

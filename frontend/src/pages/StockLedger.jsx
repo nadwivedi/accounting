@@ -43,7 +43,7 @@ export default function StockLedger() {
           setSelectedProduct(null);
           loadData();
         } else {
-          navigate(-1);
+          navigate('/');
         }
       }
     };

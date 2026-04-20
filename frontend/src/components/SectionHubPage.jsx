@@ -28,6 +28,23 @@ export default function SectionHubPage({ sectionName }) {
       if (isTypingTarget(event.target) || isPopupOpen()) return;
 
       const key = event.key?.toLowerCase();
+      if (key === 'escape') {
+        const popup = document.querySelector('.fixed.inset-0.z-50');
+        if (popup) return; // let popup handle it
+        event.preventDefault();
+        
+        if (typeof showForm !== 'undefined' && showForm) {
+          handleCloseForm();
+        } else if (typeof modalOnly !== 'undefined' && modalOnly && typeof onModalFinish === 'function') {
+          onModalFinish();
+        } else if (typeof navigate !== 'undefined') {
+          navigate('/');
+        } else {
+          window.location.href = '/';
+        }
+        return;
+      }
+
       if (key === 'arrowdown' || key === 'arrowright') {
         event.preventDefault();
         setActiveIndex((prev) => (prev + 1) % items.length);

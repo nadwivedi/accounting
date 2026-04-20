@@ -74,6 +74,17 @@ export default function Party() {
   useEffect(() => {
     const handleKeyDown = (event) => {
       const key = event.key?.toLowerCase();
+      if (key === 'escape') {
+        const popup = document.querySelector('.fixed.inset-0.z-50');
+        if (popup) return;
+        event.preventDefault();
+        if (showForm) {
+          handleCloseForm();
+        } else {
+          navigate('/');
+        }
+        return;
+      }
       if (event.defaultPrevented || !event.altKey || event.ctrlKey || event.metaKey) return;
       if (key !== 'n') return;
 
