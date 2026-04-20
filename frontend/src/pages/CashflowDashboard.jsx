@@ -13,6 +13,15 @@ import {
   TrendingUp,
   XCircle
 } from 'lucide-react';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer
+} from 'recharts';
 import apiClient from '../utils/api';
 
 const formatCurrency = (value) => (
@@ -190,6 +199,19 @@ export default function CashflowDashboard() {
 
   const netCashflow = summary.actualReceived - summary.actualPaid;
 
+  const chartData = useMemo(() => {
+    const grouped = {};
+    entries.forEach(entry => {
+      const dateKey = formatDateForInput(new Date(entry.date || 0));
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = { date: dateKey, displayDate: formatDate(entry.date), CashIn: 0, CashOut: 0 };
+      }
+      grouped[dateKey].CashIn += getEntryIn(entry);
+      grouped[dateKey].CashOut += getEntryOut(entry);
+    });
+    return Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date));
+  }, [entries]);
+
   const cashInRows = useMemo(() => entries
     .filter((entry) => getEntryIn(entry) > 0)
     .sort((first, second) => new Date(second.date || 0).getTime() - new Date(first.date || 0).getTime())
@@ -291,26 +313,68 @@ export default function CashflowDashboard() {
         ) : (
           <>
             <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 lg:mb-5 lg:gap-3 xl:mb-6 xl:gap-3 2xl:mb-8 2xl:gap-4">
-              <StatCard title="Actual Money Received" value={formatCurrency(summary.actualReceived)} subtitle="sale paid amount + receipts + purchase returns" icon={ArrowDownCircle} tone="from-emerald-500 to-teal-500" valueClassName="text-emerald-700" />
-              <StatCard title="Actual Money Paid" value={formatCurrency(summary.actualPaid)} subtitle="purchase paid amount + payments + expenses" icon={ArrowUpCircle} tone="from-rose-500 to-pink-500" valueClassName="text-rose-700" />
+              <StatCard title="Total Cash In" value={formatCurrency(summary.actualReceived)} subtitle="sale paid + receipts + purchase returns" icon={ArrowDownCircle} tone="from-emerald-500 to-teal-500" valueClassName="text-emerald-700" />
+              <StatCard title="Total Cash Out" value={formatCurrency(summary.actualPaid)} subtitle="purchase paid + payments + expenses + returns" icon={ArrowUpCircle} tone="from-rose-500 to-pink-500" valueClassName="text-rose-700" />
               <StatCard title="Net Cashflow" value={formatCurrency(netCashflow)} subtitle="received minus paid" icon={netCashflow >= 0 ? TrendingUp : TrendingDown} tone={netCashflow >= 0 ? 'from-blue-500 to-cyan-500' : 'from-amber-500 to-orange-500'} valueClassName={netCashflow >= 0 ? 'text-blue-700' : 'text-amber-700'} />
             </div>
 
-            <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 lg:mb-5 lg:gap-3 xl:mb-6 xl:gap-3 2xl:mb-8 2xl:gap-4">
-              <StatCard title="Sales" value={formatCurrency(summary.sales)} subtitle={`paid now: ${formatCurrency(summary.salePaid)}`} icon={ShoppingCart} tone="from-violet-500 to-purple-500" />
-              <StatCard title="Purchases" value={formatCurrency(summary.purchases)} subtitle={`paid now: ${formatCurrency(summary.purchasePaid)}`} icon={Package} tone="from-sky-500 to-cyan-500" />
-              <StatCard title="Receivable" value={formatCurrency(summary.receivable)} subtitle="pending from sales in this range" icon={IndianRupee} tone="from-emerald-500 to-green-500" />
-              <StatCard title="Payable" value={formatCurrency(summary.payable)} subtitle="pending from purchases in this range" icon={Banknote} tone="from-rose-500 to-red-500" />
-            </div>
-
-            <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4 lg:mb-5 lg:gap-3 xl:mb-6 xl:gap-3 2xl:mb-8 2xl:gap-4">
-              <StatCard title="Receipts" value={formatCurrency(summary.receipts)} subtitle="money received later" icon={ArrowDownCircle} tone="from-emerald-500 to-teal-500" />
-              <StatCard title="Payments" value={formatCurrency(summary.payments)} subtitle="money paid later" icon={ArrowUpCircle} tone="from-rose-500 to-pink-500" />
-              <StatCard title="Expenses" value={formatCurrency(summary.expenses)} subtitle="expense cash out" icon={Banknote} tone="from-fuchsia-500 to-purple-500" />
-              <StatCard title="Returns" value={`${formatCurrency(summary.purchaseReturns)} / ${formatCurrency(summary.saleReturns)}`} subtitle="purchase return in / sale return out" icon={RefreshCw} tone="from-amber-500 to-orange-500" />
+            <div className="mb-8 overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 shadow-xl lg:p-4 xl:p-5 2xl:p-6">
+              <h3 className="mb-4 text-base font-bold text-slate-800">Daily Cashflow Trend</h3>
+              <div className="h-64 w-full xl:h-72 2xl:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis dataKey="displayDate" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748B' }} tickFormatter={(val) => `₹${val}`} />
+                    <RechartsTooltip cursor={{ fill: '#F8FAFC' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} formatter={(value) => [formatCurrency(value)]} />
+                    <Bar dataKey="CashIn" name="Cash In" fill="#10B981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                    <Bar dataKey="CashOut" name="Cash Out" fill="#F43F5E" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <div className="flex flex-col gap-4 overflow-hidden rounded-3xl border border-emerald-100 bg-emerald-50/30 p-5 shadow-lg lg:p-4 xl:p-5 2xl:p-6">
+                <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-full bg-emerald-100 p-2.5 text-emerald-600">
+                    <ArrowDownCircle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800">Money In</h2>
+                    <p className="text-sm font-medium text-slate-500">Inbound cashflow components</p>
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <StatCard title="Sales (Paid)" value={formatCurrency(summary.salePaid)} subtitle={`Total Sale Amount: ${formatCurrency(summary.sales)}`} icon={ShoppingCart} tone="from-emerald-500 to-green-500" />
+                  <StatCard title="Receipts" value={formatCurrency(summary.receipts)} subtitle="Money received separately" icon={Banknote} tone="from-emerald-400 to-teal-400" />
+                  <StatCard title="Purchase Refund" value={formatCurrency(summary.purchaseReturns)} subtitle="Cash back from purchases" icon={RefreshCw} tone="from-teal-500 to-cyan-500" />
+                  <StatCard title="Sale Receivable" value={formatCurrency(summary.receivable)} subtitle="Total pending from sales" icon={IndianRupee} tone="from-emerald-200 to-green-300" valueClassName="text-slate-600" />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-4 overflow-hidden rounded-3xl border border-rose-100 bg-rose-50/30 p-5 shadow-lg lg:p-4 xl:p-5 2xl:p-6">
+                 <div className="mb-2 flex items-center gap-3">
+                  <div className="rounded-full bg-rose-100 p-2.5 text-rose-600">
+                    <ArrowUpCircle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800">Money Out</h2>
+                    <p className="text-sm font-medium text-slate-500">Outbound cashflow components</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <StatCard title="Purchases (Paid)" value={formatCurrency(summary.purchasePaid)} subtitle={`Total Purchase: ${formatCurrency(summary.purchases)}`} icon={Package} tone="from-rose-500 to-red-500" />
+                  <StatCard title="Payments" value={formatCurrency(summary.payments)} subtitle="Money paid separately" icon={Banknote} tone="from-rose-400 to-pink-400" />
+                  <StatCard title="Expenses" value={formatCurrency(summary.expenses)} subtitle="Operating expenses" icon={TrendingDown} tone="from-fuchsia-500 to-purple-500" />
+                  <StatCard title="Sale Refunds" value={formatCurrency(summary.saleReturns)} subtitle="Cash returned to customers" icon={RefreshCw} tone="from-orange-500 to-red-500" />
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
               {renderFlowTable(cashInRows, 'in')}
               {renderFlowTable(cashOutRows, 'out')}
             </div>
