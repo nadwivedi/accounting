@@ -263,7 +263,9 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
     productName: '',
     unit: '',
     quantity: '',
-    unitPrice: ''
+    unitPrice: '',
+    trackExpiry: false,
+    expiryDate: ''
   };
 
   const [purchases, setPurchases] = useState([]);
@@ -889,7 +891,9 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         ...prev,
         product: '',
         productName: '',
-        unit: ''
+        unit: '',
+        trackExpiry: false,
+        expiryDate: ''
       }));
       setProductListIndex(-1);
       return;
@@ -901,7 +905,9 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       ...prev,
       product: product._id,
       productName,
-      unit: String(product.unit || '').trim()
+      unit: String(product.unit || '').trim(),
+      trackExpiry: Boolean(product.trackExpiry),
+      expiryDate: ''
     }));
 
     const selectedIndex = filteredProducts.findIndex((item) => String(item._id) === String(product._id));
@@ -927,7 +933,9 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         ...prev,
         product: exactProduct._id,
         productName: getProductDisplayName(exactProduct),
-        unit: String(exactProduct.unit || '').trim()
+        unit: String(exactProduct.unit || '').trim(),
+        trackExpiry: Boolean(exactProduct.trackExpiry),
+        expiryDate: ''
       }));
       const exactIndex = getMatchingProducts(value).findIndex((item) => String(item._id) === String(exactProduct._id));
       setProductListIndex(exactIndex >= 0 ? exactIndex + 1 : 1);
@@ -940,7 +948,9 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       ...prev,
       product: firstMatch?._id || '',
       productName: firstMatch ? getProductDisplayName(firstMatch) : '',
-      unit: firstMatch ? String(firstMatch.unit || '').trim() : ''
+      unit: firstMatch ? String(firstMatch.unit || '').trim() : '',
+      trackExpiry: Boolean(firstMatch?.trackExpiry),
+      expiryDate: ''
     }));
     setProductListIndex(firstMatch ? 1 : 0);
   };
@@ -1042,7 +1052,8 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
           typeOfSupply: 'goods',
           minStockLevel: 0,
           salePrice: 0,
-          taxRate: 0
+          taxRate: 0,
+          trackExpiry: false
         };
         const response = await apiClient.post('/products', productPayload);
         const newProduct = response.data;
@@ -1065,12 +1076,19 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
         return false;
       }
 
+      if (currentItem.trackExpiry && !currentItem.expiryDate) {
+        setError(`Expiry date is required for ${finalProductName || 'this product'}`);
+        return false;
+      }
+
       const newItem = {
         product: finalProductId,
         productName: finalProductName,
         unit: String(finalUnit || '').trim(),
         quantity,
         unitPrice,
+        trackExpiry: Boolean(currentItem.trackExpiry),
+        expiryDate: currentItem.trackExpiry ? currentItem.expiryDate : '',
         total: quantity * unitPrice
       };
 
@@ -1276,6 +1294,8 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
       unit: String(item.unit || item.product?.unit || '').trim(),
       quantity: Number(item.quantity || 0),
       unitPrice: Number(item.unitPrice || 0),
+      trackExpiry: Boolean(item.expiryDate || item.product?.trackExpiry),
+      expiryDate: item.expiryDate ? formatDateInput(item.expiryDate) : '',
       total: Number(item.total || (Number(item.quantity || 0) * Number(item.unitPrice || 0)))
     }));
 

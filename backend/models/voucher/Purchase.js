@@ -20,6 +20,10 @@ const purchaseItemSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
+  expiryDate: {
+    type: Date,
+    default: null
+  },
   total: {
     type: Number,
     required: true

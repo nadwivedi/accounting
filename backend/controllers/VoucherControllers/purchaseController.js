@@ -35,6 +35,7 @@ const normalizeItems = (items = []) => items.map((item) => {
     productName: String(item.productName || 'Item').trim(),
     quantity,
     unitPrice,
+    expiryDate: item.expiryDate || null,
     total: toNumber(item.total, quantity * unitPrice)
   };
 });
@@ -48,6 +49,17 @@ const validateItems = (items) => {
     if (toNumber(item.quantity) <= 0) return 'Item quantity must be greater than 0';
     if (toNumber(item.unitPrice) < 0) return 'Item price cannot be negative';
   }
+  return null;
+};
+
+const validateExpiryDates = async ({ items, userId }) => {
+  for (const item of items) {
+    const product = await Product.findOne({ _id: item.product, userId }).select('name trackExpiry').lean();
+    if (product?.trackExpiry && !item.expiryDate) {
+      return `Expiry date is required for ${product.name || item.productName}`;
+    }
+  }
+
   return null;
 };
 
@@ -139,6 +151,14 @@ exports.createPurchase = async (req, res) => {
       return res.status(400).json({ success: false, message: itemError });
     }
 
+    const expiryError = await validateExpiryDates({ items: normalizedItems, userId });
+    if (expiryError) {
+      return res.status(400).json({
+        success: false,
+        message: expiryError
+      });
+    }
+
     const normalizedSupplierInvoice = String(supplierInvoice || invoiceNo || invoiceNumber || '').trim();
     const resolvedTotalAmount = calculateTotalAmount(normalizedItems, totalAmount);
 
@@ -169,7 +189,7 @@ exports.createPurchase = async (req, res) => {
 
 
 
-    const populatedPurchase = await Purchase.findById(purchase._id).populate('items.product', 'name');
+    const populatedPurchase = await Purchase.findById(purchase._id).populate('items.product', 'name unit trackExpiry');
     res.status(201).json({ success: true, message: 'Purchase created successfully', data: populatedPurchase });
   } catch (error) {
     if (isDuplicatePurchaseInvoiceError(error)) {
@@ -196,8 +216,9 @@ exports.getAllPurchases = async (req, res) => {
     }
 
     let query = Purchase.find(filter)
-      .select('purchaseNumber supplierInvoice party purchaseDate dueDate totalAmount paidAmount type notes invoiceLink')
-      .populate('party', 'name');
+      .select('purchaseNumber supplierInvoice party purchaseDate dueDate totalAmount paidAmount type notes invoiceLink items')
+      .populate('party', 'name')
+      .populate('items.product', 'name unit trackExpiry');
 
     if (search) {
       const purchaseNumberSearch = toPurchaseNumber(search);
@@ -231,7 +252,7 @@ exports.getPurchaseById = async (req, res) => {
     const userId = req.userId;
     const purchase = await Purchase.findOne({ _id: id, userId })
       .populate('party', 'name')
-      .populate('items.product', 'name')
+      .populate('items.product', 'name unit trackExpiry')
       .lean();
 
     if (!purchase) {
@@ -272,6 +293,10 @@ exports.updatePurchase = async (req, res) => {
       const itemError = validateItems(normalizedItems);
       if (itemError) {
         return res.status(400).json({ success: false, message: itemError });
+      }
+      const expiryError = await validateExpiryDates({ items: normalizedItems, userId });
+      if (expiryError) {
+        return res.status(400).json({ success: false, message: expiryError });
       }
       for (const oldItem of purchase.items) {
         await Product.findByIdAndUpdate(oldItem.product, { $inc: { currentStock: -toNumber(oldItem.quantity) } });
@@ -318,7 +343,7 @@ exports.updatePurchase = async (req, res) => {
 
     const updatedPurchase = await Purchase.findById(id)
       .populate('party', 'name')
-      .populate('items.product', 'name');
+      .populate('items.product', 'name unit trackExpiry');
 
     res.status(200).json({ success: true, message: 'Purchase updated successfully', data: updatedPurchase });
   } catch (error) {

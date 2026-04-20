@@ -98,6 +98,41 @@ export default function StockLedger() {
     return { label: 'In Stock', color: 'bg-emerald-100 text-emerald-700', icon: CheckCircle };
   };
 
+  const getExpiryStatus = (product) => {
+    if (!product?.trackExpiry) {
+      return { label: '-', detail: '', color: 'bg-slate-100 text-slate-500', icon: Calendar };
+    }
+
+    if (Number(product.expiredQty || 0) > 0) {
+      return {
+        label: `Expired ${formatNumber(product.expiredQty)}`,
+        detail: product.nearestExpiryDate ? formatDate(product.nearestExpiryDate) : '',
+        color: 'bg-red-100 text-red-700',
+        icon: XCircle
+      };
+    }
+
+    if (Number(product.expiringQty30 || 0) > 0) {
+      return {
+        label: `Soon ${formatNumber(product.expiringQty30)}`,
+        detail: product.nearestExpiryDate ? formatDate(product.nearestExpiryDate) : '',
+        color: 'bg-amber-100 text-amber-700',
+        icon: AlertTriangle
+      };
+    }
+
+    if (product.nearestExpiryDate) {
+      return {
+        label: `Next ${formatNumber(product.nearestExpiryQty)}`,
+        detail: formatDate(product.nearestExpiryDate),
+        color: 'bg-emerald-100 text-emerald-700',
+        icon: CheckCircle
+      };
+    }
+
+    return { label: 'No dated stock', detail: '', color: 'bg-slate-100 text-slate-500', icon: Calendar };
+  };
+
   const stockSummary = useMemo(() => {
     const totals = stockLedgerRows.reduce((acc, row) => {
       acc.inQty += Number(row.inQty || 0);
@@ -112,6 +147,9 @@ export default function StockLedger() {
     const lowStockCount = currentStockRows.filter(p => 
       p.currentStock === 0 || (p.minStockLevel > 0 && p.currentStock <= p.minStockLevel)
     ).length;
+    const expiryAlertCount = currentStockRows.filter(p => (
+      p.trackExpiry && (Number(p.expiredQty || 0) > 0 || Number(p.expiringQty30 || 0) > 0)
+    )).length;
 
     return {
       movementCount: stockLedgerRows.length,
@@ -120,7 +158,8 @@ export default function StockLedger() {
       trackedItems: currentStockRows.length,
       netChange: totals.inQty - totals.outQty,
       stockValue,
-      lowStockCount
+      lowStockCount,
+      expiryAlertCount
     };
   }, [currentStockRows.length, stockLedgerRows, currentStockRows]);
 
@@ -205,13 +244,14 @@ export default function StockLedger() {
       </div>
       
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px]">
+        <table className="w-full min-w-[1050px]">
           <thead>
             <tr className="bg-gradient-to-r from-slate-800 via-slate-700 to-slate-800 text-white">
               <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Product</th>
               <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">Current Stock</th>
               <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">Min Level</th>
               <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider">Status</th>
+              <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider">Expiry</th>
               <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">Unit</th>
               <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">Purchase Price</th>
               <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider">Stock Value</th>
@@ -221,6 +261,8 @@ export default function StockLedger() {
             {filteredProducts.length > 0 ? (
               filteredProducts.map((product, index) => {
                 const status = getStockStatus(product.currentStock, product.minStockLevel);
+                const expiryStatus = getExpiryStatus(product);
+                const ExpiryIcon = expiryStatus.icon;
                 const stockValue = (product.currentStock || 0) * (product.purchasePrice || 0);
                 return (
                   <tr 
@@ -248,6 +290,13 @@ export default function StockLedger() {
                         {status.label}
                       </span>
                     </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`inline-flex min-w-[118px] items-center justify-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${expiryStatus.color}`}>
+                        <ExpiryIcon className="w-3 h-3" />
+                        <span>{expiryStatus.label}</span>
+                        {expiryStatus.detail ? <span className="font-medium opacity-80">| {expiryStatus.detail}</span> : null}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-right">
                       <p className="text-sm text-slate-600">{product.unit || 'pcs'}</p>
                     </td>
@@ -262,7 +311,7 @@ export default function StockLedger() {
               })
             ) : (
               <tr>
-                <td colSpan={7} className="px-6 py-16 text-center">
+                <td colSpan={8} className="px-6 py-16 text-center">
                   <div className="flex flex-col items-center">
                     <div className="p-4 rounded-full bg-slate-100 mb-4">
                       <Boxes className="w-8 h-8 text-slate-400" />
@@ -348,6 +397,30 @@ export default function StockLedger() {
               <AlertTriangle className="w-4 h-4 text-amber-600" />
               <span className="text-sm font-semibold text-amber-700">Min Level:</span>
               <span className="text-sm font-black text-amber-800">{formatNumber(selectedProduct?.minStockLevel)}</span>
+            </div>
+          )}
+          {selectedProduct?.trackExpiry && (
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border ${
+              selectedProduct.expiryStatus === 'expired'
+                ? 'bg-red-50 border-red-100'
+                : selectedProduct.expiryStatus === 'expiring-soon'
+                  ? 'bg-amber-50 border-amber-100'
+                  : 'bg-emerald-50 border-emerald-100'
+            }`}>
+              <AlertTriangle className={`w-4 h-4 ${
+                selectedProduct.expiryStatus === 'expired'
+                  ? 'text-red-600'
+                  : selectedProduct.expiryStatus === 'expiring-soon'
+                    ? 'text-amber-600'
+                    : 'text-emerald-600'
+              }`} />
+              <span className="text-sm font-semibold text-slate-700">Expiry:</span>
+              <span className="text-sm font-black text-slate-800">
+                {getExpiryStatus(selectedProduct).label}
+              </span>
+              {selectedProduct.nearestExpiryDate ? (
+                <span className="text-xs font-semibold text-slate-500">{formatDate(selectedProduct.nearestExpiryDate)}</span>
+              ) : null}
             </div>
           )}
         </div>
@@ -459,7 +532,7 @@ export default function StockLedger() {
               <StatCard title="Stock In" value={formatNumber(stockSummary.totalIn)} subtitle="units received" icon={ArrowDownLeft} color="from-emerald-500 to-teal-500" />
               <StatCard title="Stock Out" value={formatNumber(stockSummary.totalOut)} subtitle="units dispatched" icon={ArrowUpRight} color="from-rose-500 to-pink-500" trend={-stockSummary.totalOut} />
               <StatCard title="Net Change" value={formatNumber(stockSummary.netChange)} subtitle="in/out difference" icon={stockSummary.netChange >= 0 ? TrendingUp : TrendingDown} color={stockSummary.netChange >= 0 ? "from-emerald-500 to-green-500" : "from-rose-500 to-red-500"} trend={stockSummary.netChange} />
-              <StatCard title="Low Stock" value={formatNumber(stockSummary.lowStockCount)} subtitle="items need attention" icon={AlertTriangle} color="from-amber-500 to-orange-500" />
+              <StatCard title="Alerts" value={formatNumber(stockSummary.lowStockCount + stockSummary.expiryAlertCount)} subtitle={`${formatNumber(stockSummary.lowStockCount)} low / ${formatNumber(stockSummary.expiryAlertCount)} expiry`} icon={AlertTriangle} color="from-amber-500 to-orange-500" />
               <StatCard title="Total Value" value={`₹${formatNumber(stockSummary.stockValue)}`} subtitle="at purchase price" icon={TrendingUp} color="from-blue-500 to-cyan-500" />
             </>
           )}

@@ -12,7 +12,8 @@ exports.createProduct = async (req, res) => {
       minStockLevel,
       purchasePrice,
       salePrice,
-      taxRate
+      taxRate,
+      trackExpiry
     } = req.body;
     const userId = req.userId;
 
@@ -68,7 +69,8 @@ exports.createProduct = async (req, res) => {
       minStockLevel: normalizedMinStockLevel,
       purchasePrice: Number(purchasePrice || 0),
       salePrice: Number(salePrice || 0),
-      taxRate: taxRate || 0
+      taxRate: taxRate || 0,
+      trackExpiry: Boolean(trackExpiry)
     });
 
     res.status(201).json({
@@ -96,7 +98,7 @@ exports.getAllProducts = async (req, res) => {
 
     let query = Product.find(filter)
       .populate('stockGroup', 'name')
-      .select('name unit stockGroup currentStock minStockLevel salePrice taxRate typeOfSupply');
+      .select('name unit stockGroup currentStock minStockLevel salePrice taxRate typeOfSupply trackExpiry');
 
     if (search) {
       query = query.where('name').regex(new RegExp(search, 'i'));
@@ -195,6 +197,9 @@ exports.updateProduct = async (req, res) => {
     }
     if (Object.prototype.hasOwnProperty.call(updateData, 'salePrice')) {
       updateData.salePrice = Number(updateData.salePrice || 0);
+    }
+    if (Object.prototype.hasOwnProperty.call(updateData, 'trackExpiry')) {
+      updateData.trackExpiry = Boolean(updateData.trackExpiry);
     }
 
     const product = await Product.findOneAndUpdate(

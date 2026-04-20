@@ -9,6 +9,11 @@ const TYPE_OF_SUPPLY_OPTIONS = [
   { value: 'services', label: 'Services' }
 ];
 
+const TRACK_EXPIRY_OPTIONS = [
+  { value: false, label: 'No' },
+  { value: true, label: 'Yes' }
+];
+
 const DEFAULT_UNIT_OPTIONS = ['pcs', 'kg', 'g', 'ltr', 'ml', 'box', 'hrs', 'minutes'];
 
 const getNormalizedTypeOfSupply = (value) => (
@@ -24,9 +29,13 @@ const getPopupInitialState = (initialName = '', product = null) => {
     : '';
   const resolvedUnit = String(product?.unit || 'pcs').trim() || 'pcs';
   const resolvedTypeOfSupply = getNormalizedTypeOfSupply(product?.typeOfSupply);
+  const resolvedTrackExpiry = Boolean(product?.trackExpiry);
   const typeOfSupplyQuery = TYPE_OF_SUPPLY_OPTIONS.find(
     (option) => option.value === resolvedTypeOfSupply
   )?.label || TYPE_OF_SUPPLY_OPTIONS[0].label;
+  const trackExpiryQuery = TRACK_EXPIRY_OPTIONS.find(
+    (option) => option.value === resolvedTrackExpiry
+  )?.label || TRACK_EXPIRY_OPTIONS[0].label;
 
   return {
     formData: {
@@ -36,10 +45,16 @@ const getPopupInitialState = (initialName = '', product = null) => {
       typeOfSupply: resolvedTypeOfSupply,
       minStockLevel: product?.minStockLevel ?? '',
       salePrice: product?.salePrice ?? '',
-      taxRate: product?.taxRate ?? 0
+      taxRate: product?.taxRate ?? 0,
+      trackExpiry: resolvedTrackExpiry
     },
     stockGroupQuery: resolvedStockGroupName,
     unitQuery: resolvedUnit,
+    trackExpiryQuery,
+    trackExpiryListIndex: Math.max(
+      TRACK_EXPIRY_OPTIONS.findIndex((option) => option.value === resolvedTrackExpiry),
+      0
+    ),
     typeOfSupplyQuery,
     typeOfSupplyListIndex: Math.max(
       TYPE_OF_SUPPLY_OPTIONS.findIndex((option) => option.value === resolvedTypeOfSupply),
@@ -76,6 +91,9 @@ export default function AddProductPopup({
   const [unitQuery, setUnitQuery] = useState(initialPopupState.unitQuery);
   const [unitListIndex, setUnitListIndex] = useState(-1);
   const [isUnitSectionActive, setIsUnitSectionActive] = useState(false);
+  const [trackExpiryQuery, setTrackExpiryQuery] = useState(initialPopupState.trackExpiryQuery);
+  const [trackExpiryListIndex, setTrackExpiryListIndex] = useState(initialPopupState.trackExpiryListIndex);
+  const [isTrackExpiryOpen, setIsTrackExpiryOpen] = useState(false);
   const [typeOfSupplyQuery, setTypeOfSupplyQuery] = useState(initialPopupState.typeOfSupplyQuery);
   const [typeOfSupplyListIndex, setTypeOfSupplyListIndex] = useState(initialPopupState.typeOfSupplyListIndex);
   const [isTypeOfSupplyOpen, setIsTypeOfSupplyOpen] = useState(false);
@@ -89,6 +107,8 @@ export default function AddProductPopup({
   const unitInputRef = useRef(null);
   const minStockInputRef = useRef(null);
   const salePriceInputRef = useRef(null);
+  const trackExpiryRef = useRef(null);
+  const trackExpirySectionRef = useRef(null);
   const typeOfSupplyRef = useRef(null);
   const typeOfSupplySectionRef = useRef(null);
   const editingId = product?._id || null;
@@ -190,6 +210,36 @@ export default function AddProductPopup({
     return selectedOption?.label || TYPE_OF_SUPPLY_OPTIONS[0].label;
   }, [formData.typeOfSupply]);
 
+  const selectedTrackExpiryLabel = useMemo(() => {
+    const selectedOption = TRACK_EXPIRY_OPTIONS.find(
+      (option) => option.value === Boolean(formData.trackExpiry)
+    );
+    return selectedOption?.label || TRACK_EXPIRY_OPTIONS[0].label;
+  }, [formData.trackExpiry]);
+
+  const filteredTrackExpiryOptions = useMemo(() => {
+    const normalized = normalizeText(trackExpiryQuery);
+    const normalizedSelected = normalizeText(selectedTrackExpiryLabel);
+
+    if (
+      isTrackExpiryOpen
+      && normalized
+      && normalized === normalizedSelected
+    ) {
+      return TRACK_EXPIRY_OPTIONS;
+    }
+
+    if (!normalized) return TRACK_EXPIRY_OPTIONS;
+
+    const startsWith = TRACK_EXPIRY_OPTIONS.filter((option) => normalizeText(option.label).startsWith(normalized));
+    const includes = TRACK_EXPIRY_OPTIONS.filter((option) => (
+      !normalizeText(option.label).startsWith(normalized)
+      && normalizeText(option.label).includes(normalized)
+    ));
+
+    return [...startsWith, ...includes];
+  }, [isTrackExpiryOpen, selectedTrackExpiryLabel, trackExpiryQuery]);
+
   const filteredTypeOfSupplyOptions = useMemo(() => {
     const normalized = normalizeText(typeOfSupplyQuery);
     const normalizedSelected = normalizeText(selectedTypeOfSupplyLabel);
@@ -234,6 +284,13 @@ export default function AddProductPopup({
     'down',
     'viewport'
   );
+  const trackExpiryDropdownStyle = useFloatingDropdownPosition(
+    trackExpirySectionRef,
+    isTrackExpiryOpen,
+    [filteredTrackExpiryOptions.length, trackExpiryListIndex],
+    'down',
+    'viewport'
+  );
 
   useEffect(() => {
     if (!showForm) {
@@ -246,6 +303,9 @@ export default function AddProductPopup({
       setUnitQuery(nextState.unitQuery);
       setUnitListIndex(-1);
       setIsUnitSectionActive(false);
+      setTrackExpiryQuery(nextState.trackExpiryQuery);
+      setTrackExpiryListIndex(nextState.trackExpiryListIndex);
+      setIsTrackExpiryOpen(false);
       setTypeOfSupplyQuery(nextState.typeOfSupplyQuery);
       setTypeOfSupplyListIndex(nextState.typeOfSupplyListIndex);
       setIsTypeOfSupplyOpen(false);
@@ -261,6 +321,9 @@ export default function AddProductPopup({
     setUnitQuery(nextState.unitQuery);
     setUnitListIndex(-1);
     setIsUnitSectionActive(false);
+    setTrackExpiryQuery(nextState.trackExpiryQuery);
+    setTrackExpiryListIndex(nextState.trackExpiryListIndex);
+    setIsTrackExpiryOpen(false);
     setTypeOfSupplyQuery(nextState.typeOfSupplyQuery);
     setTypeOfSupplyListIndex(nextState.typeOfSupplyListIndex);
     setIsTypeOfSupplyOpen(false);
@@ -323,6 +386,21 @@ export default function AddProductPopup({
       return prev;
     });
   }, [showForm, unitPanelOptions, isUnitSectionActive]);
+
+  useEffect(() => {
+    setTrackExpiryQuery(selectedTrackExpiryLabel);
+
+    if (!showForm) {
+      setTrackExpiryListIndex(0);
+      setIsTrackExpiryOpen(false);
+      return;
+    }
+
+    const selectedIndex = filteredTrackExpiryOptions.findIndex(
+      (option) => option.label === selectedTrackExpiryLabel
+    );
+    setTrackExpiryListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+  }, [filteredTrackExpiryOptions, selectedTrackExpiryLabel, showForm]);
 
   useEffect(() => {
     setTypeOfSupplyQuery(selectedTypeOfSupplyLabel);
@@ -407,14 +485,14 @@ export default function AddProductPopup({
   };
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+    const { name, value, type, checked } = event.target;
 
     if (name === 'minStockLevel' || name === 'salePrice' || name === 'taxRate') {
       setFormData((prev) => ({ ...prev, [name]: value }));
       return;
     }
 
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleStockGroupInputChange = (event) => {
@@ -590,6 +668,91 @@ export default function AddProductPopup({
     }
   };
 
+  const selectTrackExpiry = (option, moveNext = false) => {
+    if (!option) return;
+
+    setFormData((prev) => ({ ...prev, trackExpiry: Boolean(option.value) }));
+    setTrackExpiryQuery(option.label);
+    setTrackExpiryListIndex(
+      Math.max(filteredTrackExpiryOptions.findIndex((item) => item.value === option.value), 0)
+    );
+    setIsTrackExpiryOpen(false);
+
+    if (moveNext) {
+      requestAnimationFrame(() => {
+        typeOfSupplyRef.current?.focus();
+        typeOfSupplyRef.current?.select?.();
+      });
+    }
+  };
+
+  const handleTrackExpiryInputChange = (event) => {
+    const value = event.target.value;
+    setTrackExpiryQuery(value);
+    setIsTrackExpiryOpen(true);
+
+    const exactMatch = TRACK_EXPIRY_OPTIONS.find(
+      (option) => normalizeText(option.label) === normalizeText(value)
+    );
+
+    if (exactMatch) {
+      setFormData((prev) => ({ ...prev, trackExpiry: exactMatch.value }));
+    }
+  };
+
+  const handleTrackExpiryKeyDown = (event) => {
+    const key = event.key?.toLowerCase();
+
+    if (key === 'arrowdown') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsTrackExpiryOpen(true);
+      if (filteredTrackExpiryOptions.length === 0) return;
+      setTrackExpiryListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.min(prev + 1, filteredTrackExpiryOptions.length - 1);
+      });
+      return;
+    }
+
+    if (key === 'arrowup') {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsTrackExpiryOpen(true);
+      if (filteredTrackExpiryOptions.length === 0) return;
+      setTrackExpiryListIndex((prev) => {
+        if (prev < 0) return 0;
+        return Math.max(prev - 1, 0);
+      });
+      return;
+    }
+
+    if (key === 'escape' && isTrackExpiryOpen) {
+      event.preventDefault();
+      event.stopPropagation();
+      setTrackExpiryQuery(selectedTrackExpiryLabel);
+      setIsTrackExpiryOpen(false);
+      return;
+    }
+
+    if (key === 'enter') {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!isTrackExpiryOpen) {
+        setIsTrackExpiryOpen(true);
+        return;
+      }
+
+      const activeOption = trackExpiryListIndex >= 0 ? filteredTrackExpiryOptions[trackExpiryListIndex] : null;
+      const exactMatch = TRACK_EXPIRY_OPTIONS.find(
+        (option) => normalizeText(option.label) === normalizeText(trackExpiryQuery)
+      );
+      const matchedOption = activeOption || exactMatch || filteredTrackExpiryOptions[0] || TRACK_EXPIRY_OPTIONS[0];
+      selectTrackExpiry(matchedOption, true);
+    }
+  };
+
   const selectTypeOfSupply = (option, moveNext = false, submitAfterSelect = false) => {
     if (!option) return;
 
@@ -701,6 +864,24 @@ export default function AddProductPopup({
     }
   };
 
+  const handleSalePriceKeyDown = (event) => {
+    if (event.key !== 'Enter' || event.shiftKey) return;
+    event.preventDefault();
+    event.stopPropagation();
+
+    const selectedIndex = TRACK_EXPIRY_OPTIONS.findIndex(
+      (option) => option.value === Boolean(formData.trackExpiry)
+    );
+    setTrackExpiryQuery(selectedTrackExpiryLabel);
+    setTrackExpiryListIndex(selectedIndex >= 0 ? selectedIndex : 0);
+    setIsTrackExpiryOpen(true);
+
+    requestAnimationFrame(() => {
+      trackExpiryRef.current?.focus();
+      trackExpiryRef.current?.select?.();
+    });
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -729,7 +910,8 @@ export default function AddProductPopup({
         typeOfSupply: getNormalizedTypeOfSupply(formData.typeOfSupply),
         minStockLevel: Number(formData.minStockLevel || 0),
         salePrice: Number(formData.salePrice || 0),
-        taxRate: Number(formData.taxRate || 0)
+        taxRate: Number(formData.taxRate || 0),
+        trackExpiry: Boolean(formData.trackExpiry)
       };
 
       const response = isEditMode
@@ -759,6 +941,9 @@ export default function AddProductPopup({
         setUnitQuery(resetState.unitQuery);
         setUnitListIndex(-1);
         setIsUnitSectionActive(false);
+        setTrackExpiryQuery(resetState.trackExpiryQuery);
+        setTrackExpiryListIndex(resetState.trackExpiryListIndex);
+        setIsTrackExpiryOpen(false);
         setTypeOfSupplyQuery(resetState.typeOfSupplyQuery);
         setTypeOfSupplyListIndex(resetState.typeOfSupplyListIndex);
         setIsTypeOfSupplyOpen(false);
@@ -1070,11 +1255,100 @@ export default function AddProductPopup({
                         name="salePrice"
                         value={formData.salePrice}
                         onChange={handleChange}
+                        onKeyDown={handleSalePriceKeyDown}
                         min="0"
                         step="0.01"
                         className={getInlineFieldClass('emerald')}
                         placeholder="0.00"
                       />
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Track Expiry</label>
+                      <div
+                        ref={trackExpirySectionRef}
+                        className="relative min-w-0 flex-1"
+                        onBlurCapture={(event) => {
+                          const nextFocused = event.relatedTarget;
+                          if (
+                            trackExpirySectionRef.current
+                            && nextFocused instanceof Node
+                            && trackExpirySectionRef.current.contains(nextFocused)
+                          ) {
+                            return;
+                          }
+                          setTrackExpiryQuery(selectedTrackExpiryLabel);
+                          setIsTrackExpiryOpen(false);
+                        }}
+                      >
+                        <div className="relative">
+                          <input
+                            ref={trackExpiryRef}
+                            type="text"
+                            value={trackExpiryQuery}
+                            onChange={handleTrackExpiryInputChange}
+                            onFocus={() => {
+                              const selectedOption = TRACK_EXPIRY_OPTIONS.find(
+                                (option) => option.value === Boolean(formData.trackExpiry)
+                              ) || TRACK_EXPIRY_OPTIONS[0];
+                              setTrackExpiryQuery(selectedOption.label);
+                              setIsTrackExpiryOpen(true);
+                              setTrackExpiryListIndex(
+                                Math.max(filteredTrackExpiryOptions.findIndex((option) => option.value === selectedOption.value), 0)
+                              );
+                            }}
+                            onKeyDown={handleTrackExpiryKeyDown}
+                            className={`${getInlineFieldClass('emerald')} pr-10`}
+                            placeholder="Select yes or no"
+                          />
+                          <ChevronDown className={`pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500 transition-transform ${isTrackExpiryOpen ? 'rotate-180' : ''}`} />
+                        </div>
+
+                        {isTrackExpiryOpen && trackExpiryDropdownStyle && (
+                          <div
+                            className="fixed z-[90] overflow-hidden rounded-xl border border-amber-200 bg-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]"
+                            style={trackExpiryDropdownStyle}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <div className="flex items-center justify-between border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2">
+                              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-700">Track Expiry</span>
+                              <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-amber-700 shadow-sm">
+                                {filteredTrackExpiryOptions.length}
+                              </span>
+                            </div>
+                            <div className="overflow-y-auto py-1" style={{ maxHeight: trackExpiryDropdownStyle.maxHeight }}>
+                              {filteredTrackExpiryOptions.map((option, index) => {
+                                const isActive = index === trackExpiryListIndex;
+                                const isSelected = Boolean(formData.trackExpiry) === option.value;
+
+                                return (
+                                  <button
+                                    key={option.label}
+                                    type="button"
+                                    onMouseDown={(event) => event.preventDefault()}
+                                    onMouseEnter={() => setTrackExpiryListIndex(index)}
+                                    onClick={() => selectTrackExpiry(option, true)}
+                                    className={`flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-[13px] transition ${
+                                      isActive
+                                        ? 'bg-yellow-200 text-amber-950'
+                                        : isSelected
+                                        ? 'bg-yellow-50 text-amber-800'
+                                        : 'text-slate-700 hover:bg-amber-50'
+                                    }`}
+                                  >
+                                    <span className="truncate font-medium">{option.label}</span>
+                                    {isSelected && (
+                                      <span className="shrink-0 rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
+                                        Selected
+                                      </span>
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">

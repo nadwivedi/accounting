@@ -393,19 +393,21 @@ export default function AddPurchasePopup({
                       <p className="text-xs font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
                     </div>
                     <div className="flex-1 overflow-auto">
-                      <table className="w-full min-w-[720px] table-fixed text-[13px]">
+                      <table className="w-full min-w-[860px] table-fixed text-[13px]">
                         <colgroup>
-                          <col className="w-[34%]" />
-                          <col className="w-[10%]" />
-                          <col className="w-[10%]" />
-                          <col className="w-[21%]" />
-                          <col className="w-[25%]" />
+                          <col className="w-[30%]" />
+                          <col className="w-[9%]" />
+                          <col className="w-[9%]" />
+                          <col className="w-[16%]" />
+                          <col className="w-[16%]" />
+                          <col className="w-[20%]" />
                         </colgroup>
                         <thead className="bg-white text-gray-600">
                           <tr>
                             <th className="border-b border-r border-slate-400 px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider">Product</th>
                             <th className="border-b border-r border-slate-400 px-3 py-2 pr-12 text-right text-[11px] font-semibold uppercase tracking-wider">Qty</th>
                             <th className="border-b border-r border-slate-400 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider">Per</th>
+                            <th className="border-b border-r border-slate-400 px-3 py-2 text-center text-[11px] font-semibold uppercase tracking-wider">Expiry</th>
                             <th className="border-b border-r border-slate-400 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Price</th>
                             <th className="border-b border-r border-slate-400 px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider">Total</th>
                           </tr>
@@ -458,6 +460,19 @@ export default function AddPurchasePopup({
                                   )}
                                 </td>
                                 <td className="border-r border-slate-400 px-3 py-2">
+                                  {item.trackExpiry || item.expiryDate ? (
+                                    <input
+                                      type="date"
+                                      value={item.expiryDate || ''}
+                                      onChange={(e) => handleItemChange(index, 'expiryDate', e.target.value)}
+                                      onKeyDown={handleSelectEnterMoveNext}
+                                      className="w-full bg-transparent px-1 py-1 text-center text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                    />
+                                  ) : (
+                                    <span className="block text-center text-slate-400">-</span>
+                                  )}
+                                </td>
+                                <td className="border-r border-slate-400 px-3 py-2">
                                   <input
                                     type="number"
                                     value={item.unitPrice}
@@ -487,7 +502,7 @@ export default function AddPurchasePopup({
                           {isItemEntryClosed ? (
                             <>
                               <tr className="bg-emerald-50/40">
-                                <td colSpan={4} className="border-t border-emerald-200 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-emerald-800">
+                                <td colSpan={5} className="border-t border-emerald-200 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-emerald-800">
                                   Total Amount
                                 </td>
                                 <td className="border-t border-emerald-200 px-3 py-3 text-right text-sm font-bold text-emerald-900">
@@ -497,7 +512,7 @@ export default function AddPurchasePopup({
                               {!isCashParty && (
                                 <>
                                   <tr className="bg-white">
-                                    <td colSpan={4} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
+                                    <td colSpan={5} className="border-t border-emerald-100 px-3 py-3 text-right text-[12px] font-bold uppercase tracking-wide text-slate-700">
                                       Paid Amount
                                     </td>
                                     <td className="border-t border-emerald-100 px-3 py-2">
@@ -522,7 +537,7 @@ export default function AddPurchasePopup({
                                     </td>
                                   </tr>
                                   <tr className="bg-slate-50/50">
-                                    <td colSpan={4} className="px-3 py-2 text-right text-[11px] font-bold uppercase tracking-wide text-gray-500">
+                                    <td colSpan={5} className="px-3 py-2 text-right text-[11px] font-bold uppercase tracking-wide text-gray-500">
                                       Balance
                                     </td>
                                     <td className="px-3 py-2 text-right text-sm font-bold text-gray-700">
@@ -673,6 +688,21 @@ export default function AddPurchasePopup({
                                 ) : (
                                   <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-medium text-gray-700">
                                     {currentItemUnit}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-3 py-2.5">
+                                {currentItem.trackExpiry ? (
+                                  <input
+                                    type="date"
+                                    value={currentItem.expiryDate || ''}
+                                    onChange={(e) => setCurrentItem({ ...currentItem, expiryDate: e.target.value })}
+                                    onKeyDown={handleSelectEnterMoveNext}
+                                    className={`${inputClass} text-center focus:ring-emerald-500`}
+                                  />
+                                ) : (
+                                  <div className="rounded-lg border border-emerald-100 bg-white px-2.5 py-1.5 text-center text-slate-400">
+                                    -
                                   </div>
                                 )}
                               </td>

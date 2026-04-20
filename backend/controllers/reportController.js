@@ -1395,12 +1395,16 @@ exports.getStockLedger = async (req, res) => {
     withDateFilters(purchaseReturnFilter, 'voucherDate', fromDate, toDate);
     withDateFilters(saleReturnFilter, 'voucherDate', fromDate, toDate);
 
-    const [purchases, sales, purchaseReturns, saleReturns, products] = await Promise.all([
-      Purchase.find(purchaseFilter).populate('items.product', 'name'),
-      Sale.find(saleFilter).populate('items.product', 'name'),
-      PurchaseReturn.find(purchaseReturnFilter).populate('items.product', 'name'),
-      SaleReturn.find(saleReturnFilter).populate('items.product', 'name'),
-      Product.find({ userId }, 'name currentStock')
+    const [purchases, sales, purchaseReturns, saleReturns, products, fifoPurchases, fifoSales, fifoPurchaseReturns, fifoSaleReturns] = await Promise.all([
+      Purchase.find(purchaseFilter).populate('items.product', 'name unit trackExpiry'),
+      Sale.find(saleFilter).populate('items.product', 'name unit trackExpiry'),
+      PurchaseReturn.find(purchaseReturnFilter).populate('items.product', 'name unit trackExpiry'),
+      SaleReturn.find(saleReturnFilter).populate('items.product', 'name unit trackExpiry'),
+      Product.find({ userId }, 'name currentStock minStockLevel unit purchasePrice salePrice trackExpiry'),
+      Purchase.find({ userId }).select('items purchaseDate purchaseNumber createdAt').populate('items.product', 'name unit trackExpiry'),
+      Sale.find({ userId }).select('items saleDate invoiceNumber createdAt').populate('items.product', 'name unit trackExpiry'),
+      PurchaseReturn.find({ userId }).select('items voucherDate voucherNumber createdAt').populate('items.product', 'name unit trackExpiry'),
+      SaleReturn.find({ userId }).select('items voucherDate voucherNumber createdAt').populate('items.product', 'name unit trackExpiry')
     ]);
 
     const partyNameMap = await getPartyNameMap(userId, [
@@ -1434,6 +1438,7 @@ exports.getStockLedger = async (req, res) => {
           productName: item.product.name,
           inQty: toNumber(item.quantity),
           outQty: 0,
+          expiryDate: item.expiryDate || null,
           note: purchase.notes || ''
         });
       });
@@ -1527,17 +1532,179 @@ exports.getStockLedger = async (req, res) => {
       };
     });
 
+    const buildExpirySnapshot = () => {
+      const productMap = new Map(products.map((product) => [String(product._id), product]));
+      const lotsByProduct = new Map();
+      const getProductId = (item) => String(item.product?._id || item.product || '');
+      const getEntryTime = (dateValue, createdAtValue) => {
+        const dateTime = new Date(dateValue).getTime() || 0;
+        const createdTime = new Date(createdAtValue || dateValue).getTime() || 0;
+        return { dateTime, createdTime };
+      };
+
+      fifoPurchases.forEach((purchase) => {
+        (purchase.items || []).forEach((item, itemIndex) => {
+          const productKey = getProductId(item);
+          const product = productMap.get(productKey);
+          const expiryDate = item.expiryDate ? new Date(item.expiryDate) : null;
+          const quantity = toNumber(item.quantity);
+          if (!productKey || !product?.trackExpiry || !expiryDate || Number.isNaN(expiryDate.getTime()) || quantity <= 0) return;
+
+          if (!lotsByProduct.has(productKey)) {
+            lotsByProduct.set(productKey, []);
+          }
+
+          const entryTime = getEntryTime(purchase.purchaseDate, purchase.createdAt);
+          lotsByProduct.get(productKey).push({
+            productId: productKey,
+            expiryDate,
+            remainingQty: quantity,
+            dateTime: entryTime.dateTime,
+            createdTime: entryTime.createdTime,
+            itemIndex
+          });
+        });
+      });
+
+      lotsByProduct.forEach((lots) => {
+        lots.sort((a, b) => (
+          a.dateTime - b.dateTime
+          || a.createdTime - b.createdTime
+          || a.itemIndex - b.itemIndex
+        ));
+      });
+
+      const fifoMovements = [];
+      const pushMovement = (entry, dateField, direction) => {
+        (entry.items || []).forEach((item, itemIndex) => {
+          const productKey = getProductId(item);
+          const quantity = toNumber(item.quantity);
+          if (!productKey || quantity <= 0) return;
+          const product = productMap.get(productKey);
+          if (!product?.trackExpiry) return;
+
+          const entryTime = getEntryTime(entry[dateField], entry.createdAt);
+          fifoMovements.push({
+            productId: productKey,
+            quantity,
+            direction,
+            dateTime: entryTime.dateTime,
+            createdTime: entryTime.createdTime,
+            itemIndex
+          });
+        });
+      };
+
+      fifoSales.forEach((sale) => pushMovement(sale, 'saleDate', 'out'));
+      fifoPurchaseReturns.forEach((purchaseReturn) => pushMovement(purchaseReturn, 'voucherDate', 'out'));
+      fifoSaleReturns.forEach((saleReturn) => pushMovement(saleReturn, 'voucherDate', 'in'));
+
+      fifoMovements.sort((a, b) => (
+        a.dateTime - b.dateTime
+        || a.createdTime - b.createdTime
+        || a.itemIndex - b.itemIndex
+      ));
+
+      const consumedByProduct = new Map();
+
+      fifoMovements.forEach((movement) => {
+        if (movement.direction === 'in') {
+          let quantityToRestore = movement.quantity;
+          const consumedLots = consumedByProduct.get(movement.productId) || [];
+
+          while (quantityToRestore > 0 && consumedLots.length > 0) {
+            const lastConsumed = consumedLots[consumedLots.length - 1];
+            const restoredQty = Math.min(lastConsumed.quantity, quantityToRestore);
+            lastConsumed.lot.remainingQty += restoredQty;
+            lastConsumed.quantity -= restoredQty;
+            quantityToRestore -= restoredQty;
+
+            if (lastConsumed.quantity <= 0) {
+              consumedLots.pop();
+            }
+          }
+          return;
+        }
+
+        let quantityToConsume = movement.quantity;
+        const lots = lotsByProduct.get(movement.productId) || [];
+
+        for (const lot of lots) {
+          if (quantityToConsume <= 0) break;
+          if (lot.remainingQty <= 0) continue;
+          const consumedQty = Math.min(lot.remainingQty, quantityToConsume);
+          lot.remainingQty -= consumedQty;
+          quantityToConsume -= consumedQty;
+
+          if (!consumedByProduct.has(movement.productId)) {
+            consumedByProduct.set(movement.productId, []);
+          }
+          consumedByProduct.get(movement.productId).push({ lot, quantity: consumedQty });
+        }
+      });
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const alertUntil = new Date(today);
+      alertUntil.setDate(alertUntil.getDate() + 30);
+      const snapshot = new Map();
+
+      lotsByProduct.forEach((lots, productKey) => {
+        const remainingLots = lots
+          .filter((lot) => lot.remainingQty > 0)
+          .sort((a, b) => a.expiryDate - b.expiryDate);
+        const expiredLots = remainingLots.filter((lot) => lot.expiryDate < today);
+        const expiringLots = remainingLots.filter((lot) => lot.expiryDate >= today && lot.expiryDate <= alertUntil);
+        const nearestLot = remainingLots[0] || null;
+        const nearestExpiryDate = nearestLot?.expiryDate || null;
+        const sameExpiryQty = nearestExpiryDate
+          ? remainingLots
+            .filter((lot) => lot.expiryDate.toISOString().slice(0, 10) === nearestExpiryDate.toISOString().slice(0, 10))
+            .reduce((sum, lot) => sum + toNumber(lot.remainingQty), 0)
+          : 0;
+
+        snapshot.set(productKey, {
+          nearestExpiryDate,
+          nearestExpiryQty: sameExpiryQty,
+          expiryDaysLeft: nearestExpiryDate ? Math.ceil((nearestExpiryDate - today) / 86400000) : null,
+          expiredQty: expiredLots.reduce((sum, lot) => sum + toNumber(lot.remainingQty), 0),
+          expiringQty30: expiringLots.reduce((sum, lot) => sum + toNumber(lot.remainingQty), 0),
+          expiryStatus: expiredLots.length > 0
+            ? 'expired'
+            : expiringLots.length > 0
+              ? 'expiring-soon'
+              : nearestLot
+                ? 'ok'
+                : 'none'
+        });
+      });
+
+      return snapshot;
+    };
+
+    const expirySnapshot = buildExpirySnapshot();
+
     const currentStock = products
       .filter((p) => (!productId || String(p._id) === String(productId)))
-      .map((p) => ({
-        productId: p._id,
-        productName: p.name,
-        currentStock: toNumber(p.currentStock),
-        minStockLevel: toNumber(p.minStockLevel || 0),
-        unit: p.unit || 'pcs',
-        purchasePrice: toNumber(p.purchasePrice || 0),
-        salePrice: toNumber(p.salePrice || 0)
-      }));
+      .map((p) => {
+        const expiry = expirySnapshot.get(String(p._id)) || {};
+        return {
+          productId: p._id,
+          productName: p.name,
+          currentStock: toNumber(p.currentStock),
+          minStockLevel: toNumber(p.minStockLevel || 0),
+          unit: p.unit || 'pcs',
+          purchasePrice: toNumber(p.purchasePrice || 0),
+          salePrice: toNumber(p.salePrice || 0),
+          trackExpiry: Boolean(p.trackExpiry),
+          nearestExpiryDate: expiry.nearestExpiryDate || null,
+          nearestExpiryQty: toNumber(expiry.nearestExpiryQty),
+          expiryDaysLeft: expiry.expiryDaysLeft ?? null,
+          expiredQty: toNumber(expiry.expiredQty),
+          expiringQty30: toNumber(expiry.expiringQty30),
+          expiryStatus: expiry.expiryStatus || (p.trackExpiry ? 'none' : 'not-tracked')
+        };
+      });
 
     res.status(200).json({
       success: true,
