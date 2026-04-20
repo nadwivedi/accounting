@@ -11,14 +11,13 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 2,
   })}`;
 
-/** DD-MM-YYYY for date banner headings */
+/** DD-MM-YYYY banner heading */
 const formatDateBanner = (isoKey) => {
-  // isoKey is "YYYY-MM-DD"
   const [yyyy, mm, dd] = isoKey.split('-');
   return `${dd}-${mm}-${yyyy}`;
 };
 
-/** Canonical YYYY-MM-DD key for grouping (uses entry.date or entryCreatedAt) */
+/** Canonical YYYY-MM-DD key for grouping */
 const getDateKey = (entry) => {
   const raw = entry?.date || entry?.entryCreatedAt || '';
   const d = new Date(raw);
@@ -68,7 +67,7 @@ const TYPE_BADGE = {
 };
 
 /* ──────────────────────────────────────────────
-   Sub-components
+   StatCard
 ────────────────────────────────────────────── */
 function StatCard({ title, value, icon: Icon, tone }) {
   return (
@@ -90,59 +89,62 @@ function StatCard({ title, value, icon: Icon, tone }) {
   );
 }
 
-/** One complete table (header + rows) for a single date */
+/* ──────────────────────────────────────────────
+   DayTable — one complete mini-table per date
+   (same style as VahanDashboard expiry table)
+────────────────────────────────────────────── */
 function DayTable({ dateKey, entries }) {
   return (
-    <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      {/* ── Date banner ── */}
-      <div className="flex items-center gap-3 bg-gradient-to-r from-slate-700 to-slate-800 px-5 py-3">
-        <span className="text-base font-bold tracking-wide text-white">
+    <div className="mb-4 overflow-hidden rounded-lg border border-gray-200 bg-white">
+      {/* Date banner */}
+      <div className="flex items-center gap-2 bg-gray-800 px-3 py-2">
+        <span className="text-sm font-bold text-white">
           📅 {formatDateBanner(dateKey)}
         </span>
-        <span className="rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-semibold text-slate-200">
+        <span className="rounded bg-white/20 px-2 py-0.5 text-[11px] font-semibold text-gray-300">
           {entries.length} {entries.length === 1 ? 'entry' : 'entries'}
         </span>
       </div>
 
-      {/* ── Table with its own header ── */}
+      {/* Table — header + rows */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[820px]">
-          <thead>
-            <tr className="bg-[linear-gradient(135deg,#0f766e_0%,#0d9488_38%,#0891b2_72%,#0284c7_100%)] text-white">
-              <th className="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-[0.14em]">Type</th>
-              <th className="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-[0.14em]">Ref #</th>
-              <th className="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-[0.14em]">Party</th>
-              <th className="px-4 py-2.5 text-left text-xs font-bold uppercase tracking-[0.14em]">Method</th>
-              <th className="px-4 py-2.5 text-right text-xs font-bold uppercase tracking-[0.14em]">Amount</th>
-              <th className="px-4 py-2.5 text-right text-xs font-bold uppercase tracking-[0.14em]">In</th>
-              <th className="px-4 py-2.5 text-right text-xs font-bold uppercase tracking-[0.14em]">Out</th>
+        <table className="w-full">
+          <thead className="border-b border-gray-200 bg-gray-50">
+            <tr>
+              <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600">Type</th>
+              <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600">Ref #</th>
+              <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600">Party</th>
+              <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600">Method</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-gray-600">Amount</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-gray-600">In</th>
+              <th className="px-3 py-2 text-right text-[11px] font-semibold uppercase tracking-wider text-gray-600">Out</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-gray-200">
             {entries.map((entry, idx) => {
-              const badge = TYPE_BADGE[entry.type] || 'bg-slate-100 text-slate-700';
+              const badge = TYPE_BADGE[entry.type] || 'bg-gray-100 text-gray-700';
               return (
                 <tr
                   key={`${entry.refId || entry.voucherNumber || entry.type}-${idx}`}
-                  className="transition-colors hover:bg-slate-50"
+                  className="transition-colors hover:bg-gray-50"
                 >
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${badge}`}>
+                  <td className="px-3 py-2">
+                    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${badge}`}>
                       {entry.label || entry.displayType || entry.type || '-'}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-xs font-semibold text-slate-700">
+                  <td className="px-3 py-2 text-xs font-semibold text-gray-800">
                     {entry.voucherNumber || '-'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{entry.partyName || '-'}</td>
-                  <td className="px-4 py-3 text-sm text-slate-700">{entry.method || '-'}</td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold text-slate-700">
+                  <td className="px-3 py-2 text-xs text-gray-800">{entry.partyName || '-'}</td>
+                  <td className="px-3 py-2 text-xs text-gray-800">{entry.method || '-'}</td>
+                  <td className="px-3 py-2 text-right text-xs font-semibold text-gray-800">
                     {Number(entry.amount || 0) > 0 ? formatCurrency(entry.amount) : '-'}
                   </td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold text-emerald-600">
+                  <td className="px-3 py-2 text-right text-xs font-bold text-emerald-600">
                     {Number(entry.inAmount || 0) > 0 ? formatCurrency(entry.inAmount) : '-'}
                   </td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold text-rose-600">
+                  <td className="px-3 py-2 text-right text-xs font-bold text-red-600">
                     {Number(entry.outAmount || 0) > 0 ? formatCurrency(entry.outAmount) : '-'}
                   </td>
                 </tr>
@@ -167,7 +169,7 @@ export default function HomeDayBookPanel() {
     const loadDayBook = async () => {
       try {
         setLoading(true);
-        // No date params → backend returns ALL records (withDateFilters skips when both are absent)
+        // No date params → backend returns ALL records (withDateFilters skips when both absent)
         const response = await apiClient.get('/reports/day-book');
         setEntries(response?.data?.entries || []);
         setError('');
@@ -228,8 +230,10 @@ export default function HomeDayBookPanel() {
 
         {/* Date-grouped tables */}
         {loading ? (
-          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-12 text-center text-sm font-medium text-slate-500">
-            Loading day book...
+          <div className="space-y-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-12 animate-pulse rounded-lg bg-gray-100" />
+            ))}
           </div>
         ) : groupedByDate.size > 0 ? (
           <div>
@@ -238,12 +242,12 @@ export default function HomeDayBookPanel() {
             ))}
           </div>
         ) : (
-          <div className="flex flex-col items-center rounded-2xl border border-slate-200 bg-white px-4 py-14 text-center">
-            <div className="rounded-full bg-slate-100 p-4">
-              <BookText className="h-7 w-7 text-slate-400" />
+          <div className="flex flex-col items-center rounded-lg border border-gray-200 bg-white px-4 py-14 text-center">
+            <div className="rounded-full bg-gray-100 p-4">
+              <BookText className="h-7 w-7 text-gray-400" />
             </div>
-            <p className="mt-4 text-base font-semibold text-slate-700">No day book entries found</p>
-            <p className="mt-1 text-sm text-slate-500">New vouchers will appear here automatically.</p>
+            <p className="mt-4 text-base font-semibold text-gray-700">No day book entries found</p>
+            <p className="mt-1 text-sm text-gray-500">New vouchers will appear here automatically.</p>
           </div>
         )}
       </div>
