@@ -1168,6 +1168,18 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     navigate(location.pathname, { replace: true, state: {} });
   }, [location.pathname, location.state, navigate, showForm]);
 
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this sale?')) {
+      try {
+        await apiClient.delete(`/sales/${id}`);
+        toast.success('Sale deleted successfully', toastOptions);
+        fetchSales();
+      } catch (err) {
+        setError(err.message || 'Error deleting sale');
+      }
+    }
+  };
+
   const handleCancel = () => {
     setShowPartyForm(false);
     setShowProductForm(false);
@@ -1529,6 +1541,12 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                         className="inline-flex items-center justify-center rounded-md border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
                       >
                         Edit
+                      </button>
+                      <button
+                        onClick={() => handleDelete(sale._id)}
+                        className="inline-flex items-center justify-center rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50"
+                      >
+                        Delete
                       </button>
                       </div>
                     </td>

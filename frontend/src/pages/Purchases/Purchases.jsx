@@ -1857,13 +1857,13 @@ export default function Purchases({ modalOnly = false, onModalFinish = null }) {
                         <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleEdit(purchase)}
-                          className="inline-flex items-center justify-center rounded-md border border-blue-200 bg-white px-3 py-1.5 text-xs font-medium text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+                          className="inline-flex items-center justify-center rounded-md border border-blue-200 bg-white px-2.5 py-1 text-[11px] font-medium text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
                         >
                           Edit
                         </button>
                         <button
                           onClick={() => handleDelete(purchase._id)}
-                          className="inline-flex items-center justify-center rounded-md border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50"
+                          className="inline-flex items-center justify-center rounded-md border border-red-200 bg-white px-2.5 py-1 text-[11px] font-medium text-red-700 shadow-sm transition hover:border-red-300 hover:bg-red-50"
                         >
                           Delete
                         </button>
