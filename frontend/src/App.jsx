@@ -33,6 +33,7 @@ import Settings from './pages/Settings';
 import ExpenseReport from './pages/ExpenseReport';
 import PaymentReport from './pages/PaymentReport';
 import CashflowDashboard from './pages/CashflowDashboard';
+import AuditLog from './pages/AuditLog';
 import { AddPaymentPopupLauncher } from './pages/Payments/component/AddPaymentPopup';
 import ProtectedRoute from './components/ProtectedRoute';
 import SectionHubPage from './components/SectionHubPage';
@@ -297,6 +298,15 @@ function App() {
                 title="Profit And Loss Report"
                 description="Profit and loss statement will be shown here after the report is implemented."
               />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/audit-log"
+          element={
+            <ProtectedRoute>
+              <AuditLog />
             </ProtectedRoute>
           }
         />

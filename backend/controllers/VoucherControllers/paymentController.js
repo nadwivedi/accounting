@@ -5,6 +5,7 @@ const {
   ensureSequentialNumbersForUser,
   parsePrefixedNumberSearch
 } = require('../../utils/voucherNumbers');
+const { createAuditLog } = require('../../utils/auditLogger');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -113,6 +114,17 @@ exports.createPayment = async (req, res) => {
 
     const savedPayment = await Payment.findById(payment._id).populate('party', 'name');
 
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'CREATE',
+      module: 'Payment',
+      refId: payment._id,
+      refLabel: `Pay-${String(payment.paymentNumber).padStart(2, '0')}`,
+      before: null,
+      after: savedPayment
+    });
+
     res.status(201).json({
       success: true,
       message: 'Payment created successfully',
@@ -195,6 +207,7 @@ exports.updatePayment = async (req, res) => {
     if (!existingPayment) {
       return res.status(404).json({ success: false, message: 'Payment not found' });
     }
+    const beforeSnapshot = existingPayment.toObject();
 
     const amountNumber = toNumber(amount, NaN);
     if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
@@ -244,6 +257,17 @@ exports.updatePayment = async (req, res) => {
     await existingPayment.save();
 
     const savedPayment = await Payment.findById(existingPayment._id).populate('party', 'name');
+
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'UPDATE',
+      module: 'Payment',
+      refId: existingPayment._id,
+      refLabel: `Pay-${String(existingPayment.paymentNumber).padStart(2, '0')}`,
+      before: beforeSnapshot,
+      after: savedPayment
+    });
 
     res.status(200).json({
       success: true,

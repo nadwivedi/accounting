@@ -6,6 +6,7 @@ const {
   ensureSequentialNumbersForUser,
   parsePrefixedNumberSearch
 } = require('../../utils/voucherNumbers');
+const { createAuditLog } = require('../../utils/auditLogger');
 
 
 
@@ -190,6 +191,18 @@ exports.createPurchase = async (req, res) => {
 
 
     const populatedPurchase = await Purchase.findById(purchase._id).populate('items.product', 'name unit trackExpiry');
+
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'CREATE',
+      module: 'Purchase',
+      refId: purchase._id,
+      refLabel: `Pur-${String(purchase.purchaseNumber).padStart(2, '0')}`,
+      before: null,
+      after: populatedPurchase
+    });
+
     res.status(201).json({ success: true, message: 'Purchase created successfully', data: populatedPurchase });
   } catch (error) {
     if (isDuplicatePurchaseInvoiceError(error)) {
@@ -283,6 +296,9 @@ exports.updatePurchase = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Purchase not found' });
     }
 
+    // Capture before-snapshot for audit
+    const beforeSnapshot = purchase.toObject();
+
     if (party) purchase.party = party;
 
     const hasNewItems = Array.isArray(items);
@@ -345,6 +361,17 @@ exports.updatePurchase = async (req, res) => {
       .populate('party', 'name')
       .populate('items.product', 'name unit trackExpiry');
 
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'UPDATE',
+      module: 'Purchase',
+      refId: id,
+      refLabel: `Pur-${String(purchase.purchaseNumber).padStart(2, '0')}`,
+      before: beforeSnapshot,
+      after: updatedPurchase
+    });
+
     res.status(200).json({ success: true, message: 'Purchase updated successfully', data: updatedPurchase });
   } catch (error) {
     if (isDuplicatePurchaseInvoiceError(error)) {
@@ -372,6 +399,17 @@ exports.deletePurchase = async (req, res) => {
 
     // Delete all payments linked to this purchase
     await Payment.deleteMany({ userId, refId: purchase._id, refType: 'purchase' });
+
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'DELETE',
+      module: 'Purchase',
+      refId: purchase._id,
+      refLabel: `Pur-${String(purchase.purchaseNumber).padStart(2, '0')}`,
+      before: purchase.toObject(),
+      after: null
+    });
 
     res.status(200).json({ success: true, message: 'Purchase deleted successfully' });
   } catch (error) {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, Boxes, CreditCard, FileBarChart, Package, ReceiptText, RefreshCw, ShoppingCart, TrendingUp, Wallet } from 'lucide-react';
+import { BookOpen, Boxes, CreditCard, FileBarChart, Package, ReceiptText, RefreshCw, ShoppingCart, ShieldCheck, TrendingUp, Wallet } from 'lucide-react';
 import { getSectionConfig } from '../navigation/sectionMenu';
 
 const REPORT_ITEMS = [
@@ -16,7 +16,8 @@ const REPORT_ITEMS = [
   { name: 'Payment Report', path: '/reports/payment-report', Icon: CreditCard },
   { name: 'Receipt Report', path: '/reports/receipt-report', Icon: ReceiptText },
   { name: 'Expense Report', path: '/reports/expense-report', Icon: ReceiptText },
-  { name: 'Profit And Loss Report', path: '/reports/profit-loss-report', Icon: FileBarChart }
+  { name: 'Profit And Loss Report', path: '/reports/profit-loss-report', Icon: FileBarChart },
+  { name: 'Audit Log', path: '/reports/audit-log', Icon: ShieldCheck }
 ];
 
 export default function ReportsHub() {

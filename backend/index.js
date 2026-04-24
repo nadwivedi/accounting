@@ -29,6 +29,7 @@ const saleDiscountRoutes = require('./routes/VoucherRoutes/saleDiscountRoutes');
 const purchaseDiscountRoutes = require('./routes/VoucherRoutes/purchaseDiscountRoutes');
 const reportRoutes = require('./routes/reportRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const auditLogRoutes = require('./routes/auditLogRoutes');
 
 const app = express();
 
@@ -67,6 +68,7 @@ app.use('/api/sale-discounts', saleDiscountRoutes);
 app.use('/api/purchase-discounts', purchaseDiscountRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/uploads', uploadRoutes);
+app.use('/api/audit-logs', auditLogRoutes);
 
 const PORT = process.env.PORT || 5000;
 const startServer = async () => {

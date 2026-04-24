@@ -5,6 +5,7 @@ const {
   ensureSequentialNumbersForUser,
   parsePrefixedNumberSearch
 } = require('../../utils/voucherNumbers');
+const { createAuditLog } = require('../../utils/auditLogger');
 
 const toNumber = (value, fallback = 0) => {
   const parsed = Number(value);
@@ -113,6 +114,17 @@ exports.createReceipt = async (req, res) => {
 
     const savedReceipt = await Receipt.findById(receipt._id);
 
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'CREATE',
+      module: 'Receipt',
+      refId: receipt._id,
+      refLabel: `Rec-${String(receipt.receiptNumber).padStart(2, '0')}`,
+      before: null,
+      after: savedReceipt
+    });
+
     res.status(201).json({
       success: true,
       message: 'Receipt created successfully',
@@ -194,6 +206,7 @@ exports.updateReceipt = async (req, res) => {
     if (!existingReceipt) {
       return res.status(404).json({ success: false, message: 'Receipt not found' });
     }
+    const beforeSnapshot = existingReceipt.toObject();
 
     const amountNumber = toNumber(amount, NaN);
     if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
@@ -243,6 +256,17 @@ exports.updateReceipt = async (req, res) => {
     await existingReceipt.save();
 
     const savedReceipt = await Receipt.findById(existingReceipt._id);
+
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'UPDATE',
+      module: 'Receipt',
+      refId: existingReceipt._id,
+      refLabel: `Rec-${String(existingReceipt.receiptNumber).padStart(2, '0')}`,
+      before: beforeSnapshot,
+      after: savedReceipt
+    });
 
     res.status(200).json({
       success: true,

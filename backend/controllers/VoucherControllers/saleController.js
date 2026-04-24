@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const fs = require('fs');
 const { createSaleInvoicePdf, getSaleInvoiceAbsolutePath } = require('../../utils/saleInvoicePdf');
 const { ensureSequentialNumbersForUser } = require('../../utils/voucherNumbers');
+const { createAuditLog } = require('../../utils/auditLogger');
 
 const SALE_TYPES = {
   CASH: 'cash',
@@ -201,6 +202,17 @@ exports.createSale = async (req, res) => {
     // balance = totalAmount - paidAmount (computed, never stored; can be negative = overpayment)
     // No auto-receipts are created – receipts are always created manually.
 
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'CREATE',
+      module: 'Sale',
+      refId: populatedSale._id,
+      refLabel: populatedSale.invoiceNumber || String(populatedSale._id),
+      before: null,
+      after: populatedSale
+    });
+
     res.status(201).json({ success: true, message: 'Sale created successfully', data: populatedSale });
   } catch (error) {
     if (isDuplicateSaleInvoiceError(error)) {
@@ -297,6 +309,8 @@ exports.updateSale = async (req, res) => {
     if (!existingSale) {
       return res.status(404).json({ success: false, message: 'Sale not found' });
     }
+    // Capture before-snapshot for audit
+    const beforeSnapshot = existingSale.toObject();
 
     const nextItems = Array.isArray(items)
       ? items.map((item) => ({
@@ -402,6 +416,17 @@ exports.updateSale = async (req, res) => {
     // balance = totalAmount - paidAmount (computed on the fly, never stored)
     await ensureSaleInvoicePdf(sale);
 
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'UPDATE',
+      module: 'Sale',
+      refId: id,
+      refLabel: sale.invoiceNumber || String(id),
+      before: beforeSnapshot,
+      after: sale
+    });
+
     res.status(200).json({ success: true, message: 'Sale updated successfully', data: sale });
   } catch (error) {
     console.error('Update sale error:', error);
@@ -429,6 +454,17 @@ exports.deleteSale = async (req, res) => {
 
     // Delete manual receipts that were specifically linked to this sale invoice
     await Receipt.deleteMany({ userId, refType: 'sale', refId: sale._id });
+
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'DELETE',
+      module: 'Sale',
+      refId: sale._id,
+      refLabel: sale.invoiceNumber || String(sale._id),
+      before: sale.toObject(),
+      after: null
+    });
 
     res.status(200).json({ success: true, message: 'Sale deleted successfully' });
   } catch (error) {
