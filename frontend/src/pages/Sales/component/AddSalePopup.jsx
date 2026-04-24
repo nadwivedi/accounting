@@ -693,48 +693,27 @@ export default function AddSalePopup({
           </div>
 
           <div className="border-t border-gray-200 bg-gray-50 px-3 py-3 md:px-4 md:py-3">
-            <div className="flex flex-col gap-3">
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
-                <div className="rounded-xl border border-emerald-200 bg-white px-3 py-2.5">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Total Amount</p>
-                  <p className="mt-1 text-base font-bold text-emerald-700 md:text-lg">
-                    Rs {Number(formData.totalAmount || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
-                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Paid Amount</p>
-                  <p className="mt-1 text-base font-bold text-slate-800 md:text-lg">
-                    Rs {Number(isCashParty ? formData.totalAmount || 0 : formData.paidAmount || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div className={`rounded-xl border px-3 py-2.5 ${balanceColor}`}>
-                  <p className="text-[11px] font-bold uppercase tracking-wide">{balanceLabel}</p>
-                  <p className="mt-1 text-base font-bold md:text-lg">{balanceDisplay}</p>
-                </div>
+            <div className="flex flex-col items-center justify-between gap-2 md:flex-row">
+              <div className="hidden text-[11px] text-gray-600 md:block md:text-xs">
+                <kbd className="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-[10px]">Esc</kbd> to close
               </div>
 
-              <div className="flex flex-col items-center justify-between gap-2 md:flex-row">
-                <div className="hidden text-[11px] text-gray-600 md:block md:text-xs">
-                  <kbd className="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-[10px]">Esc</kbd> to close
-                </div>
-
-                <div className="flex w-full gap-2 md:w-auto">
-                  <button
-                    type="button"
-                    onClick={handleCancel}
-                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    form="sales-form"
-                    disabled={loading}
-                    className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
-                  >
-                    {loading ? 'Saving...' : editingId ? 'Update Sale' : 'Save Sale'}
-                  </button>
-                </div>
+              <div className="flex w-full gap-2 md:w-auto">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  form="sales-form"
+                  disabled={loading}
+                  className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
+                >
+                  {loading ? 'Saving...' : editingId ? 'Update Sale' : 'Save Sale'}
+                </button>
               </div>
             </div>
           </div>
