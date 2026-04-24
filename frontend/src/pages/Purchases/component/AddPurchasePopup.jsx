@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2, CalendarDays, Package, Upload } from 'lucide-react';
+import { Building2, CalendarDays, Package, Upload, Plus } from 'lucide-react';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
 import { useFloatingDropdownPosition } from '../../../utils/useFloatingDropdownPosition';
 
@@ -95,7 +95,7 @@ export default function AddPurchasePopup({
 
   useEffect(() => {
     if (showForm) {
-      setIsItemEntryClosed(false);
+      setIsItemEntryClosed(Boolean(editingId));
     }
   }, [showForm, editingId]);
 
@@ -390,7 +390,19 @@ export default function AddPurchasePopup({
 
                   <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
                     <div className="border-b border-emerald-100 bg-emerald-50 px-3 py-2">
-                      <p className="text-xs font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
+                        {isItemEntryClosed && (
+                          <button
+                            type="button"
+                            onClick={reopenItemEntryFromPaidAmount}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Add More Stock
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="flex-1 overflow-auto">
                       <table className="w-full min-w-[860px] table-fixed text-[13px]">
