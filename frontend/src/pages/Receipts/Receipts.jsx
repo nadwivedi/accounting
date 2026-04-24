@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Receipt, IndianRupee, Search, Pencil } from 'lucide-react';
+import { Receipt, IndianRupee, Search, Pencil, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import { getBankDisplayName, normalizeBankName } from '../../utils/bankAccounts';
@@ -89,6 +89,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
   const { user, isEmployee } = useAuth();
   const canEdit = !isEmployee || user?.permissions?.edit === true;
   const canAdd = !isEmployee || user?.permissions?.add === true;
+  const canDelete = !isEmployee || user?.permissions?.delete === true;
   const [editingId, setEditingId] = useState(null);
   const [receipts, setReceipts] = useState([]);
   const [parties, setParties] = useState([]);
@@ -761,6 +762,22 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this receipt?')) return;
+
+    try {
+      setLoading(true);
+      await apiClient.delete(`/receipts/${id}`);
+      toast.success('Receipt deleted successfully', TOAST_OPTIONS);
+      fetchReceipts();
+      fetchSales();
+    } catch (err) {
+      toast.error(err.message || 'Error deleting receipt', TOAST_OPTIONS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const totalReceipts = receipts.reduce((sum, r) => sum + Number(r.amount || 0), 0);
   const totalSalesAmount = sales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
   const totalReceivable = Math.max(0, totalSalesAmount - totalReceipts);
@@ -986,6 +1003,29 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                         <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Notes</p>
                         <p className="mt-1 break-words text-sm text-slate-700">{receipt.notes || '-'}</p>
                       </div>
+
+                      <div className="flex gap-2 pt-1">
+                        {canEdit && (
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(receipt)}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-sky-200 bg-sky-50 py-2.5 text-xs font-bold text-sky-700 transition hover:bg-sky-100"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            Edit
+                          </button>
+                        )}
+                        {canDelete && (
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(receipt._id)}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 py-2.5 text-xs font-bold text-red-700 transition hover:bg-red-100"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </article>
                 ))}
@@ -1008,7 +1048,7 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Receipt Account</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Reference</th>
                       <th className="border-y-2 border-r border-black px-4 py-3.5 text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Notes</th>
-                      <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Edit</th>
+                      <th className="border-y-2 border-r-2 border-black px-4 py-3.5 text-center text-sm font-semibold shadow-[inset_0_-1px_0_rgba(148,163,184,0.2)]">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
@@ -1036,19 +1076,34 @@ export default function Receipts({ modalOnly = false, onModalFinish = null }) {
                           <div className="max-w-[24rem] truncate">{receipt.notes || '-'}</div>
                         </td>
                         <td className="border border-slate-400 px-4 py-3 text-center">
-                          {canEdit && (
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleEdit(receipt);
-                            }}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                            Edit
-                          </button>
-                          )}
+                          <div className="flex items-center justify-center gap-2">
+                            {canEdit && (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleEdit(receipt);
+                              }}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-100"
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                              Edit
+                            </button>
+                            )}
+                            {canDelete && (
+                            <button
+                              type="button"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleDelete(receipt._id);
+                              }}
+                              className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                              Delete
+                            </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}

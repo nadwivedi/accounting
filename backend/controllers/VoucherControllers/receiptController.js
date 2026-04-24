@@ -278,3 +278,36 @@ exports.updateReceipt = async (req, res) => {
     res.status(500).json({ success: false, message: error.message || 'Error updating receipt' });
   }
 };
+
+exports.deleteReceipt = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({ success: false, message: 'Invalid receipt id' });
+    }
+
+    const receipt = await Receipt.findOneAndDelete({ _id: id, userId });
+    if (!receipt) {
+      return res.status(404).json({ success: false, message: 'Receipt not found' });
+    }
+
+    await createAuditLog({
+      userId,
+      employee: req.employee || null,
+      action: 'DELETE',
+      module: 'Receipt',
+      refId: receipt._id,
+      refLabel: `Rec-${String(receipt.receiptNumber).padStart(2, '0')}`,
+      before: receipt.toObject(),
+      after: null
+    });
+
+    res.status(200).json({ success: true, message: 'Receipt deleted successfully' });
+  } catch (error) {
+    console.error('Delete receipt error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Error deleting receipt' });
+  }
+};
+
