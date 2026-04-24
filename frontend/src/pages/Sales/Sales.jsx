@@ -65,6 +65,41 @@ const getInitialFormData = () => ({
   notes: ''
 });
 
+const normalizeSaleForEdit = (sale) => {
+  const normalizedPartyId = typeof sale?.party === 'object'
+    ? sale.party?._id || ''
+    : (sale?.party || '');
+  const normalizedItems = Array.isArray(sale?.items)
+    ? sale.items.map((item) => ({
+      ...item,
+      product: typeof item?.product === 'object' ? item.product?._id || '' : (item?.product || ''),
+      productName: item?.productName || item?.product?.name || '',
+      unit: String(item?.unit || item?.product?.unit || '').trim(),
+      quantity: Number(item?.quantity || 0),
+      unitPrice: Number(item?.unitPrice || 0),
+      total: Number(item?.total || 0),
+      taxAmount: Number(item?.taxAmount || 0)
+    }))
+    : [];
+
+  return {
+    ...getInitialFormData(),
+    ...sale,
+    party: normalizedPartyId,
+    items: normalizedItems,
+    saleDate: formatDateForInput(sale?.saleDate),
+    dueDate: sale?.dueDate ? formatDateForInput(sale.dueDate) : '',
+    subtotal: Number(sale?.subtotal || 0),
+    taxAmount: Number(sale?.taxAmount || 0),
+    totalAmount: Number(sale?.totalAmount || 0),
+    paidAmount: Number(sale?.paidAmount || 0),
+    customerName: String(sale?.customerName || '').trim(),
+    customerPhone: String(sale?.customerPhone || '').replace(/\D/g, '').slice(0, 10),
+    customerAddress: sale?.customerAddress || '',
+    notes: sale?.notes || ''
+  };
+};
+
 const getInitialPartyFormData = (type = 'customer') => ({
   type,
   name: '',
@@ -1093,29 +1128,36 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     }
   };
 
-  const handleEdit = (sale) => {
-    const normalizedPartyId = typeof sale.party === 'object'
-      ? sale.party?._id || ''
-      : (sale.party || '');
-    const resolvedLeadgerName = resolveLeadgerNameById(normalizedPartyId) || sale.customerName || '';
+  const handleEdit = async (sale) => {
+    const saleId = typeof sale === 'string' ? sale : sale?._id;
+    if (!saleId) return;
 
-    setFormData({
-      ...getInitialFormData(),
-      ...sale,
-      party: normalizedPartyId,
-      saleDate: formatDateForInput(sale.saleDate),
-      customerName: resolvedLeadgerName,
-      customerPhone: String(sale.customerPhone || '').replace(/\D/g, '').slice(0, 10),
-      customerAddress: sale.customerAddress || ''
-    });
-    setLeadgerQuery(resolvedLeadgerName);
-    setLeadgerListIndex(resolvedLeadgerName ? 0 : -1);
-    setIsLeadgerSectionActive(false);
-    setProductQuery('');
-    setProductListIndex(-1);
-    setIsProductSectionActive(false);
-    setEditingId(sale._id);
-    setShowForm(true);
+    try {
+      setLoading(true);
+      const response = await apiClient.get(`/sales/${saleId}`);
+      const saleDetail = response?.data || response;
+      const normalizedSale = normalizeSaleForEdit(saleDetail);
+      const resolvedLeadgerName = resolveLeadgerNameById(normalizedSale.party) || normalizedSale.customerName || '';
+
+      setFormData({
+        ...normalizedSale,
+        customerName: resolvedLeadgerName || normalizedSale.customerName
+      });
+      setCurrentItem(initialCurrentItem);
+      setLeadgerQuery(resolvedLeadgerName);
+      setLeadgerListIndex(resolvedLeadgerName ? 0 : -1);
+      setIsLeadgerSectionActive(false);
+      setProductQuery('');
+      setProductListIndex(-1);
+      setIsProductSectionActive(false);
+      setEditingId(saleId);
+      setShowForm(true);
+      setError('');
+    } catch (err) {
+      setError(err.message || 'Error loading sale details');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {

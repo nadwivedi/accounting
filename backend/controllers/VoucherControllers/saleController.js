@@ -278,21 +278,120 @@ exports.updateSale = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const { customerName, customerPhone, customerAddress, dueDate, notes, paidAmount } = req.body;
+    const {
+      party,
+      customerName,
+      customerPhone,
+      customerAddress,
+      items,
+      saleDate,
+      dueDate,
+      subtotal,
+      taxAmount,
+      totalAmount,
+      paidAmount,
+      notes
+    } = req.body;
 
     const existingSale = await Sale.findOne({ _id: id, userId });
     if (!existingSale) {
       return res.status(404).json({ success: false, message: 'Sale not found' });
     }
 
-    const updateFields = { customerName, customerPhone, customerAddress, dueDate, notes };
+    const nextItems = Array.isArray(items)
+      ? items.map((item) => ({
+        product: typeof item?.product === 'object' ? item.product?._id || item.product : item?.product,
+        productName: item?.productName,
+        unit: String(item?.unit || '').trim(),
+        quantity: toNumber(item?.quantity),
+        unitPrice: toNumber(item?.unitPrice),
+        total: toNumber(item?.total)
+      }))
+      : existingSale.items.map((item) => ({
+        product: item.product,
+        productName: item.productName,
+        unit: item.unit,
+        quantity: toNumber(item.quantity),
+        unitPrice: toNumber(item.unitPrice),
+        total: toNumber(item.total)
+      }));
 
-    // If paidAmount updated, recompute type
-    if (paidAmount !== undefined) {
-      const breakdown = getSalePaymentBreakdown(existingSale.totalAmount, paidAmount);
-      updateFields.paidAmount = breakdown.paidAmount;
-      updateFields.type = breakdown.type;
+    if (!nextItems.length) {
+      return res.status(400).json({ success: false, message: 'At least one item is required' });
     }
+
+    const previousQtyByProduct = new Map();
+    existingSale.items.forEach((item) => {
+      const productId = String(item.product);
+      previousQtyByProduct.set(productId, (previousQtyByProduct.get(productId) || 0) + toNumber(item.quantity));
+    });
+
+    const nextQtyByProduct = new Map();
+    for (const item of nextItems) {
+      const productId = String(item.product || '');
+      if (!productId) {
+        return res.status(400).json({ success: false, message: 'Each sale item must have a product' });
+      }
+
+      const product = await Product.findById(productId);
+      const nextQty = toNumber(item.quantity);
+      const availableStock = toNumber(product?.currentStock) + (previousQtyByProduct.get(productId) || 0);
+
+      if (!product || availableStock < nextQty) {
+        return res.status(400).json({
+          success: false,
+          message: `Insufficient stock for ${item.productName || product?.name || 'selected product'}`
+        });
+      }
+
+      item.productName = item.productName || product.name;
+      item.unit = item.unit || String(product.unit || '').trim();
+      item.total = toNumber(item.total, item.unitPrice * nextQty);
+
+      nextQtyByProduct.set(productId, (nextQtyByProduct.get(productId) || 0) + nextQty);
+    }
+
+    const effectiveSubtotal = subtotal !== undefined
+      ? toNumber(subtotal)
+      : nextItems.reduce((sum, item) => sum + toNumber(item.total, item.unitPrice * item.quantity), 0);
+    const effectiveTaxAmount = taxAmount !== undefined ? toNumber(taxAmount) : 0;
+    const effectiveTotalAmount = totalAmount !== undefined
+      ? toNumber(totalAmount)
+      : effectiveSubtotal + effectiveTaxAmount;
+    const breakdown = getSalePaymentBreakdown(
+      effectiveTotalAmount,
+      paidAmount !== undefined ? paidAmount : existingSale.paidAmount
+    );
+
+    const allProductIds = new Set([
+      ...previousQtyByProduct.keys(),
+      ...nextQtyByProduct.keys()
+    ]);
+
+    for (const productId of allProductIds) {
+      const previousQty = previousQtyByProduct.get(productId) || 0;
+      const nextQty = nextQtyByProduct.get(productId) || 0;
+      const stockAdjustment = previousQty - nextQty;
+      if (stockAdjustment !== 0) {
+        await Product.findByIdAndUpdate(productId, { $inc: { currentStock: stockAdjustment } });
+      }
+    }
+
+    const updateFields = {
+      party: party || null,
+      customerName,
+      customerPhone,
+      customerAddress,
+      items: nextItems,
+      saleDate: saleDate || existingSale.saleDate,
+      dueDate: dueDate || null,
+      subtotal: effectiveSubtotal,
+      taxAmount: effectiveTaxAmount,
+      totalAmount: breakdown.totalAmount,
+      paidAmount: breakdown.paidAmount,
+      type: breakdown.type,
+      notes
+    };
 
     const sale = await Sale.findOneAndUpdate(
       { _id: id, userId },
@@ -301,6 +400,7 @@ exports.updateSale = async (req, res) => {
     ).populate('items.product', 'name unit');
 
     // balance = totalAmount - paidAmount (computed on the fly, never stored)
+    await ensureSaleInvoicePdf(sale);
 
     res.status(200).json({ success: true, message: 'Sale updated successfully', data: sale });
   } catch (error) {

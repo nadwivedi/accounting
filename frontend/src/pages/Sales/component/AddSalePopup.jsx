@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Building2, CalendarDays, Package } from 'lucide-react';
+import { Building2, CalendarDays, Package, Plus } from 'lucide-react';
 import { handlePopupFormKeyDown } from '../../../utils/popupFormKeyboard';
 import { useFloatingDropdownPosition } from '../../../utils/useFloatingDropdownPosition';
 
@@ -87,6 +87,16 @@ export default function AddSalePopup({
     return String(matchingProduct?.unit || '').trim() || '-';
   };
   const currentItemUnit = String(currentItem.unit || '').trim() || '-';
+  const liveBalance = Number(formData.totalAmount || 0) - Number(formData.paidAmount || 0);
+  const balanceColor = liveBalance < 0
+    ? 'text-purple-600 bg-purple-50 border-purple-200'
+    : liveBalance === 0
+    ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+    : 'text-red-600 bg-red-50 border-red-200';
+  const balanceLabel = liveBalance < 0 ? 'Advance (Overpaid)' : liveBalance === 0 ? 'Fully Paid' : 'Balance Due';
+  const balanceDisplay = liveBalance < 0
+    ? `-Rs ${Math.abs(liveBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+    : `Rs ${liveBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
   const sanitizeNonNegativeInput = (value) => {
     const text = String(value ?? '');
     if (!text.trim() || text === '-' || text === '-.') return '';
@@ -99,9 +109,23 @@ export default function AddSalePopup({
 
   useEffect(() => {
     if (showForm) {
-      setIsItemEntryClosed(false);
+      setIsItemEntryClosed(Boolean(editingId));
     }
   }, [showForm, editingId]);
+
+  useEffect(() => {
+    if (!showForm) return undefined;
+
+    const handleWindowKeyDown = (event) => {
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      event.preventDefault();
+      event.stopPropagation();
+      handleCancel();
+    };
+
+    window.addEventListener('keydown', handleWindowKeyDown, true);
+    return () => window.removeEventListener('keydown', handleWindowKeyDown, true);
+  }, [showForm, handleCancel]);
 
   if (!showForm) return null;
 
@@ -338,7 +362,19 @@ export default function AddSalePopup({
 
                   <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
                     <div className="border-b border-emerald-100 bg-emerald-50 px-3 py-2">
-                      <p className="text-xs font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-semibold text-emerald-800">{formData.items.length} item(s) added</p>
+                        {isItemEntryClosed && (
+                          <button
+                            type="button"
+                            onClick={reopenItemEntryFromPaidAmount}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Add More Stock
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div className="flex-1 overflow-auto">
                       <table className="w-full min-w-[720px] table-fixed text-[13px]">
@@ -656,27 +692,50 @@ export default function AddSalePopup({
             </div>
           </div>
 
-          <div className="flex flex-col items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2.5 md:flex-row md:px-4 md:py-3">
-            <div className="hidden text-[11px] text-gray-600 md:block md:text-xs">
-              <kbd className="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-[10px]">Esc</kbd> to close
-            </div>
+          <div className="border-t border-gray-200 bg-gray-50 px-3 py-3 md:px-4 md:py-3">
+            <div className="flex flex-col gap-3">
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+                <div className="rounded-xl border border-emerald-200 bg-white px-3 py-2.5">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Total Amount</p>
+                  <p className="mt-1 text-base font-bold text-emerald-700 md:text-lg">
+                    Rs {Number(formData.totalAmount || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white px-3 py-2.5">
+                  <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Paid Amount</p>
+                  <p className="mt-1 text-base font-bold text-slate-800 md:text-lg">
+                    Rs {Number(isCashParty ? formData.totalAmount || 0 : formData.paidAmount || 0).toFixed(2)}
+                  </p>
+                </div>
+                <div className={`rounded-xl border px-3 py-2.5 ${balanceColor}`}>
+                  <p className="text-[11px] font-bold uppercase tracking-wide">{balanceLabel}</p>
+                  <p className="mt-1 text-base font-bold md:text-lg">{balanceDisplay}</p>
+                </div>
+              </div>
 
-            <div className="flex w-full gap-2 md:w-auto">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                form="sales-form"
-                disabled={loading}
-                className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
-              >
-                {loading ? 'Saving...' : editingId ? 'Update Sale' : 'Save Sale'}
-              </button>
+              <div className="flex flex-col items-center justify-between gap-2 md:flex-row">
+                <div className="hidden text-[11px] text-gray-600 md:block md:text-xs">
+                  <kbd className="rounded bg-gray-200 px-1.5 py-0.5 font-mono text-[10px]">Esc</kbd> to close
+                </div>
+
+                <div className="flex w-full gap-2 md:w-auto">
+                  <button
+                    type="button"
+                    onClick={handleCancel}
+                    className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    form="sales-form"
+                    disabled={loading}
+                    className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-2 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
+                  >
+                    {loading ? 'Saving...' : editingId ? 'Update Sale' : 'Save Sale'}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </form>
