@@ -536,14 +536,28 @@ export default function AddPurchasePopup({
                                       />
                                     </td>
                                   </tr>
-                                  <tr className="bg-slate-50/50">
-                                    <td colSpan={5} className="px-3 py-2 text-right text-[11px] font-bold uppercase tracking-wide text-gray-500">
-                                      Balance
-                                    </td>
-                                    <td className="px-3 py-2 text-right text-sm font-bold text-gray-700">
-                                      Rs {Number((formData.totalAmount || 0) - (formData.paidAmount || 0)).toFixed(2)}
-                                    </td>
-                                  </tr>
+                                  {(() => {
+                                    const liveBalance = Number(formData.totalAmount || 0) - Number(formData.paidAmount || 0);
+                                    const balanceColor = liveBalance < 0
+                                      ? 'text-purple-600 bg-purple-50'
+                                      : liveBalance === 0
+                                      ? 'text-emerald-700 bg-emerald-50'
+                                      : 'text-red-600 bg-red-50';
+                                    const balanceLabel = liveBalance < 0 ? 'Advance (Overpaid)' : liveBalance === 0 ? 'Fully Paid' : 'Balance Due';
+                                    const balanceDisplay = liveBalance < 0
+                                      ? `-₹${Math.abs(liveBalance).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+                                      : `₹${liveBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+                                    return (
+                                      <tr className={balanceColor}>
+                                        <td colSpan={5} className="border-t border-slate-100 px-3 py-2.5 text-right text-[12px] font-bold uppercase tracking-wide">
+                                          {balanceLabel}
+                                        </td>
+                                        <td className="border-t border-slate-100 px-3 py-2.5 text-right text-sm font-bold">
+                                          {balanceDisplay}
+                                        </td>
+                                      </tr>
+                                    );
+                                  })()}
                                 </>
                               )}
                             </>
