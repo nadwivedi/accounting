@@ -195,11 +195,21 @@ export default function AddSalePopup({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-1 md:p-4" onClick={handleCancel}>
       <div className="flex h-[95dvh] max-h-[95dvh] w-[94vw] max-w-[68rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-2.5 py-2 text-white md:px-4 md:py-3">
-          <div className="flex justify-between items-center">
-            <h2 className="text-base font-bold md:text-xl">
-              {editingId ? 'Edit Sale Entry' : 'Add New Sale'}
-            </h2>
+        <div className="border-b border-violet-200 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500 px-3 py-3 text-white shadow-lg shadow-violet-500/20 md:px-5 md:py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/18 ring-1 ring-white/30 backdrop-blur-sm">
+                <Package className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-violet-100 md:text-xs">
+                  Sales Entry
+                </p>
+                <h2 className="text-base font-bold md:text-xl">
+                  {editingId ? 'Edit Sale Entry' : 'Add New Sale'}
+                </h2>
+              </div>
+            </div>
             <button
               type="button"
               onClick={handleCancel}
