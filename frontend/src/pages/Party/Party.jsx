@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Pencil, Search, Wallet } from 'lucide-react';
+import { Pencil, Search, Wallet, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import AddPartyPopup from './component/AddPartyPopup';
@@ -175,6 +175,22 @@ export default function Party() {
     navigate(`/party/${party._id}`);
   };
 
+  const handleDelete = async (party) => {
+    if (!window.confirm(`Are you sure you want to delete "${party.name}"?`)) return;
+
+    try {
+      setLoading(true);
+      await apiClient.delete(`/parties/${party._id}`);
+      fetchParties();
+      toast.success('Party deleted successfully', TOAST_OPTIONS);
+    } catch (err) {
+      setError(err.message || 'Error deleting party');
+      toast.error(err.message || 'Error deleting party', TOAST_OPTIONS);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -305,19 +321,34 @@ export default function Party() {
                       <p className="truncate text-sm font-bold text-white">{item.name || '-'}</p>
                       <p className="mt-1 text-xs text-cyan-100">Open party ledger</p>
                     </div>
-                    {canEdit && (
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleEdit(item);
-                      }}
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
-                      aria-label={`Edit ${item.name}`}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    )}
+                    <div className="flex gap-2">
+                      {canEdit && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleEdit(item);
+                        }}
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-blue-200 bg-white text-blue-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50"
+                        aria-label={`Edit ${item.name}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      )}
+                      {canEdit && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          handleDelete(item);
+                        }}
+                        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-red-200 bg-white text-red-600 shadow-sm transition hover:border-red-300 hover:bg-red-50"
+                        aria-label={`Delete ${item.name}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="space-y-3 px-4 py-4 text-sm">
@@ -368,7 +399,7 @@ export default function Party() {
                       </td>
                       <td className="border border-slate-400 px-4 py-3 text-center">{item.mobile || '-'}</td>
                       <td className="border border-slate-400 px-4 py-3">
-                        <div className="flex items-center justify-center">
+                        <div className="flex items-center justify-center gap-2">
                           {canEdit && (
                           <button
                             type="button"
@@ -380,6 +411,19 @@ export default function Party() {
                             aria-label={`Edit ${item.name}`}
                           >
                             <Pencil className="h-4 w-4" />
+                          </button>
+                          )}
+                          {canEdit && (
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleDelete(item);
+                            }}
+                            className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-red-200 bg-white text-red-600 shadow-sm transition hover:border-red-300 hover:bg-red-50"
+                            aria-label={`Delete ${item.name}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </button>
                           )}
                         </div>

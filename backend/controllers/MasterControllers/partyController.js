@@ -193,3 +193,38 @@ exports.updateParty = async (req, res) => {
     });
   }
 };
+
+exports.deleteParty = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+
+    if (!mongoose.isValidObjectId(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid party id is required'
+      });
+    }
+
+    const party = await Party.findOneAndDelete({ _id: id, userId });
+
+    if (!party) {
+      return res.status(404).json({
+        success: false,
+        message: 'Party not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Party deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete party error:', error);
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Error deleting party'
+    });
+  }
+};
+
