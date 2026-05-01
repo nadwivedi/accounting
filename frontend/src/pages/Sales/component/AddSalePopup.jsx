@@ -44,6 +44,7 @@ export default function AddSalePopup({
   handleProductInputChange,
   handleProductInputKeyDown,
   onOpenNewProduct,
+  onOpenNewService,
   handleSelectEnterMoveNext,
   handleAddItem,
   handleRemoveItem,
@@ -613,10 +614,7 @@ export default function AddSalePopup({
                                               className="mt-2 inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition hover:bg-indigo-100"
                                             >
                                               Create New Service
-                                              className="mt-2 inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
-                                            >
-                                              Create New Stock
-                                              <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-emerald-700">Ctrl</span>
+                                              <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-indigo-600">Ctrl</span>
                                             </button>
                                           </div>
                                         ) : (

@@ -50,53 +50,81 @@ const formatLabel = (value) => {
 };
 
 const getTypeMeta = (type) => {
-  // Clean, unified badges based on the actual transaction term
-  if (type === 'sale_cash' || type === 'purchase_cash' || type === 'cash') {
-    return { label: 'Cash', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
+  const normalized = String(type || '').trim().toLowerCase();
+
+  if (normalized === 'sale_cash' || normalized === 'cash sale') {
+    return { label: 'Cash Sale', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
   }
-  if (type === 'sale_partial' || type === 'purchase_partial' || type === 'partial') {
-    return { label: 'Partial', className: 'border-amber-200 bg-amber-50 text-amber-700' };
+  if (normalized === 'sale_partial' || normalized === 'partial sale') {
+    return { label: 'Partial Sale', className: 'border-amber-200 bg-amber-50 text-amber-700' };
   }
-  if (type === 'sale_credit' || type === 'purchase_credit' || type === 'credit') {
-    return { label: 'Credit', className: 'border-rose-200 bg-rose-50 text-rose-700' };
+  if (normalized === 'sale_credit' || normalized === 'credit sale') {
+    return { label: 'Credit Sale', className: 'border-rose-200 bg-rose-50 text-rose-700' };
   }
 
-  if (type === 'receipt') {
+  if (normalized === 'purchase_cash' || normalized === 'cash purchase') {
+    return { label: 'Cash Purchase', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
+  }
+  if (normalized === 'purchase_partial' || normalized === 'partial purchase') {
+    return { label: 'Partial Purchase', className: 'border-amber-200 bg-amber-50 text-amber-700' };
+  }
+  if (normalized === 'purchase_credit' || normalized === 'credit purchase') {
+    return { label: 'Credit Purchase', className: 'border-rose-200 bg-rose-50 text-rose-700' };
+  }
+
+  // Fallback for generic cash/partial/credit if they somehow appear without prefix
+  if (normalized === 'cash') {
+    return { label: 'Cash', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
+  }
+  if (normalized === 'partial') {
+    return { label: 'Partial', className: 'border-amber-200 bg-amber-50 text-amber-700' };
+  }
+  if (normalized === 'credit') {
+    return { label: 'Credit', className: 'border-rose-200 bg-rose-50 text-rose-700' };
+  }
+  if (normalized === 'sale') {
+    return { label: 'Sale', className: 'border-emerald-200 bg-emerald-50 text-emerald-700' };
+  }
+  if (normalized === 'purchase') {
+    return { label: 'Purchase', className: 'border-rose-200 bg-rose-50 text-rose-700' };
+  }
+
+  if (normalized === 'receipt') {
     return {
       label: 'Receipt',
       className: 'border-sky-200 bg-sky-50 text-sky-700'
     };
   }
 
-  if (type === 'payment') {
+  if (normalized === 'payment') {
     return {
       label: 'Payment',
       className: 'border-violet-200 bg-violet-50 text-violet-700'
     };
   }
 
-  if (type === 'sale discount') {
+  if (normalized === 'sale discount' || normalized === 'sale_discount') {
     return {
       label: 'Discount After Sale',
       className: 'border-violet-200 bg-violet-50 text-violet-700'
     };
   }
 
-  if (type === 'purchase discount') {
+  if (normalized === 'purchase discount' || normalized === 'purchase_discount') {
     return {
       label: 'Discount After Purchase',
       className: 'border-emerald-200 bg-emerald-50 text-emerald-700'
     };
   }
 
-  if (type === 'purchase return') {
+  if (normalized === 'purchase return' || normalized === 'purchase_return') {
     return {
       label: 'Purchase Return',
       className: 'border-rose-200 bg-rose-50 text-rose-700'
     };
   }
 
-  if (type === 'sale return') {
+  if (normalized === 'sale return' || normalized === 'sale_return') {
     return {
       label: 'Sale Return',
       className: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700'
@@ -793,13 +821,10 @@ export default function PartyDetail() {
                     </div>
 
                     <div className="mt-4 space-y-2">
-                      <div className="flex items-center justify-between rounded-xl bg-slate-100/80 px-3 py-2 text-xs">
-                        <span className="font-medium uppercase tracking-wider text-slate-500">Qty</span>
-                        <span className="font-semibold text-slate-700">{row.quantity ? formatQuantity(row.quantity) : '-'}</span>
-                      </div>
+                      {/* Qty field removed as requested */}
                       {detailRows.length > 0 ? (
                         <div className="rounded-xl bg-slate-100/80 px-3 py-2.5">
-                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Details</p>
+                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Items</p>
                           <div className="mt-1.5 space-y-1">
                             {detailRows.map((detail, detailIndex) => (
                               <p key={`${row.refId || index}-detail-${detailIndex}`} className="text-xs text-slate-600">
@@ -827,8 +852,7 @@ export default function PartyDetail() {
                   <tr>
                     <th className="border-y-2 border-l-2 border-r border-black px-4 py-3 text-center font-semibold">Date / Ref No</th>
                     <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Type</th>
-                    <th className="border-y-2 border-r border-black px-4 py-3 font-semibold">Details</th>
-                    <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Qty</th>
+                    <th className="border-y-2 border-r border-black px-4 py-3 font-semibold">Items</th>
                     <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Amount</th>
                     <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Money In</th>
                     <th className="border-y-2 border-r border-black px-4 py-3 text-center font-semibold">Money Out</th>
@@ -880,9 +904,7 @@ export default function PartyDetail() {
                             <span className="text-slate-400">-</span>
                           )}
                         </td>
-                        <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-slate-800">
-                          {row.quantity ? formatQuantity(row.quantity) : '-'}
-                        </td>
+                        {/* Qty cell removed as requested */}
                         <td className="border border-slate-300 px-4 py-3 text-center font-semibold text-slate-900">
                           {['sale', 'cash sale', 'credit sale', 'sale_cash', 'sale_partial', 'sale_credit', 'purchase', 'cash purchase', 'credit purchase', 'purchase_cash', 'purchase_partial', 'purchase_credit', 'cash', 'partial', 'credit'].includes(row.type) ? (
                             <div className="space-y-1 text-xs">
@@ -915,7 +937,7 @@ export default function PartyDetail() {
 
                   {sortedLedgerRows.length === 0 ? (
                     <tr>
-                      <td colSpan="9" className="border border-slate-300 px-4 py-10 text-center text-slate-500">
+                      <td colSpan="7" className="border border-slate-300 px-4 py-10 text-center text-slate-500">
                         No ledger data found.
                       </td>
                     </tr>

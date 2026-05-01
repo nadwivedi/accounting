@@ -68,14 +68,12 @@ const getTotalQuantity = (items = []) => items.reduce(
 const getItemSummary = (items = []) => {
   if (!Array.isArray(items) || items.length === 0) return '';
 
-  const preview = items.slice(0, 3).map((item) => {
+  return items.map((item) => {
     const itemName = String(item.productName || item.product?.name || 'Item').trim() || 'Item';
-    return `${itemName} x${toNumber(item.quantity)}`;
-  });
-
-  return items.length > 3
-    ? `${preview.join(', ')} +${items.length - 3} more`
-    : preview.join(', ');
+    const qty = toNumber(item.quantity);
+    const rate = toNumber(item.unitPrice);
+    return `${itemName} x${qty}@${rate}`;
+  }).join('  ');
 };
 
 const getDetailedItems = (items = []) => {
