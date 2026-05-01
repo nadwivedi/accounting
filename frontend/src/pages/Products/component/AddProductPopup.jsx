@@ -21,7 +21,7 @@ const getNormalizedTypeOfSupply = (value) => (
   String(value || '').trim().toLowerCase() === 'services' ? 'services' : 'goods'
 );
 
-const getPopupInitialState = (initialName = '', product = null, defaultTrackExpiry = false) => {
+const getPopupInitialState = (initialName = '', product = null, defaultTrackExpiry = false, initialType = 'goods') => {
   const normalizedStockGroupId = product
     ? (typeof product.stockGroup === 'object' ? product.stockGroup?._id || '' : product.stockGroup || '')
     : '';
@@ -29,7 +29,7 @@ const getPopupInitialState = (initialName = '', product = null, defaultTrackExpi
     ? (typeof product.stockGroup === 'object' ? product.stockGroup?.name || '' : '')
     : '';
   const resolvedUnit = String(product?.unit || 'pcs').trim() || 'pcs';
-  const resolvedTypeOfSupply = getNormalizedTypeOfSupply(product?.typeOfSupply);
+  const resolvedTypeOfSupply = product ? getNormalizedTypeOfSupply(product?.typeOfSupply) : getNormalizedTypeOfSupply(initialType);
   const resolvedTrackExpiry = product ? Boolean(product?.trackExpiry) : Boolean(defaultTrackExpiry);
   const typeOfSupplyQuery = TYPE_OF_SUPPLY_OPTIONS.find(
     (option) => option.value === resolvedTypeOfSupply
@@ -75,6 +75,7 @@ const getInlineFieldClass = (tone = 'indigo') => {
 export default function AddProductPopup({
   showForm,
   initialName = '',
+  initialType = 'goods',
   product = null,
   onClose,
   onProductCreated,
@@ -297,7 +298,7 @@ export default function AddProductPopup({
 
   useEffect(() => {
     if (!showForm) {
-      const nextState = getPopupInitialState(initialName, product, defaultTrackExpiry);
+      const nextState = getPopupInitialState(initialName, product, defaultTrackExpiry, initialType);
       setFormData(nextState.formData);
       setError('');
       setStockGroupQuery(nextState.stockGroupQuery);
@@ -315,7 +316,7 @@ export default function AddProductPopup({
       return;
     }
 
-    const nextState = getPopupInitialState(initialName, product, defaultTrackExpiry);
+    const nextState = getPopupInitialState(initialName, product, defaultTrackExpiry, initialType);
     setFormData(nextState.formData);
     setError('');
     setStockGroupQuery(nextState.stockGroupQuery);
@@ -348,7 +349,7 @@ export default function AddProductPopup({
     };
 
     loadOptions();
-  }, [defaultTrackExpiry, initialName, product, showForm]);
+  }, [defaultTrackExpiry, initialName, initialType, product, showForm]);
 
   useEffect(() => {
     if (!showForm) return;

@@ -92,7 +92,7 @@ exports.createPurchaseReturn = async (req, res) => {
         return res.status(400).json({ success: false, message: `Product not found for ${purchaseItem.productName}` });
       }
 
-      if (toNumber(product.currentStock) < quantity) {
+      if (product.typeOfSupply !== 'services' && toNumber(product.currentStock) < quantity) {
         return res.status(400).json({ success: false, message: `Insufficient current stock for ${purchaseItem.productName} to process return` });
       }
 
@@ -112,7 +112,10 @@ exports.createPurchaseReturn = async (req, res) => {
     }
 
     for (const item of normalizedItems) {
-      await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: -item.quantity } });
+      const product = await Product.findById(item.product);
+      if (product && product.typeOfSupply !== 'services') {
+        await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: -item.quantity } });
+      }
     }
 
     const voucherNumber = await getNextPurchaseReturnVoucherNumber(userId);

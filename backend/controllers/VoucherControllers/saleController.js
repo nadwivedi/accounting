@@ -152,10 +152,13 @@ exports.createSale = async (req, res) => {
     for (const item of items) {
       const product = await Product.findById(item.product);
       const qty = toNumber(item.quantity);
-      if (!product || product.currentStock < qty) {
+      if (!product) {
+        return res.status(400).json({ success: false, message: `Product not found for ${item.productName || 'selected item'}` });
+      }
+      if (product.typeOfSupply !== 'services' && product.currentStock < qty) {
         return res.status(400).json({
           success: false,
-          message: `Insufficient stock for ${item.productName || 'selected product'}`
+          message: `Insufficient stock for ${item.productName || product.name || 'selected product'}`
         });
       }
     }
@@ -195,7 +198,10 @@ exports.createSale = async (req, res) => {
     }
 
     for (const item of items) {
-      await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: -toNumber(item.quantity) } });
+      const product = await Product.findById(item.product);
+      if (product && product.typeOfSupply !== 'services') {
+        await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: -toNumber(item.quantity) } });
+      }
     }
 
     // Note: paidAmount is stored directly on the sale.
@@ -349,13 +355,18 @@ exports.updateSale = async (req, res) => {
 
       const product = await Product.findById(productId);
       const nextQty = toNumber(item.quantity);
-      const availableStock = toNumber(product?.currentStock) + (previousQtyByProduct.get(productId) || 0);
+      if (!product) {
+        return res.status(400).json({ success: false, message: `Product not found for ${item.productName || 'selected item'}` });
+      }
 
-      if (!product || availableStock < nextQty) {
-        return res.status(400).json({
-          success: false,
-          message: `Insufficient stock for ${item.productName || product?.name || 'selected product'}`
-        });
+      if (product.typeOfSupply !== 'services') {
+        const availableStock = toNumber(product.currentStock) + (previousQtyByProduct.get(productId) || 0);
+        if (availableStock < nextQty) {
+          return res.status(400).json({
+            success: false,
+            message: `Insufficient stock for ${item.productName || product.name || 'selected product'}`
+          });
+        }
       }
 
       item.productName = item.productName || product.name;
@@ -383,6 +394,9 @@ exports.updateSale = async (req, res) => {
     ]);
 
     for (const productId of allProductIds) {
+      const product = await Product.findById(productId);
+      if (!product || product.typeOfSupply === 'services') continue;
+
       const previousQty = previousQtyByProduct.get(productId) || 0;
       const nextQty = nextQtyByProduct.get(productId) || 0;
       const stockAdjustment = previousQty - nextQty;
@@ -449,7 +463,10 @@ exports.deleteSale = async (req, res) => {
     deleteSaleInvoicePdf(sale.invoicePdfPath);
 
     for (const item of sale.items) {
-      await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: toNumber(item.quantity) } });
+      const product = await Product.findById(item.product);
+      if (product && product.typeOfSupply !== 'services') {
+        await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: toNumber(item.quantity) } });
+      }
     }
 
     // Delete manual receipts that were specifically linked to this sale invoice

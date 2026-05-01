@@ -369,6 +369,7 @@ export default function AddSalePopup({
                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-[10px] text-white md:h-6 md:w-6 md:text-xs">2</span>
                     Sale Items
                   </h3>
+                  
 
                   <div className="flex flex-1 flex-col overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
                     <div className="border-b border-emerald-100 bg-emerald-50 px-3 py-2">
@@ -605,6 +606,18 @@ export default function AddSalePopup({
                                               Create New Stock
                                               <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-emerald-700">Ctrl</span>
                                             </button>
+                                            <button
+                                              type="button"
+                                              onMouseDown={(event) => event.preventDefault()}
+                                              onClick={onOpenNewService}
+                                              className="mt-2 inline-flex items-center gap-2 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition hover:bg-indigo-100"
+                                            >
+                                              Create New Service
+                                              className="mt-2 inline-flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                                            >
+                                              Create New Stock
+                                              <span className="rounded bg-white px-1.5 py-0.5 font-mono text-[10px] text-emerald-700">Ctrl</span>
+                                            </button>
                                           </div>
                                         ) : (
                                           filteredProducts.map((product, index) => {
@@ -629,9 +642,15 @@ export default function AddSalePopup({
                                               >
                                                 <span className="truncate font-medium">{getProductDisplayName(product)}</span>
                                                 <div className="flex shrink-0 items-center gap-2">
-                                                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                                                    Qty: {formatStockQuantity(product.currentStock)}
-                                                  </span>
+                                                  {product.typeOfSupply !== 'services' ? (
+                                                    <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                                                      Qty: {formatStockQuantity(product.currentStock)}
+                                                    </span>
+                                                  ) : (
+                                                    <span className="rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700">
+                                                      Service
+                                                    </span>
+                                                  )}
                                                   {isSelected && (
                                                     <span className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-700">
                                                       Selected

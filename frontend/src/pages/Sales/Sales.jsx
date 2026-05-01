@@ -910,7 +910,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     }
 
     const product = products.find(p => p._id === currentItem.product);
-    if (!product || product.currentStock < currentItem.quantity) {
+    if (product.typeOfSupply !== 'services' && product.currentStock < currentItem.quantity) {
       setError(`Insufficient stock for ${product?.name}`);
       return false;
     }
@@ -1274,7 +1274,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
           handleProductFocus={handleProductFocus}
           handleProductInputChange={handleProductInputChange}
           handleProductInputKeyDown={handleProductInputKeyDown}
-          onOpenNewProduct={openInlineProductForm}
+          onOpenNewProduct={() => openInlineProductForm('goods')}
+          onOpenNewService={() => openInlineProductForm('services')}
           handleSelectEnterMoveNext={handleSelectEnterMoveNext}
           handleAddItem={handleAddItem}
           handleRemoveItem={handleRemoveItem}
@@ -1383,7 +1384,8 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         handleProductFocus={handleProductFocus}
         handleProductInputChange={handleProductInputChange}
         handleProductInputKeyDown={handleProductInputKeyDown}
-        onOpenNewProduct={openInlineProductForm}
+        onOpenNewProduct={() => openInlineProductForm('goods')}
+          onOpenNewService={() => openInlineProductForm('services')}
         handleSelectEnterMoveNext={handleSelectEnterMoveNext}
         handleAddItem={handleAddItem}
         handleRemoveItem={handleRemoveItem}

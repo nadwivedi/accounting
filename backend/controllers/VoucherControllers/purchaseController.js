@@ -185,7 +185,10 @@ exports.createPurchase = async (req, res) => {
     });
 
     for (const item of normalizedItems) {
-      await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: toNumber(item.quantity) } });
+      const product = await Product.findById(item.product);
+      if (product && product.typeOfSupply !== 'services') {
+        await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: toNumber(item.quantity) } });
+      }
     }
 
 
@@ -315,10 +318,16 @@ exports.updatePurchase = async (req, res) => {
         return res.status(400).json({ success: false, message: expiryError });
       }
       for (const oldItem of purchase.items) {
-        await Product.findByIdAndUpdate(oldItem.product, { $inc: { currentStock: -toNumber(oldItem.quantity) } });
+        const product = await Product.findById(oldItem.product);
+        if (product && product.typeOfSupply !== 'services') {
+          await Product.findByIdAndUpdate(oldItem.product, { $inc: { currentStock: -toNumber(oldItem.quantity) } });
+        }
       }
       for (const newItem of normalizedItems) {
-        await Product.findByIdAndUpdate(newItem.product, { $inc: { currentStock: toNumber(newItem.quantity) } });
+        const product = await Product.findById(newItem.product);
+        if (product && product.typeOfSupply !== 'services') {
+          await Product.findByIdAndUpdate(newItem.product, { $inc: { currentStock: toNumber(newItem.quantity) } });
+        }
       }
       purchase.items = normalizedItems;
     }
@@ -394,7 +403,10 @@ exports.deletePurchase = async (req, res) => {
     }
 
     for (const item of purchase.items) {
-      await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: -toNumber(item.quantity) } });
+      const product = await Product.findById(item.product);
+      if (product && product.typeOfSupply !== 'services') {
+        await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: -toNumber(item.quantity) } });
+      }
     }
 
     // Delete all payments linked to this purchase

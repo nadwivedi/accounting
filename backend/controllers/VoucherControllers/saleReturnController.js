@@ -1,4 +1,4 @@
-﻿const SaleReturn = require('../../models/voucher/SaleReturn');
+const SaleReturn = require('../../models/voucher/SaleReturn');
 const mongoose = require('mongoose');
 const Sale = require('../../models/voucher/Sales');
 const Product = require('../../models/master/Stock');
@@ -108,7 +108,10 @@ exports.createSaleReturn = async (req, res) => {
     }
 
     for (const item of normalizedItems) {
-      await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: item.quantity } });
+      const product = await Product.findById(item.product);
+      if (product && product.typeOfSupply !== 'services') {
+        await Product.findByIdAndUpdate(item.product, { $inc: { currentStock: item.quantity } });
+      }
     }
 
     const voucherNumber = await getNextSaleReturnVoucherNumber(userId);

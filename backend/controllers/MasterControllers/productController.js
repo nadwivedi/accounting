@@ -293,6 +293,13 @@ exports.updateStock = async (req, res) => {
       });
     }
 
+    if (product.typeOfSupply === 'services') {
+      return res.status(400).json({
+        success: false,
+        message: 'Stock tracking is not available for services'
+      });
+    }
+
     const stockBefore = Number(product.currentStock || 0);
 
     if (type === 'subtract' && stockBefore < normalizedQuantity) {
