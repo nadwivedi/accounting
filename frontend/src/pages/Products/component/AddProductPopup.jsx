@@ -69,7 +69,7 @@ const getInlineFieldClass = (tone = 'indigo') => {
     ? 'focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200'
     : 'focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200';
 
-  return `w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-bold text-gray-900 transition-all placeholder:font-normal placeholder:text-gray-400 focus:outline-none ${focusTone}`;
+  return `w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm xl:py-1.5 xl:text-xs lg:py-1 lg:text-[11px] font-bold text-gray-900 transition-all placeholder:font-normal placeholder:text-gray-400 focus:outline-none ${focusTone}`;
 };
 
 export default function AddProductPopup({
@@ -964,15 +964,15 @@ export default function AddProductPopup({
         className="flex max-h-[92vh] w-full max-w-[34rem] flex-col overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-slate-200/80 md:rounded-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex-shrink-0 border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-1.5 text-white md:px-4 md:py-2">
+        <div className="flex-shrink-0 border-b border-white/15 bg-gradient-to-r from-cyan-700 via-blue-700 to-indigo-700 px-3 py-1.5 text-white md:px-4 md:py-2 xl:py-1.5 lg:py-1">
           <div className="flex items-center justify-between">
             <div className="flex items-start gap-3">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20 text-white ring-1 ring-white/30 md:h-8 md:w-8">
-                <Package className="h-4 w-4 md:h-5 md:w-5" />
+              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-white/20 text-white ring-1 ring-white/30 md:h-8 md:w-8 xl:h-7 xl:w-7 lg:h-6 lg:w-6">
+                <Package className="h-4 w-4 md:h-5 md:w-5 xl:h-4 xl:w-4 lg:h-3.5 lg:w-3.5" />
               </div>
               <div>
-                <h2 className="text-base font-bold md:text-xl">{isEditMode ? 'Edit Stock Item' : 'Add New Stock Item'}</h2>
-                <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs">Create or update stock details in a clean accounting format.</p>
+                <h2 className="text-base font-bold md:text-xl xl:text-lg lg:text-base">{isEditMode ? 'Edit Stock Item' : 'Add New Stock Item'}</h2>
+                <p className="mt-0.5 text-[11px] text-cyan-100 md:text-xs xl:text-[11px] lg:text-[10px]">Create or update stock details in a clean accounting format.</p>
               </div>
             </div>
             <button
@@ -989,7 +989,7 @@ export default function AddProductPopup({
         </div>
 
         <form onSubmit={handleSubmit} onKeyDown={(e) => handlePopupFormKeyDown(e, onClose)} className="flex flex-1 flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-2.5 md:p-4">
+          <div className="flex-1 overflow-y-auto p-2.5 md:p-4 xl:p-3 lg:p-2">
             <div className="flex flex-col gap-3 md:gap-4">
               {error ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
@@ -997,15 +997,15 @@ export default function AddProductPopup({
                 </div>
               ) : null}
 
-              <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4">
-                <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg">
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs text-white md:h-8 md:w-8 md:text-sm">1</span>
+              <div className="rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-2.5 md:p-4 xl:p-3 lg:p-2">
+                <h3 className="mb-3 flex items-center gap-2 text-base font-bold text-gray-800 md:mb-4 md:text-lg xl:text-base lg:text-sm">
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-xs text-white md:h-8 md:w-8 md:text-sm xl:h-7 xl:w-7 xl:text-xs lg:h-6 lg:w-6 lg:text-[10px]">1</span>
                   Basic Details
                 </h3>
 
                 <div className="space-y-3 md:space-y-4">
                   <div className="flex items-center gap-2">
-                    <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Item Name *</label>
+                    <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm xl:text-xs lg:text-[11px]">Item Name *</label>
                     <input
                       ref={nameInputRef}
                       type="text"
@@ -1020,7 +1020,7 @@ export default function AddProductPopup({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Stock Group</label>
+                    <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm xl:text-xs lg:text-[11px]">Stock Group</label>
                     <div
                       ref={stockGroupSectionRef}
                       className="relative min-w-0 flex-1"
@@ -1108,7 +1108,7 @@ export default function AddProductPopup({
 
                   <div className="flex items-center gap-2">
                     <div className="relative mb-1 min-h-[16px] w-32 shrink-0">
-                      <label className="block text-xs font-semibold text-gray-700 md:text-sm">Unit *</label>
+                      <label className="block text-xs font-semibold text-gray-700 md:text-sm xl:text-xs lg:text-[11px]">Unit *</label>
                       {isUnitSectionActive && (
                         <button
                           type="button"
@@ -1222,7 +1222,7 @@ export default function AddProductPopup({
 
                   <div className="space-y-3 md:space-y-4">
                     <div className="flex items-center gap-2">
-                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Min Stock Level</label>
+                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm xl:text-xs lg:text-[11px]">Min Stock Level</label>
                       <input
                         ref={minStockInputRef}
                         type="number"
@@ -1236,7 +1236,7 @@ export default function AddProductPopup({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Tax Rate</label>
+                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm xl:text-xs lg:text-[11px]">Tax Rate</label>
                       <input
                         type="number"
                         name="taxRate"
@@ -1251,7 +1251,7 @@ export default function AddProductPopup({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Selling Price</label>
+                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm xl:text-xs lg:text-[11px]">Selling Price</label>
                       <input
                         ref={salePriceInputRef}
                         type="number"
@@ -1267,7 +1267,7 @@ export default function AddProductPopup({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Track Expiry</label>
+                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm xl:text-xs lg:text-[11px]">Track Expiry</label>
                       <div
                         ref={trackExpirySectionRef}
                         className="relative min-w-0 flex-1"
@@ -1355,7 +1355,7 @@ export default function AddProductPopup({
                     </div>
 
                     <div className="flex items-center gap-2">
-                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm">Type Of Supply</label>
+                      <label className="w-32 shrink-0 text-xs font-semibold text-gray-700 md:text-sm xl:text-xs lg:text-[11px]">Type Of Supply</label>
                       <div
                         ref={typeOfSupplySectionRef}
                         className="relative min-w-0 flex-1"
@@ -1447,7 +1447,7 @@ export default function AddProductPopup({
             </div>
           </div>
 
-          <div className="flex shrink-0 flex-col items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2 md:flex-row md:px-4">
+          <div className="flex shrink-0 flex-col items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-3 py-2 md:flex-row md:px-4 xl:py-1.5 lg:py-1">
             <div className="text-[11px] text-gray-600 md:text-xs">
               <kbd className="rounded bg-gray-200 px-2 py-1 font-mono text-xs">Esc</kbd> to close
             </div>
@@ -1456,7 +1456,7 @@ export default function AddProductPopup({
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5"
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-1.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 md:flex-none md:px-5 xl:py-1.5 xl:text-xs lg:py-1 lg:text-[11px]"
               >
                 Cancel
               </button>
@@ -1464,7 +1464,7 @@ export default function AddProductPopup({
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-1.5 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6"
+                className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-1.5 text-sm font-semibold text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 md:flex-none md:px-6 xl:py-1.5 xl:text-xs lg:py-1 lg:text-[11px]"
               >
                 {loading ? 'Saving...' : isEditMode ? 'Update Stock Item' : 'Save Stock'}
               </button>
