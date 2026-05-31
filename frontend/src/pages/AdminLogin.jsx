@@ -1,84 +1,64 @@
-import { useState } from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAdminAuth } from '../context/AdminAuthContext';
 
-export default function Login() {
-  const [emailOrPhone, setEmailOrPhone] = useState('');
+export default function AdminLogin() {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('signin');
   const [showPassword, setShowPassword] = useState(false);
 
-  const { login, employeeLogin, loading } = useAuth();
+  const { adminLogin, loading, refreshAdmin } = useAdminAuth();
   const navigate = useNavigate();
 
-  const handleLoginSubmit = async (e) => {
+  useEffect(() => {
+    refreshAdmin().then((a) => {
+      if (a) navigate('/adm', { replace: true });
+    });
+  }, []);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    if (!emailOrPhone || !password) {
+    if (!email || !password) {
       setError('Please fill all fields');
       return;
     }
 
-    let result;
-    if (activeTab === 'staff') {
-      result = await employeeLogin(emailOrPhone, password);
-    } else {
-      result = await login(emailOrPhone, password);
-    }
+    const result = await adminLogin(email, password);
 
     if (result.success) {
-      navigate('/stock');
+      navigate('/adm');
     } else {
       setError(result.message);
     }
   };
 
-  const inputClasses = "w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-200 text-gray-800 text-sm";
-  const labelClasses = "block text-xs font-medium text-gray-700 mb-1";
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-3xl"></div>
       </div>
-      
+
       <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl mb-3 shadow-lg shadow-blue-500/30">
+          <div className="inline-flex items-center justify-center w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl mb-3 shadow-lg shadow-purple-500/30">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">BillHub</h1>
-          <p className="text-slate-400 text-xs">Inventory & Billing Management</p>
+          <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">Admin Panel</h1>
+          <p className="text-slate-400 text-xs">Super Admin Access</p>
         </div>
 
         <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-slate-900/50 p-6 border border-white/20">
           <div className="flex bg-slate-100 p-1 rounded-lg mb-4">
-            <button
-              onClick={() => { setActiveTab('signin'); setError(''); }}
-              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all duration-300 ${
-                activeTab === 'signin'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Owner Login
-            </button>
-            <button
-              onClick={() => { setActiveTab('staff'); setError(''); }}
-              className={`flex-1 py-2 px-3 rounded-md font-medium text-xs transition-all duration-300 ${
-                activeTab === 'staff'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Staff Login
-            </button>
+            <div className="flex-1 py-2 px-3 rounded-md font-medium text-xs bg-white text-purple-600 shadow-sm text-center">
+              Admin Login
+            </div>
           </div>
 
           {error && (
@@ -90,27 +70,34 @@ export default function Login() {
             </div>
           )}
 
-          <form onSubmit={handleLoginSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className={labelClasses}>{activeTab === 'staff' ? 'Mobile Number' : 'Email / Mobile'}</label>
-              <input
-                type="text"
-                value={emailOrPhone}
-                onChange={(e) => setEmailOrPhone(e.target.value)}
-                className={inputClasses}
-                placeholder={activeTab === 'staff' ? 'Enter registered mobile' : 'email or mobile'}
-                required
-              />
+              <label className="block text-xs font-medium text-gray-700 mb-1">Mobile Number</label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all duration-200 text-gray-800 text-sm"
+                  placeholder="Enter registered mobile"
+                  required
+                />
+              </div>
             </div>
 
             <div>
-              <label className={labelClasses}>Password</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
               <div className="relative">
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className={inputClasses}
+                  className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all duration-200 text-gray-800 text-sm"
                   placeholder="password"
                   required
                 />
@@ -136,15 +123,21 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-lg font-medium text-sm hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 px-4 rounded-lg font-medium text-sm hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
+
+          <p className="text-center text-gray-500 text-xs mt-4">
+            <a href="/login" className="text-purple-600 font-medium hover:text-purple-700 transition-colors">
+              Back to User Login
+            </a>
+          </p>
         </div>
 
         <p className="text-center text-slate-500 text-xs mt-6">
-          &copy; 2026 BillHub. All rights reserved.
+          &copy; 2026 BillHub Admin. All rights reserved.
         </p>
       </div>
     </div>

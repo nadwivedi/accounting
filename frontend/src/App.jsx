@@ -2,7 +2,10 @@ import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useAuth } from './context/AuthContext';
+import { useAdminAuth } from './context/AdminAuthContext';
 import Login from './pages/Login';
+import AdminLogin from './pages/AdminLogin';
+import AdminPanel from './pages/AdminPanel';
 import Home from './pages/Home';
 import Masters from './pages/Masters';
 import Products from './pages/Products';
@@ -40,6 +43,7 @@ import SectionHubPage from './components/SectionHubPage';
 
 function App() {
   const { isAuthenticated } = useAuth();
+  const { isAdminAuthenticated } = useAdminAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -447,6 +451,10 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        {/* Admin Routes */}
+        <Route path="/admlogin" element={<AdminLogin />} />
+        <Route path="/adm" element={<AdminPanel />} />
 
         {/* Redirect to stock */}
         <Route path="*" element={<Navigate to="/" />} />

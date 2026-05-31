@@ -30,6 +30,7 @@ const purchaseDiscountRoutes = require('./routes/VoucherRoutes/purchaseDiscountR
 const reportRoutes = require('./routes/reportRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const auditLogRoutes = require('./routes/auditLogRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use('/api/purchase-discounts', purchaseDiscountRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/uploads', uploadRoutes);
 app.use('/api/audit-logs', auditLogRoutes);
+app.use('/api/admin', adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 const startServer = async () => {

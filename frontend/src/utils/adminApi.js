@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const apiClient = axios.create({
+const adminApi = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
   headers: {
@@ -10,18 +10,17 @@ const apiClient = axios.create({
   }
 });
 
-// Handle responses
-apiClient.interceptors.response.use(
+adminApi.interceptors.response.use(
   (response) => response.data,
   (error) => {
     if (error.response?.status === 401) {
       const path = window.location.pathname;
-      if (path !== '/login' && !path.startsWith('/admlogin') && !path.startsWith('/adm')) {
-        window.location.href = '/login';
+      if (path !== '/admlogin' && !path.startsWith('/login') && !path.startsWith('/adm')) {
+        window.location.href = '/admlogin';
       }
     }
     return Promise.reject(error.response?.data || error.message);
   }
 );
 
-export default apiClient;
+export default adminApi;
