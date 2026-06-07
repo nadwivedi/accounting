@@ -35,9 +35,9 @@ const buildSummary = (entries) =>
       acc.entryCount += 1;
       acc.totalInward += Number(entry.inAmount || 0);
       acc.totalOutward += Number(entry.outAmount || 0);
-      if (['sale', 'cash sale', 'credit sale', 'cash', 'partial', 'credit'].includes(entry.type))
+      if (['Cash Sale', 'Credit Sale', 'Partial Sale'].includes(entry.label))
         acc.sales += amount;
-      if (['purchase', 'cash purchase', 'credit purchase'].includes(entry.type))
+      if (['Cash Purchase', 'Credit Purchase', 'Partial Purchase', 'Purchase'].includes(entry.label))
         acc.purchases += amount;
       if (entry.type === 'receipt') acc.receipts += amount;
       if (entry.type === 'payment') acc.payments += amount;
@@ -47,23 +47,21 @@ const buildSummary = (entries) =>
     { entryCount: 0, totalInward: 0, totalOutward: 0, sales: 0, purchases: 0, receipts: 0, payments: 0, expenses: 0 }
   );
 
-const TYPE_BADGE = {
-  sale: 'bg-amber-100 text-amber-700',
-  'cash sale': 'bg-emerald-100 text-emerald-700',
-  'credit sale': 'bg-blue-100 text-blue-700',
-  cash: 'bg-emerald-100 text-emerald-700',
-  partial: 'bg-amber-100 text-amber-700',
-  credit: 'bg-blue-100 text-blue-700',
-  payment: 'bg-rose-100 text-rose-700',
-  receipt: 'bg-sky-100 text-sky-700',
-  purchase: 'bg-orange-100 text-orange-700',
-  'cash purchase': 'bg-violet-100 text-violet-700',
-  'credit purchase': 'bg-indigo-100 text-indigo-700',
-  expense: 'bg-fuchsia-100 text-fuchsia-700',
-  saleDiscount: 'bg-violet-100 text-violet-700',
-  purchaseDiscount: 'bg-emerald-100 text-emerald-700',
-  purchaseReturn: 'bg-teal-100 text-teal-700',
-  saleReturn: 'bg-red-100 text-red-700',
+const BADGE_BY_LABEL = {
+  'Cash Sale': 'bg-emerald-100 text-emerald-700',
+  'Credit Sale': 'bg-blue-100 text-blue-700',
+  'Partial Sale': 'bg-amber-100 text-amber-700',
+  'Cash Purchase': 'bg-violet-100 text-violet-700',
+  'Credit Purchase': 'bg-indigo-100 text-indigo-700',
+  'Partial Purchase': 'bg-orange-100 text-orange-700',
+  Purchase: 'bg-orange-100 text-orange-700',
+  Receipt: 'bg-sky-100 text-sky-700',
+  Payment: 'bg-rose-100 text-rose-700',
+  Expense: 'bg-fuchsia-100 text-fuchsia-700',
+  'Sale Return': 'bg-red-100 text-red-700',
+  'Purchase Return': 'bg-teal-100 text-teal-700',
+  'Discount After Sale': 'bg-violet-100 text-violet-700',
+  'Discount After Purchase': 'bg-emerald-100 text-emerald-700',
 };
 
 /* ──────────────────────────────────────────────
@@ -122,14 +120,13 @@ function DayTable({ dateKey, entries }) {
           </thead>
           <tbody className="divide-y divide-gray-200">
             {entries.map((entry, idx) => {
-              const badge = TYPE_BADGE[entry.type] || 'bg-gray-100 text-gray-700';
               return (
                 <tr
                   key={`${entry.refId || entry.voucherNumber || entry.type}-${idx}`}
                   className="transition-colors hover:bg-gray-50"
                 >
                   <td className="px-3 py-2">
-                    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${badge}`}>
+                    <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold capitalize ${BADGE_BY_LABEL[entry.label] || 'bg-gray-100 text-gray-700'}`}>
                       {entry.label || entry.displayType || entry.type || '-'}
                     </span>
                   </td>

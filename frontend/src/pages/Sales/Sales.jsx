@@ -175,7 +175,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const fetchAllSalesForTotals = async () => {
     try {
       const response = await apiClient.get('/sales');
-      setAllSales(response.data?.data || []);
+      setAllSales(response?.data || []);
     } catch (err) {
       console.error('Error fetching all sales for totals:', err);
     }
