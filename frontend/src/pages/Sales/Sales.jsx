@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, IndianRupee, Search } from 'lucide-react';
+import { ShoppingCart, IndianRupee, Search, Banknote, CreditCard, Receipt } from 'lucide-react';
 import { toast } from 'react-toastify';
 import apiClient from '../../utils/api';
 import AddPartyPopup from '../Party/component/AddPartyPopup';
@@ -138,6 +138,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   };
 
   const [sales, setSales] = useState([]);
+  const [allSales, setAllSales] = useState([]);
   const [leadgers, setLeadgers] = useState([]);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -169,6 +170,19 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     fetchLeadgers();
     fetchProducts();
   }, [search]);
+
+  const fetchAllSalesForTotals = async () => {
+    try {
+      const response = await apiClient.get('/sales');
+      setAllSales(response.data?.data || []);
+    } catch (err) {
+      console.error('Error fetching all sales for totals:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchAllSalesForTotals();
+  }, []);
 
   useEffect(() => {
     if (location.state?.openShortcut !== 'sale' || showForm) return;
@@ -1105,6 +1119,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         toastOptions
       );
       fetchSales();
+      fetchAllSalesForTotals();
       setFormData(getInitialFormData());
       setCurrentItem(initialCurrentItem);
       setEditingId(null);
@@ -1174,6 +1189,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         await apiClient.delete(`/sales/${id}`);
         toast.success('Sale deleted successfully', toastOptions);
         fetchSales();
+        fetchAllSalesForTotals();
       } catch (err) {
         setError(err.message || 'Error deleting sale');
       }
@@ -1220,8 +1236,26 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     setShowForm(true);
   };
 
-  const totalSales = sales.length;
-  const totalAmount = sales.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
+  const totalsData = allSales.length ? allSales : sales;
+  const totalSales = totalsData.length;
+  const totalAmount = totalsData.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
+  const salesTotals = useMemo(() => {
+    let cash = 0;
+    let credit = 0;
+    let partial = 0;
+    for (const sale of totalsData) {
+      const type = String(sale.type || '').toLowerCase();
+      const amt = Number(sale.totalAmount || 0);
+      if (type === 'cash' || type === 'cash sale') {
+        cash += amt;
+      } else if (type === 'credit' || type === 'credit sale') {
+        credit += amt;
+      } else if (type === 'partial' || type === 'sale') {
+        partial += amt;
+      }
+    }
+    return { totalCash: cash, totalCredit: credit, totalPartial: partial };
+  }, [totalsData]);
   const popupFieldClass = 'w-full rounded-lg border border-indigo-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 transition-all focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200';
   const popupLabelClass = 'mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-600';
   const popupSectionClass = 'rounded-xl border-2 border-indigo-200 bg-gradient-to-r from-blue-50 to-indigo-50 p-3 md:p-4';
@@ -1313,33 +1347,83 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
         </div>
       )}
 
-      <div className="mb-5 mt-1 grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4">
-        <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Sales</p>
-              <p className="mt-1 sm:mt-2 text-base sm:text-2xl font-bold text-slate-800 leading-tight">{totalSales}</p>
+      <div className="mb-5 mt-1 grid grid-cols-5 gap-1 sm:gap-4">
+        <div className="group relative overflow-hidden rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
+          <div className="flex flex-col items-center gap-0.5 sm:items-start sm:gap-2">
+            <p className="text-[9px] sm:text-xs font-medium text-slate-500 leading-tight text-center sm:text-left">Sales</p>
+            <p className="text-xs sm:text-2xl font-bold text-slate-800 leading-tight">{totalSales}</p>
+            <div className="flex sm:hidden h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+              <ShoppingCart className="h-3.5 w-3.5" />
             </div>
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform group-hover:scale-110">
-              <ShoppingCart className="h-6 w-6" />
-            </div>
+          </div>
+          <div className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600 transition-transform group-hover:scale-110">
+            <ShoppingCart className="h-6 w-6" />
           </div>
           <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-blue-500 to-cyan-400 opacity-80"></div>
         </div>
-        <div className="group relative overflow-hidden rounded-xl bg-white p-2.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-[10px] sm:text-xs font-medium text-slate-500 leading-tight">Total Amount</p>
-              <p className="mt-1 sm:mt-2 text-[11px] sm:text-2xl font-bold text-slate-800 leading-tight">
-                <span className="text-[10px] sm:text-base text-slate-400 font-medium mr-1">Rs</span>
-                {totalAmount.toFixed(2)}
-              </p>
-            </div>
-            <div className="hidden sm:flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
-              <IndianRupee className="h-6 w-6" />
+        <div className="group relative overflow-hidden rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
+          <div className="flex flex-col items-center gap-0.5 sm:items-start sm:gap-2">
+            <p className="text-[9px] sm:text-xs font-medium text-slate-500 leading-tight text-center sm:text-left">Amount</p>
+            <p className="text-[9px] sm:text-2xl font-bold text-slate-800 leading-tight text-center sm:text-left">
+              <span className="text-[8px] sm:text-base text-slate-400 font-medium mr-0.5">Rs</span>
+              {totalAmount.toFixed(2)}
+            </p>
+            <div className="flex sm:hidden h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+              <IndianRupee className="h-3.5 w-3.5" />
             </div>
           </div>
+          <div className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
+            <IndianRupee className="h-6 w-6" />
+          </div>
           <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500 to-teal-400 opacity-80"></div>
+        </div>
+        <div className="group relative overflow-hidden rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
+          <div className="flex flex-col items-center gap-0.5 sm:items-start sm:gap-2">
+            <p className="text-[9px] sm:text-xs font-medium text-slate-500 leading-tight text-center sm:text-left">Cash</p>
+            <p className="text-[9px] sm:text-2xl font-bold text-emerald-700 leading-tight text-center sm:text-left">
+              <span className="text-[8px] sm:text-base text-slate-400 font-medium mr-0.5">Rs</span>
+              {Number(salesTotals.totalCash || 0).toFixed(2)}
+            </p>
+            <div className="flex sm:hidden h-6 w-6 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+              <Banknote className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 transition-transform group-hover:scale-110">
+            <Banknote className="h-6 w-6" />
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-emerald-500 to-green-400 opacity-80"></div>
+        </div>
+        <div className="group relative overflow-hidden rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
+          <div className="flex flex-col items-center gap-0.5 sm:items-start sm:gap-2">
+            <p className="text-[9px] sm:text-xs font-medium text-slate-500 leading-tight text-center sm:text-left">Credit</p>
+            <p className="text-[9px] sm:text-2xl font-bold text-red-700 leading-tight text-center sm:text-left">
+              <span className="text-[8px] sm:text-base text-slate-400 font-medium mr-0.5">Rs</span>
+              {Number(salesTotals.totalCredit || 0).toFixed(2)}
+            </p>
+            <div className="flex sm:hidden h-6 w-6 items-center justify-center rounded-lg bg-red-50 text-red-600">
+              <CreditCard className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 h-12 w-12 items-center justify-center rounded-xl bg-red-50 text-red-600 transition-transform group-hover:scale-110">
+            <CreditCard className="h-6 w-6" />
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-red-500 to-rose-400 opacity-80"></div>
+        </div>
+        <div className="group relative overflow-hidden rounded-xl bg-white p-1.5 shadow-sm ring-1 ring-slate-200/50 transition-all hover:shadow-md sm:rounded-2xl sm:p-5">
+          <div className="flex flex-col items-center gap-0.5 sm:items-start sm:gap-2">
+            <p className="text-[9px] sm:text-xs font-medium text-slate-500 leading-tight text-center sm:text-left">Partial</p>
+            <p className="text-[9px] sm:text-2xl font-bold text-amber-700 leading-tight text-center sm:text-left">
+              <span className="text-[8px] sm:text-base text-slate-400 font-medium mr-0.5">Rs</span>
+              {Number(salesTotals.totalPartial || 0).toFixed(2)}
+            </p>
+            <div className="flex sm:hidden h-6 w-6 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+              <Receipt className="h-3.5 w-3.5" />
+            </div>
+          </div>
+          <div className="hidden sm:flex absolute right-3 top-1/2 -translate-y-1/2 h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600 transition-transform group-hover:scale-110">
+            <Receipt className="h-6 w-6" />
+          </div>
+          <div className="absolute inset-x-0 bottom-0 h-0.5 sm:h-1 bg-gradient-to-r from-amber-500 to-yellow-400 opacity-80"></div>
         </div>
       </div>
 

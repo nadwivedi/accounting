@@ -120,6 +120,58 @@ const getLinkedSaleReceiptTotal = async ({ saleId, userId }) => {
   return toNumber(result[0]?.total);
 };
 
+// ─── Sales totals aggregation ──────────────────────────────────────────────
+
+exports.getSalesTotals = async (req, res) => {
+  try {
+    const userId = req.userId;
+
+    const pipeline = [
+      { $match: { userId: new mongoose.Types.ObjectId(String(userId)) } },
+      {
+        $group: {
+          _id: null,
+          totalCash: {
+            $sum: {
+              $cond: [
+                { $in: [{ $toLower: '$type' }, ['cash', 'cash sale']] },
+                '$totalAmount',
+                0
+              ]
+            }
+          },
+          totalCredit: {
+            $sum: {
+              $cond: [
+                { $in: [{ $toLower: '$type' }, ['credit', 'credit sale']] },
+                '$totalAmount',
+                0
+              ]
+            }
+          },
+          totalPartial: {
+            $sum: {
+              $cond: [
+                { $in: [{ $toLower: '$type' }, ['partial', 'sale']] },
+                '$totalAmount',
+                0
+              ]
+            }
+          }
+        }
+      }
+    ];
+
+    const result = await Sale.aggregate(pipeline);
+    const totals = result[0] || { totalCash: 0, totalCredit: 0, totalPartial: 0 };
+
+    res.status(200).json({ success: true, data: totals });
+  } catch (error) {
+    console.error('Get sales totals error:', error);
+    res.status(500).json({ success: false, message: error.message || 'Error fetching sales totals' });
+  }
+};
+
 // ─── Controllers ────────────────────────────────────────────────────────────
 
 exports.getNextSaleInvoiceNumber = async (req, res) => {

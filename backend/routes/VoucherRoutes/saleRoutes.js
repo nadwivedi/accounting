@@ -6,6 +6,7 @@ const {
   getSaleById,
   getNextSaleInvoiceNumber,
   getSaleInvoicePdf,
+  getSalesTotals,
   updateSale,
   deleteSale,
   updatePaymentStatus
@@ -18,6 +19,7 @@ router.use(auth);
 router.post('/', createSale);
 router.get('/', getAllSales);
 router.get('/next-invoice-number', getNextSaleInvoiceNumber);
+router.get('/totals', getSalesTotals);
 router.get('/:id/invoice-pdf', getSaleInvoicePdf);
 router.get('/:id', getSaleById);
 router.put('/:id', updateSale);
