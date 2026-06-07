@@ -147,6 +147,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [formData, setFormData] = useState(initialFormData);
   const [currentItem, setCurrentItem] = useState(initialCurrentItem);
   const [showPartyForm, setShowPartyForm] = useState(false);
@@ -1236,6 +1237,17 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
     setShowForm(true);
   };
 
+  const filteredSales = useMemo(() => {
+    if (typeFilter === 'all') return sales;
+    return sales.filter((sale) => {
+      const t = String(sale.type || '').toLowerCase();
+      if (typeFilter === 'cash') return t === 'cash' || t === 'cash sale';
+      if (typeFilter === 'credit') return t === 'credit' || t === 'credit sale';
+      if (typeFilter === 'partial') return t === 'partial' || t === 'sale';
+      return true;
+    });
+  }, [sales, typeFilter]);
+
   const totalsData = allSales.length ? allSales : sales;
   const totalSales = totalsData.length;
   const totalAmount = totalsData.reduce((sum, sale) => sum + Number(sale.totalAmount || 0), 0);
@@ -1506,6 +1518,16 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                 className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-9 pr-4 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
             </div>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 lg:w-auto"
+            >
+              <option value="all">All Types</option>
+              <option value="cash">Cash</option>
+              <option value="credit">Credit</option>
+              <option value="partial">Partial</option>
+            </select>
             <button
               onClick={handleOpenForm}
               className="inline-flex items-center justify-center whitespace-nowrap rounded-lg bg-slate-800 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-900"
@@ -1518,7 +1540,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
       {/* Sales List */}
       {loading && !showForm ? (
         <div className="px-6 py-10 text-center text-slate-500">Loading...</div>
-      ) : sales.length === 0 ? (
+      ) : filteredSales.length === 0 ? (
         <div className="rounded-[20px] border border-dashed border-slate-300 bg-white/80 px-6 py-10 text-center text-slate-500">
           No sales found. Create your first sale!
         </div>
@@ -1538,7 +1560,7 @@ export default function Sales({ modalOnly = false, onModalFinish = null }) {
                 </tr>
               </thead>
               <tbody className="bg-[linear-gradient(180deg,rgba(255,255,255,0.94)_0%,rgba(248,250,252,0.98)_100%)] text-slate-600">
-                {sales.map((sale) => {
+                {filteredSales.map((sale) => {
                   const saleTotal = Number(sale.totalAmount || 0);
                   const salePaid = Number(sale.paidAmount || 0);
                   const typeNorm = String(sale.type || '').toLowerCase();
