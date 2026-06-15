@@ -60,6 +60,8 @@ export default function AddPurchasePopup({
   const [isItemEntryClosed, setIsItemEntryClosed] = useState(false);
   const inputClass = 'w-full rounded-lg border border-slate-400 bg-white px-2.5 py-1.5 text-[13px] text-gray-800 focus:border-transparent focus:outline-none focus:ring-2';
   const currentItemTotal = Math.max(0, Number(currentItem.quantity || 0) * Number(currentItem.unitPrice || 0));
+  const currentProduct = products.find(p => String(p._id) === String(currentItem.product));
+  const isCurrentService = currentProduct?.typeOfSupply === 'services';
   const resolvedLeadgerInputRef = leadgerInputRef || localLeadgerInputRef;
   const resolvedProductInputRef = productInputRef || localProductInputRef;
   const displayedPurchaseNumber = editingId
@@ -435,6 +437,8 @@ export default function AddPurchasePopup({
                         <tbody className="divide-y divide-emerald-50">
                           {formData.items.map((item, index) => {
                             const isNewInTable = !item.product;
+                            const itemProduct = products.find(p => String(p._id) === String(item.product));
+                            const isServiceItem = itemProduct?.typeOfSupply === 'services';
                             return (
                               <tr key={index} className="hover:bg-emerald-50/40">
                                 <td className="border-r border-slate-400 px-3 py-2">
@@ -463,6 +467,7 @@ export default function AddPurchasePopup({
                                     onKeyDown={handleSelectEnterMoveNext}
                                     className="w-full bg-transparent px-1 py-1 text-right text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
                                     min="0"
+                                    step={isServiceItem ? 'any' : '1'}
                                   />
                                 </td>
                                 <td className="border-r border-slate-400 px-3 py-2 text-center">
@@ -706,6 +711,7 @@ export default function AddPurchasePopup({
                                   onKeyDown={handleSelectEnterMoveNext}
                                   className={`${inputClass} ml-auto w-[22%] min-w-[44px] text-right focus:ring-emerald-500`}
                                   min="0"
+                                  step={isCurrentService ? 'any' : '1'}
                                 />
                               </td>
                               <td className="px-3 py-2.5 text-center">

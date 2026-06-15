@@ -58,6 +58,8 @@ export default function AddSalePopup({
   const inputClass = "w-full rounded-lg border border-slate-400 bg-white px-2.5 py-1.5 text-[13px] text-gray-800 transition placeholder:text-slate-400 focus:border-transparent focus:outline-none focus:ring-2";
   const labelClass = "mb-1 block text-[11px] font-semibold text-gray-700 md:text-xs";
   const currentItemTotal = Math.max(0, Number(currentItem.quantity || 0) * Number(currentItem.unitPrice || 0));
+  const currentProduct = products.find(p => String(p._id) === String(currentItem.product));
+  const isCurrentService = currentProduct?.typeOfSupply === 'services';
   const resolvedProductInputRef = productInputRef || localProductInputRef;
   const leadgerDropdownStyle = useFloatingDropdownPosition(leadgerSectionRef, isLeadgerSectionActive, [filteredLeadgers.length, leadgerListIndex]);
   const expandedLeadgerDropdownStyle = leadgerDropdownStyle ? {
@@ -407,7 +409,10 @@ export default function AddSalePopup({
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-emerald-50">
-                          {formData.items.map((item, index) => (
+                          {formData.items.map((item, index) => {
+                            const itemProduct = products.find(p => String(p._id) === String(item.product));
+                            const isServiceItem = itemProduct?.typeOfSupply === 'services';
+                            return (
                             <tr key={index} className="hover:bg-emerald-50/40">
                               <td className="border-r border-slate-400 px-3 py-2">
                                 <input
@@ -435,6 +440,7 @@ export default function AddSalePopup({
                                   onKeyDown={handleSelectEnterMoveNext}
                                   className="w-full bg-transparent px-1 py-1 text-right text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
                                   min="0"
+                                  step={isServiceItem ? 'any' : '1'}
                                 />
                               </td>
                               <td className="border-r border-slate-400 px-3 py-2 text-center text-gray-600">
@@ -465,7 +471,8 @@ export default function AddSalePopup({
                                 Rs {Number(item.total || 0).toFixed(2)}
                               </td>
                             </tr>
-                          ))}
+                          );
+                        })}
                           {isItemEntryClosed ? (
                             <>
                               <tr className="bg-emerald-50/40">
@@ -673,6 +680,7 @@ export default function AddSalePopup({
                                 onKeyDown={handleSelectEnterMoveNext}
                                 className={`${inputClass} ml-auto w-[22%] min-w-[44px] text-right focus:ring-emerald-500`}
                                 min="0"
+                                step={isCurrentService ? 'any' : '1'}
                               />
                             </td>
                               <td className="px-3 py-2.5 text-center">
