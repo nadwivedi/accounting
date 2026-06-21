@@ -487,15 +487,17 @@ export default function AddSalePopup({
                                     <span className="text-[10px] font-semibold text-slate-500">m</span>
                                   </div>
                                 ) : (
-                                  <input
-                                    type="number"
-                                    value={item.quantity}
-                                    onChange={(e) => handleItemChange(index, 'quantity', sanitizeNonNegativeInput(e.target.value))}
-                                    onKeyDown={handleSelectEnterMoveNext}
-                                    className="w-full bg-transparent px-1 py-1 text-right text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
-                                    min="0"
-                                    step={isServiceItem ? 'any' : '1'}
-                                  />
+                                  <div className="flex justify-end">
+                                    <input
+                                      type="number"
+                                      value={item.quantity}
+                                      onChange={(e) => handleItemChange(index, 'quantity', sanitizeNonNegativeInput(e.target.value))}
+                                      onKeyDown={handleSelectEnterMoveNext}
+                                      className="w-[70px] bg-transparent px-1 py-1 text-right text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                      min="0"
+                                      step={isServiceItem ? 'any' : '1'}
+                                    />
+                                  </div>
                                 )}
                               </td>
                               <td className="border-r border-slate-400 px-3 py-2 text-center text-gray-600">
@@ -766,16 +768,18 @@ export default function AddSalePopup({
                                   </div>
                                 </div>
                               ) : (
-                                <input
-                                  type="number"
-                                  placeholder="0"
-                                  value={currentItem.quantity}
-                                  onChange={(e) => setCurrentItem({ ...currentItem, quantity: sanitizeNonNegativeInput(e.target.value) })}
-                                  onKeyDown={handleSelectEnterMoveNext}
-                                  className={`${inputClass} ml-auto w-[22%] min-w-[44px] text-right focus:ring-emerald-500`}
-                                  min="0"
-                                  step={isCurrentService ? 'any' : '1'}
-                                />
+                                <div className="flex justify-end">
+                                  <input
+                                    type="number"
+                                    placeholder="0"
+                                    value={currentItem.quantity}
+                                    onChange={(e) => setCurrentItem({ ...currentItem, quantity: sanitizeNonNegativeInput(e.target.value) })}
+                                    onKeyDown={handleSelectEnterMoveNext}
+                                    className={`${inputClass} !w-[70px] text-right focus:ring-emerald-500`}
+                                    min="0"
+                                    step={isCurrentService ? 'any' : '1'}
+                                  />
+                                </div>
                               )}
                             </td>
                               <td className="px-3 py-2.5 text-center">
