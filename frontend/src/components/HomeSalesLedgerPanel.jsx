@@ -18,6 +18,24 @@ const formatDate = (value) => {
 
 const formatQuantity = (value) => Number(value || 0).toLocaleString('en-IN');
 
+const formatDetailedQuantity = (qty, unit) => {
+  const u = String(unit || '').trim().toLowerCase();
+  if (u === 'hrs' || u === 'hour' || u === 'hours') {
+    const totalMins = Math.round(Number(qty || 0) * 60);
+    const hours = Math.floor(totalMins / 60);
+    const minutes = totalMins % 60;
+    if (hours > 0 && minutes > 0) {
+      return `${hours} hrs ${minutes} mins`;
+    } else if (hours > 0) {
+      return `${hours} hrs`;
+    } else if (minutes > 0) {
+      return `${minutes} mins`;
+    }
+    return '0 hrs';
+  }
+  return Number(qty || 0).toLocaleString('en-IN');
+};
+
 const formatInvoiceNumber = (value) => {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isInteger(parsed) || parsed <= 0) return String(value || '-').trim() || '-';
@@ -183,7 +201,7 @@ function SaleDetailModal({ detail, loading, error, onClose }) {
                           <tr key={item.id} className="bg-white">
                             <td className="border-b border-slate-100 px-4 py-3 font-medium text-slate-800">{item.productName || '-'}</td>
                             <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-700">{item.unit || '-'}</td>
-                            <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-800">{formatQuantity(item.quantity)}</td>
+                            <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-800">{formatDetailedQuantity(item.quantity, item.unit)}</td>
                             <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-800">{formatCurrency(item.unitPrice)}</td>
                             <td className="border-b border-slate-100 px-4 py-3 text-center font-semibold text-slate-900">{formatCurrency(item.total)}</td>
                           </tr>

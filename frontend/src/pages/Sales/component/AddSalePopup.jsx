@@ -89,6 +89,25 @@ export default function AddSalePopup({
     const matchingProduct = products.find((product) => String(product?._id) === String(item?.product || ''));
     return String(matchingProduct?.unit || '').trim() || '-';
   };
+
+  const isHrsUnit = (unit) => {
+    const u = String(unit || '').trim().toLowerCase();
+    return u === 'hrs' || u === 'hour' || u === 'hours';
+  };
+
+  const decimalToHrsMins = (decimalValue) => {
+    const val = parseFloat(decimalValue) || 0;
+    const totalMins = Math.round(val * 60);
+    const hours = Math.floor(totalMins / 60);
+    const minutes = totalMins % 60;
+    return { hours, minutes };
+  };
+
+  const hrsMinsToDecimal = (hours, minutes) => {
+    const h = parseInt(hours, 10) || 0;
+    const m = parseInt(minutes, 10) || 0;
+    return h + (m / 60);
+  };
   const currentItemUnit = String(currentItem.unit || '').trim() || '-';
   const liveBalance = Number(formData.totalAmount || 0) - Number(formData.paidAmount || 0);
   const balanceColor = liveBalance < 0
@@ -197,7 +216,7 @@ export default function AddSalePopup({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-1 md:p-4" onClick={handleCancel}>
-      <div className="flex h-[95dvh] max-h-[95dvh] w-[94vw] max-w-[68rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+      <div className="flex h-[95dvh] max-h-[95dvh] w-[96vw] max-w-[72rem] flex-col overflow-hidden rounded-lg bg-white shadow-2xl md:h-[98vh] md:max-h-[99vh] md:w-full md:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="border-b border-violet-200 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-indigo-500 px-3 py-3 text-white shadow-lg shadow-violet-500/20 md:px-5 md:py-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -394,10 +413,10 @@ export default function AddSalePopup({
                       <table className="w-full min-w-[720px] table-fixed text-[13px]">
                         <colgroup>
                           <col className="w-[34%]" />
-                          <col className="w-[10%]" />
-                          <col className="w-[10%]" />
-                          <col className="w-[21%]" />
-                          <col className="w-[25%]" />
+                          <col className="w-[22%]" />
+                          <col className="w-[9%]" />
+                          <col className="w-[15%]" />
+                          <col className="w-[20%]" />
                         </colgroup>
                         <thead className="bg-white text-gray-600">
                           <tr>
@@ -433,15 +452,51 @@ export default function AddSalePopup({
                                 />
                               </td>
                               <td className="border-r border-slate-400 px-3 py-2">
-                                <input
-                                  type="number"
-                                  value={item.quantity}
-                                  onChange={(e) => handleItemChange(index, 'quantity', sanitizeNonNegativeInput(e.target.value))}
-                                  onKeyDown={handleSelectEnterMoveNext}
-                                  className="w-full bg-transparent px-1 py-1 text-right text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
-                                  min="0"
-                                  step={isServiceItem ? 'any' : '1'}
-                                />
+                                {isHrsUnit(resolveItemUnit(item)) ? (
+                                  <div className="flex items-center gap-1 justify-end">
+                                    <input
+                                      type="number"
+                                      value={decimalToHrsMins(item.quantity).hours}
+                                      onChange={(e) => {
+                                        const { minutes } = decimalToHrsMins(item.quantity);
+                                        const hrs = e.target.value;
+                                        const newQty = hrsMinsToDecimal(hrs, minutes);
+                                        handleItemChange(index, 'quantity', newQty);
+                                      }}
+                                      placeholder="Hrs"
+                                      className="rounded border border-slate-300 bg-white px-1.5 py-1 text-right text-[13px] font-medium text-gray-800 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400" style={{width:'52px'}}
+                                      min="0"
+                                    />
+                                    <span className="text-[10px] font-semibold text-slate-500">h</span>
+                                    <input
+                                      type="number"
+                                      value={decimalToHrsMins(item.quantity).minutes}
+                                      onChange={(e) => {
+                                        const { hours } = decimalToHrsMins(item.quantity);
+                                        let mins = parseInt(e.target.value, 10);
+                                        if (isNaN(mins) || mins < 0) mins = 0;
+                                        if (mins > 59) mins = 59;
+                                        const newQty = hrsMinsToDecimal(hours, mins);
+                                        handleItemChange(index, 'quantity', newQty);
+                                      }}
+                                      placeholder="Min"
+                                      className="rounded border border-slate-300 bg-white px-1.5 py-1 text-right text-[13px] font-medium text-gray-800 outline-none focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400" style={{width:'46px'}}
+                                      min="0"
+                                      max="59"
+                                    />
+                                    <span className="text-[10px] font-semibold text-slate-500">m</span>
+                                  </div>
+                                ) : (
+                                  <input
+                                    type="number"
+                                    value={item.quantity}
+                                    onChange={(e) => handleItemChange(index, 'quantity', sanitizeNonNegativeInput(e.target.value))}
+                                    onKeyDown={handleSelectEnterMoveNext}
+                                    className="w-full bg-transparent px-1 py-1 text-right text-gray-600 outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500"
+                                    min="0"
+                                    step={isServiceItem ? 'any' : '1'}
+                                  />
+                                )}
                               </td>
                               <td className="border-r border-slate-400 px-3 py-2 text-center text-gray-600">
                                 {resolveItemUnit(item)}
@@ -672,16 +727,56 @@ export default function AddSalePopup({
                                 </div>
                               </td>
                             <td className="px-3 py-2.5">
-                              <input
-                                type="number"
-                                placeholder="0"
-                                value={currentItem.quantity}
-                                onChange={(e) => setCurrentItem({ ...currentItem, quantity: sanitizeNonNegativeInput(e.target.value) })}
-                                onKeyDown={handleSelectEnterMoveNext}
-                                className={`${inputClass} ml-auto w-[22%] min-w-[44px] text-right focus:ring-emerald-500`}
-                                min="0"
-                                step={isCurrentService ? 'any' : '1'}
-                              />
+                              {isHrsUnit(currentItemUnit) ? (
+                                <div className="flex items-center gap-1 justify-end">
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      type="number"
+                                      placeholder="0"
+                                      value={decimalToHrsMins(currentItem.quantity).hours}
+                                      onChange={(e) => {
+                                        const { minutes } = decimalToHrsMins(currentItem.quantity);
+                                        const hrs = e.target.value;
+                                        const newQty = hrsMinsToDecimal(hrs, minutes);
+                                        setCurrentItem({ ...currentItem, quantity: newQty });
+                                      }}
+                                      className="rounded-lg border border-slate-400 bg-white px-2 py-1.5 text-right text-[13px] font-medium text-gray-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-400" style={{width:'60px'}}
+                                      min="0"
+                                    />
+                                    <span className="text-xs font-bold text-slate-500">hrs</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <input
+                                      type="number"
+                                      placeholder="0"
+                                      value={decimalToHrsMins(currentItem.quantity).minutes}
+                                      onChange={(e) => {
+                                        const { hours } = decimalToHrsMins(currentItem.quantity);
+                                        let mins = parseInt(e.target.value, 10);
+                                        if (isNaN(mins) || mins < 0) mins = 0;
+                                        if (mins > 59) mins = 59;
+                                        const newQty = hrsMinsToDecimal(hours, mins);
+                                        setCurrentItem({ ...currentItem, quantity: newQty });
+                                      }}
+                                      className="rounded-lg border border-slate-400 bg-white px-2 py-1.5 text-right text-[13px] font-medium text-gray-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-400" style={{width:'54px'}}
+                                      min="0"
+                                      max="59"
+                                    />
+                                    <span className="text-xs font-bold text-slate-500">min</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <input
+                                  type="number"
+                                  placeholder="0"
+                                  value={currentItem.quantity}
+                                  onChange={(e) => setCurrentItem({ ...currentItem, quantity: sanitizeNonNegativeInput(e.target.value) })}
+                                  onKeyDown={handleSelectEnterMoveNext}
+                                  className={`${inputClass} ml-auto w-[22%] min-w-[44px] text-right focus:ring-emerald-500`}
+                                  min="0"
+                                  step={isCurrentService ? 'any' : '1'}
+                                />
+                              )}
                             </td>
                               <td className="px-3 py-2.5 text-center">
                                 <div className="rounded-lg border border-emerald-200 bg-white px-2.5 py-1.5 font-medium text-gray-700">

@@ -43,6 +43,24 @@ const formatQuantity = (value) => Number(value || 0).toLocaleString('en-IN', {
   maximumFractionDigits: 2
 });
 
+const formatDetailedQuantity = (qty, unit) => {
+  const u = String(unit || '').trim().toLowerCase();
+  if (u === 'hrs' || u === 'hour' || u === 'hours') {
+    const totalMins = Math.round(Number(qty || 0) * 60);
+    const hours = Math.floor(totalMins / 60);
+    const minutes = totalMins % 60;
+    if (hours > 0 && minutes > 0) {
+      return `${hours} hrs ${minutes} mins`;
+    } else if (hours > 0) {
+      return `${hours} hrs`;
+    } else if (minutes > 0) {
+      return `${minutes} mins`;
+    }
+    return '0 hrs';
+  }
+  return formatQuantity(qty);
+};
+
 const formatLabel = (value) => {
   const normalized = String(value || '').trim();
   if (!normalized) return '-';
@@ -286,7 +304,7 @@ function VoucherDetailModal({ detail, loading, error, onClose }) {
                               <p className="font-medium text-slate-800">{item.productName}</p>
                               {item.unit ? <p className="text-xs text-slate-500">{item.unit}</p> : null}
                             </td>
-                            <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-800">{formatQuantity(item.quantity)}</td>
+                            <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-800">{formatDetailedQuantity(item.quantity, item.unit)}</td>
                             <td className="border-b border-slate-100 px-4 py-3 text-center font-medium text-slate-800">{formatCurrency(item.unitPrice)}</td>
                             <td className="border-b border-slate-100 px-4 py-3 text-center font-semibold text-slate-900">{formatCurrency(item.total)}</td>
                           </tr>

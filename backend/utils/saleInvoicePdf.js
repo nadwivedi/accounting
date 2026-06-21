@@ -278,6 +278,24 @@ const drawTableHeader = (doc, y) => {
     .text('TOTAL', x + 412, y + 9, { width: 110, align: 'center' });
 };
 
+const formatQuantityForPdf = (qty, unit) => {
+  const u = String(unit || '').trim().toLowerCase();
+  if (u === 'hrs' || u === 'hour' || u === 'hours') {
+    const totalMins = Math.round(Number(qty || 0) * 60);
+    const hours = Math.floor(totalMins / 60);
+    const minutes = totalMins % 60;
+    if (hours > 0 && minutes > 0) {
+      return `${hours}h ${minutes}m`;
+    } else if (hours > 0) {
+      return `${hours}h`;
+    } else if (minutes > 0) {
+      return `${minutes}m`;
+    }
+    return '0h';
+  }
+  return String(qty || 0);
+};
+
 const drawItemsTable = (doc, items, startY) => {
   let y = startY;
   const x = PAGE.marginX;
@@ -315,12 +333,14 @@ const drawItemsTable = (doc, items, startY) => {
       .rect(x, y, width, rowHeight)
       .fill(index % 2 === 0 ? '#ffffff' : BRAND.zebra);
 
+    const qtyStr = formatQuantityForPdf(item?.quantity, item?.unit || item?.product?.unit);
+
     doc
       .fillColor(BRAND.slate)
       .font('Helvetica')
       .fontSize(10)
       .text(String(item?.productName || item?.product?.name || 'Item').trim() || 'Item', x + 8, y + 8, { width: 210 })
-      .text(String(item?.quantity || 0), x + 218, y + 8, { width: 72, align: 'center' })
+      .text(qtyStr, x + 218, y + 8, { width: 72, align: 'center' })
       .text(formatCurrency(item?.unitPrice || 0), x + 300, y + 8, { width: 94, align: 'center' })
       .text(formatCurrency(item?.total || 0), x + 412, y + 8, { width: 110, align: 'center' });
 
