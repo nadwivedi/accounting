@@ -88,17 +88,24 @@ export default function FYReport() {
     payments: []
   });
 
-  const fetchReport = async () => {
+  // Pass all filter values explicitly to avoid stale closure issues
+  const fetchReport = async ({
+    ft = filterType,
+    fy = selectedFY,
+    month = selectedMonth,
+    from = fromDate,
+    to = toDate
+  } = {}) => {
     setLoading(true);
     setError('');
     try {
       const params = {};
-      if (filterType === 'custom') {
-        if (fromDate) params.fromDate = fromDate;
-        if (toDate) params.toDate = toDate;
+      if (ft === 'custom') {
+        if (from) params.fromDate = from;
+        if (to) params.toDate = to;
       } else {
-        params.fy = selectedFY;
-        if (selectedMonth) params.month = selectedMonth;
+        params.fy = fy;
+        if (month) params.month = month;
       }
 
       const response = await apiClient.get('/reports/fy-report', { params });
@@ -115,19 +122,32 @@ export default function FYReport() {
       }
     } catch (err) {
       console.error('Error fetching FY report:', err);
-      setError(err.response?.data?.message || err.message || 'Error loading report.');
+      setError(typeof err === 'string' ? err : (err?.message || 'Error loading report.'));
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchReport();
+    fetchReport({
+      ft: filterType,
+      fy: selectedFY,
+      month: selectedMonth,
+      from: fromDate,
+      to: toDate
+    });
   }, []);
 
   const handleFilterSubmit = (e) => {
     e.preventDefault();
-    fetchReport();
+    // Pass current state values explicitly to avoid any stale closure
+    fetchReport({
+      ft: filterType,
+      fy: selectedFY,
+      month: selectedMonth,
+      from: fromDate,
+      to: toDate
+    });
   };
 
   const getFilterLabel = () => {
@@ -142,7 +162,7 @@ export default function FYReport() {
     return monthLabel && monthLabel !== 'All Months' ? `${fyLabel} (${monthLabel})` : fyLabel;
   };
 
-  // Excel Export
+  // Excel Export — use Blob + anchor click (works in all browsers)
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
 
@@ -157,73 +177,81 @@ export default function FYReport() {
       ['Total Purchases', reportData.summary.totalPurchases, reportData.summary.purchasesCount],
       ['Money Received (Receipts)', reportData.summary.totalReceipts, reportData.summary.receiptsCount],
       ['Payments Made', reportData.summary.totalPayments, reportData.summary.paymentsCount],
-      ['Net Cash Flow (Receipts - Payments)', reportData.summary.totalReceipts - reportData.summary.totalPayments, '']
+      ['Net Cash Flow (Receipts - Payments)', (reportData.summary.totalReceipts || 0) - (reportData.summary.totalPayments || 0), '']
     ];
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
     XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
 
-    // 2. Sales Sheet
-    if (reportData.sales.length > 0) {
-      const salesRows = reportData.sales.map((s) => ({
-        'Invoice No': s.invoiceNumber,
-        'Date': formatDate(s.date),
-        'Party / Customer': s.partyName,
-        'Total Amount (Rs)': s.totalAmount,
-        'Paid Amount (Rs)': s.paidAmount,
-        'Items Count': s.itemsCount,
-        'Total Qty': s.totalQty,
-        'Type': s.type
-      }));
-      const wsSales = XLSX.utils.json_to_sheet(salesRows);
-      XLSX.utils.book_append_sheet(wb, wsSales, 'Sales');
-    }
+    // 2. Sales Sheet (always add, even if empty, with headers)
+    const salesRows = reportData.sales.length > 0
+      ? reportData.sales.map((s) => ({
+          'Invoice No': s.invoiceNumber,
+          'Date': formatDate(s.date),
+          'Party / Customer': s.partyName,
+          'Total Amount (Rs)': s.totalAmount,
+          'Paid Amount (Rs)': s.paidAmount,
+          'Items Count': s.itemsCount,
+          'Total Qty': s.totalQty,
+          'Type': s.type
+        }))
+      : [{ 'Invoice No': '', 'Date': '', 'Party / Customer': 'No data for selected period', 'Total Amount (Rs)': '', 'Paid Amount (Rs)': '', 'Items Count': '', 'Total Qty': '', 'Type': '' }];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesRows), 'Sales');
 
     // 3. Purchases Sheet
-    if (reportData.purchases.length > 0) {
-      const purchaseRows = reportData.purchases.map((p) => ({
-        'Invoice / Bill No': p.invoiceNumber,
-        'Date': formatDate(p.date),
-        'Party / Vendor': p.partyName,
-        'Total Amount (Rs)': p.totalAmount,
-        'Paid Amount (Rs)': p.paidAmount,
-        'Items Count': p.itemsCount,
-        'Total Qty': p.totalQty,
-        'Type': p.type
-      }));
-      const wsPurchases = XLSX.utils.json_to_sheet(purchaseRows);
-      XLSX.utils.book_append_sheet(wb, wsPurchases, 'Purchases');
-    }
+    const purchaseRows = reportData.purchases.length > 0
+      ? reportData.purchases.map((p) => ({
+          'Invoice / Bill No': p.invoiceNumber,
+          'Date': formatDate(p.date),
+          'Party / Vendor': p.partyName,
+          'Total Amount (Rs)': p.totalAmount,
+          'Paid Amount (Rs)': p.paidAmount,
+          'Items Count': p.itemsCount,
+          'Total Qty': p.totalQty,
+          'Type': p.type
+        }))
+      : [{ 'Invoice / Bill No': '', 'Date': '', 'Party / Vendor': 'No data for selected period', 'Total Amount (Rs)': '', 'Paid Amount (Rs)': '', 'Items Count': '', 'Total Qty': '', 'Type': '' }];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(purchaseRows), 'Purchases');
 
     // 4. Receipts Sheet
-    if (reportData.receipts.length > 0) {
-      const receiptRows = reportData.receipts.map((r) => ({
-        'Receipt No': r.receiptNumber,
-        'Date': formatDate(r.date),
-        'Party Name': r.partyName,
-        'Amount (Rs)': r.amount,
-        'Payment Method': r.method,
-        'Notes': r.notes
-      }));
-      const wsReceipts = XLSX.utils.json_to_sheet(receiptRows);
-      XLSX.utils.book_append_sheet(wb, wsReceipts, 'Money Received');
-    }
+    const receiptRows = reportData.receipts.length > 0
+      ? reportData.receipts.map((r) => ({
+          'Receipt No': r.receiptNumber,
+          'Date': formatDate(r.date),
+          'Party Name': r.partyName,
+          'Amount (Rs)': r.amount,
+          'Payment Method': r.method,
+          'Notes': r.notes
+        }))
+      : [{ 'Receipt No': '', 'Date': '', 'Party Name': 'No data for selected period', 'Amount (Rs)': '', 'Payment Method': '', 'Notes': '' }];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(receiptRows), 'Money Received');
 
     // 5. Payments Sheet
-    if (reportData.payments.length > 0) {
-      const paymentRows = reportData.payments.map((p) => ({
-        'Payment No': p.paymentNumber,
-        'Date': formatDate(p.date),
-        'Party Name': p.partyName,
-        'Amount (Rs)': p.amount,
-        'Payment Method': p.method,
-        'Notes': p.notes
-      }));
-      const wsPayments = XLSX.utils.json_to_sheet(paymentRows);
-      XLSX.utils.book_append_sheet(wb, wsPayments, 'Payments Made');
-    }
+    const paymentRows = reportData.payments.length > 0
+      ? reportData.payments.map((p) => ({
+          'Payment No': p.paymentNumber,
+          'Date': formatDate(p.date),
+          'Party Name': p.partyName,
+          'Amount (Rs)': p.amount,
+          'Payment Method': p.method,
+          'Notes': p.notes
+        }))
+      : [{ 'Payment No': '', 'Date': '', 'Party Name': 'No data for selected period', 'Amount (Rs)': '', 'Payment Method': '', 'Notes': '' }];
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(paymentRows), 'Payments Made');
 
+    // Use Blob + URL.createObjectURL for reliable browser download
     const filename = `Report_${getFilterLabel().replace(/[^a-zA-Z0-9_-]/g, '_')}.xlsx`;
-    XLSX.writeFile(wb, filename);
+    const wbBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+    const blob = new Blob([wbBuffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
   };
 
   const netCashFlow = (reportData.summary.totalReceipts || 0) - (reportData.summary.totalPayments || 0);
