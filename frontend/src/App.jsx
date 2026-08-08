@@ -36,6 +36,7 @@ import Settings from './pages/Settings';
 import ExpenseReport from './pages/ExpenseReport';
 import PaymentReport from './pages/PaymentReport';
 import CashflowDashboard from './pages/CashflowDashboard';
+import FYReport from './pages/FYReport';
 import AuditLog from './pages/AuditLog';
 import { AddPaymentPopupLauncher } from './pages/Payments/component/AddPaymentPopup';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -191,6 +192,15 @@ function App() {
           element={
             <ProtectedRoute>
               <ReportsHub />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reports/fy-report"
+          element={
+            <ProtectedRoute>
+              <FYReport />
             </ProtectedRoute>
           }
         />

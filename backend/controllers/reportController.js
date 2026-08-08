@@ -356,6 +356,139 @@ exports.getOutstandingReport = async (req, res) => {
   }
 };
 
+exports.getFYReport = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { fy, month, fromDate, toDate } = req.query;
+
+    let startDate = null;
+    let endDate = null;
+
+    if (fromDate || toDate) {
+      if (fromDate) {
+        startDate = new Date(fromDate);
+        startDate.setHours(0, 0, 0, 0);
+      }
+      if (toDate) {
+        endDate = new Date(toDate);
+        endDate.setHours(23, 59, 59, 999);
+      }
+    } else if (fy) {
+      let startYear = parseInt(fy, 10);
+      if (String(fy).includes('-')) {
+        const parts = fy.split('-');
+        startYear = parseInt(parts[0], 10);
+      }
+      if (startYear < 100) {
+        startYear += 2000;
+      }
+
+      if (month && !isNaN(parseInt(month, 10))) {
+        const m = parseInt(month, 10); // 1 to 12
+        const year = m >= 4 ? startYear : startYear + 1;
+        startDate = new Date(year, m - 1, 1, 0, 0, 0, 0);
+        endDate = new Date(year, m, 0, 23, 59, 59, 999);
+      } else {
+        startDate = new Date(startYear, 3, 1, 0, 0, 0, 0); // April 1
+        endDate = new Date(startYear + 1, 2, 31, 23, 59, 59, 999); // March 31
+      }
+    }
+
+    const buildDateFilter = (dateField) => {
+      const filter = { userId };
+      if (startDate || endDate) {
+        filter[dateField] = {};
+        if (startDate) filter[dateField].$gte = startDate;
+        if (endDate) filter[dateField].$lte = endDate;
+      }
+      return filter;
+    };
+
+    const [sales, purchases, receipts, payments] = await Promise.all([
+      Sale.find(buildDateFilter('saleDate')).populate('party', 'name partyName').lean(),
+      Purchase.find(buildDateFilter('purchaseDate')).populate('party', 'name partyName').lean(),
+      Receipt.find(buildDateFilter('receiptDate')).populate('party', 'name partyName').lean(),
+      Payment.find(buildDateFilter('paymentDate')).populate('party', 'name partyName').lean()
+    ]);
+
+    const salesFormatted = sales.map((s) => ({
+      _id: s._id,
+      invoiceNumber: s.invoiceNumber || '-',
+      date: s.saleDate,
+      partyName: s.customerName || (s.party?.name || s.party?.partyName) || 'Walk-in',
+      totalAmount: toNumber(s.totalAmount),
+      paidAmount: toNumber(s.paidAmount),
+      type: s.type || 'sale',
+      itemsCount: Array.isArray(s.items) ? s.items.length : 0,
+      totalQty: Array.isArray(s.items) ? s.items.reduce((acc, i) => acc + toNumber(i.quantity), 0) : 0
+    }));
+
+    const purchasesFormatted = purchases.map((p) => ({
+      _id: p._id,
+      invoiceNumber: p.supplierInvoice || (p.purchaseNumber ? `PUR-${p.purchaseNumber}` : '-'),
+      date: p.purchaseDate,
+      partyName: (p.party?.name || p.party?.partyName) || 'Vendor',
+      totalAmount: toNumber(p.totalAmount),
+      paidAmount: toNumber(p.paidAmount),
+      type: p.type || 'purchase',
+      itemsCount: Array.isArray(p.items) ? p.items.length : 0,
+      totalQty: Array.isArray(p.items) ? p.items.reduce((acc, i) => acc + toNumber(i.quantity), 0) : 0
+    }));
+
+    const receiptsFormatted = receipts.map((r) => ({
+      _id: r._id,
+      receiptNumber: r.receiptNumber ? `REC-${r.receiptNumber}` : '-',
+      date: r.receiptDate,
+      partyName: (r.party?.name || r.party?.partyName) || 'General Receipt',
+      amount: toNumber(r.amount),
+      method: r.method || 'Cash Account',
+      notes: r.notes || ''
+    }));
+
+    const paymentsFormatted = payments.map((p) => ({
+      _id: p._id,
+      paymentNumber: p.paymentNumber ? `PAY-${p.paymentNumber}` : '-',
+      date: p.paymentDate,
+      partyName: (p.party?.name || p.party?.partyName) || 'General Payment',
+      amount: toNumber(p.amount),
+      method: p.method || 'Cash Account',
+      notes: p.notes || ''
+    }));
+
+    const summary = {
+      totalSales: salesFormatted.reduce((sum, s) => sum + s.totalAmount, 0),
+      totalPurchases: purchasesFormatted.reduce((sum, p) => sum + p.totalAmount, 0),
+      totalReceipts: receiptsFormatted.reduce((sum, r) => sum + r.amount, 0),
+      totalPayments: paymentsFormatted.reduce((sum, p) => sum + p.amount, 0),
+      salesCount: salesFormatted.length,
+      purchasesCount: purchasesFormatted.length,
+      receiptsCount: receiptsFormatted.length,
+      paymentsCount: paymentsFormatted.length
+    };
+
+    res.status(200).json({
+      success: true,
+      period: {
+        startDate,
+        endDate,
+        fy,
+        month
+      },
+      summary,
+      sales: salesFormatted,
+      purchases: purchasesFormatted,
+      receipts: receiptsFormatted,
+      payments: paymentsFormatted
+    });
+  } catch (error) {
+    console.error('FY report error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error fetching FY report'
+    });
+  }
+};
+
 exports.getPartyLedger = async (req, res) => {
   try {
     const userId = req.userId;

@@ -5,7 +5,8 @@ const {
   getPartyLedger,
   getPartyLedgerEntryDetail,
   getStockLedger,
-  getDayBookReport
+  getDayBookReport,
+  getFYReport
 } = require('../controllers/reportController');
 const auth = require('../middleware/auth');
 
@@ -16,5 +17,6 @@ router.get('/party-ledger', getPartyLedger);
 router.get('/party-ledger-entry-detail', getPartyLedgerEntryDetail);
 router.get('/stock-ledger', getStockLedger);
 router.get('/day-book', getDayBookReport);
+router.get('/fy-report', getFYReport);
 
 module.exports = router;

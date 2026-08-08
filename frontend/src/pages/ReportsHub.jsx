@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, Boxes, CreditCard, FileBarChart, Package, ReceiptText, RefreshCw, ShoppingCart, ShieldCheck, TrendingUp, Wallet } from 'lucide-react';
+import { BookOpen, Boxes, Calendar, CreditCard, FileBarChart, Package, ReceiptText, RefreshCw, ShoppingCart, ShieldCheck, TrendingUp, Wallet } from 'lucide-react';
 import { getSectionConfig } from '../navigation/sectionMenu';
 
 const REPORT_ITEMS = [
+  { name: 'FY & Custom Period Report', path: '/reports/fy-report', Icon: Calendar },
   { name: 'Cashflow Dashboard', path: '/reports/cashflow-dashboard', Icon: TrendingUp },
   { name: 'Party Ledger', path: '/party-ledger', Icon: Wallet },
   { name: 'Day Book', path: '/day-book', Icon: BookOpen },
