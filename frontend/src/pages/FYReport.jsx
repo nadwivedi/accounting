@@ -649,66 +649,66 @@ export default function FYReport() {
         )}
 
         {/* Summary KPI Grid */}
-        <div className={`mb-8 grid grid-cols-1 gap-4 ${currentCategory === 'all' || currentCategory === 'overview' ? 'sm:grid-cols-2 lg:grid-cols-5' : 'sm:grid-cols-1 lg:grid-cols-3 max-w-2xl'}`}>
+        <div className={`mb-6 grid grid-cols-1 gap-3.5 ${currentCategory === 'all' || currentCategory === 'overview' ? 'sm:grid-cols-2 lg:grid-cols-5' : 'sm:grid-cols-1 lg:grid-cols-3 max-w-xl'}`}>
           {/* Sales Card */}
           {(currentCategory === 'all' || currentCategory === 'overview' || currentCategory === 'sales') && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 shadow-sm transition hover:shadow-md">
+            <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-4 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between text-amber-800">
                 <span className="text-xs font-bold uppercase tracking-wider">Total Sales</span>
-                <ShoppingCart className="h-6 w-6 text-amber-600" />
+                <ShoppingCart className="h-5 w-5 text-amber-600" />
               </div>
-              <p className="mt-3 text-2xl font-black text-amber-950 sm:text-3xl">{formatCurrency(reportData.summary.totalSales || totalSalesAmount)}</p>
-              <p className="mt-1 text-xs text-amber-800/80 font-bold">{reportData.summary.salesCount || reportData.sales.length} Sales Invoices</p>
+              <p className="mt-2 text-lg font-extrabold text-amber-950 sm:text-xl">{formatCurrency(reportData.summary.totalSales || totalSalesAmount)}</p>
+              <p className="mt-0.5 text-xs text-amber-800/80 font-medium">{reportData.summary.salesCount || reportData.sales.length} Sales Invoices</p>
             </div>
           )}
 
           {/* Purchases Card */}
           {(currentCategory === 'all' || currentCategory === 'overview' || currentCategory === 'purchases') && (
-            <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50/70 p-5 shadow-sm transition hover:shadow-md">
+            <div className="rounded-xl border border-fuchsia-200 bg-fuchsia-50/70 p-4 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between text-fuchsia-800">
                 <span className="text-xs font-bold uppercase tracking-wider">Total Purchases</span>
-                <Package className="h-6 w-6 text-fuchsia-600" />
+                <Package className="h-5 w-5 text-fuchsia-600" />
               </div>
-              <p className="mt-3 text-2xl font-black text-fuchsia-950 sm:text-3xl">{formatCurrency(reportData.summary.totalPurchases || totalPurchasesAmount)}</p>
-              <p className="mt-1 text-xs text-fuchsia-800/80 font-bold">{reportData.summary.purchasesCount || reportData.purchases.length} Purchase Bills</p>
+              <p className="mt-2 text-lg font-extrabold text-fuchsia-950 sm:text-xl">{formatCurrency(reportData.summary.totalPurchases || totalPurchasesAmount)}</p>
+              <p className="mt-0.5 text-xs text-fuchsia-800/80 font-medium">{reportData.summary.purchasesCount || reportData.purchases.length} Purchase Bills</p>
             </div>
           )}
 
           {/* Money Received (Receipts) Card */}
           {(currentCategory === 'all' || currentCategory === 'overview' || currentCategory === 'receipts') && (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 shadow-sm transition hover:shadow-md">
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between text-emerald-800">
                 <span className="text-xs font-bold uppercase tracking-wider">Money Received</span>
-                <ReceiptText className="h-6 w-6 text-emerald-600" />
+                <ReceiptText className="h-5 w-5 text-emerald-600" />
               </div>
-              <p className="mt-3 text-2xl font-black text-emerald-950 sm:text-3xl">{formatCurrency(reportData.summary.totalReceipts || totalReceiptsAmount)}</p>
-              <p className="mt-1 text-xs text-emerald-800/80 font-bold">{reportData.summary.receiptsCount || reportData.receipts.length} Receipts</p>
+              <p className="mt-2 text-lg font-extrabold text-emerald-950 sm:text-xl">{formatCurrency(reportData.summary.totalReceipts || totalReceiptsAmount)}</p>
+              <p className="mt-0.5 text-xs text-emerald-800/80 font-medium">{reportData.summary.receiptsCount || reportData.receipts.length} Receipts</p>
             </div>
           )}
 
           {/* Payments Made Card */}
           {(currentCategory === 'all' || currentCategory === 'overview' || currentCategory === 'payments') && (
-            <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-5 shadow-sm transition hover:shadow-md">
+            <div className="rounded-xl border border-rose-200 bg-rose-50/70 p-4 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between text-rose-800">
                 <span className="text-xs font-bold uppercase tracking-wider">Payments Made</span>
-                <CreditCard className="h-6 w-6 text-rose-600" />
+                <CreditCard className="h-5 w-5 text-rose-600" />
               </div>
-              <p className="mt-3 text-2xl font-black text-rose-950 sm:text-3xl">{formatCurrency(reportData.summary.totalPayments || totalPaymentsAmount)}</p>
-              <p className="mt-1 text-xs text-rose-800/80 font-bold">{reportData.summary.paymentsCount || reportData.payments.length} Payments</p>
+              <p className="mt-2 text-lg font-extrabold text-rose-950 sm:text-xl">{formatCurrency(reportData.summary.totalPayments || totalPaymentsAmount)}</p>
+              <p className="mt-0.5 text-xs text-rose-800/80 font-medium">{reportData.summary.paymentsCount || reportData.payments.length} Payments</p>
             </div>
           )}
 
           {/* Net Cash Flow Card */}
           {(currentCategory === 'all' || currentCategory === 'overview') && (
-            <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 shadow-sm transition hover:shadow-md">
+            <div className="rounded-xl border border-sky-200 bg-sky-50/70 p-4 shadow-sm transition hover:shadow-md">
               <div className="flex items-center justify-between text-sky-800">
                 <span className="text-xs font-bold uppercase tracking-wider">Net Cash Flow</span>
-                <TrendingUp className="h-6 w-6 text-sky-600" />
+                <TrendingUp className="h-5 w-5 text-sky-600" />
               </div>
-              <p className={`mt-3 text-2xl font-black sm:text-3xl ${netCashFlow >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+              <p className={`mt-2 text-lg font-extrabold sm:text-xl ${netCashFlow >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                 {formatCurrency(netCashFlow)}
               </p>
-              <p className="mt-1 text-xs text-sky-800/80 font-bold">Receipts - Payments</p>
+              <p className="mt-0.5 text-xs text-sky-800/80 font-medium">Receipts - Payments</p>
             </div>
           )}
         </div>
