@@ -410,10 +410,10 @@ exports.getFYReport = async (req, res) => {
     const fetchPayments = !voucherType || voucherType === 'all' || voucherType === 'payments';
 
     const [sales, purchases, receipts, payments] = await Promise.all([
-      fetchSales ? Sale.find(buildDateFilter('saleDate')).populate('party', 'name partyName').lean() : [],
-      fetchPurchases ? Purchase.find(buildDateFilter('purchaseDate')).populate('party', 'name partyName').lean() : [],
-      fetchReceipts ? Receipt.find(buildDateFilter('receiptDate')).populate('party', 'name partyName').lean() : [],
-      fetchPayments ? Payment.find(buildDateFilter('paymentDate')).populate('party', 'name partyName').lean() : []
+      fetchSales ? Sale.find(buildDateFilter('saleDate')).populate('party', 'name partyName').sort({ saleDate: 1 }).lean() : [],
+      fetchPurchases ? Purchase.find(buildDateFilter('purchaseDate')).populate('party', 'name partyName').sort({ purchaseDate: 1 }).lean() : [],
+      fetchReceipts ? Receipt.find(buildDateFilter('receiptDate')).populate('party', 'name partyName').sort({ receiptDate: 1 }).lean() : [],
+      fetchPayments ? Payment.find(buildDateFilter('paymentDate')).populate('party', 'name partyName').sort({ paymentDate: 1 }).lean() : []
     ]);
 
     const salesFormatted = sales.map((s) => ({
