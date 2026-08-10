@@ -67,8 +67,8 @@ export default function FYReport() {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [voucherType, setVoucherType] = useState('all'); // 'all', 'sales', 'purchases', 'receipts', 'payments'
-  const [activeTab, setActiveTab] = useState('overview');
+  const [voucherType, setVoucherType] = useState('sales'); // default to 'sales'
+  const [activeTab, setActiveTab] = useState('sales'); // default to 'sales'
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -255,6 +255,20 @@ export default function FYReport() {
           ]);
         }
       });
+      salesAoa.push([]);
+      salesAoa.push([
+        'TOTAL SALES',
+        `Invoices: ${reportData.sales.length}`,
+        '',
+        `Items: ${totalSalesItemsCount}`,
+        totalSalesItemsCount,
+        '-',
+        '',
+        totalSalesAmount,
+        totalSalesAmount,
+        totalPaidSalesAmount,
+        ''
+      ]);
     } else {
       salesAoa.push(['-', '-', 'No sales data for selected period', '-', '-', '-', '-', '-', '-', '-', '-']);
     }
@@ -301,6 +315,20 @@ export default function FYReport() {
           ]);
         }
       });
+      purchaseAoa.push([]);
+      purchaseAoa.push([
+        'TOTAL PURCHASES',
+        `Bills: ${reportData.purchases.length}`,
+        '',
+        `Items: ${totalPurchasesItemsCount}`,
+        totalPurchasesItemsCount,
+        '-',
+        '',
+        totalPurchasesAmount,
+        totalPurchasesAmount,
+        totalPaidPurchasesAmount,
+        ''
+      ]);
     } else {
       purchaseAoa.push(['-', '-', 'No purchase data for selected period', '-', '-', '-', '-', '-', '-', '-', '-']);
     }
@@ -323,6 +351,15 @@ export default function FYReport() {
           r.notes || '-'
         ]);
       });
+      receiptsAoa.push([]);
+      receiptsAoa.push([
+        'TOTAL MONEY RECEIVED',
+        `Receipts: ${reportData.receipts.length}`,
+        '',
+        totalReceiptsAmount,
+        '',
+        ''
+      ]);
     } else {
       receiptsAoa.push(['-', '-', 'No money received data for selected period', '-', '-', '-']);
     }
@@ -345,6 +382,15 @@ export default function FYReport() {
           p.notes || '-'
         ]);
       });
+      paymentsAoa.push([]);
+      paymentsAoa.push([
+        'TOTAL PAYMENTS MADE',
+        `Payments: ${reportData.payments.length}`,
+        '',
+        totalPaymentsAmount,
+        '',
+        ''
+      ]);
     } else {
       paymentsAoa.push(['-', '-', 'No payment data for selected period', '-', '-', '-']);
     }
@@ -400,25 +446,40 @@ export default function FYReport() {
 
   const netCashFlow = (reportData.summary.totalReceipts || 0) - (reportData.summary.totalPayments || 0);
 
+  const totalSalesAmount = reportData.sales.reduce((sum, s) => sum + (s.totalAmount || 0), 0);
+  const totalPaidSalesAmount = reportData.sales.reduce((sum, s) => sum + (s.paidAmount || 0), 0);
+  const totalSalesQty = reportData.sales.reduce((sum, s) => sum + (s.totalQty || 0), 0);
+  const totalSalesItemsCount = reportData.sales.reduce((sum, s) => sum + (s.itemsCount || 0), 0);
+
+  const totalPurchasesAmount = reportData.purchases.reduce((sum, p) => sum + (p.totalAmount || 0), 0);
+  const totalPaidPurchasesAmount = reportData.purchases.reduce((sum, p) => sum + (p.paidAmount || 0), 0);
+  const totalPurchasesQty = reportData.purchases.reduce((sum, p) => sum + (p.totalQty || 0), 0);
+  const totalPurchasesItemsCount = reportData.purchases.reduce((sum, p) => sum + (p.itemsCount || 0), 0);
+
+  const totalReceiptsAmount = reportData.receipts.reduce((sum, r) => sum + (r.amount || 0), 0);
+  const totalPaymentsAmount = reportData.payments.reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const currentCategory = voucherType !== 'all' ? voucherType : activeTab;
+
   return (
-    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0f172a] to-[#020617] px-4 py-6 text-slate-100">
+    <div className="min-h-screen bg-slate-50 px-4 py-6 text-slate-900">
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <Link
               to="/reports"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-700 shadow-sm transition hover:bg-slate-100 hover:text-slate-900"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-amber-400">
+                <span className="rounded-md border border-amber-600/30 bg-amber-50 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-amber-700">
                   Date Range: {getDateRangeLabel()}
                 </span>
               </div>
-              <h1 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">
+              <h1 className="mt-1 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
                 {getReportTitle()}
               </h1>
             </div>
@@ -427,7 +488,7 @@ export default function FYReport() {
           <button
             type="button"
             onClick={exportToExcel}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30 transition hover:bg-emerald-500 active:scale-95"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition hover:bg-emerald-700 active:scale-95"
           >
             <FileSpreadsheet className="h-4 w-4" />
             Export to Excel
@@ -435,33 +496,37 @@ export default function FYReport() {
         </div>
 
         {/* Filter Card */}
-        <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md">
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-3">
-            <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-300">
-              <Filter className="h-4 w-4 text-amber-400" />
+        <div className="mb-6 overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+            <div className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-700">
+              <Filter className="h-4 w-4 text-amber-600" />
               <span>Select Filter Option</span>
-            </div>
-
-            {/* Filter mode switcher */}
-            <div className="flex rounded-lg border border-white/10 bg-slate-800/80 p-1">
+            </div>            {/* Filter mode switcher */}
+            <div className="flex rounded-lg border border-slate-200 bg-slate-100 p-1">
               <button
                 type="button"
-                onClick={() => setFilterType('fy')}
-                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                onClick={() => {
+                  setFilterType('fy');
+                  fetchReport({ ft: 'fy', fy: selectedFY, month: selectedMonth, from: fromDate, to: toDate, vt: voucherType });
+                }}
+                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
                   filterType === 'fy'
-                    ? 'bg-amber-500 text-slate-950 shadow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Financial Year & Month
               </button>
               <button
                 type="button"
-                onClick={() => setFilterType('custom')}
-                className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                onClick={() => {
+                  setFilterType('custom');
+                  fetchReport({ ft: 'custom', fy: selectedFY, month: selectedMonth, from: fromDate, to: toDate, vt: voucherType });
+                }}
+                className={`rounded-md px-3 py-1.5 text-xs font-bold transition ${
                   filterType === 'custom'
-                    ? 'bg-amber-500 text-slate-950 shadow'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-amber-500 text-slate-950 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 Custom Date Range
@@ -473,16 +538,20 @@ export default function FYReport() {
             {filterType === 'fy' ? (
               <>
                 <div className="flex-1 min-w-[200px]">
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
                     Indian Financial Year
                   </label>
                   <select
                     value={selectedFY}
-                    onChange={(e) => setSelectedFY(e.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-slate-900/90 px-3.5 py-2 text-sm font-medium text-white outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                    onChange={(e) => {
+                      const newFy = e.target.value;
+                      setSelectedFY(newFy);
+                      fetchReport({ ft: filterType, fy: newFy, month: selectedMonth, from: fromDate, to: toDate, vt: voucherType });
+                    }}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
                   >
                     {FY_OPTIONS.map((fy) => (
-                      <option key={fy.value} value={fy.value}>
+                      <option key={fy.value} value={fy.value} className="bg-white text-slate-900 py-1.5">
                         {fy.label}
                       </option>
                     ))}
@@ -490,16 +559,20 @@ export default function FYReport() {
                 </div>
 
                 <div className="flex-1 min-w-[180px]">
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
                     Month Filter
                   </label>
                   <select
                     value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-slate-900/90 px-3.5 py-2 text-sm font-medium text-white outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                    onChange={(e) => {
+                      const newMonth = e.target.value;
+                      setSelectedMonth(newMonth);
+                      fetchReport({ ft: filterType, fy: selectedFY, month: newMonth, from: fromDate, to: toDate, vt: voucherType });
+                    }}
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
                   >
                     {INDIAN_MONTHS.map((m) => (
-                      <option key={m.value} value={m.value}>
+                      <option key={m.value} value={m.value} className="bg-white text-slate-900 py-1.5">
                         {m.label}
                       </option>
                     ))}
@@ -509,33 +582,33 @@ export default function FYReport() {
             ) : (
               <>
                 <div className="flex-1 min-w-[180px]">
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
                     From Date
                   </label>
                   <input
                     type="date"
                     value={fromDate}
                     onChange={(e) => setFromDate(e.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-slate-900/90 px-3.5 py-2 text-sm font-medium text-white outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
                   />
                 </div>
 
                 <div className="flex-1 min-w-[180px]">
-                  <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
                     To Date
                   </label>
                   <input
                     type="date"
                     value={toDate}
                     onChange={(e) => setToDate(e.target.value)}
-                    className="w-full rounded-xl border border-white/15 bg-slate-900/90 px-3.5 py-2 text-sm font-medium text-white outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                    className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
                   />
                 </div>
               </>
             )}
 
             <div className="flex-1 min-w-[180px]">
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+              <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-slate-600">
                 Transaction / Voucher Filter
               </label>
               <select
@@ -546,14 +619,15 @@ export default function FYReport() {
                   if (vt !== 'all') {
                     setActiveTab(vt);
                   }
+                  fetchReport({ ft: filterType, fy: selectedFY, month: selectedMonth, from: fromDate, to: toDate, vt });
                 }}
-                className="w-full rounded-xl border border-white/15 bg-slate-900/90 px-3.5 py-2 text-sm font-medium text-white outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+                className="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-sm font-semibold text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
               >
-                <option value="all">All Transactions</option>
-                <option value="sales">Sales Only</option>
-                <option value="purchases">Purchases Only</option>
-                <option value="receipts">Money Received Only</option>
-                <option value="payments">Payments Made Only</option>
+                <option value="all" className="bg-white text-slate-900 py-1.5">All Transactions</option>
+                <option value="sales" className="bg-white text-slate-900 py-1.5">Sales Only</option>
+                <option value="purchases" className="bg-white text-slate-900 py-1.5">Purchases Only</option>
+                <option value="receipts" className="bg-white text-slate-900 py-1.5">Money Received Only</option>
+                <option value="payments" className="bg-white text-slate-900 py-1.5">Payments Made Only</option>
               </select>
             </div>
 
@@ -569,234 +643,97 @@ export default function FYReport() {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm font-semibold text-rose-300">
+          <div className="mb-6 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm font-bold text-rose-700">
             {error}
           </div>
         )}
 
         {/* Summary KPI Grid */}
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {/* Sales */}
-          <div className="rounded-2xl border border-amber-400/30 bg-gradient-to-br from-amber-50 to-orange-50 p-4 shadow-lg">
-            <div className="flex items-center justify-between text-amber-700">
-              <span className="text-xs font-bold uppercase tracking-wider">Total Sales</span>
-              <ShoppingCart className="h-5 w-5" />
+        <div className={`mb-8 grid grid-cols-1 gap-4 ${currentCategory === 'all' || currentCategory === 'overview' ? 'sm:grid-cols-2 lg:grid-cols-5' : 'sm:grid-cols-1 lg:grid-cols-3 max-w-2xl'}`}>
+          {/* Sales Card */}
+          {(currentCategory === 'all' || currentCategory === 'overview' || currentCategory === 'sales') && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5 shadow-sm transition hover:shadow-md">
+              <div className="flex items-center justify-between text-amber-800">
+                <span className="text-xs font-bold uppercase tracking-wider">Total Sales</span>
+                <ShoppingCart className="h-6 w-6 text-amber-600" />
+              </div>
+              <p className="mt-3 text-2xl font-black text-amber-950 sm:text-3xl">{formatCurrency(reportData.summary.totalSales || totalSalesAmount)}</p>
+              <p className="mt-1 text-xs text-amber-800/80 font-bold">{reportData.summary.salesCount || reportData.sales.length} Sales Invoices</p>
             </div>
-            <p className="mt-3 text-xl font-black text-amber-900">{formatCurrency(reportData.summary.totalSales)}</p>
-            <p className="mt-1 text-xs text-amber-700/70">{reportData.summary.salesCount} Sales Invoices</p>
-          </div>
+          )}
 
-          {/* Purchases */}
-          <div className="rounded-2xl border border-fuchsia-400/30 bg-gradient-to-br from-fuchsia-50 to-pink-50 p-4 shadow-lg">
-            <div className="flex items-center justify-between text-fuchsia-700">
-              <span className="text-xs font-bold uppercase tracking-wider">Total Purchases</span>
-              <Package className="h-5 w-5" />
+          {/* Purchases Card */}
+          {(currentCategory === 'all' || currentCategory === 'overview' || currentCategory === 'purchases') && (
+            <div className="rounded-2xl border border-fuchsia-200 bg-fuchsia-50/70 p-5 shadow-sm transition hover:shadow-md">
+              <div className="flex items-center justify-between text-fuchsia-800">
+                <span className="text-xs font-bold uppercase tracking-wider">Total Purchases</span>
+                <Package className="h-6 w-6 text-fuchsia-600" />
+              </div>
+              <p className="mt-3 text-2xl font-black text-fuchsia-950 sm:text-3xl">{formatCurrency(reportData.summary.totalPurchases || totalPurchasesAmount)}</p>
+              <p className="mt-1 text-xs text-fuchsia-800/80 font-bold">{reportData.summary.purchasesCount || reportData.purchases.length} Purchase Bills</p>
             </div>
-            <p className="mt-3 text-xl font-black text-fuchsia-900">{formatCurrency(reportData.summary.totalPurchases)}</p>
-            <p className="mt-1 text-xs text-fuchsia-700/70">{reportData.summary.purchasesCount} Purchase Bills</p>
-          </div>
+          )}
 
-          {/* Money Received (Receipts) */}
-          <div className="rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-50 to-teal-50 p-4 shadow-lg">
-            <div className="flex items-center justify-between text-emerald-700">
-              <span className="text-xs font-bold uppercase tracking-wider">Money Received</span>
-              <ReceiptText className="h-5 w-5" />
+          {/* Money Received (Receipts) Card */}
+          {(currentCategory === 'all' || currentCategory === 'overview' || currentCategory === 'receipts') && (
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 shadow-sm transition hover:shadow-md">
+              <div className="flex items-center justify-between text-emerald-800">
+                <span className="text-xs font-bold uppercase tracking-wider">Money Received</span>
+                <ReceiptText className="h-6 w-6 text-emerald-600" />
+              </div>
+              <p className="mt-3 text-2xl font-black text-emerald-950 sm:text-3xl">{formatCurrency(reportData.summary.totalReceipts || totalReceiptsAmount)}</p>
+              <p className="mt-1 text-xs text-emerald-800/80 font-bold">{reportData.summary.receiptsCount || reportData.receipts.length} Receipts</p>
             </div>
-            <p className="mt-3 text-xl font-black text-emerald-900">{formatCurrency(reportData.summary.totalReceipts)}</p>
-            <p className="mt-1 text-xs text-emerald-700/70">{reportData.summary.receiptsCount} Receipts</p>
-          </div>
+          )}
 
-          {/* Payments Made */}
-          <div className="rounded-2xl border border-rose-400/30 bg-gradient-to-br from-rose-50 to-pink-50 p-4 shadow-lg">
-            <div className="flex items-center justify-between text-rose-700">
-              <span className="text-xs font-bold uppercase tracking-wider">Payments Made</span>
-              <CreditCard className="h-5 w-5" />
+          {/* Payments Made Card */}
+          {(currentCategory === 'all' || currentCategory === 'overview' || currentCategory === 'payments') && (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50/70 p-5 shadow-sm transition hover:shadow-md">
+              <div className="flex items-center justify-between text-rose-800">
+                <span className="text-xs font-bold uppercase tracking-wider">Payments Made</span>
+                <CreditCard className="h-6 w-6 text-rose-600" />
+              </div>
+              <p className="mt-3 text-2xl font-black text-rose-950 sm:text-3xl">{formatCurrency(reportData.summary.totalPayments || totalPaymentsAmount)}</p>
+              <p className="mt-1 text-xs text-rose-800/80 font-bold">{reportData.summary.paymentsCount || reportData.payments.length} Payments</p>
             </div>
-            <p className="mt-3 text-xl font-black text-rose-900">{formatCurrency(reportData.summary.totalPayments)}</p>
-            <p className="mt-1 text-xs text-rose-700/70">{reportData.summary.paymentsCount} Payments</p>
-          </div>
+          )}
 
-          {/* Net Cash Flow */}
-          <div className="rounded-2xl border border-sky-400/30 bg-gradient-to-br from-sky-50 to-blue-50 p-4 shadow-lg">
-            <div className="flex items-center justify-between text-sky-700">
-              <span className="text-xs font-bold uppercase tracking-wider">Net Cash Flow</span>
-              <TrendingUp className="h-5 w-5" />
+          {/* Net Cash Flow Card */}
+          {(currentCategory === 'all' || currentCategory === 'overview') && (
+            <div className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 shadow-sm transition hover:shadow-md">
+              <div className="flex items-center justify-between text-sky-800">
+                <span className="text-xs font-bold uppercase tracking-wider">Net Cash Flow</span>
+                <TrendingUp className="h-6 w-6 text-sky-600" />
+              </div>
+              <p className={`mt-3 text-2xl font-black sm:text-3xl ${netCashFlow >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                {formatCurrency(netCashFlow)}
+              </p>
+              <p className="mt-1 text-xs text-sky-800/80 font-bold">Receipts - Payments</p>
             </div>
-            <p className={`mt-3 text-xl font-black ${netCashFlow >= 0 ? 'text-emerald-800' : 'text-rose-800'}`}>
-              {formatCurrency(netCashFlow)}
-            </p>
-            <p className="mt-1 text-xs text-sky-700/70">Receipts - Payments</p>
-          </div>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="mb-6 flex overflow-x-auto border-b border-white/10 pb-2">
-          <div className="flex gap-2">
-            {[
-              { id: 'overview', label: 'Overview', count: null },
-              { id: 'sales', label: 'Sales Report', count: reportData.sales.length },
-              { id: 'purchases', label: 'Purchase Report', count: reportData.purchases.length },
-              { id: 'receipts', label: 'Money Received', count: reportData.receipts.length },
-              { id: 'payments', label: 'Payments Made', count: reportData.payments.length }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                type="button"
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                  activeTab === tab.id
-                    ? 'bg-white/15 text-white shadow'
-                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
-                }`}
-              >
-                <span>{tab.label}</span>
-                {tab.count !== null && (
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-bold ${
-                      activeTab === tab.id ? 'bg-amber-500 text-slate-950' : 'bg-white/10 text-slate-300'
-                    }`}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
+          )}
         </div>
 
         {/* Data Tables Container */}
-        <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-md">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           {loading ? (
-            <div className="p-12 text-center text-slate-400">
+            <div className="p-12 text-center text-slate-500">
               <RefreshCw className="mx-auto h-8 w-8 animate-spin text-amber-500 mb-3" />
-              <p className="text-base font-semibold">Loading report data...</p>
+              <p className="text-base font-semibold text-slate-700">Loading report data...</p>
             </div>
           ) : (
             <>
-              {/* Overview Tab */}
-              {activeTab === 'overview' && (
-                <div className="p-6 space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Top Sales Summary */}
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                      <h3 className="text-sm font-bold text-amber-400 uppercase tracking-wider mb-3 flex justify-between items-center">
-                        <span>Recent Sales ({reportData.sales.length})</span>
-                        <button
-                          onClick={() => setActiveTab('sales')}
-                          className="text-xs text-amber-400 underline hover:text-amber-300"
-                        >
-                          View All
-                        </button>
-                      </h3>
-                      {reportData.sales.length === 0 ? (
-                        <p className="text-xs text-slate-500 py-4 text-center">No sales records in this period.</p>
-                      ) : (
-                        <div className="divide-y divide-white/5">
-                          {reportData.sales.slice(0, 5).map((s) => (
-                            <div key={s._id} className="py-2 flex justify-between items-center text-xs">
-                              <div>
-                                <p className="font-semibold text-slate-200">{s.partyName}</p>
-                                <p className="text-slate-400">{s.invoiceNumber} • {formatDate(s.date)}</p>
-                              </div>
-                              <span className="font-bold text-emerald-400">{formatCurrency(s.totalAmount)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Top Purchases Summary */}
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                      <h3 className="text-sm font-bold text-fuchsia-400 uppercase tracking-wider mb-3 flex justify-between items-center">
-                        <span>Recent Purchases ({reportData.purchases.length})</span>
-                        <button
-                          onClick={() => setActiveTab('purchases')}
-                          className="text-xs text-fuchsia-400 underline hover:text-fuchsia-300"
-                        >
-                          View All
-                        </button>
-                      </h3>
-                      {reportData.purchases.length === 0 ? (
-                        <p className="text-xs text-slate-500 py-4 text-center">No purchase records in this period.</p>
-                      ) : (
-                        <div className="divide-y divide-white/5">
-                          {reportData.purchases.slice(0, 5).map((p) => (
-                            <div key={p._id} className="py-2 flex justify-between items-center text-xs">
-                              <div>
-                                <p className="font-semibold text-slate-200">{p.partyName}</p>
-                                <p className="text-slate-400">{p.invoiceNumber} • {formatDate(p.date)}</p>
-                              </div>
-                              <span className="font-bold text-fuchsia-400">{formatCurrency(p.totalAmount)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Top Receipts */}
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                      <h3 className="text-sm font-bold text-emerald-400 uppercase tracking-wider mb-3 flex justify-between items-center">
-                        <span>Recent Receipts ({reportData.receipts.length})</span>
-                        <button
-                          onClick={() => setActiveTab('receipts')}
-                          className="text-xs text-emerald-400 underline hover:text-emerald-300"
-                        >
-                          View All
-                        </button>
-                      </h3>
-                      {reportData.receipts.length === 0 ? (
-                        <p className="text-xs text-slate-500 py-4 text-center">No receipt records in this period.</p>
-                      ) : (
-                        <div className="divide-y divide-white/5">
-                          {reportData.receipts.slice(0, 5).map((r) => (
-                            <div key={r._id} className="py-2 flex justify-between items-center text-xs">
-                              <div>
-                                <p className="font-semibold text-slate-200">{r.partyName}</p>
-                                <p className="text-slate-400">{r.receiptNumber} • {formatDate(r.date)}</p>
-                              </div>
-                              <span className="font-bold text-emerald-400">{formatCurrency(r.amount)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Top Payments */}
-                    <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-                      <h3 className="text-sm font-bold text-rose-400 uppercase tracking-wider mb-3 flex justify-between items-center">
-                        <span>Recent Payments ({reportData.payments.length})</span>
-                        <button
-                          onClick={() => setActiveTab('payments')}
-                          className="text-xs text-rose-400 underline hover:text-rose-300"
-                        >
-                          View All
-                        </button>
-                      </h3>
-                      {reportData.payments.length === 0 ? (
-                        <p className="text-xs text-slate-500 py-4 text-center">No payment records in this period.</p>
-                      ) : (
-                        <div className="divide-y divide-white/5">
-                          {reportData.payments.slice(0, 5).map((p) => (
-                            <div key={p._id} className="py-2 flex justify-between items-center text-xs">
-                              <div>
-                                <p className="font-semibold text-slate-200">{p.partyName}</p>
-                                <p className="text-slate-400">{p.paymentNumber} • {formatDate(p.date)}</p>
-                              </div>
-                              <span className="font-bold text-rose-400">{formatCurrency(p.amount)}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Sales Tab Table */}
-              {activeTab === 'sales' && (
+              {(activeTab === 'sales' || activeTab === 'all') && (
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-white/5 text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-white/10">
+                  {activeTab === 'all' && (
+                    <div className="bg-amber-50 px-5 py-2.5 border-b border-amber-200 text-xs font-bold uppercase tracking-wider text-amber-800 flex justify-between items-center">
+                      <span>Sales Report</span>
+                      <span>{reportData.sales.length} Invoices</span>
+                    </div>
+                  )}
+                  <table className="w-full text-left text-sm text-slate-800">
+                    <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">
                       <tr>
                         <th className="px-5 py-3.5">Invoice #</th>
                         <th className="px-5 py-3.5">Date</th>
@@ -809,33 +746,33 @@ export default function FYReport() {
                         <th className="px-5 py-3.5 text-center">Type</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-slate-100">
                       {reportData.sales.map((s) => (
-                        <tr key={s._id} className="hover:bg-white/5 transition">
-                          <td className="px-5 py-3 font-semibold text-white">{s.invoiceNumber}</td>
-                          <td className="px-5 py-3 whitespace-nowrap">{formatDate(s.date)}</td>
-                          <td className="px-5 py-3 font-medium text-slate-200">{s.partyName}</td>
-                          <td className="px-5 py-3 text-xs text-slate-300 min-w-[240px]">
+                        <tr key={s._id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-5 py-3 font-semibold text-slate-900">{s.invoiceNumber}</td>
+                          <td className="px-5 py-3 whitespace-nowrap text-slate-600">{formatDate(s.date)}</td>
+                          <td className="px-5 py-3 font-semibold text-slate-900">{s.partyName}</td>
+                          <td className="px-5 py-3 text-xs text-slate-700 min-w-[240px]">
                             {Array.isArray(s.items) && s.items.length > 0 ? (
                               <div className="space-y-1 max-h-28 overflow-y-auto pr-1">
                                 {s.items.map((item, idx) => (
-                                  <div key={idx} className="flex items-center justify-between gap-2 rounded border border-white/5 bg-slate-800/60 px-2 py-1">
-                                    <span className="font-semibold text-amber-300">{item.productName}</span>
-                                    <span className="text-slate-400 text-[11px]">({item.quantity} {item.unit} @ Rs {item.unitPrice})</span>
-                                    <span className="font-bold text-emerald-400 text-[11px]">Rs {item.total}</span>
+                                  <div key={idx} className="flex items-center justify-between gap-2 rounded border border-slate-200 bg-slate-50 px-2 py-1">
+                                    <span className="font-bold text-slate-900">{item.productName}</span>
+                                    <span className="text-slate-500 text-[11px]">({item.quantity} {item.unit} @ Rs {item.unitPrice})</span>
+                                    <span className="font-bold text-emerald-700 text-[11px]">Rs {item.total}</span>
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <span className="text-slate-500 italic">No line items</span>
+                              <span className="text-slate-400 italic">No line items</span>
                             )}
                           </td>
-                          <td className="px-5 py-3 text-center">{s.itemsCount}</td>
-                          <td className="px-5 py-3 text-center">{s.totalQty}</td>
-                          <td className="px-5 py-3 text-right font-bold text-emerald-400">{formatCurrency(s.totalAmount)}</td>
-                          <td className="px-5 py-3 text-right text-slate-300">{formatCurrency(s.paidAmount)}</td>
+                          <td className="px-5 py-3 text-center text-slate-700 font-medium">{s.itemsCount}</td>
+                          <td className="px-5 py-3 text-center text-slate-700 font-medium">{s.totalQty}</td>
+                          <td className="px-5 py-3 text-right font-bold text-emerald-700">{formatCurrency(s.totalAmount)}</td>
+                          <td className="px-5 py-3 text-right text-slate-600">{formatCurrency(s.paidAmount)}</td>
                           <td className="px-5 py-3 text-center">
-                            <span className="rounded-full bg-amber-500/10 px-2.5 py-1 text-xs font-semibold text-amber-400 border border-amber-500/20 capitalize">
+                            <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-800 border border-amber-200 capitalize">
                               {s.type}
                             </span>
                           </td>
@@ -843,21 +780,44 @@ export default function FYReport() {
                       ))}
                       {reportData.sales.length === 0 && (
                         <tr>
-                          <td colSpan="9" className="px-5 py-10 text-center text-slate-500">
+                          <td colSpan="9" className="px-5 py-10 text-center text-slate-400">
                             No sales records found for this period.
                           </td>
                         </tr>
                       )}
                     </tbody>
+                    {reportData.sales.length > 0 && (
+                      <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300 text-slate-900 text-sm">
+                        <tr>
+                          <td colSpan="3" className="px-5 py-3.5 text-amber-800 font-black uppercase tracking-wider">
+                            TOTAL SALES ({reportData.sales.length} Invoices)
+                          </td>
+                          <td className="px-5 py-3.5 text-xs text-slate-700 font-semibold">
+                            Total Line Items: {totalSalesItemsCount}
+                          </td>
+                          <td className="px-5 py-3.5 text-center text-slate-900 font-bold">{totalSalesItemsCount}</td>
+                          <td className="px-5 py-3.5 text-center text-slate-900 font-bold">{totalSalesQty}</td>
+                          <td className="px-5 py-3.5 text-right font-black text-emerald-700 text-base">{formatCurrency(totalSalesAmount)}</td>
+                          <td className="px-5 py-3.5 text-right text-slate-800 font-bold">{formatCurrency(totalPaidSalesAmount)}</td>
+                          <td className="px-5 py-3.5"></td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
                 </div>
               )}
 
               {/* Purchases Tab Table */}
-              {activeTab === 'purchases' && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-white/5 text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-white/10">
+              {(activeTab === 'purchases' || activeTab === 'all') && (
+                <div className="overflow-x-auto border-t border-slate-200">
+                  {activeTab === 'all' && (
+                    <div className="bg-fuchsia-50 px-5 py-2.5 border-b border-fuchsia-200 text-xs font-bold uppercase tracking-wider text-fuchsia-800 flex justify-between items-center">
+                      <span>Purchase Report</span>
+                      <span>{reportData.purchases.length} Bills</span>
+                    </div>
+                  )}
+                  <table className="w-full text-left text-sm text-slate-800">
+                    <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">
                       <tr>
                         <th className="px-5 py-3.5">Bill / Invoice #</th>
                         <th className="px-5 py-3.5">Date</th>
@@ -869,18 +829,18 @@ export default function FYReport() {
                         <th className="px-5 py-3.5 text-center">Type</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-slate-100">
                       {reportData.purchases.map((p) => (
-                        <tr key={p._id} className="hover:bg-white/5 transition">
-                          <td className="px-5 py-3 font-semibold text-white">{p.invoiceNumber}</td>
-                          <td className="px-5 py-3">{formatDate(p.date)}</td>
-                          <td className="px-5 py-3 font-medium text-slate-200">{p.partyName}</td>
-                          <td className="px-5 py-3 text-center">{p.itemsCount}</td>
-                          <td className="px-5 py-3 text-center">{p.totalQty}</td>
-                          <td className="px-5 py-3 text-right font-bold text-fuchsia-400">{formatCurrency(p.totalAmount)}</td>
-                          <td className="px-5 py-3 text-right text-slate-300">{formatCurrency(p.paidAmount)}</td>
+                        <tr key={p._id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-5 py-3 font-semibold text-slate-900">{p.invoiceNumber}</td>
+                          <td className="px-5 py-3 text-slate-600">{formatDate(p.date)}</td>
+                          <td className="px-5 py-3 font-semibold text-slate-900">{p.partyName}</td>
+                          <td className="px-5 py-3 text-center text-slate-700 font-medium">{p.itemsCount}</td>
+                          <td className="px-5 py-3 text-center text-slate-700 font-medium">{p.totalQty}</td>
+                          <td className="px-5 py-3 text-right font-bold text-fuchsia-700">{formatCurrency(p.totalAmount)}</td>
+                          <td className="px-5 py-3 text-right text-slate-600">{formatCurrency(p.paidAmount)}</td>
                           <td className="px-5 py-3 text-center">
-                            <span className="rounded-full bg-fuchsia-500/10 px-2.5 py-1 text-xs font-semibold text-fuchsia-400 border border-fuchsia-500/20 capitalize">
+                            <span className="rounded-full bg-fuchsia-100 px-2.5 py-1 text-xs font-bold text-fuchsia-800 border border-fuchsia-200 capitalize">
                               {p.type}
                             </span>
                           </td>
@@ -888,21 +848,41 @@ export default function FYReport() {
                       ))}
                       {reportData.purchases.length === 0 && (
                         <tr>
-                          <td colSpan="8" className="px-5 py-10 text-center text-slate-500">
+                          <td colSpan="8" className="px-5 py-10 text-center text-slate-400">
                             No purchase records found for this period.
                           </td>
                         </tr>
                       )}
                     </tbody>
+                    {reportData.purchases.length > 0 && (
+                      <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300 text-slate-900 text-sm">
+                        <tr>
+                          <td colSpan="3" className="px-5 py-3.5 text-fuchsia-800 font-black uppercase tracking-wider">
+                            TOTAL PURCHASES ({reportData.purchases.length} Bills)
+                          </td>
+                          <td className="px-5 py-3.5 text-center text-slate-900 font-bold">{totalPurchasesItemsCount}</td>
+                          <td className="px-5 py-3.5 text-center text-slate-900 font-bold">{totalPurchasesQty}</td>
+                          <td className="px-5 py-3.5 text-right font-black text-fuchsia-700 text-base">{formatCurrency(totalPurchasesAmount)}</td>
+                          <td className="px-5 py-3.5 text-right text-slate-800 font-bold">{formatCurrency(totalPaidPurchasesAmount)}</td>
+                          <td className="px-5 py-3.5"></td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
                 </div>
               )}
 
               {/* Receipts Tab Table */}
-              {activeTab === 'receipts' && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-white/5 text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-white/10">
+              {(activeTab === 'receipts' || activeTab === 'all') && (
+                <div className="overflow-x-auto border-t border-slate-200">
+                  {activeTab === 'all' && (
+                    <div className="bg-emerald-50 px-5 py-2.5 border-b border-emerald-200 text-xs font-bold uppercase tracking-wider text-emerald-800 flex justify-between items-center">
+                      <span>Money Received</span>
+                      <span>{reportData.receipts.length} Receipts</span>
+                    </div>
+                  )}
+                  <table className="w-full text-left text-sm text-slate-800">
+                    <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">
                       <tr>
                         <th className="px-5 py-3.5">Receipt #</th>
                         <th className="px-5 py-3.5">Date</th>
@@ -912,34 +892,50 @@ export default function FYReport() {
                         <th className="px-5 py-3.5 text-right">Amount</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-slate-100">
                       {reportData.receipts.map((r) => (
-                        <tr key={r._id} className="hover:bg-white/5 transition">
-                          <td className="px-5 py-3 font-semibold text-white">{r.receiptNumber}</td>
-                          <td className="px-5 py-3">{formatDate(r.date)}</td>
-                          <td className="px-5 py-3 font-medium text-slate-200">{r.partyName}</td>
-                          <td className="px-5 py-3 text-slate-300">{r.method}</td>
-                          <td className="px-5 py-3 text-slate-400 text-xs">{r.notes || '-'}</td>
-                          <td className="px-5 py-3 text-right font-bold text-emerald-400">{formatCurrency(r.amount)}</td>
+                        <tr key={r._id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-5 py-3 font-semibold text-slate-900">{r.receiptNumber}</td>
+                          <td className="px-5 py-3 text-slate-600">{formatDate(r.date)}</td>
+                          <td className="px-5 py-3 font-semibold text-slate-900">{r.partyName}</td>
+                          <td className="px-5 py-3 text-slate-700">{r.method}</td>
+                          <td className="px-5 py-3 text-slate-500 text-xs">{r.notes || '-'}</td>
+                          <td className="px-5 py-3 text-right font-bold text-emerald-700">{formatCurrency(r.amount)}</td>
                         </tr>
                       ))}
                       {reportData.receipts.length === 0 && (
                         <tr>
-                          <td colSpan="6" className="px-5 py-10 text-center text-slate-500">
+                          <td colSpan="6" className="px-5 py-10 text-center text-slate-400">
                             No money received (receipt) records found for this period.
                           </td>
                         </tr>
                       )}
                     </tbody>
+                    {reportData.receipts.length > 0 && (
+                      <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300 text-slate-900 text-sm">
+                        <tr>
+                          <td colSpan="5" className="px-5 py-3.5 text-emerald-800 font-black uppercase tracking-wider">
+                            TOTAL MONEY RECEIVED ({reportData.receipts.length} Receipts)
+                          </td>
+                          <td className="px-5 py-3.5 text-right font-black text-emerald-700 text-base">{formatCurrency(totalReceiptsAmount)}</td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
                 </div>
               )}
 
               {/* Payments Tab Table */}
-              {activeTab === 'payments' && (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-slate-300">
-                    <thead className="bg-white/5 text-xs font-bold uppercase tracking-wider text-slate-400 border-b border-white/10">
+              {(activeTab === 'payments' || activeTab === 'all') && (
+                <div className="overflow-x-auto border-t border-slate-200">
+                  {activeTab === 'all' && (
+                    <div className="bg-rose-50 px-5 py-2.5 border-b border-rose-200 text-xs font-bold uppercase tracking-wider text-rose-800 flex justify-between items-center">
+                      <span>Payments Made</span>
+                      <span>{reportData.payments.length} Payments</span>
+                    </div>
+                  )}
+                  <table className="w-full text-left text-sm text-slate-800">
+                    <thead className="bg-slate-100 text-xs font-bold uppercase tracking-wider text-slate-700 border-b border-slate-200">
                       <tr>
                         <th className="px-5 py-3.5">Payment #</th>
                         <th className="px-5 py-3.5">Date</th>
@@ -949,25 +945,35 @@ export default function FYReport() {
                         <th className="px-5 py-3.5 text-right">Amount</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-slate-100">
                       {reportData.payments.map((p) => (
-                        <tr key={p._id} className="hover:bg-white/5 transition">
-                          <td className="px-5 py-3 font-semibold text-white">{p.paymentNumber}</td>
-                          <td className="px-5 py-3">{formatDate(p.date)}</td>
-                          <td className="px-5 py-3 font-medium text-slate-200">{p.partyName}</td>
-                          <td className="px-5 py-3 text-slate-300">{p.method}</td>
-                          <td className="px-5 py-3 text-slate-400 text-xs">{p.notes || '-'}</td>
-                          <td className="px-5 py-3 text-right font-bold text-rose-400">{formatCurrency(p.amount)}</td>
+                        <tr key={p._id} className="hover:bg-slate-50 transition-colors">
+                          <td className="px-5 py-3 font-semibold text-slate-900">{p.paymentNumber}</td>
+                          <td className="px-5 py-3 text-slate-600">{formatDate(p.date)}</td>
+                          <td className="px-5 py-3 font-semibold text-slate-900">{p.partyName}</td>
+                          <td className="px-5 py-3 text-slate-700">{p.method}</td>
+                          <td className="px-5 py-3 text-slate-500 text-xs">{p.notes || '-'}</td>
+                          <td className="px-5 py-3 text-right font-bold text-rose-700">{formatCurrency(p.amount)}</td>
                         </tr>
                       ))}
                       {reportData.payments.length === 0 && (
                         <tr>
-                          <td colSpan="6" className="px-5 py-10 text-center text-slate-500">
+                          <td colSpan="6" className="px-5 py-10 text-center text-slate-400">
                             No payment records found for this period.
                           </td>
                         </tr>
                       )}
                     </tbody>
+                    {reportData.payments.length > 0 && (
+                      <tfoot className="bg-slate-100 font-bold border-t-2 border-slate-300 text-slate-900 text-sm">
+                        <tr>
+                          <td colSpan="5" className="px-5 py-3.5 text-rose-800 font-black uppercase tracking-wider">
+                            TOTAL PAYMENTS MADE ({reportData.payments.length} Payments)
+                          </td>
+                          <td className="px-5 py-3.5 text-right font-black text-rose-700 text-base">{formatCurrency(totalPaymentsAmount)}</td>
+                        </tr>
+                      </tfoot>
+                    )}
                   </table>
                 </div>
               )}
