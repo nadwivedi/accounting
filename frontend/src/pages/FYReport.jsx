@@ -67,11 +67,13 @@ export default function FYReport() {
   const [selectedMonth, setSelectedMonth] = useState('');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
+  const [voucherType, setVoucherType] = useState('all'); // 'all', 'sales', 'purchases', 'receipts', 'payments'
   const [activeTab, setActiveTab] = useState('overview');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [reportData, setReportData] = useState({
+    period: {},
     summary: {
       totalSales: 0,
       totalPurchases: 0,
@@ -94,12 +96,13 @@ export default function FYReport() {
     fy = selectedFY,
     month = selectedMonth,
     from = fromDate,
-    to = toDate
+    to = toDate,
+    vt = voucherType
   } = {}) => {
     setLoading(true);
     setError('');
     try {
-      const params = {};
+      const params = { voucherType: vt };
       if (ft === 'custom') {
         if (from) params.fromDate = from;
         if (to) params.toDate = to;
@@ -111,12 +114,16 @@ export default function FYReport() {
       const response = await apiClient.get('/reports/fy-report', { params });
       if (response?.success) {
         setReportData({
+          period: response.period || {},
           summary: response.summary || {},
           sales: response.sales || [],
           purchases: response.purchases || [],
           receipts: response.receipts || [],
           payments: response.payments || []
         });
+        if (vt !== 'all') {
+          setActiveTab(vt);
+        }
       } else {
         setError('Failed to fetch report data.');
       }
@@ -134,25 +141,26 @@ export default function FYReport() {
       fy: selectedFY,
       month: selectedMonth,
       from: fromDate,
-      to: toDate
+      to: toDate,
+      vt: voucherType
     });
   }, []);
 
   const handleFilterSubmit = (e) => {
     e.preventDefault();
-    // Pass current state values explicitly to avoid any stale closure
     fetchReport({
       ft: filterType,
       fy: selectedFY,
       month: selectedMonth,
       from: fromDate,
-      to: toDate
+      to: toDate,
+      vt: voucherType
     });
   };
 
   const getFilterLabel = () => {
     if (filterType === 'custom') {
-      if (fromDate && toDate) return `Custom ${formatDate(fromDate)} to ${formatDate(toDate)}`;
+      if (fromDate && toDate) return `Custom (${formatDate(fromDate)} to ${formatDate(toDate)})`;
       if (fromDate) return `From ${formatDate(fromDate)}`;
       if (toDate) return `Up to ${formatDate(toDate)}`;
       return 'Custom Date Range';
@@ -162,16 +170,189 @@ export default function FYReport() {
     return monthLabel && monthLabel !== 'All Months' ? `${fyLabel} (${monthLabel})` : fyLabel;
   };
 
+  const getReportTitle = () => {
+    const currentView = voucherType !== 'all' ? voucherType : activeTab;
+    if (currentView === 'sales') return 'Sales Report';
+    if (currentView === 'purchases') return 'Purchase Report';
+    if (currentView === 'receipts') return 'Money Received Report';
+    if (currentView === 'payments') return 'Payments Made Report';
+    return 'Financial Period Report';
+  };
+
+  const getDateRangeLabel = () => {
+    if (filterType === 'custom') {
+      if (fromDate && toDate) return `${formatDate(fromDate)} to ${formatDate(toDate)}`;
+      if (fromDate) return `From ${formatDate(fromDate)}`;
+      if (toDate) return `Up to ${formatDate(toDate)}`;
+      return 'Custom Date Range';
+    }
+    if (reportData.period?.startDate && reportData.period?.endDate) {
+      return `${formatDate(reportData.period.startDate)} to ${formatDate(reportData.period.endDate)}`;
+    }
+    const startYear = parseInt(selectedFY, 10) || 2026;
+    if (selectedMonth && !isNaN(parseInt(selectedMonth, 10))) {
+      const m = parseInt(selectedMonth, 10);
+      const year = m >= 4 ? startYear : startYear + 1;
+      const start = new Date(year, m - 1, 1);
+      const end = new Date(year, m, 0);
+      return `${formatDate(start)} to ${formatDate(end)}`;
+    }
+    return `01 Apr ${startYear} to 31 Mar ${startYear + 1}`;
+  };
+
   // Excel Export — use Blob + anchor click (works in all browsers)
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
+    const mainTitle = getReportTitle();
+    const dateRange = getDateRangeLabel();
 
-    // 1. Summary Sheet
-    const summaryRows = [
-      ['BILLHUB FINANCIAL REPORT'],
-      ['Filter / Period:', getFilterLabel()],
-      ['Generated On:', new Date().toLocaleString('en-IN')],
-      [],
+    const createTopHeader = (headingText) => [
+      [headingText.toUpperCase()],
+      [`REPORT DATE RANGE: ${dateRange}`],
+      [`Filter / Period: ${getFilterLabel()}`],
+      [`Generated On: ${new Date().toLocaleString('en-IN')}`],
+      []
+    ];
+
+    // 1. Sales Sheet
+    const salesHeader = ['Sale Date', 'Invoice No', 'Party / Customer', 'Product Name', 'Qty', 'Unit', 'Rate (Rs)', 'Sale Amount (Rs)', 'Invoice Total (Rs)', 'Paid Amount (Rs)', 'Type'];
+    const salesAoa = [
+      ...createTopHeader('SALES REPORT'),
+      salesHeader
+    ];
+
+    if (reportData.sales.length > 0) {
+      reportData.sales.forEach((s) => {
+        if (Array.isArray(s.items) && s.items.length > 0) {
+          s.items.forEach((item) => {
+            salesAoa.push([
+              formatDate(s.date),
+              s.invoiceNumber,
+              s.partyName,
+              item.productName || 'N/A',
+              item.quantity,
+              item.unit || '-',
+              item.unitPrice,
+              item.total,
+              s.totalAmount,
+              s.paidAmount,
+              s.type
+            ]);
+          });
+        } else {
+          salesAoa.push([
+            formatDate(s.date),
+            s.invoiceNumber,
+            s.partyName,
+            'General Sale',
+            s.totalQty || 0,
+            '-',
+            s.totalAmount,
+            s.totalAmount,
+            s.totalAmount,
+            s.paidAmount,
+            s.type
+          ]);
+        }
+      });
+    } else {
+      salesAoa.push(['-', '-', 'No sales data for selected period', '-', '-', '-', '-', '-', '-', '-', '-']);
+    }
+    const wsSales = XLSX.utils.aoa_to_sheet(salesAoa);
+
+    // 2. Purchases Sheet
+    const purchaseHeader = ['Purchase Date', 'Bill / Invoice No', 'Party / Vendor', 'Product Name', 'Qty', 'Unit', 'Rate (Rs)', 'Amount (Rs)', 'Bill Total (Rs)', 'Paid Amount (Rs)', 'Type'];
+    const purchaseAoa = [
+      ...createTopHeader('PURCHASE REPORT'),
+      purchaseHeader
+    ];
+
+    if (reportData.purchases.length > 0) {
+      reportData.purchases.forEach((p) => {
+        if (Array.isArray(p.items) && p.items.length > 0) {
+          p.items.forEach((item) => {
+            purchaseAoa.push([
+              formatDate(p.date),
+              p.invoiceNumber,
+              p.partyName,
+              item.productName || 'N/A',
+              item.quantity,
+              item.unit || '-',
+              item.unitPrice,
+              item.total,
+              p.totalAmount,
+              p.paidAmount,
+              p.type
+            ]);
+          });
+        } else {
+          purchaseAoa.push([
+            formatDate(p.date),
+            p.invoiceNumber,
+            p.partyName,
+            'General Purchase',
+            p.totalQty || 0,
+            '-',
+            p.totalAmount,
+            p.totalAmount,
+            p.totalAmount,
+            p.paidAmount,
+            p.type
+          ]);
+        }
+      });
+    } else {
+      purchaseAoa.push(['-', '-', 'No purchase data for selected period', '-', '-', '-', '-', '-', '-', '-', '-']);
+    }
+    const wsPurchases = XLSX.utils.aoa_to_sheet(purchaseAoa);
+
+    // 3. Receipts Sheet
+    const receiptsHeader = ['Receipt No', 'Date', 'Party Name', 'Amount (Rs)', 'Payment Method', 'Notes'];
+    const receiptsAoa = [
+      ...createTopHeader('MONEY RECEIVED REPORT'),
+      receiptsHeader
+    ];
+    if (reportData.receipts.length > 0) {
+      reportData.receipts.forEach((r) => {
+        receiptsAoa.push([
+          r.receiptNumber,
+          formatDate(r.date),
+          r.partyName,
+          r.amount,
+          r.method,
+          r.notes || '-'
+        ]);
+      });
+    } else {
+      receiptsAoa.push(['-', '-', 'No money received data for selected period', '-', '-', '-']);
+    }
+    const wsReceipts = XLSX.utils.aoa_to_sheet(receiptsAoa);
+
+    // 4. Payments Sheet
+    const paymentsHeader = ['Payment No', 'Date', 'Party Name', 'Amount (Rs)', 'Payment Method', 'Notes'];
+    const paymentsAoa = [
+      ...createTopHeader('PAYMENTS MADE REPORT'),
+      paymentsHeader
+    ];
+    if (reportData.payments.length > 0) {
+      reportData.payments.forEach((p) => {
+        paymentsAoa.push([
+          p.paymentNumber,
+          formatDate(p.date),
+          p.partyName,
+          p.amount,
+          p.method,
+          p.notes || '-'
+        ]);
+      });
+    } else {
+      paymentsAoa.push(['-', '-', 'No payment data for selected period', '-', '-', '-']);
+    }
+    const wsPayments = XLSX.utils.aoa_to_sheet(paymentsAoa);
+
+    // 5. Summary Sheet
+    const summaryAoa = [
+      ...createTopHeader('FINANCIAL SUMMARY REPORT'),
       ['Metric', 'Amount (INR)', 'Count'],
       ['Total Sales', reportData.summary.totalSales, reportData.summary.salesCount],
       ['Total Purchases', reportData.summary.totalPurchases, reportData.summary.purchasesCount],
@@ -179,67 +360,30 @@ export default function FYReport() {
       ['Payments Made', reportData.summary.totalPayments, reportData.summary.paymentsCount],
       ['Net Cash Flow (Receipts - Payments)', (reportData.summary.totalReceipts || 0) - (reportData.summary.totalPayments || 0), '']
     ];
-    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
-    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryAoa);
 
-    // 2. Sales Sheet (always add, even if empty, with headers)
-    const salesRows = reportData.sales.length > 0
-      ? reportData.sales.map((s) => ({
-          'Invoice No': s.invoiceNumber,
-          'Date': formatDate(s.date),
-          'Party / Customer': s.partyName,
-          'Total Amount (Rs)': s.totalAmount,
-          'Paid Amount (Rs)': s.paidAmount,
-          'Items Count': s.itemsCount,
-          'Total Qty': s.totalQty,
-          'Type': s.type
-        }))
-      : [{ 'Invoice No': '', 'Date': '', 'Party / Customer': 'No data for selected period', 'Total Amount (Rs)': '', 'Paid Amount (Rs)': '', 'Items Count': '', 'Total Qty': '', 'Type': '' }];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(salesRows), 'Sales');
+    // Append sheets in order depending on active filter/tab
+    if (voucherType === 'sales' || activeTab === 'sales') {
+      XLSX.utils.book_append_sheet(wb, wsSales, 'Sales Report');
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+      XLSX.utils.book_append_sheet(wb, wsPurchases, 'Purchases');
+      XLSX.utils.book_append_sheet(wb, wsReceipts, 'Money Received');
+      XLSX.utils.book_append_sheet(wb, wsPayments, 'Payments Made');
+    } else if (voucherType === 'purchases' || activeTab === 'purchases') {
+      XLSX.utils.book_append_sheet(wb, wsPurchases, 'Purchase Report');
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+      XLSX.utils.book_append_sheet(wb, wsSales, 'Sales');
+      XLSX.utils.book_append_sheet(wb, wsReceipts, 'Money Received');
+      XLSX.utils.book_append_sheet(wb, wsPayments, 'Payments Made');
+    } else {
+      XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+      XLSX.utils.book_append_sheet(wb, wsSales, 'Sales Report');
+      XLSX.utils.book_append_sheet(wb, wsPurchases, 'Purchase Report');
+      XLSX.utils.book_append_sheet(wb, wsReceipts, 'Money Received');
+      XLSX.utils.book_append_sheet(wb, wsPayments, 'Payments Made');
+    }
 
-    // 3. Purchases Sheet
-    const purchaseRows = reportData.purchases.length > 0
-      ? reportData.purchases.map((p) => ({
-          'Invoice / Bill No': p.invoiceNumber,
-          'Date': formatDate(p.date),
-          'Party / Vendor': p.partyName,
-          'Total Amount (Rs)': p.totalAmount,
-          'Paid Amount (Rs)': p.paidAmount,
-          'Items Count': p.itemsCount,
-          'Total Qty': p.totalQty,
-          'Type': p.type
-        }))
-      : [{ 'Invoice / Bill No': '', 'Date': '', 'Party / Vendor': 'No data for selected period', 'Total Amount (Rs)': '', 'Paid Amount (Rs)': '', 'Items Count': '', 'Total Qty': '', 'Type': '' }];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(purchaseRows), 'Purchases');
-
-    // 4. Receipts Sheet
-    const receiptRows = reportData.receipts.length > 0
-      ? reportData.receipts.map((r) => ({
-          'Receipt No': r.receiptNumber,
-          'Date': formatDate(r.date),
-          'Party Name': r.partyName,
-          'Amount (Rs)': r.amount,
-          'Payment Method': r.method,
-          'Notes': r.notes
-        }))
-      : [{ 'Receipt No': '', 'Date': '', 'Party Name': 'No data for selected period', 'Amount (Rs)': '', 'Payment Method': '', 'Notes': '' }];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(receiptRows), 'Money Received');
-
-    // 5. Payments Sheet
-    const paymentRows = reportData.payments.length > 0
-      ? reportData.payments.map((p) => ({
-          'Payment No': p.paymentNumber,
-          'Date': formatDate(p.date),
-          'Party Name': p.partyName,
-          'Amount (Rs)': p.amount,
-          'Payment Method': p.method,
-          'Notes': p.notes
-        }))
-      : [{ 'Payment No': '', 'Date': '', 'Party Name': 'No data for selected period', 'Amount (Rs)': '', 'Payment Method': '', 'Notes': '' }];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(paymentRows), 'Payments Made');
-
-    // Use Blob + URL.createObjectURL for reliable browser download
-    const filename = `Report_${getFilterLabel().replace(/[^a-zA-Z0-9_-]/g, '_')}.xlsx`;
+    const filename = `${mainTitle.replace(/\s+/g, '_')}_${dateRange.replace(/[^a-zA-Z0-9_-]/g, '_')}.xlsx`;
     const wbBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([wbBuffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
@@ -270,12 +414,12 @@ export default function FYReport() {
             </Link>
             <div>
               <div className="flex items-center gap-2">
-                <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-amber-400">
-                  Financial Year & Custom Period
+                <span className="rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider text-amber-400">
+                  Date Range: {getDateRangeLabel()}
                 </span>
               </div>
-              <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
-                FY Period & Custom Date Report
+              <h1 className="mt-1 text-2xl font-black tracking-tight text-white sm:text-3xl">
+                {getReportTitle()}
               </h1>
             </div>
           </div>
@@ -389,6 +533,29 @@ export default function FYReport() {
                 </div>
               </>
             )}
+
+            <div className="flex-1 min-w-[180px]">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-slate-400">
+                Transaction / Voucher Filter
+              </label>
+              <select
+                value={voucherType}
+                onChange={(e) => {
+                  const vt = e.target.value;
+                  setVoucherType(vt);
+                  if (vt !== 'all') {
+                    setActiveTab(vt);
+                  }
+                }}
+                className="w-full rounded-xl border border-white/15 bg-slate-900/90 px-3.5 py-2 text-sm font-medium text-white outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
+              >
+                <option value="all">All Transactions</option>
+                <option value="sales">Sales Only</option>
+                <option value="purchases">Purchases Only</option>
+                <option value="receipts">Money Received Only</option>
+                <option value="payments">Payments Made Only</option>
+              </select>
+            </div>
 
             <button
               type="submit"
@@ -634,6 +801,7 @@ export default function FYReport() {
                         <th className="px-5 py-3.5">Invoice #</th>
                         <th className="px-5 py-3.5">Date</th>
                         <th className="px-5 py-3.5">Party / Customer</th>
+                        <th className="px-5 py-3.5">Products Sold (Qty @ Rate)</th>
                         <th className="px-5 py-3.5 text-center">Items</th>
                         <th className="px-5 py-3.5 text-center">Total Qty</th>
                         <th className="px-5 py-3.5 text-right">Total Amount</th>
@@ -645,8 +813,23 @@ export default function FYReport() {
                       {reportData.sales.map((s) => (
                         <tr key={s._id} className="hover:bg-white/5 transition">
                           <td className="px-5 py-3 font-semibold text-white">{s.invoiceNumber}</td>
-                          <td className="px-5 py-3">{formatDate(s.date)}</td>
+                          <td className="px-5 py-3 whitespace-nowrap">{formatDate(s.date)}</td>
                           <td className="px-5 py-3 font-medium text-slate-200">{s.partyName}</td>
+                          <td className="px-5 py-3 text-xs text-slate-300 min-w-[240px]">
+                            {Array.isArray(s.items) && s.items.length > 0 ? (
+                              <div className="space-y-1 max-h-28 overflow-y-auto pr-1">
+                                {s.items.map((item, idx) => (
+                                  <div key={idx} className="flex items-center justify-between gap-2 rounded border border-white/5 bg-slate-800/60 px-2 py-1">
+                                    <span className="font-semibold text-amber-300">{item.productName}</span>
+                                    <span className="text-slate-400 text-[11px]">({item.quantity} {item.unit} @ Rs {item.unitPrice})</span>
+                                    <span className="font-bold text-emerald-400 text-[11px]">Rs {item.total}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-slate-500 italic">No line items</span>
+                            )}
+                          </td>
                           <td className="px-5 py-3 text-center">{s.itemsCount}</td>
                           <td className="px-5 py-3 text-center">{s.totalQty}</td>
                           <td className="px-5 py-3 text-right font-bold text-emerald-400">{formatCurrency(s.totalAmount)}</td>
@@ -660,7 +843,7 @@ export default function FYReport() {
                       ))}
                       {reportData.sales.length === 0 && (
                         <tr>
-                          <td colSpan="8" className="px-5 py-10 text-center text-slate-500">
+                          <td colSpan="9" className="px-5 py-10 text-center text-slate-500">
                             No sales records found for this period.
                           </td>
                         </tr>

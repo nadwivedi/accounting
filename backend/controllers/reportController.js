@@ -359,7 +359,7 @@ exports.getOutstandingReport = async (req, res) => {
 exports.getFYReport = async (req, res) => {
   try {
     const userId = req.userId;
-    const { fy, month, fromDate, toDate } = req.query;
+    const { fy, month, fromDate, toDate, voucherType } = req.query;
 
     let startDate = null;
     let endDate = null;
@@ -404,11 +404,16 @@ exports.getFYReport = async (req, res) => {
       return filter;
     };
 
+    const fetchSales = !voucherType || voucherType === 'all' || voucherType === 'sales';
+    const fetchPurchases = !voucherType || voucherType === 'all' || voucherType === 'purchases';
+    const fetchReceipts = !voucherType || voucherType === 'all' || voucherType === 'receipts';
+    const fetchPayments = !voucherType || voucherType === 'all' || voucherType === 'payments';
+
     const [sales, purchases, receipts, payments] = await Promise.all([
-      Sale.find(buildDateFilter('saleDate')).populate('party', 'name partyName').lean(),
-      Purchase.find(buildDateFilter('purchaseDate')).populate('party', 'name partyName').lean(),
-      Receipt.find(buildDateFilter('receiptDate')).populate('party', 'name partyName').lean(),
-      Payment.find(buildDateFilter('paymentDate')).populate('party', 'name partyName').lean()
+      fetchSales ? Sale.find(buildDateFilter('saleDate')).populate('party', 'name partyName').lean() : [],
+      fetchPurchases ? Purchase.find(buildDateFilter('purchaseDate')).populate('party', 'name partyName').lean() : [],
+      fetchReceipts ? Receipt.find(buildDateFilter('receiptDate')).populate('party', 'name partyName').lean() : [],
+      fetchPayments ? Payment.find(buildDateFilter('paymentDate')).populate('party', 'name partyName').lean() : []
     ]);
 
     const salesFormatted = sales.map((s) => ({
@@ -420,7 +425,16 @@ exports.getFYReport = async (req, res) => {
       paidAmount: toNumber(s.paidAmount),
       type: s.type || 'sale',
       itemsCount: Array.isArray(s.items) ? s.items.length : 0,
-      totalQty: Array.isArray(s.items) ? s.items.reduce((acc, i) => acc + toNumber(i.quantity), 0) : 0
+      totalQty: Array.isArray(s.items) ? s.items.reduce((acc, i) => acc + toNumber(i.quantity), 0) : 0,
+      items: Array.isArray(s.items)
+        ? s.items.map((i) => ({
+            productName: i.productName || 'N/A',
+            quantity: toNumber(i.quantity),
+            unitPrice: toNumber(i.unitPrice),
+            unit: i.unit || '',
+            total: toNumber(i.total)
+          }))
+        : []
     }));
 
     const purchasesFormatted = purchases.map((p) => ({
@@ -432,7 +446,16 @@ exports.getFYReport = async (req, res) => {
       paidAmount: toNumber(p.paidAmount),
       type: p.type || 'purchase',
       itemsCount: Array.isArray(p.items) ? p.items.length : 0,
-      totalQty: Array.isArray(p.items) ? p.items.reduce((acc, i) => acc + toNumber(i.quantity), 0) : 0
+      totalQty: Array.isArray(p.items) ? p.items.reduce((acc, i) => acc + toNumber(i.quantity), 0) : 0,
+      items: Array.isArray(p.items)
+        ? p.items.map((i) => ({
+            productName: i.productName || 'N/A',
+            quantity: toNumber(i.quantity),
+            unitPrice: toNumber(i.unitPrice),
+            unit: i.unit || '',
+            total: toNumber(i.total)
+          }))
+        : []
     }));
 
     const receiptsFormatted = receipts.map((r) => ({
@@ -472,7 +495,8 @@ exports.getFYReport = async (req, res) => {
         startDate,
         endDate,
         fy,
-        month
+        month,
+        voucherType: voucherType || 'all'
       },
       summary,
       sales: salesFormatted,
