@@ -15,8 +15,8 @@ adminApi.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       const path = window.location.pathname;
-      if (path !== '/admlogin' && !path.startsWith('/login') && !path.startsWith('/adm')) {
-        window.location.href = '/admlogin';
+      if (!path.startsWith('/login') && !path.startsWith('/adm')) {
+        window.location.href = '/admin/login';
       }
     }
     return Promise.reject(error.response?.data || error.message);

@@ -463,8 +463,10 @@ function App() {
         />
 
         {/* Admin Routes */}
-        <Route path="/admlogin" element={<AdminLogin />} />
-        <Route path="/adm" element={<AdminPanel />} />
+        <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/adm" element={<Navigate to="/admin" replace />} />
+        <Route path="/admlogin" element={<Navigate to="/admin/login" replace />} />
 
         {/* Redirect to stock */}
         <Route path="*" element={<Navigate to="/" />} />

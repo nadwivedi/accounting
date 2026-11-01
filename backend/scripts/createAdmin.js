@@ -1,62 +1,41 @@
+// Create an admin account for the /admin panel.
+// Usage (from the backend folder):  npm run create-admin
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const mongoose = require('mongoose');
-const Admin = require('../models/Admin');
 const readline = require('readline');
+const Admin = require('../models/Admin');
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+const ask = (question) => new Promise((resolve) => rl.question(question, (answer) => resolve(String(answer || '').trim())));
 
-const ask = (question) => new Promise((resolve) => {
-  rl.question(question, resolve);
-});
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 async function createAdmin() {
+  let exitCode = 0;
   try {
-    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/accounting';
+    const email = (await ask('Admin email: ')).toLowerCase();
+    if (!EMAIL_PATTERN.test(email)) throw new Error('Please enter a valid email address');
+
+    const password = await ask('Admin password (min 6 chars): ');
+    if (password.length < 6) throw new Error('Password must be at least 6 characters');
+
+    const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/inventory';
     await mongoose.connect(uri);
-    console.log('Connected to MongoDB');
 
-    const firstName = await ask('First Name: ');
-    const lastName = await ask('Last Name: ');
-    const email = await ask('Email: ');
-    const password = await ask('Password (min 6 chars): ');
+    if (await Admin.findOne({ email })) throw new Error(`An admin with email ${email} already exists`);
 
-    if (!firstName || !lastName || !email || !password) {
-      console.log('First name, last name, email, and password are required');
-      process.exit(1);
-    }
+    const admin = await new Admin({ email, password }).save();
 
-    if (password.length < 6) {
-      console.log('Password must be at least 6 characters');
-      process.exit(1);
-    }
-
-    const existing = await Admin.findOne({ email: email.toLowerCase().trim() });
-    if (existing) {
-      console.log('An admin with this email already exists');
-      process.exit(1);
-    }
-
-    const admin = new Admin({
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      email: email.toLowerCase().trim(),
-      password
-    });
-
-    await admin.save();
-
-    console.log(`\nAdmin created successfully!`);
-    console.log(`Name: ${admin.firstName} ${admin.lastName}`);
+    console.log('\nAdmin created successfully!');
     console.log(`Email: ${admin.email}`);
-    console.log(`ID: ${admin._id}`);
-
-    process.exit(0);
+    console.log('Login at: https://accounting.softwarebytes.in/admin');
   } catch (error) {
-    console.error('Error creating admin:', error.message);
-    process.exit(1);
+    console.error(`\nError: ${error.message}`);
+    exitCode = 1;
+  } finally {
+    rl.close();
+    await mongoose.disconnect().catch(() => {});
+    process.exit(exitCode);
   }
 }
 

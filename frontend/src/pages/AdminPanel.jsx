@@ -48,7 +48,7 @@ export default function AdminPanel() {
     const init = async () => {
       const a = await refreshAdmin();
       if (!a) {
-        navigate('/admlogin', { replace: true });
+        navigate('/admin/login', { replace: true });
         return;
       }
       fetchUsers();
@@ -167,20 +167,27 @@ export default function AdminPanel() {
 
   const handleAccess = async (user) => {
     if (!window.confirm(`Access ${user.companyName || user.email}'s account?`)) return;
+    // Open the tab right away (inside the click) so the browser doesn't block it as a popup
+    const accessWindow = window.open('', '_blank');
     try {
       const response = await adminApi.post(`/admin/access-user/${user._id}`);
-      if (response.token) {
-        window.open(`https://accounting.softwarebytes.in/?admin_token=${response.token}`, '_blank');
-        toast.success('Access window opened');
+      if (!response.success) throw new Error(response.message || 'Failed to access account');
+      const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+      if (accessWindow) {
+        accessWindow.location.href = `${appUrl}/`;
+      } else {
+        window.location.href = `${appUrl}/`;
       }
+      toast.success(`Opened ${user.companyName || user.email}'s account`);
     } catch (e) {
-      toast.error(e?.message || 'Failed to generate access token');
+      if (accessWindow) accessWindow.close();
+      toast.error(e?.message || 'Failed to access account');
     }
   };
 
   const handleLogout = async () => {
     await adminLogout();
-    navigate('/admlogin');
+    navigate('/admin/login');
   };
 
   const filteredUsers = users.filter((u) => {

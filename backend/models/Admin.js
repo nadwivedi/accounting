@@ -4,12 +4,12 @@ const bcrypt = require('bcryptjs');
 const adminSchema = new mongoose.Schema({
   firstName: {
     type: String,
-    required: [true, 'First name is required'],
+    default: 'Admin',
     trim: true
   },
   lastName: {
     type: String,
-    required: [true, 'Last name is required'],
+    default: '',
     trim: true
   },
   email: {

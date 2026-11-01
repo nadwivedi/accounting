@@ -4,6 +4,8 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
 const ADMIN_COOKIE_NAME = process.env.ADMIN_COOKIE_NAME || 'admin_token';
+const AUTH_COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'auth_token';
+const ACCESS_SESSION_MS = 2 * 60 * 60 * 1000;
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'your_jwt_secret', {
@@ -427,15 +429,19 @@ exports.accessUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id },
+      { id: user._id, impersonatedBy: req.adminId },
       process.env.JWT_SECRET || 'your_jwt_secret',
       { expiresIn: '2h' }
     );
 
+    // Log this browser into the user's account (same cookie a normal user login sets)
+    res.cookie(AUTH_COOKIE_NAME, token, { ...getCookieOptions(), maxAge: ACCESS_SESSION_MS });
+
+    console.log(`Admin ${req.admin?.email} accessed user account ${user.email}`);
+
     res.status(200).json({
       success: true,
-      message: 'Access token generated',
-      token,
+      message: 'User session started',
       user: {
         id: user._id,
         firstName: user.firstName,

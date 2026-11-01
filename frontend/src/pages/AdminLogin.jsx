@@ -13,7 +13,7 @@ export default function AdminLogin() {
 
   useEffect(() => {
     refreshAdmin().then((a) => {
-      if (a) navigate('/adm', { replace: true });
+      if (a) navigate('/admin', { replace: true });
     });
   }, []);
 
@@ -29,7 +29,7 @@ export default function AdminLogin() {
     const result = await adminLogin(email, password);
 
     if (result.success) {
-      navigate('/adm');
+      navigate('/admin');
     } else {
       setError(result.message);
     }
@@ -72,19 +72,19 @@ export default function AdminLogin() {
 
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
-              <label className="block text-xs font-medium text-gray-700 mb-1">Mobile Number</label>
+              <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
               <div className="relative">
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <input
-                  type="text"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white transition-all duration-200 text-gray-800 text-sm"
-                  placeholder="Enter registered mobile"
+                  placeholder="admin@example.com"
                   required
                 />
               </div>
