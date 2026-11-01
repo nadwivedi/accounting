@@ -97,7 +97,11 @@ const deleteSaleInvoicePdf = (relativePath = '') => {
 
 const ensureSaleInvoicePdf = async (sale) => {
   if (!sale) throw new Error('Sale is required to generate invoice PDF');
-  const generatedPdf = await createSaleInvoicePdf(sale);
+  const receivedAmount = await getLinkedSaleReceiptTotal({
+    saleId: sale._id,
+    userId: sale.userId?._id || sale.userId
+  });
+  const generatedPdf = await createSaleInvoicePdf(sale, { receivedAmount });
   if (sale.invoicePdfPath && sale.invoicePdfPath !== generatedPdf.relativePath) {
     deleteSaleInvoicePdf(sale.invoicePdfPath);
   }

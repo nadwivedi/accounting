@@ -357,7 +357,14 @@ const drawItemsTable = (doc, items, startY) => {
   return y + 14;
 };
 
-const drawTotals = (doc, sale, y) => {
+const getPaymentSummary = (sale, receivedAmount = 0) => {
+  const totalAmount = Number(sale?.totalAmount || 0);
+  const paidAmount = Math.max(0, Number(sale?.paidAmount || 0)) + Math.max(0, Number(receivedAmount || 0));
+  const balanceAmount = totalAmount - paidAmount;
+  return { totalAmount, paidAmount, balanceAmount };
+};
+
+const drawTotals = (doc, sale, y, payment) => {
   const labelX = 336;
   const valueX = 450;
   const totalWidth = 110;
@@ -399,7 +406,33 @@ const drawTotals = (doc, sale, y) => {
     .text('Grand Total:', labelX, y + 63, { width: 98, align: 'right' })
     .text(formatCurrency(sale?.totalAmount || 0), valueX, y + 63, { width: totalWidth, align: 'right' });
 
-  return y + 96;
+  if (!payment || payment.paidAmount <= 0) {
+    return y + 96;
+  }
+
+  doc
+    .fillColor(BRAND.slate)
+    .font('Helvetica')
+    .fontSize(10.5)
+    .text('Paid:', labelX, y + 94, { width: 92, align: 'right' })
+    .text(formatCurrency(payment.paidAmount), valueX, y + 94, { width: totalWidth, align: 'right' });
+
+  doc
+    .moveTo(labelX, y + 112)
+    .lineTo(PAGE.width - PAGE.marginX, y + 112)
+    .lineWidth(1)
+    .strokeColor(BRAND.line)
+    .stroke();
+
+  const balanceLabel = payment.balanceAmount < 0 ? 'Advance:' : 'Balance Due:';
+  doc
+    .fillColor(payment.balanceAmount > 0 ? '#b91c1c' : '#15803d')
+    .font('Helvetica-Bold')
+    .fontSize(11)
+    .text(balanceLabel, labelX - 20, y + 120, { width: 112, align: 'right' })
+    .text(formatCurrency(Math.abs(payment.balanceAmount)), valueX, y + 120, { width: totalWidth, align: 'right' });
+
+  return y + 140;
 };
 
 const drawBankAndQr = (doc, profile, qrBuffer, y) => {
@@ -495,18 +528,20 @@ const drawFooter = (doc) => {
   doc.restore();
 };
 
-const createSaleInvoicePdf = async (sale) => {
+const createSaleInvoicePdf = async (sale, { receivedAmount = 0 } = {}) => {
   const relativePath = getSaleInvoiceRelativePath(sale);
   const absolutePath = getSaleInvoiceAbsolutePath(relativePath);
   ensureDir(path.dirname(absolutePath));
 
   const profile = getBusinessProfile(sale);
   const items = Array.isArray(sale?.items) ? sale.items : [];
+  const payment = getPaymentSummary(sale, receivedAmount);
   const upiPaymentUrl = buildUpiPaymentUrl({
     upiId: profile.upiId,
     companyName: profile.companyName,
     invoiceNumber: sale?.invoiceNumber,
-    totalAmount: sale?.totalAmount
+    // Ask only for the outstanding amount when part of the bill is already paid
+    totalAmount: payment.balanceAmount > 0 ? payment.balanceAmount : payment.totalAmount
   });
   const qrBuffer = upiPaymentUrl
     ? await QRCode.toBuffer(upiPaymentUrl, { margin: 1, width: 180 })
@@ -527,13 +562,13 @@ const createSaleInvoicePdf = async (sale) => {
       let y = drawHeader(doc, sale, profile);
       y = drawItemsTable(doc, items, y);
 
-      if (y > 478) {
+      if (y > (payment.paidAmount > 0 ? 434 : 478)) {
         doc.addPage({ margin: 0 });
         drawOuterFrame(doc);
         y = PAGE.marginY + 24;
       }
 
-      y = drawTotals(doc, sale, y);
+      y = drawTotals(doc, sale, y, payment);
 
       doc
         .fillColor(BRAND.slate)
